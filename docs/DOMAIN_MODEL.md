@@ -1,37 +1,27 @@
-# DOMAIN_MODEL.md - Modelo de Domínio CeLiLac
+# DOMAIN_MODEL.md - Bounded Contexts Detalhados
 
-## Visão Geral do Domínio
-O CeLiLac utiliza DDD para isolar a lógica complexa de segurança alimentar de detalhes de infraestrutura.
+## 1. Perfil Alimentar
+- **Responsabilidade:** Gerenciar restrições e sensibilidades.
+- **Entidades:** Profile, Allergy, Intolerance.
+- **Value Objects:** SeverityLevel (LOW, MEDIUM, HIGH, FATAL).
+- **Regras Críticas:** 
+    - Um perfil deve ter pelo menos uma restrição para ser considerado "Ativo".
+    - Mudanças em restrições 'FATAL' exigem revalidação de todo o histórico de consumo.
 
-## Bounded Contexts (Contextos Delimitados)
+## 2. Catálogo de Produtos e Parceiros
+- **Responsabilidade:** Inventário de itens e curadoria de estabelecimentos.
+- **Entidades:** Product, Ingredient, Partner (Restaurante/Loja).
+- **Agregados:** Product é a raiz. Ingredientes são entidades filhas.
+- **Regras:** 
+    - Um produto sem lista de ingredientes é marcado como "PENDENTE DE ANÁLISE".
+    - O campo `cross_contamination` é obrigatório.
 
-### 1. Identidade e Acesso (IAM)
-- **Responsabilidade:** Gestão de usuários, autenticação e permissões (celíacos, estabelecimentos, admin).
-- **Entidades:** User, Role, Permission.
-- **Value Objects:** Email, Password, CPF.
-
-### 2. Perfil Alimentar (Core)
-- **Responsabilidade:** Gerenciar restrições específicas de cada usuário (Celiaquia, APLV, intolerância a lactose, etc).
-- **Entidades:** UserProfile, Restriction.
-- **Value Objects:** SensitivityLevel, AllergenType.
-- **Regra Crítica:** Um perfil nunca deve ser "vazio" se o usuário se declarou celíaco.
-
-### 3. Catálogo de Produtos e Parceiros
-- **Responsabilidade:** Cadastro de produtos, ingredientes e estabelecimentos parceiros.
-- **Entidades:** Product, Partner, Ingredient.
-- **Agregado:** Product (Raiz) -> List<Ingredient>.
-
-### 4. Motor de Compatibilidade Alimentar (Allergen Engine - Crítico)
-- **Responsabilidade:** Cruzar o Perfil Alimentar com os Ingredientes do Produto para gerar alertas de segurança.
-- **Entidades:** CompatibilityResult.
+## 3. Compatibilidade Alimentar (Core Engine)
+- **Responsabilidade:** Match entre Perfil e Produto.
+- **Entidades:** CompatibilityReport.
 - **Regras:**
-    - Se "Trigo/Cevada/Centeio" presente -> Alerta Máximo para Celíacos.
-    - Se "Pode conter traços" -> Alerta de Risco para Celíacos.
-- **Nota:** Este contexto deve ser 100% isolado e testado exaustivamente.
+    - O motor deve ser agnóstico a banco de dados (Pure Domain).
+    - Deve suportar "Traços de Alérgenos" como um modificador de risco.
 
-### 5. Avaliações e Confiança (Social)
-- **Responsabilidade:** Feedbacks de usuários sobre a veracidade das informações dos produtos.
-- **Entidades:** Review, TrustScore.
-
-## Mapa de Contextos (Context Map)
-- O **Allergen Engine** consome dados de **Perfil Alimentar** e **Catálogo de Produtos** (Upstream-Downstream).
+## 4. Administracao
+- **Responsabilidade:** Gestão de denúncias de dados incorretos e moderação.
