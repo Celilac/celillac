@@ -1,3 +1,12 @@
+
+---
+| Atributo | Descrição |
+| :--- | :--- |
+| **Objetivo** | Definir a persistência e segurança dos dados. |
+| **Quem consulta** | Agentes de IA e Desenvolvedores Backend/Mobile |
+| **Decisões que controla** | Schema, Migrations e Seeds. |
+| **Validação Humana** | Alterações de Schema (Migrations). |
+---
 # DATABASE.md - Estratégia de Persistência CeLiLac
 
 ## Ambiente Local (Docker)

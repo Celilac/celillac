@@ -1,3 +1,12 @@
+
+---
+| Atributo | Descrição |
+| :--- | :--- |
+| **Objetivo** | Especificar a lógica de segurança alimentar. |
+| **Quem consulta** | Agentes de IA e Desenvolvedores Backend/Mobile |
+| **Decisões que controla** | Cálculo de compatibilidade e níveis de risco. |
+| **Validação Humana** | QUALQUER ALTERAÇÃO exige aprovação humana. |
+---
 # ALLERGEN_ENGINE.md - Especificação do Motor de Alérgenos
 
 ## Objetivo
