@@ -1,16 +1,16 @@
+# PRD - Product Requirements Document
 
----
-| Atributo | Descrição |
-| :--- | :--- |
-| **Objetivo** | Definir o que o CeLiLac deve fazer sob a ótica do usuário. |
-| **Quem consulta** | Agentes de IA e Desenvolvedores Backend/Mobile |
-| **Decisões que controla** | Escopo de funcionalidades e prioridade de entrega. |
-| **Validação Humana** | Mudança em regras de negócio críticas. |
----
-# PRD.md
+## 1. Objetivo
+Definir o que o sistema deve fazer e por que.
 
-## Objetivo
-Visão Geral, Jornadas de Usuário e Requisitos Funcionais.
+## 2. Conteúdo Mínimo
+Jornadas de usuário, requisitos funcionais e não funcionais.
 
-## Status
-Aguardando preenchimento conforme regras de DDD.
+## 3. Quem deve consultar
+Agentes de IA, Desenvolvedores, Product Owners.
+
+## 4. Quais decisões ele controla
+Escopo das funcionalidades e priorização.
+
+## 5. Alterações que exigem validação humana
+Qualquer mudança em regras de negócio ou requisitos de segurança.
