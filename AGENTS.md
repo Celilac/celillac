@@ -26,3 +26,17 @@ O CeLiLac é uma plataforma de segurança alimentar focada em celíacos e pessoa
 2. Identificar Contexto Delimitado em `docs/DOMAIN_MODEL.md`.
 3. Propor plano no chat.
 4. Implementar -> Testar -> Validar.
+
+## Exemplos Práticos de Tarefas
+
+### ✅ Permitidas (Autonomia Total)
+- "Criar testes unitários para a entidade de Usuário."
+- "Implementar a lógica de validação de e-mail no Value Object."
+- "Criar um script de seed para cadastrar 10 produtos fictícios."
+- "Refatorar um controller para extrair lógica para um Use Case."
+
+### ⚠️ Restritas (Exigem Aprovação Humana)
+- "Alterar a função `checkCompatibility()` no motor de alérgenos."
+- "Adicionar uma nova biblioteca de banco de dados no package.json."
+- "Alterar o schema da tabela `users` no PostgreSQL."
+- "Modificar a política de CORS no servidor Express."
