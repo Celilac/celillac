@@ -1,14 +1,34 @@
+import 'dotenv/config'; // deve ser a primeira importação
 import express from 'express';
 
-const app = express();
-const port = process.env.PORT || 3000;
+import { testDatabaseConnection } from './infrastructure/database/connection';
+import { iamRouter } from './interfaces/http/routes/iam.routes';
+
+const app  = express();
+const port = process.env.PORT ?? 3000;
 
 app.use(express.json());
 
-app.get('/health', (req, res) => {
+// --- Rotas ---
+app.get('/health', (_req, res) => {
   res.json({ status: 'OK', service: 'CeLiLac Backend' });
 });
 
-app.listen(port, () => {
-  console.log(`[Server]: CeLiLac Backend is running at http://localhost:${port}`);
-});
+app.use('/iam', iamRouter);
+
+// --- Boot ---
+async function bootstrap(): Promise<void> {
+  try {
+    await testDatabaseConnection();
+    app.listen(port, () => {
+      console.log(`[Server]: CeLiLac Backend rodando em http://localhost:${port}`);
+    });
+  } catch (error) {
+    console.error('[Server]: Falha ao conectar com o banco de dados. Verifique se o Docker está rodando.');
+    console.error(error);
+    process.exit(1);
+  }
+}
+
+bootstrap();
+
