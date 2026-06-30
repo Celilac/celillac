@@ -3,6 +3,7 @@ import express from 'express';
 
 import { testDatabaseConnection } from './infrastructure/database/connection';
 import { iamRouter } from './interfaces/http/routes/iam.routes';
+import { foodProfileRouter } from './interfaces/http/routes/food-profile.routes';
 
 const app  = express();
 const port = process.env.PORT ?? 3000;
@@ -14,7 +15,8 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'OK', service: 'CeLiLac Backend' });
 });
 
-app.use('/iam', iamRouter);
+app.use('/iam',          iamRouter);
+app.use('/food-profile', foodProfileRouter);
 
 // --- Boot ---
 async function bootstrap(): Promise<void> {
