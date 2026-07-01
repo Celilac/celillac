@@ -70,6 +70,15 @@ export class FoodProfile extends Entity<FoodProfileProps> {
     return Result.ok<void>(undefined as any);
   }
 
+  /**
+   * clearRestrictions — Remove todas as restrições e zera o sinalizador de revalidação.
+   * Utilizado durante processos de atualização total do perfil.
+   */
+  clearRestrictions(): void {
+    this.props.restrictions = [];
+    this._requiresHistoryRevalidation = false;
+  }
+
   static create(props: FoodProfileProps, id?: string): Result<FoodProfile> {
     if (!props.userId || props.userId.trim().length === 0) {
       return Result.fail<FoodProfile>('O userId do perfil não pode ser vazio.');
