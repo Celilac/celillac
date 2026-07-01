@@ -1,0 +1,169 @@
+# Walkthrough — FEAT-001: Módulo IAM Implementado
+
+> **Status:** ✅ CONCLUÍDO  
+> **Data:** 2026-06-29  
+> **Conformidade:** `AGENTS.md` ✅ | `GUARDRAILS.md` ✅ | `DEFINITION_OF_DONE.md` ✅
+
+---
+
+## Arquivos Criados / Modificados
+
+### ⚙️ Setup
+| Arquivo | Ação |
+|:--------|:-----|
+| `.env.example` | [NEW] Template de variáveis de ambiente |
+| `.env` | [NEW] Local (gitignored) |
+| `.gitignore` | [NEW] Protege `.env` e `dist/` |
+| `jest.config.ts` | [NEW] Jest com ts-jest e threshold de 80% |
+| `tsconfig.json` | [MODIFY] Adicionado `types: ["jest", "node"]` |
+
+### 🏛️ Domain (Núcleo — zero dependências externas)
+| Arquivo | Ação |
+|:--------|:-----|
+| `src/domain/Entity.ts` | [MODIFY] UUID real com `uuid` v4 + getter `id` |
+| `src/domain/Result.ts` | [NEW] Padrão Result<T> para erros de domínio |
+| `src/domain/iam/value-objects/UserRole.ts` | [NEW] Enum CELIACO / PARCEIRO / ADMIN |
+| `src/domain/iam/value-objects/Email.ts` | [NEW] VO imutável com validação RFC 5322 |
+| `src/domain/iam/value-objects/PasswordHash.ts` | [NEW] VO imutável — domínio nunca vê plaintext |
+| `src/domain/iam/User.ts` | [NEW] Entidade raiz do IAM |
+| `src/domain/iam/repositories/IUserRepository.ts` | [NEW] Interface pura do domínio |
+
+### ⚙️ Application (Casos de Uso)
+| Arquivo | Ação |
+|:--------|:-----|
+| `src/application/iam/RegisterUserUseCase.ts` | [NEW] Orquestra cadastro: validar → verificar dup → hash → salvar |
+| `src/application/iam/LoginUserUseCase.ts` | [NEW] Orquestra login: buscar → comparar → JWT |
+
+### 🔧 Infrastructure
+| Arquivo | Ação |
+|:--------|:-----|
+| `src/infrastructure/database/connection.ts` | [NEW] Singleton `pg.Pool` — **corrige o erro de conexão** |
+| `src/infrastructure/database/iam/PgUserRepository.ts` | [NEW] Implementa `IUserRepository` com SQL |
+
+### 🌐 Interfaces
+| Arquivo | Ação |
+|:--------|:-----|
+| `src/interfaces/http/controllers/BaseController.ts` | [MODIFY] Tipado com Express + métodos `ok/created/badRequest/etc` |
+| `src/interfaces/http/controllers/iam/RegisterUserController.ts` | [NEW] |
+| `src/interfaces/http/controllers/iam/LoginUserController.ts` | [NEW] |
+| `src/interfaces/http/routes/iam.routes.ts` | [NEW] Composition Root das dependências |
+| `src/index.ts` | [MODIFY] `dotenv`, rotas IAM, `bootstrap()` com teste de conexão |
+
+### 🧪 Testes
+| Arquivo | Ação |
+|:--------|:-----|
+| `tests/unit/domain/Result.spec.ts` | [NEW] |
+| `tests/unit/domain/iam/Email.spec.ts` | [NEW] |
+| `tests/unit/domain/iam/PasswordHash.spec.ts` | [NEW] |
+| `tests/unit/domain/iam/User.spec.ts` | [NEW] |
+
+---
+
+## Resultados dos Testes
+
+```
+PASS tests/unit/domain/iam/PasswordHash.spec.ts
+PASS tests/unit/domain/iam/Email.spec.ts
+PASS tests/unit/domain/Result.spec.ts
+PASS tests/unit/domain/iam/User.spec.ts
+
+Test Suites: 4 passed, 4 total
+Tests:       22 passed, 22 total
+```
+
+### Cobertura do Domínio
+
+| Arquivo | Stmts | Branch | Funcs | Lines |
+|:--------|:------|:-------|:------|:------|
+| **All files** | **100%** | **100%** | **100%** | **100%** |
+| Entity.ts | 100% | 100% | 100% | 100% |
+| Result.ts | 100% | 100% | 100% | 100% |
+| User.ts | 100% | 100% | 100% | 100% |
+| Email.ts | 100% | 100% | 100% | 100% |
+| PasswordHash.ts | 100% | 100% | 100% | 100% |
+| UserRole.ts | 100% | 100% | 100% | 100% |
+
+> Meta: ≥ 80% (DEFINITION_OF_DONE.md) → **Atingido: 100%** ✅
+
+---
+
+## Build TypeScript
+
+```bash
+npm run build  →  exit code 0 (zero erros) ✅
+```
+
+---
+
+## Validação de Integração com Docker (Próximo Passo Manual)
+
+```bash
+# 1. Subir o banco de dados
+docker-compose -f infra/docker/docker-compose.yml up -d
+
+# 2. Subir o servidor
+cd backend && npm run dev
+
+# 3. Testar cadastro
+curl -X POST http://localhost:3000/iam/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teste@celilac.com","password":"Senha@123","role":"CELIACO"}'
+# Esperado: 201 { "id": "...", "email": "teste@celilac.com", "role": "CELIACO" }
+
+# 4. Testar login
+curl -X POST http://localhost:3000/iam/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"teste@celilac.com","password":"Senha@123"}'
+# Esperado: 200 { "token": "eyJ...", "expiresIn": "7d" }
+
+# 5. Health check
+curl http://localhost:3000/health
+# Esperado: { "status": "OK", "service": "CeLiLac Backend" }
+```
+
+---
+
+## Definition of Done — Checklist Final
+
+- [x] Conformidade com `DOMAIN_MODEL.md` (IAM separado do Perfil Alimentar)
+- [x] Clean Architecture (dependências apontando para dentro)
+- [x] Testes unitários com **100%** de cobertura no domínio
+- [x] Build TypeScript sem erros (`npm run build`)
+- [x] API documentada (`POST /iam/register`, `POST /iam/login`)
+- [x] Nenhum segredo exposto (`.env` no `.gitignore`, apenas `.env.example` no repo)
+- [x] Não afeta o Motor de Alérgenos
+- [x] Validação com Docker + curl — **✅ COMPLETO**
+
+---
+
+## Resultados dos Testes de Integração (2026-06-29)
+
+### Infraestrutura
+| Verificação | Resultado |
+|:------------|:----------|
+| Container `celilac-postgres` | ✅ Up 45min, porta 5432 |
+| Tabela `users` | ✅ Existe com schema correto |
+| Tabela `food_profiles` | ✅ Existe com FK para users |
+| Conexão backend → banco | ✅ `[Database]: Conexão com PostgreSQL estabelecida com sucesso.` |
+
+### Testes de API
+
+| # | Cenário | Endpoint | HTTP | Resultado |
+|:--|:--------|:---------|:-----|:----------|
+| 1 | Cadastro válido (CELIACO) | `POST /iam/register` | **201** | `{id, email, role}` ✅ |
+| 2 | E-mail duplicado | `POST /iam/register` | **409** | `{error: "Este e-mail já está em uso."}` ✅ |
+| 3 | Login com senha válida | `POST /iam/login` | **200** | `{token: "eyJ...", expiresIn: "7d"}` ✅ |
+| 4 | Login com senha errada | `POST /iam/login` | **401** | `{error: "Credenciais inválidas."}` ✅ |
+| 5 | Persistência no banco | `SELECT * FROM users` | — | Registro confirmado com UUID e timestamp ✅ |
+
+### Usuário criado no banco
+```
+id: 197f5c58-6776-483f-9ff6-4ce0add7ea65
+email: celiaco@celilac.com
+role: CELIACO
+created_at: 2026-06-29 20:21:39
+```
+
+> [!IMPORTANT]
+> Rota implementada: `POST /iam/register` (não `/users/register`). O prefixo `/iam` mantém o bounded context IAM isolado dos demais contextos do sistema.
+
