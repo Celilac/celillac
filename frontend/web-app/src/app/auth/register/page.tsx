@@ -1,0 +1,107 @@
+'use client';
+// frontend/web-app/src/app/auth/register/page.tsx
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { iamApi } from '@/api/iam';
+import { useAuth } from '@/contexts/AuthContext';
+import { HttpError } from '@/api/client';
+
+export default function RegisterPage() {
+  const router   = useRouter();
+  const { login } = useAuth();
+
+  const [email,    setEmail]    = useState('');
+  const [password, setPassword] = useState('');
+  const [role,     setRole]     = useState<'CELIACO' | 'PARCEIRO'>('CELIACO');
+  const [error,    setError]    = useState('');
+  const [loading,  setLoading]  = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const user = await iamApi.register({ email, password, role });
+      // Após cadastro, faz login automático para obter o token
+      const session = await iamApi.login({ email, password });
+      login(session.token, user.id);
+      router.push('/profile');
+    } catch (err) {
+      setError(err instanceof HttpError ? err.message : 'Erro ao criar conta.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="auth-container">
+      <div className="auth-card animate-slide">
+        <div className="auth-logo">Celi<span>Lac</span></div>
+
+        <h1 className="auth-title">Criar conta</h1>
+        <p className="auth-subtitle">Configure seu perfil alimentar e coma com segurança.</p>
+
+        {error && <div className="alert alert-error" role="alert">{error}</div>}
+
+        <form className="auth-form" onSubmit={handleSubmit} id="register-form">
+          <div className="field">
+            <label className="field-label" htmlFor="register-email">E-mail</label>
+            <input
+              id="register-email"
+              type="email"
+              className="field-input"
+              placeholder="seu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+          </div>
+
+          <div className="field">
+            <label className="field-label" htmlFor="register-password">Senha</label>
+            <input
+              id="register-password"
+              type="password"
+              className="field-input"
+              placeholder="Mínimo 8 caracteres"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+              autoComplete="new-password"
+            />
+          </div>
+
+          <div className="field">
+            <label className="field-label" htmlFor="register-role">Tipo de conta</label>
+            <select
+              id="register-role"
+              className="field-input field-select"
+              value={role}
+              onChange={(e) => setRole(e.target.value as typeof role)}
+            >
+              <option value="CELIACO">🛡️ Celíaco / Pessoa com restrição</option>
+              <option value="PARCEIRO">🏪 Parceiro (Restaurante / Loja)</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="btn btn-em"
+            id="register-submit"
+            disabled={loading}
+            style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
+          >
+            {loading ? 'Criando conta…' : '✨ Criar minha conta'}
+          </button>
+        </form>
+
+        <p className="auth-footer-link">
+          Já tem conta? <Link href="/auth/login">Entrar</Link>
+        </p>
+      </div>
+    </div>
+  );
+}
