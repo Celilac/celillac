@@ -1,0 +1,20 @@
+{
+  "name": "celilac-harness-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "seed":    "ts-node seed.ts",
+    "migrate": "ts-node migrate.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "pg":       "^8.11.3"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node":     "^20",
+    "@types/pg":       "^8.11.6",
+    "ts-node":         "^10.9.2",
+    "typescript":      "^5"
+  }
+}
