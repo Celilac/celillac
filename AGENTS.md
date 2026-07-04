@@ -15,11 +15,50 @@ O CeLiLac é uma plataforma de segurança alimentar focada em celíacos e pessoa
 3. **Segurança Alimentar:** Qualquer alteração no `ALLERGEN_ENGINE` exige aprovação humana imediata.
 4. **Testes Primeiro:** Siga a cultura de TDD sempre que possível.
 
-## Comandos Permitidos
-- `npm test`, `npm run build`, `docker-compose up`.
+## Guardrails e Políticas de Segurança (Harness)
+Esta seção define as limitações estritas de operação do Agente, baseadas no princípio do menor privilégio e segurança *by-design*.
 
-## Comandos Proibidos
-- `rm -rf /`, `chmod 777`, acessos a credenciais de produção.
+### Comandos Permitidos
+- Execução de testes locais: `npm test`, `jest`
+- Build e compilação: `npm run build`, `tsc`
+- Gestão local de containers: `docker-compose up`, `docker-compose down`
+- Linting e formatação: `npm run lint`, `prettier`
+
+### Comandos Proibidos
+- Deleção em massa ou alteração arbitrária de permissões: `rm -rf /`, `chmod 777`
+- Comandos que exigem elevação de privilégio: `sudo`, `su`
+- Comandos destrutivos de rede e deploy direto via shell.
+- Acessos a instâncias, servidores remotos ou bancos de dados de produção.
+
+### Arquivos Somente Leitura (Read-Only para o Agente)
+- Documentação central legada que fuja do escopo da tarefa atual.
+- Logs e dumps de banco de dados extraídos de produção (arquivos `.log` reais não devem ser apagados, apenas lidos).
+
+### Políticas Técnicas e de Segurança
+- **Dependências Externas:** O Agente está terminantemente proibido de instalar bibliotecas sem autorização humana. Se precisar, deve propor no plano e pausar.
+- **Variáveis de Ambiente:** Nunca *hardcodar* senhas, tokens ou chaves criptográficas em código. Sempre usar leitura segura de `.env` via `process.env`.
+- **Dados Sensíveis (PII):** Não armazenar nem trafegar informações críticas de saúde sem devida proteção. Hashes e JWT não podem vazar nas respostas JSON das rotas.
+- **Uso de Sandbox:** Todo código gerado atua no sandbox do projeto. Scripts não devem tentar modificar o sistema operacional *host* além dos artefatos da aplicação.
+- **Princípio do Menor Privilégio:** A infraestrutura de um contexto não pode acessar as tabelas de outro diretamente. Funções não devem ter poderes além do seu propósito estrito.
+- **Remoção de Testes:** É expressamente proibido deletar, comentar ou pular testes (`.skip`) para mascarar quebras. Se um teste quebrar, a lógica (ou o teste defasado) deve ser corrigida.
+
+### Ações Autônomas (Exemplos de Tarefas Permitidas)
+O Agente tem autonomia total para prosseguir sem interrupção nestes cenários:
+- Criar testes unitários e de integração para a suíte.
+- Implementar lógicas de validação em Value Objects.
+- Criar scripts de seed para popular dados fictícios.
+- Refatorar controllers para extrair lógica para Use Cases (Clean Architecture).
+
+### Ações Restritas (Exigem Pausa e Aprovação Humana Obrigatória)
+- ⚠️ Alterar regras de compatibilidade alimentar.
+- ⚠️ Alterar Termos de Uso ou Políticas de Privacidade.
+- ⚠️ Modificar mecanismos de autenticação (senhas, sessões, JWT).
+- ⚠️ Alterar scripts de migração (*migrations*) de banco de dados já aplicadas.
+- ⚠️ Adicionar, atualizar ou remover dependências.
+- ⚠️ Remover testes da suíte ou reduzir *threshold* de cobertura.
+- ⚠️ Alterar regras de segurança (CORS, middlewares de Rate Limit).
+- ⚠️ Realizar Deploy.
+- ⚠️ Conectar ou ler dados de ambiente de produção.
 
 ## Arquivos de Consulta Obrigatória
 Antes de implementar qualquer nova funcionalidade, o Agente DEVE ler e compreender os seguintes documentos:
@@ -29,7 +68,6 @@ Antes de implementar qualquer nova funcionalidade, o Agente DEVE ler e compreend
 - `docs/DATABASE.md` (Esquemas de banco e tabelas existentes)
 
 ## Workflows de Execução
-
 O Agente DEVE adaptar seu comportamento de acordo com o tipo da tarefa solicitada, seguindo os fluxos abaixo:
 
 ### 1. Workflow para Nova Feature
@@ -83,16 +121,16 @@ Ao final de cada tarefa, o Agente deve apresentar um resumo claro contendo:
 4. **Próximos Passos:** Uma recomendação clara de qual deve ser a próxima feature a ser atacada (conforme PRD).
 O Agente também deve manter o artefato `walkthrough.md` sempre atualizado com o histórico de entregas.
 
-## Exemplos Práticos de Tarefas
-
-### ✅ Permitidas (Autonomia Total)
-- "Criar testes unitários para a entidade de Usuário."
-- "Implementar a lógica de validação de e-mail no Value Object."
-- "Criar um script de seed para cadastrar 10 produtos fictícios."
-- "Refatorar um controller para extrair lógica para um Use Case."
-
-### ⚠️ Restritas (Exigem Aprovação Humana)
-- "Alterar a função `checkCompatibility()` no motor de alérgenos."
-- "Adicionar uma nova biblioteca de banco de dados no package.json."
-- "Alterar o schema da tabela `users` no PostgreSQL."
-- "Modificar a política de CORS no servidor Express."
+## Checklist de Validação (Aceite de Alterações)
+Para que uma alteração feita pelo Agente seja considerada concluída e pronta para aceite (Merge/Commit), os seguintes critérios DEVEM ser obrigatoriamente preenchidos:
+- [ ] Testes unitários passando.
+- [ ] Testes de integração passando (quando aplicável).
+- [ ] Linter executado sem erros.
+- [ ] Build concluído com sucesso.
+- [ ] Nenhum segredo ou credencial (variáveis de ambiente, senhas, tokens) exposto no código.
+- [ ] Nenhuma regra crítica de negócio alterada sem autorização prévia humana.
+- [ ] Documentação atualizada quando necessário (`PRD`, `DATABASE`, contratos, etc).
+- [ ] Aderência estrita à Clean Architecture.
+- [ ] Aderência aos Bounded Contexts (sem ferir os limites dos domínios).
+- [ ] Relatório final gerado de forma clara e objetiva.
+- [ ] Revisão humana solicitada e realizada antes do aceite definitivo da branch.
