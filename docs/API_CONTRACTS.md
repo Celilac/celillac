@@ -2,8 +2,9 @@
 
 > **Versão:** v1.0  
 > **Base URL (dev):** `http://localhost:3000`  
-> **Última atualização:** 2026-07-01  
+> **Última atualização:** 2026-07-04  
 > **Fonte de verdade:** Controllers e Use Cases do backend (Clean Architecture).
+> **OpenAPI/Swagger:** [docs/openapi.yaml](openapi.yaml) (Especificação formal para geração de clientes)
 
 ---
 

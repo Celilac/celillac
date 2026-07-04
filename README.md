@@ -90,7 +90,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | ⚠️ Motor de Alérgenos (Core Domain) | ✅ Implementado | [`docs/features/allergen-engine.md`](docs/features/allergen-engine.md) |
 | 🛒 Catálogo de Produtos | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
 | 🌐 Frontend (Web App + Landing Page) | ✅ Implementado | [`docs/features/frontend.md`](docs/features/frontend.md) |
-| 🛡️ Administração | 🔜 Futuro | — |
+| 🛡️ Administração | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
 
 ---
 

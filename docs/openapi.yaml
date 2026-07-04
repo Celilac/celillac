@@ -1,0 +1,198 @@
+openapi: 3.0.3
+info:
+  title: CeLiLac API
+  version: 1.0.0
+  description: API Contracts for the CeLiLac platform (Food Safety for Celiacs).
+servers:
+  - url: http://localhost:3000
+    description: Development server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    UserRegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        role:
+          type: string
+          enum: [CELIACO, PARCEIRO, ADMIN]
+    UserRegisterResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [CELIACO, PARCEIRO, ADMIN]
+    UserLoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    UserLoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        expiresIn:
+          type: string
+    Restriction:
+      type: object
+      required:
+        - allergen
+        - severity
+      properties:
+        id:
+          type: string
+          format: uuid
+        allergen:
+          type: string
+          enum: [GLUTEN, LACTOSE, NUTS, SOY, EGGS, SHELLFISH, FISH, SESAME, OTHER]
+        severity:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, FATAL]
+    FoodProfileRequest:
+      type: object
+      required:
+        - userId
+        - restrictions
+      properties:
+        userId:
+          type: string
+          format: uuid
+        restrictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Restriction'
+    FoodProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        isActive:
+          type: boolean
+        requiresHistoryRevalidation:
+          type: boolean
+        restrictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Restriction'
+paths:
+  /iam/register:
+    post:
+      summary: Registra um novo usuário
+      tags:
+        - IAM
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegisterRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRegisterResponse'
+        '400':
+          description: Bad Request
+        '409':
+          description: Conflict (Email already in use)
+  /iam/login:
+    post:
+      summary: Autentica um usuário existente
+      tags:
+        - IAM
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserLoginResponse'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+  /food-profile:
+    post:
+      summary: Cria o perfil alimentar de um usuário
+      tags:
+        - Food Profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FoodProfileRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodProfileResponse'
+        '400':
+          description: Bad Request
+        '409':
+          description: Conflict (Profile already exists)
+  /food-profile/{userId}:
+    get:
+      summary: Recupera o perfil alimentar de um usuário
+      tags:
+        - Food Profile
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FoodProfileResponse'
+        '400':
+          description: Not Found

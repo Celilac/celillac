@@ -1,0 +1,7 @@
+// backend/src/domain/admin/value-objects/ReportReason.ts
+export enum ReportReason {
+  INCORRECT_INGREDIENTS = 'INCORRECT_INGREDIENTS',
+  MISSING_ALLERGEN = 'MISSING_ALLERGEN',
+  WRONG_CROSS_CONTAMINATION = 'WRONG_CROSS_CONTAMINATION',
+  OTHER = 'OTHER',
+}
