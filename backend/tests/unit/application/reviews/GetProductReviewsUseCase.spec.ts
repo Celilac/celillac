@@ -1,6 +1,6 @@
-import { GetProductReviewsUseCase } from '../../../../../src/application/reviews/GetProductReviewsUseCase';
-import { IReviewRepository } from '../../../../../src/domain/reviews/repositories/IReviewRepository';
-import { Review } from '../../../../../src/domain/reviews/Review';
+import { GetProductReviewsUseCase } from '../../../../src/application/reviews/GetProductReviewsUseCase';
+import { IReviewRepository } from '../../../../src/domain/reviews/repositories/IReviewRepository';
+import { Review } from '../../../../src/domain/reviews/Review';
 
 describe('GetProductReviewsUseCase', () => {
   let getProductReviewsUseCase: GetProductReviewsUseCase;

@@ -24,10 +24,10 @@ export class ReviewController {
       });
 
       if (result.isFailure) {
-        if (result.error === 'Produto não encontrado no catálogo.') {
-          return res.status(404).json({ error: result.error });
+        if (result.getError() === 'Produto não encontrado no catálogo.') {
+          return res.status(404).json({ error: result.getError() });
         }
-        return res.status(400).json({ error: result.error });
+        return res.status(400).json({ error: result.getError() });
       }
 
       const review = result.getValue();
@@ -51,7 +51,7 @@ export class ReviewController {
       const result = await this.getProductReviewsUseCase.execute(productId);
 
       if (result.isFailure) {
-        return res.status(400).json({ error: result.error });
+        return res.status(400).json({ error: result.getError() });
       }
 
       return res.status(200).json(result.getValue());

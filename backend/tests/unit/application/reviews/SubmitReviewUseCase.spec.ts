@@ -1,8 +1,8 @@
-import { SubmitReviewUseCase } from '../../../../../src/application/reviews/SubmitReviewUseCase';
-import { IReviewRepository } from '../../../../../src/domain/reviews/repositories/IReviewRepository';
-import { IProductRepository } from '../../../../../src/domain/catalog/repositories/IProductRepository';
-import { Product } from '../../../../../src/domain/catalog/Product';
-import { Review } from '../../../../../src/domain/reviews/Review';
+import { SubmitReviewUseCase } from '../../../../src/application/reviews/SubmitReviewUseCase';
+import { IReviewRepository } from '../../../../src/domain/reviews/repositories/IReviewRepository';
+import { IProductRepository } from '../../../../src/domain/allergen-engine/repositories/IProductRepository';
+import { Product } from '../../../../src/domain/catalog/Product';
+import { Review } from '../../../../src/domain/reviews/Review';
 
 describe('SubmitReviewUseCase', () => {
   let submitReviewUseCase: SubmitReviewUseCase;
@@ -17,9 +17,7 @@ describe('SubmitReviewUseCase', () => {
     };
 
     mockProductRepo = {
-      save: jest.fn(),
       findById: jest.fn(),
-      search: jest.fn(),
     };
 
     submitReviewUseCase = new SubmitReviewUseCase(mockReviewRepo, mockProductRepo);
@@ -28,7 +26,7 @@ describe('SubmitReviewUseCase', () => {
   it('deve submeter uma avaliação com sucesso para um produto existente', async () => {
     // Produto existe
     mockProductRepo.findById.mockResolvedValue(
-      Product.create({ name: 'Pão', ingredients: 'Farinha', hasGluten: true, crossContamination: '' }).getValue()
+      Product.create({ name: 'Pão', brand: '', ingredients: 'Farinha', hasGluten: true, crossContamination: '' }).getValue()
     );
 
     // Usuário não avaliou ainda
@@ -47,7 +45,7 @@ describe('SubmitReviewUseCase', () => {
 
   it('deve atualizar a avaliação se o usuário já avaliou o produto', async () => {
     mockProductRepo.findById.mockResolvedValue(
-      Product.create({ name: 'Pão', ingredients: 'Farinha', hasGluten: true, crossContamination: '' }).getValue()
+      Product.create({ name: 'Pão', brand: '', ingredients: 'Farinha', hasGluten: true, crossContamination: '' }).getValue()
     );
 
     const existingReview = Review.create({
@@ -79,6 +77,6 @@ describe('SubmitReviewUseCase', () => {
     });
 
     expect(result.isFailure).toBe(true);
-    expect(result.error).toBe('Produto não encontrado no catálogo.');
+    expect(result.getError()).toBe('Produto não encontrado no catálogo.');
   });
 });

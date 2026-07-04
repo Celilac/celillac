@@ -1,4 +1,4 @@
-import { Review } from '../../../../../src/domain/reviews/Review';
+import { Review } from '../../../../src/domain/reviews/Review';
 
 describe('Review Entity', () => {
   it('deve criar uma avaliação válida com nota 5', () => {
@@ -23,7 +23,7 @@ describe('Review Entity', () => {
     });
 
     expect(reviewOrError.isFailure).toBe(true);
-    expect(reviewOrError.error).toBe('A avaliação deve ser entre 1 e 5 estrelas.');
+    expect(reviewOrError.getError()).toBe('A avaliação deve ser entre 1 e 5 estrelas.');
   });
 
   it('deve falhar se a nota for maior que 5', () => {
@@ -34,6 +34,6 @@ describe('Review Entity', () => {
     });
 
     expect(reviewOrError.isFailure).toBe(true);
-    expect(reviewOrError.error).toBe('A avaliação deve ser entre 1 e 5 estrelas.');
+    expect(reviewOrError.getError()).toBe('A avaliação deve ser entre 1 e 5 estrelas.');
   });
 });

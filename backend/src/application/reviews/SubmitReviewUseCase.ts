@@ -1,5 +1,5 @@
 import { IReviewRepository } from '../../domain/reviews/repositories/IReviewRepository';
-import { IProductRepository } from '../../domain/catalog/repositories/IProductRepository';
+import { IProductRepository } from '../../domain/allergen-engine/repositories/IProductRepository';
 import { Review } from '../../domain/reviews/Review';
 import { Result } from '../../domain/Result';
 
@@ -41,7 +41,7 @@ export class SubmitReviewUseCase {
     );
 
     if (reviewOrError.isFailure) {
-      return Result.fail<Review>(reviewOrError.error as string);
+      return Result.fail<Review>(reviewOrError.getError());
     }
 
     const review = reviewOrError.getValue();
