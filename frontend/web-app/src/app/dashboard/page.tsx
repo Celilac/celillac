@@ -6,29 +6,52 @@ import styles from './dashboard.module.css';
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [report, setReport] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    setLoading(true);
+    setError(null);
+    setReport(null);
     
-    // Mock request to the backend check compatibility endpoint
-    if (searchQuery.toLowerCase().includes('pão')) {
-      setReport({
-        isCompatible: false,
-        riskLevel: 'BLOCKED',
-        conflicts: [
-          { allergen: 'GLUTEN', severity: 'FATAL', reason: '[FATAL] GLUTEN — detectado nos ingredientes' }
-        ],
-        reasoning: '1 conflito(s) encontrado(s). Risco: BLOCKED.'
+    try {
+      // 1. Busca o produto no catálogo (Backend Porta 3000)
+      const catalogRes = await fetch(`http://localhost:3000/catalog?query=${encodeURIComponent(searchQuery)}`);
+      if (!catalogRes.ok) throw new Error('Erro ao comunicar com o catálogo.');
+      
+      const products = await catalogRes.json();
+      if (!products || products.length === 0) {
+        throw new Error('Nenhum produto encontrado com este nome.');
+      }
+
+      const product = products[0]; // Pega o primeiro match
+
+      // 2. Envia para o Motor de Alérgenos
+      // Em produção, o userId vem do Auth Context/JWT
+      const checkRes = await fetch('http://localhost:3000/compatibility/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: 'aed052fa-b410-440b-a1f4-2a73268bae49', // Hardcoded temporário para dev
+          productId: product.id,
+        })
       });
-    } else if (searchQuery.toLowerCase().includes('maçã')) {
-      setReport({
-        isCompatible: true,
-        riskLevel: 'SAFE',
-        conflicts: [],
-        reasoning: 'Produto compatível com o perfil alimentar.'
-      });
-    } else {
-      setReport(null);
+
+      if (!checkRes.ok) {
+        const errData = await checkRes.json();
+        throw new Error(errData.error || 'Falha ao verificar compatibilidade.');
+      }
+
+      const compatibility = await checkRes.json();
+      setReport({ ...compatibility, productName: product.name });
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -63,18 +86,28 @@ export default function DashboardPage() {
               placeholder="Digite o nome (ex: pão, maçã)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={loading}
             />
-            <button type="submit" className={styles.searchButton}>
-              Verificar Compatibilidade
+            <button type="submit" className={styles.searchButton} disabled={loading}>
+              {loading ? 'Verificando...' : 'Verificar Compatibilidade'}
             </button>
           </form>
 
-          {report && (
+          {error && (
             <div className={styles.reportArea}>
+              <div className={styles.statusBlocked} style={{ borderLeftColor: '#f59e0b', color: '#f59e0b' }}>
+                <p><strong>Aviso:</strong> {error}</p>
+              </div>
+            </div>
+          )}
+
+          {report && !error && (
+            <div className={styles.reportArea}>
+              <h3 style={{ marginBottom: '1rem', color: '#fff' }}>Produto: {report.productName}</h3>
               <div className={report.riskLevel === 'SAFE' ? styles.statusSafe : styles.statusBlocked}>
                 <strong>Status: {report.riskLevel}</strong>
                 <p className={styles.reason}>{report.reasoning}</p>
-                {report.conflicts.map((c: any, index: number) => (
+                {report.conflicts && report.conflicts.map((c: any, index: number) => (
                   <p key={index} className={styles.reason}>- {c.reason}</p>
                 ))}
               </div>

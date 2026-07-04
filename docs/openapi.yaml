@@ -104,6 +104,59 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Restriction'
+    SubmitReviewRequest:
+      type: object
+      required:
+        - userId
+        - productId
+        - rating
+      properties:
+        userId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+    ReviewResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        productId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+        comment:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    ProductReviewsResponse:
+      type: object
+      properties:
+        productId:
+          type: string
+          format: uuid
+        totalReviews:
+          type: integer
+        averageRating:
+          type: number
+          format: float
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewResponse'
 paths:
   /iam/register:
     post:
@@ -196,3 +249,48 @@ paths:
                 $ref: '#/components/schemas/FoodProfileResponse'
         '400':
           description: Not Found
+  /reviews:
+    post:
+      summary: Cria ou atualiza a avaliação de um produto
+      tags:
+        - Reviews
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitReviewRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+        '400':
+          description: Bad Request
+        '404':
+          description: Product Not Found
+  /reviews/product/{productId}:
+    get:
+      summary: Recupera as avaliações de um produto específico
+      tags:
+        - Reviews
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductReviewsResponse'
+        '400':
+          description: Bad Request

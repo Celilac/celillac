@@ -13,5 +13,6 @@ Histórico de entregas do projeto. Formato: `Data | Feature | Descrição`.
 | 2026-07-01 | FEAT-005 | Bounded Context Catálogo de Produtos (`CreateProduct`, `SearchProducts`) |
 | 2026-07-04 | FEAT-007 | Início das Interfaces: Dashboard Web (UI Glassmorphism) e Scaffolding App Mobile (Expo) |
 | 2026-07-04 | FEAT-006 | Implementação do módulo de Administração e Moderação |
+| 2026-07-04 | FEAT-008 | Bounded Context de Avaliações (Social Proof) e Pipeline de Automação CI/CD |
 
 Ver [README.md](README.md) para o estado atual das funcionalidades e [`docs/`](docs/) para as especificações de cada bounded context.

@@ -18,10 +18,13 @@
    - [POST /food-profile](#post-food-profile)
    - [GET /food-profile/:userId](#get-food-profileuserid)
 4. [Compatibilidade Alimentar](#4-compatibilidade-alimentar)
-   - [POST /compatibility/check](#post-compatibilitycheck-futura)
-5. [Health Check](#5-health-check)
-6. [Enums de Domínio](#6-enums-de-domínio)
-7. [Regras para Agentes de IA](#7-regras-para-agentes-de-ia)
+   - [POST /compatibility/check](#post-compatibilitycheck)
+5. [Avaliações (Social Proof)](#5-avaliacoes)
+   - [POST /reviews](#post-reviews)
+   - [GET /reviews/product/:productId](#get-reviewsproductproductid)
+6. [Health Check](#6-health-check)
+7. [Enums de Domínio](#7-enums-de-domínio)
+8. [Regras para Agentes de IA](#8-regras-para-agentes-de-ia)
 
 ---
 
@@ -307,10 +310,7 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
 
 ## 4. Compatibilidade Alimentar
 
-### `POST /compatibility/check` *(futura — FEAT-005)*
-
-> ⚠️ **Este endpoint ainda não está implementado no backend.**  
-> O `AllergenEngine` existe e está validado (53 testes). O endpoint será implementado na FEAT-005.
+### `POST /compatibility/check`
 
 **Regra Fundamental (`FRONTEND_STRATEGY.md`):**
 > O frontend/mobile NUNCA calcula compatibilidade localmente. SEMPRE consulta este endpoint.
@@ -323,7 +323,7 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
 }
 ```
 
-**Response `200 OK` (planejada):**
+**Response `200 OK`:**
 ```json
 {
   "isCompatible": false,
@@ -352,7 +352,81 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
 
 ---
 
-## 5. Health Check
+## 5. Avaliações (Social Proof)
+
+O módulo de avaliações permite que usuários deem uma nota (1-5) para a acurácia do rótulo do produto, validando de forma comunitária a segurança do mesmo.
+
+### `POST /reviews`
+
+Cria ou atualiza a avaliação de um usuário para um produto (Upsert - limite de 1 por usuário). 🔒 *(autenticação necessária para produção)*
+
+**Request Body:**
+```json
+{
+  "userId": "uuid-do-usuario",
+  "productId": "uuid-do-produto",
+  "rating": 5,
+  "comment": "Rótulo parece seguro e completo."
+}
+```
+
+| Campo | Tipo | Obrigatório | Validação |
+|:------|:-----|:-----------:|:----------|
+| `userId` | `string (UUID)` | ✅ | ID do usuário avaliador |
+| `productId` | `string (UUID)`| ✅ | ID do produto avaliado |
+| `rating` | `integer`       | ✅ | Entre 1 e 5 |
+| `comment` | `string`       | ❌ | Comentário opcional |
+
+**Response `201 Created`:**
+```json
+{
+  "id": "uuid-da-review",
+  "userId": "uuid-do-usuario",
+  "productId": "uuid-do-produto",
+  "rating": 5,
+  "comment": "Rótulo parece seguro e completo.",
+  "createdAt": "2026-07-04T22:00:00Z"
+}
+```
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `400` | `"userId, productId e rating (1-5) são obrigatórios."` | Input inválido |
+| `404` | `"Produto não encontrado no catálogo."` | O produto não existe |
+
+---
+
+### `GET /reviews/product/:productId`
+
+Recupera todas as avaliações de um produto específico e sua média.
+
+**Path Parameter:**
+| Parâmetro | Tipo | Descrição |
+|:----------|:-----|:----------|
+| `productId`| `string (UUID)` | ID do produto |
+
+**Response `200 OK`:**
+```json
+{
+  "productId": "uuid-do-produto",
+  "totalReviews": 2,
+  "averageRating": 4.5,
+  "reviews": [
+    {
+      "id": "uuid-da-review",
+      "userId": "uuid-do-usuario",
+      "rating": 5,
+      "comment": "Seguro",
+      "createdAt": "2026-07-04T22:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+## 6. Health Check
 
 ### `GET /health`
 
@@ -368,7 +442,7 @@ Verifica se o servidor está respondendo. **Público — sem autenticação.**
 
 ---
 
-## 6. Enums de Domínio
+## 7. Enums de Domínio
 
 ### `AllergenType`
 
@@ -409,7 +483,7 @@ Valores aceitos nos campos `severity`:
 
 ---
 
-## 7. Regras para Agentes de IA
+## 8. Regras para Agentes de IA
 
 > Esta seção é direcionada a agentes de IA que consumirem esta documentação ao implementar Frontend, Mobile ou novas integrações.
 

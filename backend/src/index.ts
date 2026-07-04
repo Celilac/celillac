@@ -7,6 +7,7 @@ import { foodProfileRouter } from './interfaces/http/routes/food-profile.routes'
 import { compatibilityRouter } from './interfaces/http/routes/compatibility.routes';
 import { catalogRouter } from './interfaces/http/routes/catalog.routes';
 import { adminRouter } from './interfaces/http/routes/admin.routes';
+import { reviewsRoutes } from './interfaces/http/routes/reviews.routes';
 
 const app  = express();
 const port = process.env.PORT ?? 3000;
@@ -23,6 +24,7 @@ app.use('/food-profile', foodProfileRouter);
 app.use('/compatibility', compatibilityRouter);
 app.use('/catalog',      catalogRouter);
 app.use('/admin',        adminRouter);
+app.use('/reviews',      reviewsRoutes);
 
 // --- Boot ---
 async function bootstrap(): Promise<void> {

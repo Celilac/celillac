@@ -36,5 +36,14 @@
 - `has_gluten` (Boolean)
 - `cross_contamination` (Text)
 
+### Tabela: product_reviews (Avaliações)
+- `id` (UUID, PK)
+- `user_id` (FK -> users.id)
+- `product_id` (FK -> products.id)
+- `rating` (Integer 1-5)
+- `comment` (Text, Opcional)
+- `created_at` (Timestamp)
+- *UNIQUE constraint no par (user_id, product_id)*
+
 ## Migrações
 As migrações devem ser criadas via `TypeORM/Sequelize` e nunca editadas manualmente após o commit. O agente de IA só pode aplicar migrações após aprovação do plano de dados.

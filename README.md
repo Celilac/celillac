@@ -91,6 +91,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 🛒 Catálogo de Produtos | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
 | 🌐 Frontend (Web App + Landing Page) | ✅ Implementado | [`docs/features/frontend.md`](docs/features/frontend.md) |
 | 🛡️ Administração | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
+| ⭐ Avaliações e Confiança | ✅ Implementado | [`docs/features/reviews.md`](docs/features/reviews.md) |
 
 ---
 

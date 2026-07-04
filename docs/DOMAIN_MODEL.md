@@ -25,3 +25,10 @@
 
 ## 4. Administracao
 - **Responsabilidade:** Gestão de denúncias de dados incorretos e moderação.
+
+## 5. Avaliações e Confiança (Social Proof)
+- **Responsabilidade:** Coletar a percepção dos usuários sobre a acurácia dos rótulos dos produtos e construir a métrica de confiabilidade da comunidade.
+- **Entidades:** Review
+- **Value Objects:** Rating (1 a 5 estrelas)
+- **Regras:**
+    - Um usuário só pode avaliar um mesmo produto uma vez (Upsert na avaliação).
