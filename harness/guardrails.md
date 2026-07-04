@@ -17,3 +17,9 @@ O agente de IA opera em um sandbox isolado. Ele tem acesso apenas ao que é estr
 ## Proteção de Dados
 - **Dados Sensíveis:** Nunca utilize dados reais de usuários no ambiente de desenvolvimento local.
 - **Seeds:** Utilize apenas os scripts em `harness/scripts/` para gerar dados fictícios.
+
+## Boas Práticas de Commit e Versionamento
+- **Verificação do Git Status:** Antes de commitar novos setups de projeto (por exemplo, após rodar `npm install`), execute sempre `git status` para verificar os arquivos que serão adicionados.
+- **Commits Seletivos:** Evite comandos globais como `git add .` ou `git add -A` ao realizar commits de setup inicial. Prefira adicionar os arquivos específicos de configuração e código (`git add <arquivo>`).
+- **Hook de Pre-commit:** O repositório utiliza um hook de pre-commit localizado em `harness/hooks/pre-commit` para impedir o commit acidental de arquivos de diretórios proibidos (`node_modules/`, `dist/`, `coverage/`). Esse hook rejeitará automaticamente qualquer commit que tente incluir esses arquivos.
+

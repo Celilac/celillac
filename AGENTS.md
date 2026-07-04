@@ -26,6 +26,15 @@ O CeLiLac é uma plataforma de segurança alimentar focada em celíacos e pessoa
 2. Identificar Contexto Delimitado em `docs/DOMAIN_MODEL.md`.
 3. Propor plano no chat.
 4. Implementar -> Testar -> Validar.
+5. **Entregar:** Atualizar documentação conforme as Regras de Entrega de Feature.
+
+## Regras de Entrega de Feature
+Ao entregar uma feature nova, o Agente DEVE cumprir:
+- **Docs de Feature:** Criar `docs/features/<nome-do-contexto>.md` contendo: status, tabela de endpoints, entidades/VOs principais e regras críticas (baseado no modelo `docs/features/food-profile.md`).
+- **README.md:** Adicionar link para a feature nova na tabela "Funcionalidades". O README serve como mapa, não duplique endpoints ou regras detalhadas nele.
+- **CHANGELOG.md:** Adicionar uma entrada com data, nome da feature e descrição curta.
+- **Contratos (API_CONTRACTS.md):** Atualizar a fonte da verdade de requests/responses. Remover qualquer anotação de "planejado/futuro" assim que o endpoint for criado.
+- **Domínio (DOMAIN_MODEL.md):** Regras de negócio conceituais (o "porquê") ficam aqui. O arquivo de feature deve apenas gerar um link para o documento de domínio, sem duplicar o conceito.
 
 ## Exemplos Práticos de Tarefas
 

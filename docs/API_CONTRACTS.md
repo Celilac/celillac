@@ -17,7 +17,7 @@
    - [POST /food-profile](#post-food-profile)
    - [GET /food-profile/:userId](#get-food-profileuserid)
 4. [Compatibilidade Alimentar](#4-compatibilidade-alimentar)
-   - [POST /compatibility/check](#post-compatibilitycheck)
+   - [POST /compatibility/check](#post-compatibilitycheck-futura)
 5. [Health Check](#5-health-check)
 6. [Enums de Domínio](#6-enums-de-domínio)
 7. [Regras para Agentes de IA](#7-regras-para-agentes-de-ia)
@@ -306,12 +306,15 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
 
 ## 4. Compatibilidade Alimentar
 
-### `POST /compatibility/check`
+### `POST /compatibility/check` *(futura — FEAT-005)*
+
+> ⚠️ **Este endpoint ainda não está implementado no backend.**  
+> O `AllergenEngine` existe e está validado (53 testes). O endpoint será implementado na FEAT-005.
 
 **Regra Fundamental (`FRONTEND_STRATEGY.md`):**
 > O frontend/mobile NUNCA calcula compatibilidade localmente. SEMPRE consulta este endpoint.
 
-**Request Body:**
+**Request Body (planejado):**
 ```json
 {
   "userId":    "uuid-do-usuario",
@@ -319,7 +322,7 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
 }
 ```
 
-**Response `200 OK`:**
+**Response `200 OK` (planejada):**
 ```json
 {
   "isCompatible": false,

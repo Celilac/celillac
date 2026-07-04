@@ -1,0 +1,24 @@
+#!/bin/sh
+
+# List staged files that are added, copied, modified, or renamed (excludes deleted files)
+staged_files=$(git diff --cached --name-only --diff-filter=ACMR)
+
+# Check for node_modules, dist, or coverage
+forbidden_patterns="node_modules/|/dist/|^dist/|/coverage/|^coverage/"
+
+# Find if any files match the forbidden patterns
+matching_files=$(echo "$staged_files" | grep -E "$forbidden_patterns")
+
+if [ -n "$matching_files" ]; then
+    echo "=========================================================="
+    echo "❌ COMMIT REJECTED!"
+    echo "Voce esta tentando commitar arquivos de diretorios proibidos:"
+    echo "$matching_files" | sed 's/^/  - /'
+    echo ""
+    echo "Por favor, remova-os do stage usando:"
+    echo "  git restore --staged <arquivo>"
+    echo "=========================================================="
+    exit 1
+fi
+
+exit 0

@@ -7,6 +7,7 @@
 4. **Testes:** Criar testes unitários em `backend/tests/unit`.
 5. **Implementação:** Seguir a regra de dependência (Infra -> Application -> Domain).
 6. **Validação:** Rodar `docker-compose up` e validar integração.
+7. **Entrega:** Atualizar as documentações requeridas (`docs/features/`, `README.md`, `CHANGELOG.md`, `API_CONTRACTS.md`) sem duplicar o `DOMAIN_MODEL.md`.
 
 ## [WF-02] Alteração Crítica (Allergen Engine)
 1. **Trava:** Notificar humano antes de iniciar.

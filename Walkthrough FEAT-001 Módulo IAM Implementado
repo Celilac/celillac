@@ -99,7 +99,7 @@ npm run build  →  exit code 0 (zero erros) ✅
 
 ```bash
 # 1. Subir o banco de dados
-docker-compose -f infra/docker/docker-compose.yml up -d
+docker-compose up -d
 
 # 2. Subir o servidor
 cd backend && npm run dev
