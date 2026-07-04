@@ -19,10 +19,12 @@
    - [GET /food-profile/:userId](#get-food-profileuserid)
 4. [Compatibilidade Alimentar](#4-compatibilidade-alimentar)
    - [POST /compatibility/check](#post-compatibilitycheck)
-5. [Avaliações (Social Proof)](#5-avaliacoes)
+5. [Catálogo de Produtos](#5-catálogo-de-produtos)
+   - [POST /catalog/products](#post-catalogproducts)
+   - [GET /catalog/products](#get-catalogproducts)
+6. [Avaliações (Social Proof)](#6-avaliacoes)
    - [POST /reviews](#post-reviews)
    - [GET /reviews/product/:productId](#get-reviewsproductproductid)
-6. [Health Check](#6-health-check)
 7. [Enums de Domínio](#7-enums-de-domínio)
 8. [Regras para Agentes de IA](#8-regras-para-agentes-de-ia)
 
@@ -352,7 +354,82 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
 
 ---
 
-## 5. Avaliações (Social Proof)
+## 5. Catálogo de Produtos
+
+O Catálogo centraliza a base de dados de itens alimentícios. Produtos cadastrados aqui servem de insumo para o Motor de Alérgenos.
+
+### `POST /catalog/products`
+
+Cadastra um novo produto no catálogo.
+
+**Request Body:**
+```json
+{
+  "name": "Biscoito de Arroz",
+  "brand": "CeliFood",
+  "ingredients": "Arroz integral, sal marinho.",
+  "hasGluten": false,
+  "crossContamination": "Pode conter traços de soja."
+}
+```
+
+| Campo | Tipo | Obrigatório | Validação |
+|:------|:-----|:-----------:|:----------|
+| `name` | `string` | ✅ | Nome do produto |
+| `brand` | `string` | ❌ | Marca do produto |
+| `ingredients` | `string` | ❌ | Lista de ingredientes. Se vazio, status vira `PENDENTE_DE_ANALISE` |
+| `hasGluten` | `boolean` | ✅ | Declaração do fabricante se contém glúten |
+| `crossContamination` | `string` | ✅ | Traços declarados. Pode ser vazio. |
+
+**Response `201 Created`:**
+```json
+{
+  "id": "uuid-do-produto",
+  "name": "Biscoito de Arroz",
+  "brand": "CeliFood",
+  "ingredients": "Arroz integral, sal marinho.",
+  "hasGluten": false,
+  "crossContamination": "Pode conter traços de soja.",
+  "analysisStatus": "ANALISADO"
+}
+```
+
+---
+
+### `GET /catalog/products`
+
+Busca produtos pelo nome ou marca, com suporte a paginação.
+
+**Query Parameters:**
+| Parâmetro | Tipo | Padrão | Descrição |
+|:----------|:-----|:-------|:----------|
+| `q` | `string` | `""` | Termo de busca (`ILIKE` no nome ou marca) |
+| `page` | `integer`| `1` | Página atual |
+| `limit` | `integer`| `20` | Itens por página (máx 100) |
+
+**Response `200 OK`:**
+```json
+{
+  "data": [
+    {
+      "id": "uuid-do-produto",
+      "name": "Biscoito de Arroz",
+      "brand": "CeliFood",
+      "ingredients": "Arroz integral, sal marinho.",
+      "hasGluten": false,
+      "crossContamination": "Pode conter traços de soja.",
+      "analysisStatus": "ANALISADO"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20
+}
+```
+
+---
+
+## 6. Avaliações (Social Proof)
 
 O módulo de avaliações permite que usuários deem uma nota (1-5) para a acurácia do rótulo do produto, validando de forma comunitária a segurança do mesmo.
 
@@ -426,7 +503,7 @@ Recupera todas as avaliações de um produto específico e sua média.
 
 ---
 
-## 6. Health Check
+## 7. Health Check
 
 ### `GET /health`
 
@@ -442,7 +519,7 @@ Verifica se o servidor está respondendo. **Público — sem autenticação.**
 
 ---
 
-## 7. Enums de Domínio
+## 8. Enums de Domínio
 
 ### `AllergenType`
 
@@ -483,7 +560,7 @@ Valores aceitos nos campos `severity`:
 
 ---
 
-## 8. Regras para Agentes de IA
+## 9. Regras para Agentes de IA
 
 > Esta seção é direcionada a agentes de IA que consumirem esta documentação ao implementar Frontend, Mobile ou novas integrações.
 
