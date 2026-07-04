@@ -28,12 +28,44 @@ Antes de implementar qualquer nova funcionalidade, o Agente DEVE ler e compreend
 - `docs/API_CONTRACTS.md` (Contratos de comunicação HTTP)
 - `docs/DATABASE.md` (Esquemas de banco e tabelas existentes)
 
-## Fluxo de Trabalho
-1. Ler `docs/PRD.md`.
-2. Identificar Contexto Delimitado em `docs/DOMAIN_MODEL.md`.
-3. Propor plano no chat.
-4. Implementar -> Testar -> Validar.
-5. **Entregar:** Atualizar documentação conforme as Regras de Entrega de Feature.
+## Workflows de Execução
+
+O Agente DEVE adaptar seu comportamento de acordo com o tipo da tarefa solicitada, seguindo os fluxos abaixo:
+
+### 1. Workflow para Nova Feature
+1. **Ler** documentação obrigatória (`PRD`, `DOMAIN_MODEL`, `API_CONTRACTS`, `DATABASE`).
+2. **Identificar** o módulo/contexto afetado.
+3. **Criar plano** estruturado.
+4. **Solicitar confirmação humana** se a feature afetar algum domínio crítico (ex: motor de alérgenos).
+5. **Criar ou atualizar testes** antes ou junto do código (TDD).
+6. **Implementar** em pequenos passos.
+7. **Rodar testes** e linter (`npm test`, `npm run build`).
+8. **Gerar relatório final** atualizando `walkthrough.md`.
+
+### 2. Workflow para Correção de Bug
+1. **Reproduzir** o problema (analisar logs ou código existente).
+2. **Criar teste que falha** para garantir que o bug foi isolado.
+3. **Corrigir** a menor parte possível para não causar regressões.
+4. **Rodar testes** em toda a suíte para validar a correção.
+5. **Explicar** de forma concisa a causa e a correção no relatório de entrega.
+
+### 3. Workflow para Alteração de Regra de Negócio
+1. **Ler** `docs/ALLERGEN_ENGINE.md` e `docs/DOMAIN_MODEL.md`.
+2. **Descrever impacto** que a regra trará no resto do sistema.
+3. **Aguardar autorização humana** (modificar regras impacta diretamente a vida do consumidor).
+4. **Criar testes** cobrindo todos os cenários críticos e edge-cases.
+5. **Implementar** a regra exclusivamente na camada de Domain.
+6. **Validar** com a suíte de testes.
+7. **Registrar decisão** no `DOMAIN_MODEL.md` e `CHANGELOG.md`.
+
+### 4. Workflow para Alteração de Banco de Dados
+1. **Ler** `docs/DATABASE.md`.
+2. **Propor alteração** (novas tabelas, colunas, constraints ou índices).
+3. **Explicar impacto** sobre os dados existentes e performance.
+4. **Aguardar autorização humana** se envolver a criação/execução de uma migration estrutural.
+5. **Criar migration** de forma segura.
+6. **Rodar testes** para assegurar que a camada de repositório continua íntegra.
+7. **Documentar alteração** no `docs/DATABASE.md`.
 
 ## Regras de Entrega de Feature
 Ao entregar uma feature nova, o Agente DEVE cumprir:
