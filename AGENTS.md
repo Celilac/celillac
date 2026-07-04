@@ -21,6 +21,13 @@ O CeLiLac é uma plataforma de segurança alimentar focada em celíacos e pessoa
 ## Comandos Proibidos
 - `rm -rf /`, `chmod 777`, acessos a credenciais de produção.
 
+## Arquivos de Consulta Obrigatória
+Antes de implementar qualquer nova funcionalidade, o Agente DEVE ler e compreender os seguintes documentos:
+- `docs/PRD.md` (Visão do produto e requisitos)
+- `docs/DOMAIN_MODEL.md` (Contextos Delimitados e regras de negócio)
+- `docs/API_CONTRACTS.md` (Contratos de comunicação HTTP)
+- `docs/DATABASE.md` (Esquemas de banco e tabelas existentes)
+
 ## Fluxo de Trabalho
 1. Ler `docs/PRD.md`.
 2. Identificar Contexto Delimitado em `docs/DOMAIN_MODEL.md`.
@@ -35,6 +42,14 @@ Ao entregar uma feature nova, o Agente DEVE cumprir:
 - **CHANGELOG.md:** Adicionar uma entrada com data, nome da feature e descrição curta.
 - **Contratos (API_CONTRACTS.md):** Atualizar a fonte da verdade de requests/responses. Remover qualquer anotação de "planejado/futuro" assim que o endpoint for criado.
 - **Domínio (DOMAIN_MODEL.md):** Regras de negócio conceituais (o "porquê") ficam aqui. O arquivo de feature deve apenas gerar um link para o documento de domínio, sem duplicar o conceito.
+
+## Forma Esperada de Relatório
+Ao final de cada tarefa, o Agente deve apresentar um resumo claro contendo:
+1. **Status da Missão:** Breve parágrafo confirmando se a meta foi alcançada.
+2. **O que foi feito:** Lista em tópicos das principais adições e modificações estruturais.
+3. **Qualidade:** Resultado da execução dos testes (`npm test`) com a cobertura de código atingida e confirmação de sucesso do build.
+4. **Próximos Passos:** Uma recomendação clara de qual deve ser a próxima feature a ser atacada (conforme PRD).
+O Agente também deve manter o artefato `walkthrough.md` sempre atualizado com o histórico de entregas.
 
 ## Exemplos Práticos de Tarefas
 
