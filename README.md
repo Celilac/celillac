@@ -1,12 +1,24 @@
 # CeLiLac 🛡️
 
-> **Plataforma de Segurança Alimentar para Celíacos**  
+> **Plataforma de Segurança Alimentar para Celíacos**
 > Detecta alérgenos em produtos — incluindo traços de contaminação cruzada — e avisa antes de você consumir.
 
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Frontend](https://img.shields.io/badge/Frontend-Next.js%2014-black)](#)
-[![Tests](https://img.shields.io/badge/Tests-53%20passing%20%7C%2098%25%20coverage-brightgreen)](#)
+[![Tests](https://img.shields.io/badge/Tests-13%20suites%20%7C%2068%20passing-brightgreen)](#-testes)
+
+---
+
+## Índice
+
+- [Estrutura do Monorepo](#-estrutura-do-monorepo)
+- [Como Começar](#-como-começar)
+- [Funcionalidades](#-funcionalidades)
+- [Testes](#-testes)
+- [Arquitetura](#️-arquitetura)
+- [Documentação](#-documentação)
+- [Segurança & Governança](#-segurança--governança)
 
 ---
 
@@ -20,7 +32,7 @@ celillac/
 │   │   ├── application/     # Casos de uso
 │   │   ├── infrastructure/  # PostgreSQL (pg), repositórios
 │   │   └── interfaces/      # Controllers HTTP (Express)
-│   └── tests/unit/          # 53 testes | 98% cobertura
+│   └── tests/unit/          # 13 suítes | 68 testes
 ├── frontend/
 │   ├── web-app/             # Aplicação principal (Next.js 14, porta 3001)
 │   └── landing-page/        # Landing page estática (Next.js 14, porta 3002)
@@ -67,135 +79,18 @@ npm run dev
 
 ---
 
-## ✅ Funcionalidades Implementadas
+## ✅ Funcionalidades
 
-### 🔐 FEAT-001 — Módulo IAM (Identity & Access Management)
+Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com endpoints, entidades e regras. Contratos completos de API em [`docs/API_CONTRACTS.md`](docs/API_CONTRACTS.md).
 
-**Endpoints:**
-| Método | Rota | Descrição |
-|:-------|:-----|:----------|
-| `POST` | `/iam/register` | Cadastro de usuário |
-| `POST` | `/iam/login` | Autenticação com JWT |
-| `GET`  | `/health` | Status do servidor |
-
-**Domínio:**
-- `User` entity com UUID v4
-- Value Objects: `Email` (validação RFC 5322), `PasswordHash` (bcrypt), `UserRole`
-- Padrão `Result<T>` — erros de domínio sem exceções
-- JWT com expiração de 7 dias
-
-**Exemplo:**
-```bash
-# Cadastrar
-curl -X POST http://localhost:3000/iam/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"celíaco@celilac.com","password":"Senha@123","role":"CELIACO"}'
-# → 201 { "id": "uuid", "email": "...", "role": "CELIACO" }
-
-# Login
-curl -X POST http://localhost:3000/iam/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"celíaco@celilac.com","password":"Senha@123"}'
-# → 200 { "token": "eyJ...", "expiresIn": "7d" }
-```
-
----
-
-### 🥗 FEAT-002 — Bounded Context: Perfil Alimentar
-
-**Endpoints:**
-| Método | Rota | Descrição |
-|:-------|:-----|:----------|
-| `POST` | `/food-profile` | Criar perfil alimentar |
-| `GET`  | `/food-profile/:userId` | Buscar perfil por usuário |
-
-**Domínio:**
-- `FoodProfile` aggregate root
-- `Restriction` entity (alérgeno + severidade)
-- `SeverityLevel`: `LOW` | `MEDIUM` | `HIGH` | `FATAL`
-- `AllergenType`: Glúten, Lactose, Castanhas, Soja, Ovos, Frutos do Mar, Peixes, Gergelim, Outro
-- **Regras críticas:** perfil ativo exige ≥1 restrição; restrições `FATAL` sinalizam revalidação histórica; anti-duplicidade de alérgenos
-
-**Exemplo:**
-```bash
-curl -X POST http://localhost:3000/food-profile \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer <token>" \
-  -d '{
-    "userId": "uuid-do-user",
-    "restrictions": [
-      { "allergen": "GLUTEN", "severity": "FATAL" },
-      { "allergen": "LACTOSE", "severity": "MEDIUM" }
-    ]
-  }'
-```
-
----
-
-### ⚠️ FEAT-003 — Motor de Alérgenos (Core Domain)
-
-> **Arquivo de máxima criticidade.** Qualquer alteração exige aprovação humana conforme `harness/guardrails.md`.
-
-**O que faz:** Calcula a compatibilidade entre um `FoodProfile` e um produto, retornando um relatório completo de riscos.
-
-**Regras implementadas (aprovadas em 2026-06-30):**
-
-| Regra | Condição | Resultado |
-|:------|:---------|:----------|
-| R1 | Produto sem ingredientes declarados | `BLOCKED` (precaução) |
-| R2 | Perfil sem restrições | `SAFE` |
-| R3 | Celíaco (`FATAL`) + glúten nos ingredientes | `BLOCKED` |
-| **R4** | **Celíaco (`FATAL`) + traços de glúten (`cross_contamination`)** | **`BLOCKED`** |
-| R5 | `HIGH` + alérgeno presente | `DANGER` |
-| R6 | `MEDIUM`/`LOW` + alérgeno presente | `WARNING` |
-| R7 | Múltiplos conflitos | Risco mais alto prevalece |
-| R8 | Múltiplos conflitos | **Todos retornados** (sem omissão) |
-
-**Níveis de Risco:**
-```
-⛔ BLOCKED  — Celíaco ou produto sem ingredientes
-⚠️ DANGER   — Alérgeno de alta severidade
-🟡 WARNING  — Alérgeno de baixa/média severidade
-✅ SAFE     — Nenhum conflito encontrado
-```
-
-**Endpoint previsto (próxima fase):**
-```bash
-POST /compatibility/check
-Body: { "userId": "uuid", "productId": "uuid" }
-Response: { "isCompatible": bool, "riskLevel": "BLOCKED", "conflicts": [...], "reasoning": "..." }
-```
-
----
-
-### 🌐 FEAT-004 — Frontend Web App + Landing Page
-
-#### Web App (Next.js 14 — porta 3001)
-
-| Rota | Descrição |
-|:-----|:----------|
-| `/` | Dashboard com verificações recentes |
-| `/auth/register` | Cadastro de usuário |
-| `/auth/login` | Login |
-| `/profile` | Configuração do Perfil Alimentar |
-
-**Arquitetura do frontend:**
-```
-src/api/                   ← ÚNICA camada autorizada a chamar o backend
-├── client.ts              ← fetch base com regra arquitetural documentada
-├── iam.ts                 ← POST /iam/register | POST /iam/login
-├── food-profile.ts        ← POST/GET /food-profile
-└── compatibility.ts       ← POST /compatibility/check
-```
-
-> ⚠️ **Regra Fundamental (`FRONTEND_STRATEGY.md`):** O `AllergenEngine` reside **exclusivamente no backend**. O frontend **nunca** recalcula compatibilidade — sempre consulta `POST /compatibility/check`.
-
-#### Landing Page (Next.js 14 — porta 3002)
-
-- Output estático (`next export`) — isolada da aplicação principal
-- Seções: Hero, Stats, Como Funciona, Demo de Riscos, CTA, Footer
-- SEO: title, meta description, Open Graph, heading hierarchy
-- Zero chamadas de API
+| Contexto | Status | Doc |
+|:---------|:-------|:----|
+| 🔐 IAM | ✅ Implementado | [`docs/features/iam.md`](docs/features/iam.md) |
+| 🥗 Perfil Alimentar | ✅ Implementado | [`docs/features/food-profile.md`](docs/features/food-profile.md) |
+| ⚠️ Motor de Alérgenos (Core Domain) | ✅ Implementado | [`docs/features/allergen-engine.md`](docs/features/allergen-engine.md) |
+| 🛒 Catálogo de Produtos | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
+| 🌐 Frontend (Web App + Landing Page) | ✅ Implementado | [`docs/features/frontend.md`](docs/features/frontend.md) |
+| 🛡️ Administração | 🔜 Futuro | — |
 
 ---
 
@@ -206,21 +101,18 @@ cd backend
 npm test
 ```
 
-```
-Test Suites: 8 passed, 8 total
-Tests:       53 passed, 53 total
-Coverage:    98% statements | 96% branches | 100% functions
-```
+13 suítes de teste (68 casos), cobrindo domínio, casos de uso e o Motor de Alérgenos:
 
-**Suítes:**
 - `domain/Result.spec.ts`
-- `domain/iam/Email.spec.ts`
-- `domain/iam/PasswordHash.spec.ts`
-- `domain/iam/User.spec.ts`
-- `domain/food-profile/SeverityLevel.spec.ts`
-- `domain/food-profile/Restriction.spec.ts`
-- `domain/food-profile/FoodProfile.spec.ts`
+- `domain/iam/Email.spec.ts`, `PasswordHash.spec.ts`, `User.spec.ts`
+- `domain/food-profile/SeverityLevel.spec.ts`, `Restriction.spec.ts`, `FoodProfile.spec.ts`
 - `domain/allergen-engine/AllergenEngine.spec.ts` ← 9 casos críticos de segurança alimentar
+- `domain/catalog/Product.spec.ts`
+- `application/food-profile/UpdateFoodProfileUseCase.spec.ts`
+- `application/allergen-engine/CheckCompatibilityUseCase.spec.ts`
+- `application/catalog/CreateProductUseCase.spec.ts`, `SearchProductsUseCase.spec.ts`
+
+Para relatório de cobertura: `npm test -- --coverage`.
 
 ---
 
@@ -238,14 +130,7 @@ Domain ← Núcleo puro, zero dependências externas
 Infrastructure (PostgreSQL, pg.Pool)
 ```
 
-**Bounded Contexts:**
-| Contexto | Status | Responsabilidade |
-|:---------|:-------|:----------------|
-| **IAM** | ✅ Implementado | Cadastro, autenticação, roles |
-| **Perfil Alimentar** | ✅ Implementado | Restrições e severidades |
-| **Compatibilidade Alimentar** | ✅ Motor implementado | Match perfil ↔ produto |
-| **Catálogo de Produtos** | 🔜 Próximo | Produtos, ingredientes, parceiros |
-| **Administração** | 🔜 Futuro | Moderação, denúncias |
+Status de cada bounded context na tabela de [Funcionalidades](#-funcionalidades), acima.
 
 ### Banco de Dados (PostgreSQL via Docker)
 
@@ -259,6 +144,9 @@ Usuário: celilac_user
 |:-------|:----------|
 | `users` | IAM — id, email, password_hash, role |
 | `food_profiles` | Perfil — user_id (FK), restrictions (JSONB) |
+| `products` | Catálogo — nome, marca, ingredientes, status de análise |
+
+Detalhes de schema e estratégia de persistência em [`docs/DATABASE.md`](docs/DATABASE.md).
 
 ---
 
@@ -267,11 +155,13 @@ Usuário: celilac_user
 | Arquivo | Conteúdo |
 |:--------|:---------|
 | [`docs/PRD.md`](docs/PRD.md) | Requisitos do produto |
+| [`docs/features/`](docs/features/) | Status, endpoints e regras por bounded context |
 | [`docs/DOMAIN_MODEL.md`](docs/DOMAIN_MODEL.md) | Bounded contexts e regras |
 | [`docs/DATABASE.md`](docs/DATABASE.md) | Schema e estratégia de persistência |
 | [`docs/FRONTEND_STRATEGY.md`](docs/FRONTEND_STRATEGY.md) | Regras de interface |
 | [`docs/ALLERGEN_ENGINE.md`](docs/ALLERGEN_ENGINE.md) | Especificação do motor ⚠️ |
-| [`docs/api-contracts/OPENAPI.md`](docs/api-contracts/OPENAPI.md) | Contratos de API |
+| [`docs/API_CONTRACTS.md`](docs/API_CONTRACTS.md) | Contratos de API completos |
+| [`CHANGELOG.md`](CHANGELOG.md) | Histórico de entregas |
 | [`AGENTS.md`](AGENTS.md) | Regras de governança para IAs |
 | [`harness/guardrails.md`](harness/guardrails.md) | Restrições de segurança |
 
@@ -284,14 +174,3 @@ Usuário: celilac_user
 - **JWT em memória** no frontend — não armazenado em `localStorage`
 - **Seeds apenas** em ambiente local — nunca dados reais de usuários
 - **Agente de IA** segue `AGENTS.md` + `harness/guardrails.md` a cada tarefa
-
----
-
-## 🗓️ Histórico de Entregas
-
-| Data | Feature | Descrição |
-|:-----|:--------|:----------|
-| 2026-06-29 | FEAT-001 | Módulo IAM completo (22 testes) |
-| 2026-06-30 | FEAT-002 | Perfil Alimentar (FoodProfile + Restriction) |
-| 2026-06-30 | FEAT-003 | Motor de Alérgenos com 9 casos críticos |
-| 2026-07-01 | FEAT-004 | Frontend Web App + Landing Page (Next.js 14) |
