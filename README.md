@@ -51,7 +51,7 @@ celillac/
 
 ### 1. Banco de Dados
 ```bash
-docker-compose -f infra/docker/docker-compose.yml up -d
+docker-compose up -d
 ```
 
 ### 2. Backend (porta 3000)
