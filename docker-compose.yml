@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
     container_name: celilac-postgres
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: celilac_user
       POSTGRES_PASSWORD: celilac_password
@@ -13,6 +11,45 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./harness/scripts/init_db.sql:/docker-entrypoint-initdb.d/01_init_db.sql:ro
+      - ./harness/scripts/migrations/001_create_products_table.sql:/docker-entrypoint-initdb.d/02_create_products_table.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U celilac_user -d celilac_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: celilac-backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: db
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./backend/src:/app/src
+      - /app/node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web-app:
+    build: ./frontend/web-app
+    container_name: celilac-web-app
+    restart: unless-stopped
+    env_file:
+      - ./frontend/web-app/.env.local
+    ports:
+      - "3003:3001"
+    volumes:
+      - ./frontend/web-app/src:/app/src
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
