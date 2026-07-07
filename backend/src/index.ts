@@ -8,10 +8,13 @@ import { compatibilityRouter } from './interfaces/http/routes/compatibility.rout
 import { catalogRouter } from './interfaces/http/routes/catalog.routes';
 import { adminRouter } from './interfaces/http/routes/admin.routes';
 import { reviewsRoutes } from './interfaces/http/routes/reviews.routes';
+import { corsMiddleware, securityHeadersMiddleware } from './interfaces/http/middlewares/SecurityMiddleware';
 
 const app  = express();
 const port = process.env.PORT ?? 3000;
 
+app.use(corsMiddleware);
+app.use(securityHeadersMiddleware);
 app.use(express.json());
 
 // --- Rotas ---
@@ -25,6 +28,12 @@ app.use('/compatibility', compatibilityRouter);
 app.use('/catalog',      catalogRouter);
 app.use('/admin',        adminRouter);
 app.use('/reviews',      reviewsRoutes);
+
+// --- Middleware Global de Tratamento de Erros ---
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('[Error Handler]:', err);
+  res.status(500).json({ error: 'Ocorreu um erro interno no servidor.' });
+});
 
 // --- Boot ---
 async function bootstrap(): Promise<void> {

@@ -34,6 +34,10 @@ export abstract class BaseController {
     return res.status(401).json({ error: message });
   }
 
+  protected forbidden(res: Response, message: string): Response {
+    return res.status(403).json({ error: message });
+  }
+
   protected conflict(res: Response, message: string): Response {
     return res.status(409).json({ error: message });
   }

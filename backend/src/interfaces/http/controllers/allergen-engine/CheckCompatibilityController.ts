@@ -17,6 +17,11 @@ export class CheckCompatibilityController extends BaseController {
       return;
     }
 
+    if (req.user?.id !== userId && req.user?.role !== 'ADMIN') {
+      this.forbidden(res, 'Você não tem permissão para verificar compatibilidade para outro usuário.');
+      return;
+    }
+
     const result = await this.checkCompatibilityUseCase.execute({ userId, productId });
 
     if (result.isFailure) {

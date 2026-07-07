@@ -16,6 +16,10 @@ export class ReviewController {
         return res.status(400).json({ error: 'userId, productId e rating (1-5) são obrigatórios.' });
       }
 
+      if (req.user?.id !== userId && req.user?.role !== 'ADMIN') {
+        return res.status(403).json({ error: 'Você não tem permissão para enviar avaliação em nome de outro usuário.' });
+      }
+
       const result = await this.submitReviewUseCase.execute({
         userId,
         productId,

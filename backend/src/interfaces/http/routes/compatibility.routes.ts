@@ -7,6 +7,8 @@ import { PgProductRepository } from '../../../infrastructure/database/product/Pg
 import { CheckCompatibilityUseCase } from '../../../application/allergen-engine/CheckCompatibilityUseCase';
 import { CheckCompatibilityController } from '../controllers/allergen-engine/CheckCompatibilityController';
 
+import { authMiddleware } from '../middlewares/AuthMiddleware';
+
 const router = Router();
 
 // --- Composition Root ---
@@ -21,6 +23,6 @@ const checkCompatibilityUseCase = new CheckCompatibilityUseCase(
 const checkCompatibilityController = new CheckCompatibilityController(checkCompatibilityUseCase);
 
 // --- Rotas ---
-router.post('/check', (req, res) => checkCompatibilityController.execute(req, res));
+router.post('/check', authMiddleware, (req, res) => checkCompatibilityController.execute(req, res));
 
 export { router as compatibilityRouter };

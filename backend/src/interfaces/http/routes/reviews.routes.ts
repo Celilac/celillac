@@ -6,6 +6,8 @@ import { PgReviewRepository } from '../../../infrastructure/database/reviews/PgR
 import { pool } from '../../../infrastructure/database/connection';
 import { PgProductRepository } from '../../../infrastructure/database/product/PgProductRepository';
 
+import { authMiddleware } from '../middlewares/AuthMiddleware';
+
 export const reviewsRoutes = Router();
 
 // Dependências
@@ -18,5 +20,5 @@ const getProductReviewsUseCase = new GetProductReviewsUseCase(reviewRepo);
 const reviewController = new ReviewController(submitReviewUseCase, getProductReviewsUseCase);
 
 // Rotas
-reviewsRoutes.post('/', (req, res) => reviewController.submit(req, res));
+reviewsRoutes.post('/', authMiddleware, (req, res) => reviewController.submit(req, res));
 reviewsRoutes.get('/product/:productId', (req, res) => reviewController.getProductReviews(req, res));

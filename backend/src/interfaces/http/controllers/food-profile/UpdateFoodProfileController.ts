@@ -17,6 +17,10 @@ export class UpdateFoodProfileController extends BaseController {
       this.badRequest(res, 'O parâmetro userId é obrigatório na URL.');
       return;
     }
+    if (req.user?.id !== userId && req.user?.role !== 'ADMIN') {
+      this.forbidden(res, 'Você não tem permissão para atualizar o perfil deste usuário.');
+      return;
+    }
     if (!Array.isArray(restrictions) || restrictions.length === 0) {
       this.badRequest(res, 'O campo restrictions deve ser um array não vazio.');
       return;

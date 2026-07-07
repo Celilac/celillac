@@ -6,7 +6,7 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-React%20Native%20%2B%20Expo-9cf)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-20%20suites%20%7C%2089%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-22%20suites%20%7C%2099%20passing-brightgreen)](#-testes)
 
 ---
 
@@ -120,7 +120,7 @@ cd backend
 npm test
 ```
 
-**20 suítes de teste | 89 casos**, cobrindo domínio, casos de uso e o Motor de Alérgenos:
+**22 suítes de teste | 99 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
@@ -135,6 +135,8 @@ npm test
 | `application/catalog/CreateProductUseCase`, `SearchProductsUseCase` | 100% |
 | `application/reviews/SubmitReviewUseCase`, `GetProductReviewsUseCase` | ~93% |
 | `application/admin/CreateReportUseCase`, `ListReportsUseCase`, `ReviewReportUseCase` | ~94% |
+| `interfaces/http/middlewares/AuthMiddleware` | ~91% |
+| `interfaces/http/middlewares/SecurityMiddleware` | 100% |
 
 Para relatório de cobertura: `npm test -- --coverage`.
 
@@ -212,6 +214,10 @@ O app mobile cobre o fluxo completo do consumidor no campo:
 
 ## 🔒 Segurança & Governança
 
+- **Middleware JWT no Backend:** validação do cabeçalho `Authorization: Bearer <token>` em todas as rotas de domínio privadas (perfil, avaliações, compatibilidade).
+- **Proteção contra IDOR/BOLA:** checagem estrita de identidade em nível de controller. Um usuário comum só pode ler/escrever em dados vinculados ao seu próprio id.
+- **Tratamento de Erro Global:** Express configurado para ocultar logs detalhados e stack traces internos, retornando um status `500` genérico e limpo.
+- **CORS & Headers de Segurança:** CORS seguro para origens controladas e headers OWASP recomendados (`nosniff`, `DENY` clickjacking, etc.).
 - **`.env` nunca commitado** — apenas `.env.example` no repositório
 - **Motor de Alérgenos:** 100% das alterações exigem aprovação humana
 - **JWT mobile:** armazenado em Keychain/Keystore via `expo-secure-store` (não em AsyncStorage)

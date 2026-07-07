@@ -17,6 +17,11 @@ export class GetFoodProfileController extends BaseController {
       return;
     }
 
+    if (req.user?.id !== userId && req.user?.role !== 'ADMIN') {
+      this.forbidden(res, 'Você não tem permissão para acessar o perfil deste usuário.');
+      return;
+    }
+
     const result = await this.getProfileUseCase.execute({ userId });
 
     if (result.isFailure) {
