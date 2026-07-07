@@ -2,9 +2,11 @@
 // frontend/web-app/src/app/page.tsx — Dashboard
 // ⚠️ REGRA: compatibilidade consultada via POST /compatibility/check (Backend)
 //    O riskLevel é RENDERIZADO, nunca calculado aqui.
+import Image from 'next/image';
 import Link from 'next/link';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import type { RiskLevel } from '@/api/compatibility';
 
 // Dados de demonstração — serão substituídos por dados reais do backend
@@ -17,15 +19,28 @@ const DEMO_CHECKS: Array<{ product: string; riskLevel: RiskLevel; date: string }
 
 export default function DashboardPage() {
   const { isAuthenticated, userId } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
       {/* ── Topbar ── */}
       <header className="topbar">
-        <span className="topbar-title" style={{ fontWeight: 800, fontSize: '1.1rem' }}>
-          Celi<span style={{ color: 'var(--color-emerald)' }}>Lac</span>
+        <span className="topbar-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
+          <span className="brand-wordmark">
+            Celi<span>Lac</span>
+          </span>
         </span>
         <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="btn btn-ghost"
+            aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
+            style={{ padding: '0.4rem 0.75rem' }}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
           <Link href="/profile" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
             ⚙️ Perfil
           </Link>
