@@ -171,6 +171,8 @@ Usuário: celilac_user
 | `users` | IAM — id, email, password_hash, role |
 | `food_profiles` | Perfil — user_id (FK), restrictions (JSONB) |
 | `products` | Catálogo — nome, marca, ingredientes, status de análise |
+| `product_reviews` | Avaliações — user_id (FK), product_id (FK), rating, comment |
+| `product_reports` | Denúncias — reporter_id (FK), product_id (FK), reason, details, status |
 
 Detalhes de schema e estratégia de persistência em [`docs/DATABASE.md`](docs/DATABASE.md).
 

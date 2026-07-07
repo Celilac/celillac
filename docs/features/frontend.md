@@ -8,10 +8,11 @@
 
 | Rota | Descrição |
 |:-----|:----------|
-| `/` | Dashboard com verificações recentes |
+| `/` | Landing page / dashboard público e demonstrativo |
+| `/dashboard` | Dashboard do usuário para busca e análise de compatibilidade de produtos |
 | `/auth/register` | Cadastro de usuário |
 | `/auth/login` | Login |
-| `/profile` | Configuração do Perfil Alimentar |
+| `/profile` | Configuração e onboarding do Perfil Alimentar (suporta upsert com botão voltar) |
 
 ### Camada de API
 
@@ -20,7 +21,8 @@ src/api/                   ← ÚNICA camada autorizada a chamar o backend
 ├── client.ts              ← fetch base com regra arquitetural documentada
 ├── iam.ts                 ← POST /iam/register | POST /iam/login
 ├── food-profile.ts        ← POST/GET/PUT /food-profile
-└── compatibility.ts       ← POST /compatibility/check
+├── compatibility.ts       ← POST /compatibility/check
+└── catalog.ts             ← GET /catalog/products (busca de produtos)
 ```
 
 > ⚠️ **Regra Fundamental:** O `AllergenEngine` reside **exclusivamente no backend**. O frontend **nunca** recalcula compatibilidade — sempre consulta `POST /compatibility/check`.
