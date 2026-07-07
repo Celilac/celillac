@@ -90,9 +90,7 @@ export function SearchScreen() {
             <View style={styles.productInfo}>
               <Text style={styles.productName}>{item.name}</Text>
               <Text style={styles.productBrand}>{item.brand}</Text>
-              <Text style={styles.productStatus}>
-                {item.hasGluten ? '⚠️ Contém Glúten' : '✅ Sem Glúten declarado'}
-              </Text>
+              <Text style={styles.productStatus}>Toque para verificar compatibilidade com seu perfil</Text>
             </View>
             <Text style={styles.checkArrow}>Verificar →</Text>
           </TouchableOpacity>

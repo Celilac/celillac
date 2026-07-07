@@ -4,6 +4,68 @@ Este documento serve como **guardrail (harness)** obrigatório para qualquer Age
 
 ---
 
+## ⚙️ Princípio Central: Lógica de Negócio NUNCA no Frontend ou Mobile
+
+Este é o guardrail mais crítico do projeto. Qualquer agente que violar esta regra introduz um risco de segurança alimentar real.
+
+### A Regra
+
+> **A decisão de se um produto é seguro para um usuário pertence exclusivamente ao `AllergenEngine` no backend.**
+
+O frontend e o mobile são **camadas de apresentação**. Elas exibem resultados — nunca os calculam.
+
+### Por que isso é crítico aqui
+
+O CeLiLac detecta **contaminação cruzada** (traços de alérgenos que não aparecem nos ingredientes principais). Esta lógica é complexa, validada por testes unitários e pode mudar. Se for duplicada no frontend:
+- Um bug no frontend pode dizer "SEGURO" para um produto que mataria um celíaco.
+- A mudança na regra precisaria ser propagada para Web, Mobile e futuros clientes.
+- O backend perderia a condição de ser a única fonte da verdade.
+
+### O que o Agente DEVE fazer
+
+| ✅ Permitido (exibição) | ❌ Proibido (cálculo) |
+|:------------------------|:---------------------|
+| Exibir o `riskLevel` retornado pela API | Verificar `hasGluten` para decidir se é seguro |
+| Exibir o campo `reasoning` da API | Analisar `crossContamination` na tela |
+| Colorir o alerta com base no `riskLevel` | Comparar ingredientes com a lista de alérgenos do perfil |
+| Exibir `isCompatible` da API | Calcular qualquer score ou risco localmente |
+
+### Padrão de implementação obrigatório
+
+```
+Usuário escaneia/busca produto
+         │
+         ▼
+Tela busca productId no catálogo  ← Dados brutos apenas para exibição (nome, marca)
+         │
+         ▼
+Tela chama POST /compatibility/check  ← ÚNICA fonte de veredicto de segurança
+         │
+         ▼
+API retorna { riskLevel, reasoning, conflicts }
+         │
+         ▼
+Tela renderiza AlertBanner com o resultado  ← Só exibição, zero interpretação
+```
+
+### Exemplo de violação (PROIBIDO)
+
+```tsx
+// ❌ NUNCA FAÇA ISSO — lógica de domínio no frontend
+const isSafe = !product.hasGluten && !product.crossContamination.includes('glúten');
+```
+
+### Exemplo correto (OBRIGATÓRIO)
+
+```tsx
+// ✅ SEMPRE FAÇA ISSO — delegar ao backend
+const report = await checkCompatibility(user.id, product.id);
+// report.riskLevel é a única fonte da verdade
+```
+
+---
+
+
 ## 1. Frontend Web da Aplicação (App Autenticado)
 Esta é a interface principal de uso do sistema para usuários logados e administradores.
 
