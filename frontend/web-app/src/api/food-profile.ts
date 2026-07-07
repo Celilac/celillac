@@ -25,9 +25,16 @@ export interface FoodProfileResponse {
   restrictions:                RestrictionDTO[];
 }
 
+export interface UpdateProfileRequest {
+  restrictions: RestrictionInput[];
+}
+
 export const foodProfileApi = {
   create: (body: CreateProfileRequest, token: string) =>
     apiClient.post<FoodProfileResponse>('/food-profile', body, token),
+
+  update: (userId: string, body: UpdateProfileRequest, token: string) =>
+    apiClient.put<FoodProfileResponse>(`/food-profile/${userId}`, body, token),
 
   getByUserId: (userId: string, token: string) =>
     apiClient.get<FoodProfileResponse>(`/food-profile/${userId}`, token),

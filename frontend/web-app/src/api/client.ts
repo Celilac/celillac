@@ -36,12 +36,14 @@ async function request<T>(
   path: string,
   options: RequestInit = {},
 ): Promise<T> {
+  const { headers: optionHeaders, ...restOptions } = options;
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     headers: {
       'Content-Type': 'application/json',
-      ...(options.headers ?? {}),
+      ...(optionHeaders ?? {}),
     },
-    ...options,
+    ...restOptions,
   });
 
   if (!response.ok) {
@@ -59,6 +61,13 @@ export const apiClient = {
   post: <T>(path: string, body: unknown, token?: string) =>
     request<T>(path, {
       method: 'POST',
+      body: JSON.stringify(body),
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }),
+
+  put: <T>(path: string, body: unknown, token?: string) =>
+    request<T>(path, {
+      method: 'PUT',
       body: JSON.stringify(body),
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     }),

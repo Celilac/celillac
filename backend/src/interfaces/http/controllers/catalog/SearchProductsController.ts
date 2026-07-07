@@ -10,7 +10,7 @@ export class SearchProductsController extends BaseController {
   }
 
   protected async executeImpl(req: Request, res: Response): Promise<void> {
-    const query = req.query.q as string;
+    const query = (req.query.query ?? req.query.q) as string; // aceita ambos: ?query= e ?q=
     const page = parseInt(req.query.page as string, 10);
     const limit = parseInt(req.query.limit as string, 10);
 
