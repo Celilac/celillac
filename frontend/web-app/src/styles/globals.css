@@ -7,16 +7,18 @@
    TOKENS DE DESIGN
 ═══════════════════════════════════════ */
 :root {
-  /* Paleta — tema escuro (padrão) */
-  --color-bg:          #080C16;
-  --color-surface:     #0F1629;
-  --color-elevated:    #162035;
-  --color-border:      rgba(255,255,255,0.07);
-  --color-border-hover:rgba(255,255,255,0.15);
-
   /* Marca — extraídas do arquivo da logo (public/brand) */
   --color-brand-navy:  #244151;
   --color-brand-gold:  #E1A118;
+
+  /* Paleta — tema escuro (padrão)
+     Escala derivada do navy da marca: bg/surface são tons mais escuros do
+     mesmo matiz, elevated é o navy exato — o card mais em destaque. */
+  --color-bg:          #091115;
+  --color-surface:     #101C23;
+  --color-elevated:    var(--color-brand-navy);
+  --color-border:      rgba(255,255,255,0.07);
+  --color-border-hover:rgba(255,255,255,0.15);
   --color-wordmark-navy: #7C97A6; /* navy clareado p/ legibilidade sobre fundo escuro */
   --color-wordmark-gold: var(--color-brand-gold);
 
@@ -63,9 +65,10 @@
   --shadow-glow: 0 0 30px var(--color-emerald-glow);
 }
 
-/* Paleta — tema claro (ativado via [data-theme="light"] no <html>) */
+/* Paleta — tema claro (ativado via [data-theme="light"] no <html>)
+   --color-bg é o dourado exato da marca — os cards brancos ficam por cima. */
 :root[data-theme='light'] {
-  --color-bg:          #F7F7F5;
+  --color-bg:          var(--color-brand-gold);
   --color-surface:     #FFFFFF;
   --color-elevated:    #F1F0EC;
   --color-border:      rgba(36,65,81,0.10);
