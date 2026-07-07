@@ -221,6 +221,6 @@ O app mobile cobre o fluxo completo do consumidor no campo:
 - **`.env` nunca commitado** — apenas `.env.example` no repositório
 - **Motor de Alérgenos:** 100% das alterações exigem aprovação humana
 - **JWT mobile:** armazenado em Keychain/Keystore via `expo-secure-store` (não em AsyncStorage)
-- **JWT web:** em memória — não armazenado em `localStorage`
+- **JWT web:** em `sessionStorage` e em memória — não armazenado em `localStorage`
 - **Seeds apenas** em ambiente local — nunca dados reais de usuários
 - **Agente de IA** segue `AGENTS.md` + `harness/guardrails.md` a cada tarefa

@@ -16,5 +16,6 @@ Histórico de entregas do projeto. Formato: `Data | Feature | Descrição`.
 | 2026-07-04 | FEAT-008 | Bounded Context de Avaliações (Social Proof) e Pipeline de Automação CI/CD |
 | 2026-07-07 | FEAT-009 | App Mobile completo (React Native + Expo): Auth JWT persistido via expo-secure-store, Scanner EAN, Busca, Perfil Alimentar e Alertas visuais por risco |
 | 2026-07-07 | FEAT-010 | Middleware de Autenticação JWT no Backend (Express), mitigação de IDOR/BOLA (403 Forbidden), tratamento global de erros (500) e cabeçalhos de segurança OWASP/CORS |
+| 2026-07-07 | BUGFIX-011 | Correções e estabilização do Web App (upsert de perfil, correção do HTTP client / headers, persistência de sessão segura via sessionStorage) e correção do parâmetro de busca no backend (`query` vs `q`). |
 
 Ver [README.md](README.md) para o estado atual das funcionalidades e [`docs/`](docs/) para as especificações de cada bounded context.

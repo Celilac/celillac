@@ -1,6 +1,6 @@
 'use client';
 // frontend/web-app/src/app/profile/page.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { foodProfileApi } from '@/api/food-profile';
@@ -32,10 +32,32 @@ export default function ProfilePage() {
   const { token, userId, isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const [rows,    setRows]    = useState<Row[]>([{ allergen: 'GLUTEN', severity: 'FATAL' }]);
-  const [success, setSuccess] = useState(false);
-  const [error,   setError]   = useState('');
-  const [loading, setLoading] = useState(false);
+  const [rows,        setRows]        = useState<Row[]>([{ allergen: 'GLUTEN', severity: 'FATAL' }]);
+  const [hasProfile,  setHasProfile]  = useState(false);
+  const [loadingInit, setLoadingInit] = useState(true);
+  const [success,     setSuccess]     = useState(false);
+  const [error,       setError]       = useState('');
+  const [loading,     setLoading]     = useState(false);
+
+  // Carrega perfil existente ao montar a página
+  useEffect(() => {
+    if (!isAuthenticated || !token || !userId) {
+      setLoadingInit(false);
+      return;
+    }
+    foodProfileApi.getByUserId(userId, token)
+      .then((profile) => {
+        if (profile?.restrictions?.length) {
+          setRows(profile.restrictions.map((r) => ({ allergen: r.allergen, severity: r.severity })));
+        }
+        setHasProfile(true);
+      })
+      .catch(() => {
+        // 404 = sem perfil ainda — estado padrão (create)
+        setHasProfile(false);
+      })
+      .finally(() => setLoadingInit(false));
+  }, [isAuthenticated, token, userId]);
 
   function addRow() {
     setRows((prev) => [...prev, { allergen: 'LACTOSE', severity: 'MEDIUM' }]);
@@ -56,9 +78,15 @@ export default function ProfilePage() {
       return;
     }
     setError('');
+    setSuccess(false);
     setLoading(true);
     try {
-      await foodProfileApi.create({ userId, restrictions: rows }, token);
+      if (hasProfile) {
+        await foodProfileApi.update(userId, { restrictions: rows }, token);
+      } else {
+        await foodProfileApi.create({ userId, restrictions: rows }, token);
+        setHasProfile(true);
+      }
       setSuccess(true);
     } catch (err) {
       setError(err instanceof HttpError ? err.message : 'Erro ao salvar perfil.');
@@ -67,11 +95,32 @@ export default function ProfilePage() {
     }
   }
 
+  if (loadingInit) {
+    return (
+      <div className="auth-container" style={{ alignItems: 'flex-start', paddingTop: '4rem' }}>
+        <div className="auth-card animate-slide" style={{ maxWidth: 540 }}>
+          <p style={{ color: 'var(--color-text-muted)', textAlign: 'center' }}>Carregando perfil…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="auth-container" style={{ alignItems: 'flex-start', paddingTop: '4rem' }}>
       <div className="auth-card animate-slide" style={{ maxWidth: 540 }}>
-        <div className="auth-logo" style={{ textAlign: 'left', marginBottom: '1rem' }}>
-          Celi<span>Lac</span>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+          <div className="auth-logo" style={{ margin: 0 }}>
+            Celi<span>Lac</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="btn btn-ghost"
+            id="profile-back-btn"
+            style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }}
+          >
+            ← Voltar
+          </button>
         </div>
 
         <h1 className="auth-title">Perfil Alimentar</h1>
@@ -80,12 +129,37 @@ export default function ProfilePage() {
           compatibilidade no servidor.
         </p>
 
-        {success && (
-          <div className="alert alert-success" role="status" style={{ marginBottom: '1rem' }}>
-            ✅ Perfil salvo com sucesso! <Link href="/" style={{ color: 'inherit', textDecoration: 'underline' }}>Ver Dashboard →</Link>
+        {hasProfile && !success && (
+          <div
+            role="note"
+            style={{
+              marginBottom: '1rem',
+              background: 'var(--color-elevated)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              padding: '0.75rem 1rem',
+              fontSize: '0.85rem',
+              color: 'var(--color-text-muted)',
+            }}
+          >
+            ✏️ Editando perfil existente — alterações substituirão as restrições atuais.
           </div>
         )}
-        {error && <div className="alert alert-error" role="alert" style={{ marginBottom: '1rem' }}>{error}</div>}
+
+        {success && (
+          <div className="alert alert-success" role="status" style={{ marginBottom: '1rem' }}>
+            ✅ Perfil salvo com sucesso!{' '}
+            <Link href="/" style={{ color: 'inherit', textDecoration: 'underline' }}>
+              Ver Dashboard →
+            </Link>
+          </div>
+        )}
+
+        {error && (
+          <div className="alert alert-error" role="alert" style={{ marginBottom: '1rem' }}>
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSave} id="profile-form">
           <div className="allergen-list" style={{ marginBottom: '1rem' }}>
@@ -144,7 +218,7 @@ export default function ProfilePage() {
             disabled={loading || rows.length === 0}
             style={{ width: '100%', justifyContent: 'center' }}
           >
-            {loading ? 'Salvando…' : '💾 Salvar perfil'}
+            {loading ? 'Salvando…' : hasProfile ? '💾 Atualizar perfil' : '💾 Criar perfil'}
           </button>
         </form>
       </div>
