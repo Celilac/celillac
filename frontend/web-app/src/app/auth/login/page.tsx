@@ -1,6 +1,7 @@
 'use client';
 // frontend/web-app/src/app/auth/login/page.tsx
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { iamApi } from '@/api/iam';
@@ -44,7 +45,9 @@ export default function LoginPage() {
   return (
     <div className="auth-container">
       <div className="auth-card animate-slide">
-        <div className="auth-logo">Celi<span>Lac</span></div>
+        <div className="auth-logo">
+          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={64} height={64} priority />
+        </div>
 
         <h1 className="auth-title">Bem-vindo de volta</h1>
         <p className="auth-subtitle">Entre na sua conta para verificar produtos.</p>

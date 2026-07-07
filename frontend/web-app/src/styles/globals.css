@@ -7,14 +7,19 @@
    TOKENS DE DESIGN
 ═══════════════════════════════════════ */
 :root {
-  /* Paleta */
+  /* Paleta — tema escuro (padrão) */
   --color-bg:          #080C16;
   --color-surface:     #0F1629;
   --color-elevated:    #162035;
   --color-border:      rgba(255,255,255,0.07);
   --color-border-hover:rgba(255,255,255,0.15);
 
-  /* Marca */
+  /* Marca — extraídas do arquivo da logo (public/brand) */
+  --color-brand-navy:  #244151;
+  --color-brand-gold:  #E1A118;
+  --color-wordmark-navy: #7C97A6; /* navy clareado p/ legibilidade sobre fundo escuro */
+  --color-wordmark-gold: var(--color-brand-gold);
+
   --color-emerald:     #10B981;
   --color-emerald-dim: rgba(16,185,129,0.12);
   --color-emerald-glow:rgba(16,185,129,0.35);
@@ -58,6 +63,22 @@
   --shadow-glow: 0 0 30px var(--color-emerald-glow);
 }
 
+/* Paleta — tema claro (ativado via [data-theme="light"] no <html>) */
+:root[data-theme='light'] {
+  --color-bg:          #F7F7F5;
+  --color-surface:     #FFFFFF;
+  --color-elevated:    #F1F0EC;
+  --color-border:      rgba(36,65,81,0.10);
+  --color-border-hover:rgba(36,65,81,0.20);
+
+  --color-wordmark-navy: var(--color-brand-navy);
+  --color-wordmark-gold: #B8790A; /* dourado escurecido p/ contraste sobre fundo claro */
+
+  --color-text:        #1C2B33;
+  --color-text-muted:  #51616B;
+  --color-text-subtle: #7C8B93;
+}
+
 /* ═══════════════════════════════════════
    RESET
 ═══════════════════════════════════════ */
@@ -70,6 +91,7 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 a { color: inherit; text-decoration: none; }
 ul { list-style: none; }
@@ -137,6 +159,8 @@ button { cursor: pointer; font-family: inherit; }
   position: sticky; top: 0; z-index: 10;
 }
 .topbar-title { font-size: 1rem; font-weight: 600; }
+.brand-wordmark { font-weight: 800; font-size: 1.1rem; color: var(--color-wordmark-navy); }
+.brand-wordmark span { color: var(--color-wordmark-gold); }
 
 /* ═══════════════════════════════════════
    COMPONENTES UI
@@ -245,10 +269,9 @@ button { cursor: pointer; font-family: inherit; }
   box-shadow: var(--shadow-md);
 }
 .auth-logo {
-  font-size: 1.5rem; font-weight: 800; text-align: center;
+  display: flex; justify-content: center;
   margin-bottom: var(--space-8);
 }
-.auth-logo span { color: var(--color-emerald); }
 .auth-title { font-size: 1.25rem; font-weight: 700; margin-bottom: var(--space-2); }
 .auth-subtitle { font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: var(--space-6); }
 .auth-form { display: flex; flex-direction: column; gap: var(--space-4); }
