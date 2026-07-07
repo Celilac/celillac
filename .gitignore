@@ -3,3 +3,9 @@ dist/
 /.env
 *.env.local
 coverage/
+
+# IDE / AI Agent Configs
+.claude/
+.gemini/
+.vscode/
+*.tsbuildinfo
