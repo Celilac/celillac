@@ -1,157 +1,193 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, Platform } from 'react-native';
+// src/screens/ScannerScreen.tsx (atualizado)
+// userId hardcoded REMOVIDO — obtido via AuthContext conforme regras do projeto
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useAuth } from '../context/AuthContext';
+import { searchProducts, checkCompatibility, CompatibilityReport } from '../lib/api';
 import { AlertBanner } from '../components/AlertBanner';
 
 export function ScannerScreen() {
+  const { user } = useAuth();
   const [permission, requestPermission] = useCameraPermissions();
-  const [scannedCode, setScannedCode] = useState<string | null>(null);
-  const [report, setReport] = useState<any>(null);
   const [isScanning, setIsScanning] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [scannedCode, setScannedCode] = useState<string | null>(null);
+  const [productName, setProductName] = useState<string | null>(null);
+  const [report, setReport] = useState<CompatibilityReport | null>(null);
 
-  if (!permission) {
-    // Camera permissions are still loading.
-    return <View />;
-  }
+  if (!permission) return <View />;
 
   if (!permission.granted) {
-    // Camera permissions are not granted yet.
     return (
       <View style={styles.container}>
-        <Text style={styles.message}>Precisamos da sua permissão para mostrar a câmera.</Text>
-        <Button onPress={requestPermission} title="Conceder permissão" />
+        <Text style={styles.message}>Precisamos da sua permissão para usar a câmera.</Text>
+        <TouchableOpacity style={styles.button} onPress={requestPermission}>
+          <Text style={styles.buttonText}>Conceder Permissão</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
-  const handleBarcodeScanned = async ({ type, data }: { type: string; data: string }) => {
-    if (!isScanning) return;
+  const handleBarcodeScanned = async ({ data }: { type: string; data: string }) => {
+    if (!isScanning || !user) return;
     setIsScanning(false);
     setScannedCode(data);
+    setIsLoading(true);
+    setReport(null);
+    setProductName(null);
 
     try {
-      // 1. Em um cenário real, buscaríamos o productId pelo EAN no backend.
-      // Aqui vamos buscar no catálogo pelo código de barras como fallback ou apenas pegar o primeiro para o MVP.
-      const catalogRes = await fetch(`http://10.0.2.2:3000/catalog?query=${data}`);
-      
-      let productId = 'mock-id';
-      let productName = 'Produto Desconhecido';
-      
-      if (catalogRes.ok) {
-        const products = await catalogRes.json();
-        if (products.length > 0) {
-          productId = products[0].id;
-          productName = products[0].name;
-        }
+      // 1. Busca produto pelo EAN no catálogo
+      const catalog = await searchProducts(data);
+      const product = catalog.data[0];
+
+      if (!product) {
+        setProductName('Produto desconhecido');
+        setReport({
+          isCompatible: false,
+          riskLevel: 'BLOCKED',
+          reasoning: 'Este produto não está no catálogo CeLiLac. Não é possível verificar a segurança.',
+          conflicts: [],
+        });
+        return;
       }
 
-      // 2. Checar compatibilidade
-      const checkRes = await fetch('http://10.0.2.2:3000/compatibility/check', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: 'aed052fa-b410-440b-a1f4-2a73268bae49', // Hardcoded temporário
-          productId: productId,
-        })
-      });
+      setProductName(product.name);
 
-      if (!checkRes.ok) throw new Error('Falha na API');
-      const compatibility = await checkRes.json();
-
+      // 2. Verifica compatibilidade com o perfil do usuário (NUNCA calcular localmente)
+      const compatibility = await checkCompatibility(user.id, product.id);
+      setReport(compatibility);
+    } catch (err: any) {
+      Alert.alert('Atenção', 'Não foi possível verificar o produto. Verifique sua conexão.');
       setReport({
-        status: compatibility.riskLevel,
-        message: compatibility.reasoning || productName,
+        isCompatible: false,
+        riskLevel: 'WARNING',
+        reasoning: 'Falha de comunicação com o servidor. Não consuma sem verificação manual.',
+        conflicts: [],
       });
-
-    } catch (err) {
-      setReport({
-        status: 'WARNING',
-        message: 'Falha ao verificar. Tente novamente.',
-      });
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const reset = () => {
+    setScannedCode(null);
+    setReport(null);
+    setProductName(null);
+    setIsScanning(true);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>CeLiLac Scanner</Text>
-      
+      <Text style={styles.title}>🌾 CeLiLac Scanner</Text>
+
       <View style={styles.cameraContainer}>
         {isScanning ? (
-          <CameraView 
-            style={StyleSheet.absoluteFill} 
+          <CameraView
+            style={StyleSheet.absoluteFill}
             facing="back"
             onBarcodeScanned={handleBarcodeScanned}
-            barcodeScannerSettings={{
-              barcodeTypes: ["ean13", "ean8", "qr"],
-            }}
+            barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'qr'] }}
           />
         ) : (
           <View style={styles.pausedCamera}>
-            <Text style={styles.pausedText}>Câmera Pausada</Text>
-            <Button title="Ler outro produto" onPress={() => {
-              setScannedCode(null);
-              setReport(null);
-              setIsScanning(true);
-            }} />
+            <Text style={styles.pausedText}>📷 Câmera Pausada</Text>
+          </View>
+        )}
+        {/* Guia visual de mira */}
+        {isScanning && (
+          <View style={styles.scanOverlay}>
+            <View style={styles.scanFrame} />
+            <Text style={styles.scanHint}>Aponte para o código de barras</Text>
           </View>
         )}
       </View>
 
       <View style={styles.resultContainer}>
-        {scannedCode && <Text style={styles.scannedText}>EAN Lido: {scannedCode}</Text>}
-        {report && <AlertBanner status={report.status} message={report.message} />}
+        {isLoading && (
+          <View style={styles.loadingBox}>
+            <ActivityIndicator color="#3b82f6" size="large" />
+            <Text style={styles.loadingText}>Verificando segurança...</Text>
+          </View>
+        )}
+
+        {scannedCode && !isLoading && (
+          <Text style={styles.scannedText}>EAN: {scannedCode}</Text>
+        )}
+
+        {productName && !isLoading && (
+          <Text style={styles.productName}>{productName}</Text>
+        )}
+
+        {report && !isLoading && (
+          <AlertBanner
+            status={report.riskLevel}
+            message={report.isCompatible ? 'Compatível com seu perfil!' : 'Incompatível com seu perfil'}
+            reasoning={report.reasoning}
+          />
+        )}
+
+        {!isScanning && !isLoading && (
+          <TouchableOpacity style={styles.button} onPress={reset}>
+            <Text style={styles.buttonText}>📷 Escanear novo produto</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1a1a2e',
-    padding: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  message: {
-    textAlign: 'center',
-    paddingBottom: 10,
-    color: '#fff'
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 30,
-  },
+  container: { flex: 1, backgroundColor: '#0f172a', padding: 20, alignItems: 'center' },
+  title: { fontSize: 22, fontWeight: 'bold', color: '#f1f5f9', marginBottom: 20, marginTop: 10 },
+  message: { color: '#f1f5f9', textAlign: 'center', marginBottom: 20, fontSize: 16 },
   cameraContainer: {
     width: '100%',
-    height: 400,
-    backgroundColor: '#16213e',
-    borderRadius: 16,
+    height: 320,
+    backgroundColor: '#0f172a',
+    borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: '#3b82f6',
-    marginBottom: 30,
+    marginBottom: 24,
+    position: 'relative',
   },
-  pausedCamera: {
-    flex: 1,
+  pausedCamera: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1e293b' },
+  pausedText: { color: '#64748b', fontSize: 16 },
+  scanOverlay: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000',
   },
-  pausedText: {
-    color: '#fff',
-    marginBottom: 20,
+  scanFrame: {
+    width: 220,
+    height: 120,
+    borderWidth: 2,
+    borderColor: 'rgba(59, 130, 246, 0.8)',
+    borderRadius: 8,
+    backgroundColor: 'transparent',
   },
-  resultContainer: {
-    width: '100%',
-    alignItems: 'center',
-    minHeight: 120,
+  scanHint: {
+    color: 'rgba(241, 245, 249, 0.8)',
+    fontSize: 12,
+    marginTop: 12,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  scannedText: {
-    color: '#94a3b8',
-    marginBottom: 10,
-    fontWeight: 'bold'
-  }
+  resultContainer: { width: '100%', alignItems: 'center' },
+  loadingBox: { alignItems: 'center', marginVertical: 16, gap: 12 },
+  loadingText: { color: '#64748b', fontSize: 14 },
+  scannedText: { color: '#475569', marginBottom: 4, fontSize: 12 },
+  productName: { color: '#f1f5f9', fontWeight: 'bold', fontSize: 18, marginBottom: 8 },
+  button: {
+    backgroundColor: '#3b82f6',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    marginTop: 16,
+  },
+  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
 });

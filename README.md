@@ -5,8 +5,8 @@
 
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
-[![Frontend](https://img.shields.io/badge/Frontend-Next.js%2014-black)](#)
-[![Tests](https://img.shields.io/badge/Tests-13%20suites%20%7C%2068%20passing-brightgreen)](#-testes)
+[![Mobile](https://img.shields.io/badge/Mobile-React%20Native%20%2B%20Expo-9cf)](#-mobile)
+[![Tests](https://img.shields.io/badge/Tests-20%20suites%20%7C%2089%20passing-brightgreen)](#-testes)
 
 ---
 
@@ -35,7 +35,12 @@ celillac/
 │   └── tests/unit/          # 13 suítes | 68 testes
 ├── frontend/
 │   ├── web-app/             # Aplicação principal (Next.js 14, porta 3001)
-│   └── landing-page/        # Landing page estática (Next.js 14, porta 3002)
+│   ├── landing-page/        # Landing page estática (Next.js 14, porta 3002)
+│   └── mobile-app/          # App React Native + Expo (Android/iOS)
+│       ├── src/lib/         # api.ts (HTTP) + auth.ts (decode JWT)
+│       ├── src/context/     # AuthContext (estado global + SecureStore)
+│       ├── src/screens/     # Login, Cadastro, Onboarding, Perfil, Busca, Scanner
+│       └── src/components/  # AlertBanner, RestrictionChip, LoadingSpinner
 ├── docs/                    # Documentação de arquitetura e contratos
 ├── harness/                 # Regras de governança da IA
 └── infra/docker/            # docker-compose.yml (PostgreSQL)
@@ -77,6 +82,18 @@ npm install
 npm run dev
 ```
 
+### 5. App Mobile (Android/iOS via Expo)
+```bash
+cd frontend/mobile-app
+npm install
+npm run android     # Emulador Android (requer Android Studio)
+npm run ios         # Simulador iOS (requer macOS + Xcode)
+npm start           # Expo Go (scan QR code no celular)
+```
+
+> **Android Emulator:** A URL da API usa `http://10.0.2.2:3000` (localhost do emulador Android).  
+> **Dispositivo físico:** Altere `BASE_URL` em `src/lib/api.ts` para o IP da sua máquina.
+
 ---
 
 ## ✅ Funcionalidades
@@ -92,6 +109,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 🌐 Frontend (Web App + Landing Page) | ✅ Implementado | [`docs/features/frontend.md`](docs/features/frontend.md) |
 | 🛡️ Administração | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
 | ⭐ Avaliações e Confiança | ✅ Implementado | [`docs/features/reviews.md`](docs/features/reviews.md) |
+| 📱 App Mobile | ✅ Implementado | [`frontend/mobile-app/`](frontend/mobile-app/) |
 
 ---
 
@@ -102,16 +120,21 @@ cd backend
 npm test
 ```
 
-13 suítes de teste (68 casos), cobrindo domínio, casos de uso e o Motor de Alérgenos:
+**20 suítes de teste | 89 casos**, cobrindo domínio, casos de uso e o Motor de Alérgenos:
 
-- `domain/Result.spec.ts`
-- `domain/iam/Email.spec.ts`, `PasswordHash.spec.ts`, `User.spec.ts`
-- `domain/food-profile/SeverityLevel.spec.ts`, `Restriction.spec.ts`, `FoodProfile.spec.ts`
-- `domain/allergen-engine/AllergenEngine.spec.ts` ← 9 casos críticos de segurança alimentar
-- `domain/catalog/Product.spec.ts`
-- `application/food-profile/UpdateFoodProfileUseCase.spec.ts`
-- `application/allergen-engine/CheckCompatibilityUseCase.spec.ts`
-- `application/catalog/CreateProductUseCase.spec.ts`, `SearchProductsUseCase.spec.ts`
+| Suíte | Cobertura |
+|:------|:----------|
+| `domain/Result.spec.ts` | 100% |
+| `domain/iam/Email`, `PasswordHash`, `User` | 100% |
+| `domain/food-profile/SeverityLevel`, `Restriction`, `FoodProfile` | 100% |
+| `domain/allergen-engine/AllergenEngine` ← 9 casos críticos | ~94% |
+| `domain/catalog/Product` | 100% |
+| `domain/reviews/Review` | ~82% |
+| `application/food-profile/UpdateFoodProfileUseCase` | ~95% |
+| `application/allergen-engine/CheckCompatibilityUseCase` | 100% |
+| `application/catalog/CreateProductUseCase`, `SearchProductsUseCase` | 100% |
+| `application/reviews/SubmitReviewUseCase`, `GetProductReviewsUseCase` | ~93% |
+| `application/admin/CreateReportUseCase`, `ListReportsUseCase`, `ReviewReportUseCase` | ~94% |
 
 Para relatório de cobertura: `npm test -- --coverage`.
 
@@ -168,10 +191,30 @@ Detalhes de schema e estratégia de persistência em [`docs/DATABASE.md`](docs/D
 
 ---
 
+## 📱 Mobile
+
+O app mobile cobre o fluxo completo do consumidor no campo:
+
+| Tela | Descrição |
+|:-----|:----------|
+| **Login / Cadastro** | Autenticação via `POST /iam/login` e `POST /iam/register` |
+| **Onboarding de Perfil** | Seleção de alérgenos e severidade (`POST /food-profile`) |
+| **Scanner** | Câmera EAN-13/EAN-8 → busca no catálogo → compatibilidade |
+| **Busca** | Busca por nome/marca + verificação instantânea |
+| **Perfil** | Restrições ativas, aviso de revalidação e logout |
+
+**Segurança Mobile:**
+- Token JWT armazenado em **Keychain (iOS) / Keystore (Android)** via `expo-secure-store`
+- Compatibilidade calculada **exclusivamente no backend** — nunca no dispositivo
+- Alertas visuais: ✅ SAFE · 🟡 WARNING · ⚠️ DANGER · ⛔ BLOCKED
+
+---
+
 ## 🔒 Segurança & Governança
 
 - **`.env` nunca commitado** — apenas `.env.example` no repositório
 - **Motor de Alérgenos:** 100% das alterações exigem aprovação humana
-- **JWT em memória** no frontend — não armazenado em `localStorage`
+- **JWT mobile:** armazenado em Keychain/Keystore via `expo-secure-store` (não em AsyncStorage)
+- **JWT web:** em memória — não armazenado em `localStorage`
 - **Seeds apenas** em ambiente local — nunca dados reais de usuários
 - **Agente de IA** segue `AGENTS.md` + `harness/guardrails.md` a cada tarefa
