@@ -46,6 +46,7 @@ services:
       - "3003:3001"
     volumes:
       - ./frontend/web-app/src:/app/src
+      - ./frontend/web-app/public:/app/public
       - /app/node_modules
       - /app/.next
     depends_on:

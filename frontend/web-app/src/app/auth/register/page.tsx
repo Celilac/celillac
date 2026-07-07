@@ -1,6 +1,7 @@
 'use client';
 // frontend/web-app/src/app/auth/register/page.tsx
 import { useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { iamApi } from '@/api/iam';
@@ -37,7 +38,9 @@ export default function RegisterPage() {
   return (
     <div className="auth-container">
       <div className="auth-card animate-slide">
-        <div className="auth-logo">Celi<span>Lac</span></div>
+        <div className="auth-logo">
+          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={64} height={64} priority />
+        </div>
 
         <h1 className="auth-title">Criar conta</h1>
         <p className="auth-subtitle">Configure seu perfil alimentar e coma com segurança.</p>
