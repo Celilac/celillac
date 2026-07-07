@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   pausedCamera: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1e293b' },
   pausedText: { color: '#64748b', fontSize: 16 },
   scanOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: 'center',
     alignItems: 'center',
   },

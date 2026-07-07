@@ -2,7 +2,6 @@
 // Layout raiz da aplicação.
 // Injeta o AuthProvider e implementa a guarda de rota.
 import React from 'react';
-import { DarkTheme, ThemeProvider } from '@react-navigation/native';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { useAuth, AuthProvider } from '../context/AuthContext';
@@ -77,11 +76,9 @@ function AppNavigator() {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider value={DarkTheme}>
-      <AuthProvider>
-        <AppNavigator />
-      </AuthProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <AppNavigator />
+    </AuthProvider>
   );
 }
 
