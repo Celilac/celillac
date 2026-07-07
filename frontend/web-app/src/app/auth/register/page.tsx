@@ -36,74 +36,93 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="auth-container">
-      <div className="auth-card animate-slide">
-        <div className="auth-logo">
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={64} height={64} priority />
+    <div className="auth-shell">
+      <div className="auth-split-card">
+        <aside className="auth-brand-panel">
+          <Image
+            src="/brand/logo_with_transparent_background.png"
+            alt="CeliLac"
+            width={180}
+            height={180}
+            priority
+            className="auth-brand-panel-logo"
+          />
+          <p className="auth-brand-panel-wordmark">
+            Celi<span>Lac</span>
+          </p>
+          <p className="auth-brand-panel-tagline">Vivendo bem a vida</p>
+        </aside>
+
+        <div className="auth-form-panel">
+          <div className="auth-card animate-slide">
+            <div className="auth-logo">
+              <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={64} height={64} priority />
+            </div>
+
+            <h1 className="auth-title">Criar conta</h1>
+            <p className="auth-subtitle">Configure seu perfil alimentar e coma com segurança.</p>
+
+            {error && <div className="alert alert-error" role="alert">{error}</div>}
+
+            <form className="auth-form" onSubmit={handleSubmit} id="register-form">
+              <div className="field">
+                <label className="field-label" htmlFor="register-email">E-mail</label>
+                <input
+                  id="register-email"
+                  type="email"
+                  className="field-input"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="field">
+                <label className="field-label" htmlFor="register-password">Senha</label>
+                <input
+                  id="register-password"
+                  type="password"
+                  className="field-input"
+                  placeholder="Mínimo 8 caracteres"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+              </div>
+
+              <div className="field">
+                <label className="field-label" htmlFor="register-role">Tipo de conta</label>
+                <select
+                  id="register-role"
+                  className="field-input field-select"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as typeof role)}
+                >
+                  <option value="CELIACO">🛡️ Celíaco / Pessoa com restrição</option>
+                  <option value="PARCEIRO">🏪 Parceiro (Restaurante / Loja)</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="btn btn-em"
+                id="register-submit"
+                disabled={loading}
+                style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
+              >
+                {loading ? 'Criando conta…' : '✨ Criar minha conta'}
+              </button>
+            </form>
+
+            <p className="auth-footer-link">
+              Já tem conta? <Link href="/auth/login">Entrar</Link>
+            </p>
+          </div>
         </div>
-
-        <h1 className="auth-title">Criar conta</h1>
-        <p className="auth-subtitle">Configure seu perfil alimentar e coma com segurança.</p>
-
-        {error && <div className="alert alert-error" role="alert">{error}</div>}
-
-        <form className="auth-form" onSubmit={handleSubmit} id="register-form">
-          <div className="field">
-            <label className="field-label" htmlFor="register-email">E-mail</label>
-            <input
-              id="register-email"
-              type="email"
-              className="field-input"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
-
-          <div className="field">
-            <label className="field-label" htmlFor="register-password">Senha</label>
-            <input
-              id="register-password"
-              type="password"
-              className="field-input"
-              placeholder="Mínimo 8 caracteres"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-            />
-          </div>
-
-          <div className="field">
-            <label className="field-label" htmlFor="register-role">Tipo de conta</label>
-            <select
-              id="register-role"
-              className="field-input field-select"
-              value={role}
-              onChange={(e) => setRole(e.target.value as typeof role)}
-            >
-              <option value="CELIACO">🛡️ Celíaco / Pessoa com restrição</option>
-              <option value="PARCEIRO">🏪 Parceiro (Restaurante / Loja)</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="btn btn-em"
-            id="register-submit"
-            disabled={loading}
-            style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
-          >
-            {loading ? 'Criando conta…' : '✨ Criar minha conta'}
-          </button>
-        </form>
-
-        <p className="auth-footer-link">
-          Já tem conta? <Link href="/auth/login">Entrar</Link>
-        </p>
       </div>
     </div>
   );
