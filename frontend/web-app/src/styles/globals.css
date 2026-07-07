@@ -66,9 +66,10 @@
 }
 
 /* Paleta — tema claro (ativado via [data-theme="light"] no <html>)
-   --color-bg é o dourado exato da marca — os cards brancos ficam por cima. */
+   --color-bg é um recorte bem claro do dourado da marca (mesmo matiz,
+   luminosidade alta) — os cards brancos ficam por cima. */
 :root[data-theme='light'] {
-  --color-bg:          var(--color-brand-gold);
+  --color-bg:          #FCF4E3;
   --color-surface:     #FFFFFF;
   --color-elevated:    #F1F0EC;
   --color-border:      rgba(36,65,81,0.10);
