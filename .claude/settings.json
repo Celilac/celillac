@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(lsof -nP -iTCP:5432 -sTCP:LISTEN)",
+      "Bash(lsof -nP -iTCP:3000 -sTCP:LISTEN)",
+      "Bash(lsof -nP -iTCP:3001 -sTCP:LISTEN)",
+      "Bash(lsof -nP -iTCP:3002 -sTCP:LISTEN)",
+      "Bash(pg_isready -h localhost -p 5432)",
+      "Bash(echo \"exit code: $?\")",
+      "Bash(chmod +x node_modules/.bin/*)",
+      "Bash(npm install *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3002/)",
+      "Bash(curl -s http://localhost:3002/)",
+      "Bash(curl -s http://localhost:3002/health)",
+      "Bash(git -C /Users/evertoncoimbradearaujo/Documents/GitHub/celillac status --short)",
+      "Bash(git mv *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3003/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3003/auth/login)",
+      "Bash(curl -s -X POST http://localhost:3002/iam/register -H \"Content-Type: application/json\" -d '{\"email\":\"teste.docker@celilac.com.br\",\"password\":\"SenhaForte123!\"}')",
+      "Bash(curl -s -X POST http://localhost:3002/iam/register -H \"Content-Type: application/json\" -d '{\"email\":\"teste.docker@celilac.com.br\",\"password\":\"SenhaForte123!\",\"role\":\"USER\"}')",
+      "Bash(curl -s -X POST http://localhost:3002/iam/register -H \"Content-Type: application/json\" -d '{\"email\":\"teste.docker@celilac.com.br\",\"password\":\"SenhaForte123!\",\"role\":\"CELIACO\"}')",
+      "Bash(find /private/tmp/claude-501 -newer /tmp -iname \"*.png\" -mmin -30 2>/dev/null; echo \"---\"; find /tmp -iname \"*.png\" -mmin -30 2>/dev/null; echo \"---downloads---\"; find /Users/evertoncoimbradearaujo/Downloads -iname \"*.png\" -mmin -30 2>/dev/null; echo \"---vscode tmp---\"; find /var/folders -iname \"*.png\" -mmin -15 2>/dev/null | head -20)",
+      "Read(//private/var/folders/**)",
+      "Bash(grep -viE \"\\\\.\\(log|sock|lock\\)$\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:3003/brand/logo_with_transparent_background.png)",
+      "Bash(python3 -c \"import PIL; print\\('PIL ok'\\)\")",
+      "Bash(python3 -c \"import PIL; print\\('PIL ok', PIL.__version__\\)\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:3003/)",
+      "Bash(echo \"---exit:$?---\")",
+      "Bash(curl -s http://localhost:3001/auth/login -o /tmp/login.html -w \"%{http_code}\\\\n\")",
+      "Bash(which chromium *)",
+      "Read(//Applications/**)",
+      "Bash(pkill -f \"next dev -p 3055\")"
+    ]
+  }
+}

@@ -30,6 +30,7 @@ export default function DashboardPage() {
           <span className="brand-wordmark">
             Celi<span>Lac</span>
           </span>
+          <span className="brand-tagline">Vivendo bem a vida</span>
         </span>
         <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <button
