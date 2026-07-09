@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { CustomSnackbarProvider } from '@/components/toast/CustomSnackbarProvider';
 import '@/styles/globals.css';
 
 export const metadata: Metadata = {
@@ -30,9 +31,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <CustomSnackbarProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </CustomSnackbarProvider>
         </ThemeProvider>
       </body>
     </html>

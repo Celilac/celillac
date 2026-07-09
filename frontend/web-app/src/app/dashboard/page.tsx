@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { catalogApi } from '@/api/catalog';
 import { compatibilityApi, CompatibilityResponse } from '@/api/compatibility';
+import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import styles from './dashboard.module.css';
 
@@ -21,11 +22,11 @@ interface ReportWithName extends CompatibilityResponse {
 export default function DashboardPage() {
   const { token, userId, isAuthenticated } = useAuth();
   const router = useRouter();
+  const toast = useToast();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [report,      setReport]      = useState<ReportWithName | null>(null);
   const [loading,     setLoading]     = useState(false);
-  const [error,       setError]       = useState<string | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +38,6 @@ export default function DashboardPage() {
     }
 
     setLoading(true);
-    setError(null);
     setReport(null);
 
     try {
@@ -46,7 +46,8 @@ export default function DashboardPage() {
       const products = result.data;
 
       if (!products || products.length === 0) {
-        throw new Error('Nenhum produto encontrado com este nome.');
+        toast.warning('Nenhum produto encontrado com este nome.', 'Aviso');
+        return;
       }
 
       const product = products[0];
@@ -59,7 +60,8 @@ export default function DashboardPage() {
 
       setReport({ ...compatibility, productName: product.name });
     } catch (err) {
-      setError(err instanceof HttpError ? err.message : (err as Error).message ?? 'Erro desconhecido.');
+      const message = err instanceof HttpError ? err.message : (err as Error).message ?? 'Erro desconhecido.';
+      toast.error(message, 'Erro ao analisar produto');
     } finally {
       setLoading(false);
     }
@@ -124,15 +126,7 @@ export default function DashboardPage() {
             </p>
           )}
 
-          {error && (
-            <div className={styles.reportArea}>
-              <div className={styles.statusBlocked} style={{ borderLeftColor: '#f59e0b', color: '#f59e0b' }}>
-                <p><strong>Aviso:</strong> {error}</p>
-              </div>
-            </div>
-          )}
-
-          {report && !error && (
+          {report && (
             <div className={styles.reportArea}>
               <h3 style={{ marginBottom: '1rem', color: '#fff' }}>Produto: {report.productName}</h3>
               <div className={report.riskLevel === 'SAFE' ? styles.statusSafe : styles.statusBlocked}>

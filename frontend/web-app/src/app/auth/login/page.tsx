@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { iamApi } from '@/api/iam';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 
 // Decodifica o payload do JWT (sem verificar assinatura — só para extrair userId)
@@ -22,23 +23,23 @@ export default function LoginPage() {
   const router  = useRouter();
   const { login } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const toast   = useToast();
 
   const [email,   setEmail]   = useState('');
   const [password, setPassword] = useState('');
-  const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
     setLoading(true);
     try {
       const session = await iamApi.login({ email, password });
       const payload = decodeJwtPayload(session.token);
       login(session.token, payload.sub ?? '');
+      toast.success('Login realizado com sucesso!');
       router.push('/');
     } catch (err) {
-      setError(err instanceof HttpError ? err.message : 'Erro ao entrar.');
+      toast.error(err instanceof HttpError ? err.message : 'Erro ao entrar.', 'Erro ao entrar');
     } finally {
       setLoading(false);
     }
@@ -95,8 +96,6 @@ export default function LoginPage() {
 
               <h1 className="auth-title">Acesse sua conta</h1>
               <p className="auth-subtitle">Entre para continuar sua jornada com segurança alimentar.</p>
-
-              {error && <div className="alert alert-error" role="alert">{error}</div>}
 
               <form className="auth-form" onSubmit={handleSubmit} id="login-form">
                 <div className="field">

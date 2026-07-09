@@ -43,6 +43,11 @@
   --color-blocked-bg:  rgba(239,68,68,0.12);
   --color-blocked-border: rgba(239,68,68,0.35);
 
+  /* Info — usado em toasts/notificações neutras */
+  --color-info:        #3B82F6;
+  --color-info-bg:     rgba(59,130,246,0.1);
+  --color-info-border: rgba(59,130,246,0.3);
+
   /* Texto */
   --color-text:        #F1F5F9;
   --color-text-muted:  #94A3B8;
@@ -258,16 +263,6 @@ button { cursor: pointer; font-family: inherit; }
 
 /* Error message */
 .field-error { font-size: 0.8rem; color: var(--color-blocked); }
-
-/* Alert */
-.alert {
-  padding: var(--space-4) var(--space-6);
-  border-radius: var(--radius-md);
-  border: 1px solid;
-  font-size: 0.875rem; font-weight: 500;
-}
-.alert-error   { background: var(--color-blocked-bg);  border-color: var(--color-blocked-border);  color: #FCA5A5; }
-.alert-success { background: var(--color-safe-bg);     border-color: var(--color-safe-border);     color: #86EFAC; }
 
 /* ═══════════════════════════════════════
    RISK BADGE — Alertas Alimentares
