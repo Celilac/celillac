@@ -268,7 +268,7 @@ export default function RegisterPage() {
                   className="btn btn-em"
                   id="register-submit"
                   disabled={isSubmitDisabled}
-                  style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
+                  style={{ width: '100%', justifyContent: 'center' }}
                 >
                   {loading ? 'Criando conta…' : '✨ Criar minha conta'}
                 </button>
