@@ -1,10 +1,11 @@
 'use client';
 // frontend/web-app/src/app/profile/page.tsx
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { foodProfileApi } from '@/api/food-profile';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { HttpError } from '@/api/client';
 
 const ALLERGEN_OPTIONS = [
@@ -30,6 +31,7 @@ interface Row { allergen: string; severity: string; }
 
 export default function ProfilePage() {
   const { token, userId, isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
 
   const [rows,        setRows]        = useState<Row[]>([{ allergen: 'GLUTEN', severity: 'FATAL' }]);
@@ -97,72 +99,101 @@ export default function ProfilePage() {
 
   if (loadingInit) {
     return (
-      <div className="auth-container" style={{ alignItems: 'flex-start', paddingTop: '4rem' }}>
-        <div className="auth-card animate-slide" style={{ maxWidth: 540 }}>
-          <p style={{ color: 'var(--color-text-muted)', textAlign: 'center' }}>Carregando perfil…</p>
-        </div>
+      <div className="profile-page">
+        <header className="topbar">
+          <span className="topbar-title brand-lockup">
+            <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
+            <span className="brand-wordmark">Celi<span>Lac</span></span>
+            <span className="brand-tagline">Vivendo bem a vida</span>
+          </span>
+          <nav className="topbar-actions">
+            <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+          </nav>
+        </header>
+        <main className="auth-shell profile-shell">
+          <div className="auth-split-card profile-split-card">
+            <aside className="auth-brand-panel">
+              <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={180} height={180} priority className="auth-brand-panel-logo" />
+              <p className="auth-brand-panel-wordmark">Celi<span>Lac</span></p>
+              <p className="auth-brand-panel-tagline">Seu perfil alimentar deixa cada escolha mais segura.</p>
+            </aside>
+            <div className="auth-form-panel profile-form-panel">
+              <div className="auth-card profile-card animate-slide">
+                <p className="profile-loading" role="status">Carregando perfil…</p>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="auth-container" style={{ alignItems: 'flex-start', paddingTop: '4rem' }}>
-      <div className="auth-card animate-slide" style={{ maxWidth: 540 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <div className="auth-logo" style={{ margin: 0 }}>
-            Celi<span>Lac</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="btn btn-ghost"
-            id="profile-back-btn"
-            style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }}
-          >
-            ← Voltar
+    <div className="profile-page">
+      <header className="topbar">
+        <span className="topbar-title brand-lockup">
+          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
+          <span className="brand-wordmark">Celi<span>Lac</span></span>
+          <span className="brand-tagline">Vivendo bem a vida</span>
+        </span>
+        <nav className="topbar-actions">
+          <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
+            {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-        </div>
+        </nav>
+      </header>
 
-        <h1 className="auth-title">Perfil Alimentar</h1>
-        <p className="auth-subtitle">
-          Configure seus alérgenos e o nível de severidade. Esta informação alimenta o motor de
-          compatibilidade no servidor.
-        </p>
+      <main className="auth-shell profile-shell">
+        <div className="auth-split-card profile-split-card">
+          <aside className="auth-brand-panel">
+            <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={180} height={180} priority className="auth-brand-panel-logo" />
+            <p className="auth-brand-panel-wordmark">Celi<span>Lac</span></p>
+            <p className="auth-brand-panel-tagline">Seu perfil alimentar deixa cada escolha mais segura.</p>
+          </aside>
 
-        {hasProfile && !success && (
-          <div
-            role="note"
-            style={{
-              marginBottom: '1rem',
-              background: 'var(--color-elevated)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-md)',
-              padding: '0.75rem 1rem',
-              fontSize: '0.85rem',
-              color: 'var(--color-text-muted)',
-            }}
-          >
-            ✏️ Editando perfil existente — alterações substituirão as restrições atuais.
-          </div>
-        )}
+          <div className="auth-form-panel profile-form-panel">
+            <div className="auth-card profile-card animate-slide">
+              <div className="profile-heading">
+                <div>
+                  <p className="eyebrow">Personalização</p>
+                  <h1 className="auth-title">Perfil Alimentar</h1>
+                </div>
+              </div>
 
-        {success && (
-          <div className="alert alert-success" role="status" style={{ marginBottom: '1rem' }}>
-            ✅ Perfil salvo com sucesso!{' '}
-            <Link href="/" style={{ color: 'inherit', textDecoration: 'underline' }}>
-              Ver Dashboard →
-            </Link>
-          </div>
-        )}
+              <p className="auth-subtitle profile-intro">
+                Configure seus alérgenos e o nível de severidade. Esta informação alimenta o motor de compatibilidade no servidor.
+              </p>
 
-        {error && (
-          <div className="alert alert-error" role="alert" style={{ marginBottom: '1rem' }}>
-            {error}
-          </div>
-        )}
+              {hasProfile && !success && (
+                <div role="note" className="profile-edit-note">
+                  <span aria-hidden="true">✏️</span>
+                  <span>Editando perfil existente — alterações substituirão as restrições atuais.</span>
+                </div>
+              )}
 
-        <form onSubmit={handleSave} id="profile-form">
-          <div className="allergen-list" style={{ marginBottom: '1rem' }}>
+              {success && (
+                <div className="alert alert-success" role="status">
+                  ✅ Perfil salvo com sucesso!{' '}
+                  <a href="/" style={{ color: 'inherit', textDecoration: 'underline' }}>
+                    Ver Dashboard →
+                  </a>
+                </div>
+              )}
+
+              {error && <div className="alert alert-error" role="alert">{error}</div>}
+
+              <form onSubmit={handleSave} id="profile-form">
+                <div className="restriction-section">
+                  <div className="section-heading">
+                    <div>
+                      <h2>Suas restrições</h2>
+                      <p>Adicione pelo menos uma restrição para ativar seu perfil.</p>
+                    </div>
+                    <span className="restriction-count">{rows.length}</span>
+                  </div>
+                  <div className="allergen-list">
             {rows.map((row, idx) => (
               <div key={idx} className="allergen-row">
                 <select
@@ -199,29 +230,21 @@ export default function ProfilePage() {
                 </button>
               </div>
             ))}
+                  </div>
+                </div>
+
+                <button type="button" className="btn btn-ghost add-restriction-button" id="add-allergen-btn" onClick={addRow}>
+                  + Adicionar restrição
+                </button>
+
+                <button type="submit" className="btn btn-em save-profile-button" id="save-profile-btn" disabled={loading || rows.length === 0}>
+                  {loading ? 'Salvando…' : hasProfile ? '💾 Atualizar perfil' : '💾 Criar perfil'}
+                </button>
+              </form>
+            </div>
           </div>
-
-          <button
-            type="button"
-            className="btn btn-ghost"
-            id="add-allergen-btn"
-            onClick={addRow}
-            style={{ marginBottom: '1.5rem', width: '100%', justifyContent: 'center' }}
-          >
-            + Adicionar restrição
-          </button>
-
-          <button
-            type="submit"
-            className="btn btn-em"
-            id="save-profile-btn"
-            disabled={loading || rows.length === 0}
-            style={{ width: '100%', justifyContent: 'center' }}
-          >
-            {loading ? 'Salvando…' : hasProfile ? '💾 Atualizar perfil' : '💾 Criar perfil'}
-          </button>
-        </form>
+        </div>
+      </main>
       </div>
-    </div>
   );
 }
