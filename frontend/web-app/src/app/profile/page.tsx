@@ -168,23 +168,12 @@ export default function ProfilePage() {
                 Configure seus alérgenos e o nível de severidade. Esta informação alimenta o motor de compatibilidade no servidor.
               </p>
 
-              {hasProfile && !success && (
+              {hasProfile && (
                 <div role="note" className="profile-edit-note">
                   <span aria-hidden="true">✏️</span>
                   <span>Editando perfil existente — alterações substituirão as restrições atuais.</span>
                 </div>
               )}
-
-              {success && (
-                <div className="alert alert-success" role="status">
-                  ✅ Perfil salvo com sucesso!{' '}
-                  <a href="/" style={{ color: 'inherit', textDecoration: 'underline' }}>
-                    Ver Dashboard →
-                  </a>
-                </div>
-              )}
-
-              {error && <div className="alert alert-error" role="alert">{error}</div>}
 
               <form onSubmit={handleSave} id="profile-form">
                 <div className="restriction-section">
@@ -195,70 +184,44 @@ export default function ProfilePage() {
                     </div>
                     <span className="restriction-count">{rows.length}</span>
                   </div>
+                  
                   <div className="allergen-list">
-        </div>
+                    {rows.map((row, idx) => (
+                      <div key={idx} className="allergen-row">
+                        <select
+                          id={`allergen-select-${idx}`}
+                          className="field-input field-select"
+                          value={row.allergen}
+                          onChange={(e) => updateRow(idx, 'allergen', e.target.value)}
+                        >
+                          {ALLERGEN_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
 
-        <h1 className="auth-title">Perfil Alimentar</h1>
-        <p className="auth-subtitle">
-          Configure seus alérgenos e o nível de severidade. Esta informação alimenta o motor de
-          compatibilidade no servidor.
-        </p>
+                        <select
+                          id={`severity-select-${idx}`}
+                          className="field-input field-select"
+                          value={row.severity}
+                          onChange={(e) => updateRow(idx, 'severity', e.target.value)}
+                        >
+                          {SEVERITY_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
 
-        {hasProfile && (
-          <div
-            role="note"
-            style={{
-              marginBottom: '1rem',
-              background: 'var(--color-elevated)',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-md)',
-              padding: '0.75rem 1rem',
-              fontSize: '0.85rem',
-              color: 'var(--color-text-muted)',
-            }}
-          >
-            ✏️ Editando perfil existente — alterações substituirão as restrições atuais.
-          </div>
-        )}
-
-        <form onSubmit={handleSave} id="profile-form">
-          <div className="allergen-list" style={{ marginBottom: '1rem' }}>
-            {rows.map((row, idx) => (
-              <div key={idx} className="allergen-row">
-                <select
-                  id={`allergen-select-${idx}`}
-                  className="field-input field-select"
-                  value={row.allergen}
-                  onChange={(e) => updateRow(idx, 'allergen', e.target.value)}
-                >
-                  {ALLERGEN_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-
-                <select
-                  id={`severity-select-${idx}`}
-                  className="field-input field-select"
-                  value={row.severity}
-                  onChange={(e) => updateRow(idx, 'severity', e.target.value)}
-                >
-                  {SEVERITY_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
-
-                <button
-                  type="button"
-                  className="remove-btn"
-                  id={`remove-allergen-${idx}`}
-                  onClick={() => removeRow(idx)}
-                  aria-label={`Remover ${row.allergen}`}
-                  disabled={rows.length === 1}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
+                        <button
+                          type="button"
+                          className="remove-btn"
+                          id={`remove-allergen-${idx}`}
+                          onClick={() => removeRow(idx)}
+                          aria-label={`Remover ${row.allergen}`}
+                          disabled={rows.length === 1}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -274,6 +237,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
-      </div>
+    </div>
   );
 }
