@@ -7,6 +7,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
+const STRONG_PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
 interface Props {
   onNavigateToLogin: () => void;
 }
@@ -17,6 +19,23 @@ export function RegisterScreen({ onNavigateToLogin }: Props) {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const passwordStrengthMessage = password && !STRONG_PASSWORD_REGEX.test(password)
+    ? 'Use 8+ caracteres com maiúscula, minúscula, número e símbolo.'
+    : '';
+
+  const confirmMessage = confirm && password !== confirm
+    ? 'As senhas devem ser iguais.'
+    : '';
+
+  const isSubmitDisabled = isLoading
+    || !email.trim()
+    || !password.trim()
+    || !confirm.trim()
+    || Boolean(passwordStrengthMessage)
+    || Boolean(confirmMessage);
 
   const handleRegister = async () => {
     if (!email.trim() || !password.trim()) {
@@ -27,8 +46,8 @@ export function RegisterScreen({ onNavigateToLogin }: Props) {
       Alert.alert('Atenção', 'As senhas não coincidem.');
       return;
     }
-    if (password.length < 8) {
-      Alert.alert('Atenção', 'A senha deve ter pelo menos 8 caracteres.');
+    if (!STRONG_PASSWORD_REGEX.test(password)) {
+      Alert.alert('Atenção', 'Use uma senha forte com 8+ caracteres, letra maiúscula, minúscula, número e símbolo.');
       return;
     }
     setIsLoading(true);
@@ -66,28 +85,57 @@ export function RegisterScreen({ onNavigateToLogin }: Props) {
             value={email}
             onChangeText={setEmail}
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Senha (mínimo 8 caracteres)"
-            placeholderTextColor="#64748b"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Confirmar senha"
-            placeholderTextColor="#64748b"
-            secureTextEntry
-            value={confirm}
-            onChangeText={setConfirm}
-          />
+          <View style={styles.passwordField}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Use uma senha forte"
+              placeholderTextColor="#64748b"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={styles.visibilityButton}
+              onPress={() => setShowPassword((current) => !current)}
+              accessibilityRole="button"
+              accessibilityLabel={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+            >
+              <Text style={styles.visibilityIcon}>{showPassword ? '🙈' : '👁'}</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={passwordStrengthMessage ? styles.errorText : styles.helperText}>
+            {passwordStrengthMessage || 'Use 8+ caracteres com maiúscula, minúscula, número e símbolo.'}
+          </Text>
+
+          <View style={styles.passwordField}>
+            <TextInput
+              style={styles.passwordInput}
+              placeholder="Confirmar senha"
+              placeholderTextColor="#64748b"
+              secureTextEntry={!showConfirm}
+              value={confirm}
+              onChangeText={setConfirm}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={styles.visibilityButton}
+              onPress={() => setShowConfirm((current) => !current)}
+              accessibilityRole="button"
+              accessibilityLabel={showConfirm ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'}
+            >
+              <Text style={styles.visibilityIcon}>{showConfirm ? '🙈' : '👁'}</Text>
+            </TouchableOpacity>
+          </View>
+          {confirmMessage ? <Text style={styles.errorText}>{confirmMessage}</Text> : null}
 
           <View style={styles.roleInfo}>
             <Text style={styles.roleText}>🏷️ Conta criada como <Text style={styles.roleHighlight}>Celíaco</Text></Text>
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={isLoading}>
+          <TouchableOpacity style={[styles.button, isSubmitDisabled && styles.buttonDisabled]} onPress={handleRegister} disabled={isSubmitDisabled}>
             <Text style={styles.buttonText}>Cadastrar e Entrar</Text>
           </TouchableOpacity>
 
@@ -124,6 +172,48 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#334155',
   },
+  passwordField: {
+    width: '100%',
+    position: 'relative',
+    marginBottom: 8,
+  },
+  passwordInput: {
+    width: '100%',
+    backgroundColor: '#0f172a',
+    color: '#f1f5f9',
+    borderRadius: 10,
+    paddingLeft: 16,
+    paddingRight: 52,
+    paddingVertical: 14,
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: '#334155',
+  },
+  visibilityButton: {
+    position: 'absolute',
+    right: 14,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  visibilityIcon: {
+    fontSize: 18,
+  },
+  helperText: {
+    width: '100%',
+    color: '#64748b',
+    fontSize: 12,
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  errorText: {
+    width: '100%',
+    color: '#f87171',
+    fontSize: 12,
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
   roleInfo: {
     width: '100%',
     backgroundColor: '#0f172a',
@@ -143,6 +233,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 4,
   },
+  buttonDisabled: { opacity: 0.55 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   linkButton: { marginTop: 20 },
   linkText: { color: '#64748b', fontSize: 14 },
