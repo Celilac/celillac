@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { foodProfileApi } from '@/api/food-profile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 
 const ALLERGEN_OPTIONS = [
@@ -33,12 +34,11 @@ export default function ProfilePage() {
   const { token, userId, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
+  const toast = useToast();
 
   const [rows,        setRows]        = useState<Row[]>([{ allergen: 'GLUTEN', severity: 'FATAL' }]);
   const [hasProfile,  setHasProfile]  = useState(false);
   const [loadingInit, setLoadingInit] = useState(true);
-  const [success,     setSuccess]     = useState(false);
-  const [error,       setError]       = useState('');
   const [loading,     setLoading]     = useState(false);
 
   // Carrega perfil existente ao montar a página
@@ -79,8 +79,6 @@ export default function ProfilePage() {
       router.push('/auth/login');
       return;
     }
-    setError('');
-    setSuccess(false);
     setLoading(true);
     try {
       if (hasProfile) {
@@ -89,9 +87,13 @@ export default function ProfilePage() {
         await foodProfileApi.create({ userId, restrictions: rows }, token);
         setHasProfile(true);
       }
-      setSuccess(true);
+      toast.success({
+        description: 'Perfil salvo com sucesso!',
+        actionLabel: 'Ver Dashboard',
+        onAction: () => router.push('/'),
+      });
     } catch (err) {
-      setError(err instanceof HttpError ? err.message : 'Erro ao salvar perfil.');
+      toast.error(err instanceof HttpError ? err.message : 'Erro ao salvar perfil.', 'Erro ao salvar perfil');
     } finally {
       setLoading(false);
     }
@@ -194,6 +196,33 @@ export default function ProfilePage() {
                     <span className="restriction-count">{rows.length}</span>
                   </div>
                   <div className="allergen-list">
+        </div>
+
+        <h1 className="auth-title">Perfil Alimentar</h1>
+        <p className="auth-subtitle">
+          Configure seus alérgenos e o nível de severidade. Esta informação alimenta o motor de
+          compatibilidade no servidor.
+        </p>
+
+        {hasProfile && (
+          <div
+            role="note"
+            style={{
+              marginBottom: '1rem',
+              background: 'var(--color-elevated)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              padding: '0.75rem 1rem',
+              fontSize: '0.85rem',
+              color: 'var(--color-text-muted)',
+            }}
+          >
+            ✏️ Editando perfil existente — alterações substituirão as restrições atuais.
+          </div>
+        )}
+
+        <form onSubmit={handleSave} id="profile-form">
+          <div className="allergen-list" style={{ marginBottom: '1rem' }}>
             {rows.map((row, idx) => (
               <div key={idx} className="allergen-row">
                 <select

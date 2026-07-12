@@ -43,6 +43,11 @@
   --color-blocked-bg:  rgba(239,68,68,0.12);
   --color-blocked-border: rgba(239,68,68,0.35);
 
+  /* Info — usado em toasts/notificações neutras */
+  --color-info:        #3B82F6;
+  --color-info-bg:     rgba(59,130,246,0.1);
+  --color-info-border: rgba(59,130,246,0.3);
+
   /* Texto */
   --color-text:        #F1F5F9;
   --color-text-muted:  #94A3B8;
@@ -224,6 +229,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 .field-input:focus { border-color: var(--color-emerald); box-shadow: 0 0 0 3px var(--color-emerald-dim); }
 .field-input::placeholder { color: var(--color-text-subtle); }
+.field-hint { font-size: 0.8rem; color: var(--color-text-subtle); }
 .field-select {
   appearance: none;
   cursor: pointer;
@@ -232,19 +238,31 @@ button { cursor: pointer; font-family: inherit; }
   background-repeat: no-repeat;
   background-position: right 12px center;
 }
+.password-input-wrap { position: relative; display: flex; align-items: center; }
+.password-input { padding-right: 48px; }
+.password-visibility-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+.password-visibility-toggle:hover { color: var(--color-text); }
+.password-visibility-toggle:focus-visible {
+  outline: none;
+  border-radius: 999px;
+  box-shadow: 0 0 0 3px var(--color-emerald-dim);
+}
 
 /* Error message */
 .field-error { font-size: 0.8rem; color: var(--color-blocked); }
-
-/* Alert */
-.alert {
-  padding: var(--space-4) var(--space-6);
-  border-radius: var(--radius-md);
-  border: 1px solid;
-  font-size: 0.875rem; font-weight: 500;
-}
-.alert-error   { background: var(--color-blocked-bg);  border-color: var(--color-blocked-border);  color: #FCA5A5; }
-.alert-success { background: var(--color-safe-bg);     border-color: var(--color-safe-border);     color: #86EFAC; }
 
 /* ═══════════════════════════════════════
    RISK BADGE — Alertas Alimentares
@@ -322,12 +340,12 @@ button { cursor: pointer; font-family: inherit; }
   min-width: 0;
   display: flex; align-items: center; justify-content: center;
   background: var(--color-surface);
-  padding: var(--space-8);
+  padding: var(--space-6);
 }
 .auth-card { width: 100%; }
 .auth-logo {
   display: flex; justify-content: center;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-6);
 }
 
 /* A logo já aparece no painel de marca — não repetir no formulário */
@@ -335,9 +353,11 @@ button { cursor: pointer; font-family: inherit; }
   .auth-logo { display: none; }
 }
 .auth-title { font-size: 1.25rem; font-weight: 700; margin-bottom: var(--space-2); }
-.auth-subtitle { font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: var(--space-6); }
-.auth-form { display: flex; flex-direction: column; gap: var(--space-4); }
-.auth-footer-link { text-align: center; font-size: 0.8rem; color: var(--color-text-muted); margin-top: var(--space-4); }
+.auth-subtitle { font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: var(--space-4); }
+.auth-form { display: flex; flex-direction: column; gap: var(--space-3); }
+.auth-form .field-input,
+.auth-form .field-select { padding-top: var(--space-2); padding-bottom: var(--space-2); }
+.auth-footer-link { text-align: center; font-size: 0.8rem; color: var(--color-text-muted); margin-top: var(--space-3); }
 .auth-footer-link a { color: var(--color-emerald); font-weight: 600; }
 
 /* ═══════════════════════════════════════

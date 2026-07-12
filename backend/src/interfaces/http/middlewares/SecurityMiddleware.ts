@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 export function corsMiddleware(req: Request, res: Response, next: NextFunction): void {
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-    : ['http://localhost:3001'];
+    : ['http://localhost:3001', 'http://localhost:3003'];
 
   const origin = req.headers.origin;
 

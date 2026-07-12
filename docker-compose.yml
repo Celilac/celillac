@@ -31,7 +31,6 @@ services:
       - "3002:3002"
     volumes:
       - ./backend/src:/app/src
-      - /app/node_modules
     depends_on:
       db:
         condition: service_healthy
@@ -47,8 +46,6 @@ services:
     volumes:
       - ./frontend/web-app/src:/app/src
       - ./frontend/web-app/public:/app/public
-      - /app/node_modules
-      - /app/.next
     depends_on:
       - backend
 
