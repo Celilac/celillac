@@ -2,9 +2,9 @@
 // frontend/web-app/src/app/profile/page.tsx
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { foodProfileApi } from '@/api/food-profile';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 
 const ALLERGEN_OPTIONS = [
@@ -31,12 +31,11 @@ interface Row { allergen: string; severity: string; }
 export default function ProfilePage() {
   const { token, userId, isAuthenticated } = useAuth();
   const router = useRouter();
+  const toast = useToast();
 
   const [rows,        setRows]        = useState<Row[]>([{ allergen: 'GLUTEN', severity: 'FATAL' }]);
   const [hasProfile,  setHasProfile]  = useState(false);
   const [loadingInit, setLoadingInit] = useState(true);
-  const [success,     setSuccess]     = useState(false);
-  const [error,       setError]       = useState('');
   const [loading,     setLoading]     = useState(false);
 
   // Carrega perfil existente ao montar a página
@@ -77,8 +76,6 @@ export default function ProfilePage() {
       router.push('/auth/login');
       return;
     }
-    setError('');
-    setSuccess(false);
     setLoading(true);
     try {
       if (hasProfile) {
@@ -87,9 +84,13 @@ export default function ProfilePage() {
         await foodProfileApi.create({ userId, restrictions: rows }, token);
         setHasProfile(true);
       }
-      setSuccess(true);
+      toast.success({
+        description: 'Perfil salvo com sucesso!',
+        actionLabel: 'Ver Dashboard',
+        onAction: () => router.push('/'),
+      });
     } catch (err) {
-      setError(err instanceof HttpError ? err.message : 'Erro ao salvar perfil.');
+      toast.error(err instanceof HttpError ? err.message : 'Erro ao salvar perfil.', 'Erro ao salvar perfil');
     } finally {
       setLoading(false);
     }
@@ -129,7 +130,7 @@ export default function ProfilePage() {
           compatibilidade no servidor.
         </p>
 
-        {hasProfile && !success && (
+        {hasProfile && (
           <div
             role="note"
             style={{
@@ -143,21 +144,6 @@ export default function ProfilePage() {
             }}
           >
             ✏️ Editando perfil existente — alterações substituirão as restrições atuais.
-          </div>
-        )}
-
-        {success && (
-          <div className="alert alert-success" role="status" style={{ marginBottom: '1rem' }}>
-            ✅ Perfil salvo com sucesso!{' '}
-            <Link href="/" style={{ color: 'inherit', textDecoration: 'underline' }}>
-              Ver Dashboard →
-            </Link>
-          </div>
-        )}
-
-        {error && (
-          <div className="alert alert-error" role="alert" style={{ marginBottom: '1rem' }}>
-            {error}
           </div>
         )}
 

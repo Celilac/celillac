@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { iamApi } from '@/api/iam';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 
 const STRONG_PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
@@ -65,12 +66,12 @@ export default function RegisterPage() {
   const router   = useRouter();
   const { login } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const toast    = useToast();
 
   const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role,     setRole]     = useState<'CELIACO' | 'PARCEIRO'>('CELIACO');
-  const [error,    setError]    = useState('');
   const [loading,  setLoading]  = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -93,15 +94,17 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError('');
 
     if (!STRONG_PASSWORD_REGEX.test(password)) {
-      setError('Use uma senha forte com 8+ caracteres, letra maiúscula, minúscula, número e símbolo.');
+      toast.error(
+        'Use uma senha forte com 8+ caracteres, letra maiúscula, minúscula, número e símbolo.',
+        'Senha inválida',
+      );
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('A confirmação de senha precisa ser igual à senha.');
+      toast.error('A confirmação de senha precisa ser igual à senha.', 'Confirmação inválida');
       return;
     }
 
@@ -113,9 +116,10 @@ export default function RegisterPage() {
       // Após cadastro, faz login automático para obter o token
       const session = await iamApi.login({ email: normalizedEmail, password });
       login(session.token, user.id);
+      toast.success('Conta criada com sucesso!');
       router.push('/profile');
     } catch (err) {
-      setError(err instanceof HttpError ? err.message : 'Erro ao criar conta.');
+      toast.error(err instanceof HttpError ? err.message : 'Erro ao criar conta.', 'Erro ao criar conta');
     } finally {
       setLoading(false);
     }
@@ -172,8 +176,6 @@ export default function RegisterPage() {
 
               <h1 className="auth-title">Criar conta</h1>
               <p className="auth-subtitle">Configure seu perfil alimentar e coma com segurança.</p>
-
-              {error && <div className="alert alert-error" role="alert">{error}</div>}
 
               <form className="auth-form" onSubmit={handleSubmit} id="register-form">
                 <div className="field">
@@ -266,7 +268,7 @@ export default function RegisterPage() {
                   className="btn btn-em"
                   id="register-submit"
                   disabled={isSubmitDisabled}
-                  style={{ width: '100%', justifyContent: 'center', marginTop: '8px' }}
+                  style={{ width: '100%', justifyContent: 'center' }}
                 >
                   {loading ? 'Criando conta…' : '✨ Criar minha conta'}
                 </button>
