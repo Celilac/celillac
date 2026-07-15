@@ -20,6 +20,7 @@ Histórico de entregas do projeto. Formato: `Data | Feature | Descrição`.
 | 2026-07-07 | FEAT-012 | Identidade Visual & Temas: paleta de cores institucional, suporte completo a temas claro/escuro e estilização global no Web App. |
 | 2026-07-07 | FEAT-013 | Painel de Marca no Login/Registro: layout split-screen com painel de marca promocional adaptivo e topbar simplificada nas páginas de login e cadastro. |
 | 2026-07-07 | BUGFIX-014 | Correções e estabilização do Web App (upsert de perfil, correção do HTTP client / headers, persistência de sessão segura via sessionStorage) e correção do parâmetro de busca no backend (`query` vs `q`). |
+| 2026-07-12 | BUGFIX-015 | Correção de sintaxe JSX e conflito de mesclagem na página de perfil no Web App |
 
 Ver [README.md](README.md) para o estado atual das funcionalidades e [`docs/`](docs/) para as especificações de cada bounded context.
 

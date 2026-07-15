@@ -184,43 +184,44 @@ export default function ProfilePage() {
                     </div>
                     <span className="restriction-count">{rows.length}</span>
                   </div>
+                  
                   <div className="allergen-list">
-            {rows.map((row, idx) => (
-              <div key={idx} className="allergen-row">
-                <select
-                  id={`allergen-select-${idx}`}
-                  className="field-input field-select"
-                  value={row.allergen}
-                  onChange={(e) => updateRow(idx, 'allergen', e.target.value)}
-                >
-                  {ALLERGEN_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
+                    {rows.map((row, idx) => (
+                      <div key={idx} className="allergen-row">
+                        <select
+                          id={`allergen-select-${idx}`}
+                          className="field-input field-select"
+                          value={row.allergen}
+                          onChange={(e) => updateRow(idx, 'allergen', e.target.value)}
+                        >
+                          {ALLERGEN_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
 
-                <select
-                  id={`severity-select-${idx}`}
-                  className="field-input field-select"
-                  value={row.severity}
-                  onChange={(e) => updateRow(idx, 'severity', e.target.value)}
-                >
-                  {SEVERITY_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
+                        <select
+                          id={`severity-select-${idx}`}
+                          className="field-input field-select"
+                          value={row.severity}
+                          onChange={(e) => updateRow(idx, 'severity', e.target.value)}
+                        >
+                          {SEVERITY_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
 
-                <button
-                  type="button"
-                  className="remove-btn"
-                  id={`remove-allergen-${idx}`}
-                  onClick={() => removeRow(idx)}
-                  aria-label={`Remover ${row.allergen}`}
-                  disabled={rows.length === 1}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
+                        <button
+                          type="button"
+                          className="remove-btn"
+                          id={`remove-allergen-${idx}`}
+                          onClick={() => removeRow(idx)}
+                          aria-label={`Remover ${row.allergen}`}
+                          disabled={rows.length === 1}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
@@ -236,6 +237,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
-      </div>
+    </div>
   );
 }

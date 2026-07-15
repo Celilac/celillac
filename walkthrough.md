@@ -1,5 +1,12 @@
 # Walkthrough
 
+## 2026-07-12 — Correção de Sintaxe na Página de Perfil
+
+- Corrigida a estrutura JSX quebrada no arquivo `frontend/web-app/src/app/profile/page.tsx` gerada por um conflito de mesclagem na branch `codex/profile-page-navigation-cleanup`.
+- Resolvidas referências a variáveis fantasmas `success` e `error`, utilizando o sistema de `toast` para feedback visual direto.
+- Removido bloco de código duplicado e reorganizados os botões e formulário conforme o novo layout unificado.
+- Verificação: Instalada a nova dependência `notistack` e executado build de produção do frontend (`npm run build`) com sucesso.
+
 ## 2026-07-11 — Padronização visual do Perfil Alimentar
 
 - A tela de perfil passou a reutilizar o cabeçalho, navegação de tema e linguagem visual das telas de home, login e cadastro.
