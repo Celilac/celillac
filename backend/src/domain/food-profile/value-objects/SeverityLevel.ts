@@ -2,14 +2,16 @@
 
 /**
  * SeverityLevel — Nível de severidade de uma restrição alimentar.
- * Definido em DOMAIN_MODEL.md: LOW | MEDIUM | HIGH | FATAL
+ * Definido em DOMAIN_MODEL.md: LIFESTYLE | LOW | MEDIUM | HIGH | FATAL
  * FATAL = Celíaco. Zero tolerância, incluindo traços.
+ * LIFESTYLE = preferência pessoal (ex.: vegano), sem risco médico associado.
  */
 export enum SeverityLevel {
-  LOW    = 'LOW',
-  MEDIUM = 'MEDIUM',
-  HIGH   = 'HIGH',
-  FATAL  = 'FATAL',
+  LIFESTYLE = 'LIFESTYLE',
+  LOW       = 'LOW',
+  MEDIUM    = 'MEDIUM',
+  HIGH      = 'HIGH',
+  FATAL     = 'FATAL',
 }
 
 /**
@@ -17,8 +19,9 @@ export enum SeverityLevel {
  * Usado pelo AllergenEngine para determinar o nível final do relatório.
  */
 export const SEVERITY_ORDER: Record<SeverityLevel, number> = {
-  [SeverityLevel.LOW]:    1,
-  [SeverityLevel.MEDIUM]: 2,
-  [SeverityLevel.HIGH]:   3,
-  [SeverityLevel.FATAL]:  4,
+  [SeverityLevel.LIFESTYLE]: 0,
+  [SeverityLevel.LOW]:       1,
+  [SeverityLevel.MEDIUM]:    2,
+  [SeverityLevel.HIGH]:      3,
+  [SeverityLevel.FATAL]:     4,
 };

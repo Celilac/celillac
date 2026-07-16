@@ -73,7 +73,7 @@ export function login(payload: LoginPayload): Promise<LoginResponse> {
 // ─── Food Profile ─────────────────────────────────────────────────────────────
 
 export type AllergenType = 'GLUTEN' | 'LACTOSE' | 'NUTS' | 'SOY' | 'EGGS' | 'SHELLFISH' | 'FISH' | 'SESAME' | 'OTHER';
-export type SeverityLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'FATAL';
+export type SeverityLevel = 'LIFESTYLE' | 'LOW' | 'MEDIUM' | 'HIGH' | 'FATAL';
 
 export interface Restriction {
   id?: string;

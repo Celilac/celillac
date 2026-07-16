@@ -22,10 +22,11 @@ const ALLERGENS: { key: AllergenType; label: string; emoji: string }[] = [
 ];
 
 const SEVERITIES: { key: SeverityLevel; label: string; desc: string; color: string }[] = [
-  { key: 'LOW',    label: 'Baixa',  desc: 'Sensibilidade leve',      color: '#22c55e' },
-  { key: 'MEDIUM', label: 'Média',  desc: 'Intolerância moderada',   color: '#f59e0b' },
-  { key: 'HIGH',   label: 'Alta',   desc: 'Alergia severa',          color: '#f97316' },
-  { key: 'FATAL',  label: 'FATAL',  desc: 'Doença celíaca / grave',  color: '#ef4444' },
+  { key: 'LIFESTYLE', label: 'Estilo de vida', desc: 'Preferência pessoal, sem risco médico', color: '#6366f1' },
+  { key: 'LOW',        label: 'Baixa',          desc: 'Sensibilidade leve',                    color: '#22c55e' },
+  { key: 'MEDIUM',     label: 'Média',          desc: 'Intolerância moderada',                 color: '#f59e0b' },
+  { key: 'HIGH',       label: 'Alta',           desc: 'Alergia severa',                         color: '#f97316' },
+  { key: 'FATAL',      label: 'FATAL',          desc: 'Doença celíaca / grave',                 color: '#ef4444' },
 ];
 
 interface Props {

@@ -21,6 +21,7 @@ const ALLERGEN_LABELS: Record<AllergenType, string> = {
 };
 
 const SEVERITY_COLORS: Record<SeverityLevel, string> = {
+  LIFESTYLE: '#6366f1',
   LOW: '#22c55e',
   MEDIUM: '#f59e0b',
   HIGH: '#f97316',
@@ -28,6 +29,7 @@ const SEVERITY_COLORS: Record<SeverityLevel, string> = {
 };
 
 const SEVERITY_LABELS: Record<SeverityLevel, string> = {
+  LIFESTYLE: 'Estilo de vida',
   LOW: 'Baixa',
   MEDIUM: 'Média',
   HIGH: 'Alta',

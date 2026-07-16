@@ -3,7 +3,7 @@
 ## 1. Perfil Alimentar
 - **Responsabilidade:** Gerenciar restrições e sensibilidades.
 - **Entidades:** Profile, Allergy, Intolerance.
-- **Value Objects:** SeverityLevel (LOW, MEDIUM, HIGH, FATAL).
+- **Value Objects:** SeverityLevel (LIFESTYLE, LOW, MEDIUM, HIGH, FATAL).
 - **Regras Críticas:** 
     - Um perfil deve ter pelo menos uma restrição para ser considerado "Ativo".
     - Mudanças em restrições 'FATAL' exigem revalidação de todo o histórico de consumo.
