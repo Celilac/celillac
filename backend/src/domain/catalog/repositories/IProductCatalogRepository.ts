@@ -12,6 +12,8 @@ export interface SearchProductQuery {
   term:  string;
   page:  number;
   limit: number;
+  avoidAllergens?: string[];
+  partnerId?: string;
 }
 
 export interface IProductCatalogRepository {

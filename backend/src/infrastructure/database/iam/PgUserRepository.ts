@@ -36,6 +36,19 @@ export class PgUserRepository implements IUserRepository {
     );
   }
 
+  async findById(id: string): Promise<User | null> {
+    const result = await this.pool.query(
+      'SELECT id, email, password_hash, role FROM users WHERE id = $1 LIMIT 1',
+      [id],
+    );
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return this.mapRowToUser(result.rows[0]);
+  }
+
   // --- Mapper privado: linha do banco → entidade de domínio ---
   private mapRowToUser(row: { id: string; email: string; password_hash: string; role: string }): User {
     const email        = Email.create(row.email).getValue();

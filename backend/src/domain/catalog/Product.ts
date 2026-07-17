@@ -11,6 +11,7 @@ export interface ProductProps {
   hasGluten:          boolean;
   crossContamination: string;
   analysisStatus:     AnalysisStatus;
+  partnerId?:         string;
 }
 
 /**
@@ -31,6 +32,7 @@ export class Product extends Entity<ProductProps> {
   get hasGluten(): boolean { return this.props.hasGluten; }
   get crossContamination(): string { return this.props.crossContamination; }
   get analysisStatus(): AnalysisStatus { return this.props.analysisStatus; }
+  get partnerId(): string | undefined { return this.props.partnerId; }
 
   /**
    * Atualiza os ingredientes e recalcula o status de análise
@@ -64,6 +66,7 @@ export class Product extends Entity<ProductProps> {
           hasGluten: props.hasGluten,
           crossContamination: props.crossContamination.trim(),
           analysisStatus,
+          partnerId: props.partnerId,
         },
         id
       )

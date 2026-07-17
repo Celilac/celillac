@@ -9,6 +9,7 @@ export interface CreateProductDTO {
   ingredients:        string;
   hasGluten:          boolean;
   crossContamination: string;
+  partnerId?:         string;
 }
 
 export interface ProductResponseDTO {
@@ -19,6 +20,7 @@ export interface ProductResponseDTO {
   hasGluten:          boolean;
   crossContamination: string;
   analysisStatus:     AnalysisStatus;
+  partnerId?:         string;
 }
 
 export class CreateProductUseCase {
@@ -31,6 +33,7 @@ export class CreateProductUseCase {
       ingredients: dto.ingredients,
       hasGluten: dto.hasGluten,
       crossContamination: dto.crossContamination,
+      partnerId: dto.partnerId,
     });
 
     if (productResult.isFailure) {
@@ -48,6 +51,7 @@ export class CreateProductUseCase {
       hasGluten:          product.hasGluten,
       crossContamination: product.crossContamination,
       analysisStatus:     product.analysisStatus,
+      partnerId:          product.partnerId,
     });
   }
 }

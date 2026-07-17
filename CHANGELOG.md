@@ -30,5 +30,7 @@ Histórico de entregas do projeto. Formato: `Data | Feature | Descrição`.
 | 2026-07-17 | HARNESS-022 | Gap Analysis — Bloco 4: `AGENTS.md` com `FRONTEND_STRATEGY.md` e `ARCHITECTURE.md` na consulta obrigatória; Ações Autônomas expandidas para 8 exemplos práticos |
 | 2026-07-17 | HARNESS-023 | Gap Analysis — Bloco 4: `harness/workflows.md` sincronizado com AGENTS.md (WF-03 Bug e WF-04 Banco adicionados); `harness/guardrails.md` expandido de 4 para 9 ações restritas |
 | 2026-07-17 | HARNESS-024 | Gap Analysis — Bloco 5: `docs/HARNESS_EVALUATION.md` criado com auto-avaliação dos 11 critérios do PDF (§13); `docs/WORKSPACE_GUIDE.md` expandido com filosofia do harness |
+| 2026-07-17 | FEAT-025 | Módulo de Parceiros Comerciais (Partners): entidade de domínio `Partner`, tabela `partners` com FK `partner_id` em `products`, rotas `POST /partners` e `GET /partners/me` |
+| 2026-07-17 | FEAT-026 | Busca Avançada Filtrada: busca de produtos agora aceita `avoidAllergens`, `partnerId`, e calcula relatórios de compatibilidade dinâmicos para cada item |
 
 Ver [README.md](README.md) para o estado atual das funcionalidades e [`docs/`](docs/) para as especificações de cada bounded context.
