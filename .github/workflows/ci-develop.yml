@@ -1,0 +1,67 @@
+name: CeLiLac CI — Develop
+
+# Roda em todo push e PR direcionado à develop.
+# Este é o pipeline de integração contínua da branch principal de desenvolvimento.
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  ci:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: celilac_user
+          POSTGRES_PASSWORD: celilac_password
+          POSTGRES_DB: celilac_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: 📦 Instalar dependências do Backend
+        working-directory: backend
+        run: npm ci
+
+      - name: 🔍 Linter
+        working-directory: backend
+        run: npm run lint --if-present
+
+      - name: 🏗️ Build
+        working-directory: backend
+        run: npm run build
+
+      - name: 🧪 Testes unitários + cobertura
+        working-directory: backend
+        run: npm test -- --coverage --passWithNoTests
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://celilac_user:celilac_password@localhost:5432/celilac_db
+          JWT_SECRET: ci-secret-only-for-tests
+
+      - name: 📊 Guardrails — Verificar script de validação
+        run: bash harness/scripts/validate.sh
+        continue-on-error: true

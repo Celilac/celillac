@@ -1,0 +1,47 @@
+#!/bin/sh
+
+# =============================================================================
+# CeLiLac Harness — Hook: pre-push
+# Bloqueia pushes diretos para a branch 'main'.
+# O único fluxo permitido para a main é via Pull Request no GitHub.
+# =============================================================================
+
+protected_branch="main"
+current_branch=$(git symbolic-ref HEAD 2>/dev/null | sed 's|refs/heads/||')
+remote="$1"
+remote_url="$2"
+
+while read local_ref local_sha remote_ref remote_sha; do
+    # Verifica se o push é direcionado à main
+    if echo "$remote_ref" | grep -q "refs/heads/$protected_branch$"; then
+        echo ""
+        echo "============================================================"
+        echo "❌  PUSH DIRETO NA MAIN BLOQUEADO — CELILAC HARNESS POLICY"
+        echo "============================================================"
+        echo ""
+        echo "🚫  Branch protegida: $protected_branch"
+        echo "🚫  Sua branch atual: $current_branch"
+        echo "🚫  Destino remoto:   $remote_ref"
+        echo ""
+        echo "📋  REGRA DO HARNESS:"
+        echo "    Push direto na 'main' viola a política de governança."
+        echo "    Nenhum commit pode entrar na main sem revisão humana."
+        echo ""
+        echo "✅  FLUXO CORRETO:"
+        echo "    1. Trabalhe na branch 'develop' ou em uma feature branch."
+        echo "       git checkout develop"
+        echo "       git checkout -b feature/minha-feature"
+        echo ""
+        echo "    2. Faça push para develop ou para a feature branch:"
+        echo "       git push origin develop"
+        echo "       git push origin feature/minha-feature"
+        echo ""
+        echo "    3. Abra um Pull Request no GitHub: develop → main."
+        echo "    4. Aguarde revisão e aprovação humana antes do merge."
+        echo ""
+        echo "============================================================"
+        exit 1
+    fi
+done
+
+exit 0
