@@ -39,4 +39,11 @@ jobs:
           JWT_SECRET: ci-secret-only-for-tests
 
       - name: 📋 Guardrails — Script de validação
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Run validate script
         run: bash harness/scripts/validate.sh
