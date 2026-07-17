@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { BrandLogo } from '../components/BrandLogo';
 
 const STRONG_PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
 
@@ -72,7 +73,7 @@ export function RegisterScreen({ onNavigateToLogin }: Props) {
       {isLoading && <LoadingSpinner message="Criando conta..." />}
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
-          <Text style={styles.logo}>🌾</Text>
+          <BrandLogo />
           <Text style={styles.title}>Criar Conta</Text>
           <Text style={styles.subtitle}>Sua jornada segura começa aqui</Text>
 
@@ -157,7 +158,6 @@ const styles = StyleSheet.create({
     padding: 32,
     alignItems: 'center',
   },
-  logo: { fontSize: 48, marginBottom: 8 },
   title: { fontSize: 26, fontWeight: 'bold', color: '#f1f5f9', marginBottom: 4 },
   subtitle: { fontSize: 13, color: '#64748b', marginBottom: 28, textAlign: 'center' },
   input: {

@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { BrandLogo } from '../components/BrandLogo';
 
 interface Props {
   onNavigateToRegister: () => void;
@@ -41,7 +42,7 @@ export function LoginScreen({ onNavigateToRegister }: Props) {
       {isLoading && <LoadingSpinner message="Entrando..." />}
 
       <View style={styles.card}>
-        <Text style={styles.logo}>🌾</Text>
+        <BrandLogo />
         <Text style={styles.title}>CeLiLac</Text>
         <Text style={styles.subtitle}>Segurança alimentar para celíacos</Text>
 
@@ -93,7 +94,6 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 10,
   },
-  logo: { fontSize: 48, marginBottom: 8 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#f1f5f9', marginBottom: 4 },
   subtitle: { fontSize: 13, color: '#64748b', marginBottom: 32, textAlign: 'center' },
   input: {

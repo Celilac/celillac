@@ -9,6 +9,11 @@ O CeLiLac é uma plataforma de segurança alimentar focada em celíacos e pessoa
 - **Frontend:** Web (React/Next), Mobile (Flutter/React Native).
 - **Padronização:** O código deve seguir SOLID e ser altamente testado.
 
+## Identidade Visual (Marca)
+- Fonte única da marca: `frontend/web-app/public/brand/`. Use sempre `logo_with_transparent_background.png` (maior resolução, com alpha) para qualquer novo uso da logo — web ou mobile.
+- Mobile (`frontend/mobile-app`): a logo mestre vive em `assets/images/brand/logo.png` (cópia do arquivo acima) e todo ícone/splash gerado (`icon.png`, `android-icon-foreground.png`, `android-icon-monochrome.png`, `favicon.png`, `splash-icon.png`) deriva dela. Para exibir a marca em telas, use o componente `src/components/BrandLogo.tsx` em vez de emoji ou texto solto.
+- Nunca reintroduzir os assets placeholder padrão do template Expo (ícone "A" azul) nem emojis como substituto da logo.
+
 ## Regras Obrigatórias
 1. **Nunca implemente sem um plano:** Antes de qualquer código, crie um `PLAN.md` na tarefa.
 2. **Camadas Isoladas:** Regras de negócio ficam APENAS no `domain`. Controllers não decidem lógica.
