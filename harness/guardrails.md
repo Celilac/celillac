@@ -9,10 +9,19 @@ O agente de IA opera em um sandbox isolado. Ele tem acesso apenas ao que é estr
 - Deleção de logs ou histórico de commits.
 
 ## Ações que EXIGEM Autorização Humana (Checklist)
-1. Alterar o motor de alérgenos (`ALLERGEN_ENGINE.md`).
-2. Adicionar novas dependências no `package.json`.
-3. Alterar scripts de migração de banco de dados.
-4. Modificar a lógica de autenticação e permissões no IAM.
+
+> Esta lista está sincronizada com `AGENTS.md`. Em caso de dúvida, `AGENTS.md` é a fonte de verdade.
+
+1. ⚠️ Alterar o motor de alérgenos (`ALLERGEN_ENGINE.md` ou `AllergenEngine.ts`).
+2. ⚠️ Adicionar, atualizar ou remover dependências (`package.json`).
+3. ⚠️ Alterar scripts de migração de banco de dados já aplicados.
+4. ⚠️ Modificar a lógica de autenticação e permissões (JWT, senhas, sessões).
+5. ⚠️ Alterar Termos de Uso ou Políticas de Privacidade.
+6. ⚠️ Alterar regras de segurança (CORS, middlewares de Rate Limit, headers OWASP).
+7. ⚠️ Realizar Deploy em qualquer ambiente.
+8. ⚠️ Conectar ou ler dados de ambiente de produção.
+9. ⚠️ Remover testes da suíte ou reduzir threshold de cobertura.
+
 
 ## Proteção de Dados
 - **Dados Sensíveis:** Nunca utilize dados reais de usuários no ambiente de desenvolvimento local.

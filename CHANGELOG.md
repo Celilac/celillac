@@ -4,6 +4,9 @@ Histórico de entregas do projeto. Formato: `Data | Feature | Descrição`.
 
 | Data | Feature | Descrição |
 |:-----|:--------|:----------|
+| 2026-07-17 | HARNESS | Branch strategy: branch `develop` + workflows protect-main, ci-develop, pre-push hook |
+| 2026-07-17 | HARNESS | Gap Analysis: PRD.md real (personas, jornadas, RFs, RNFs), ALLERGEN_ENGINE.md completo (R1–R8), DOMAIN_MODEL.md com 10 bounded contexts, ARCHITECTURE.md expandido (6 regras, Ports & Adapters), DATABASE.md com separação de ambientes, AGENTS.md atualizado, workflows.md e guardrails.md sincronizados, HARNESS_EVALUATION.md criado, WORKSPACE_GUIDE.md com filosofia do harness |
+
 | 2026-06-29 | FEAT-001 | Módulo IAM completo (22 testes) |
 | 2026-06-30 | FEAT-002 | Perfil Alimentar (`FoodProfile` + `Restriction`) |
 | 2026-06-30 | FEAT-003 | Motor de Alérgenos com 9 casos críticos |
