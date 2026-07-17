@@ -38,7 +38,6 @@ jobs:
           NODE_ENV: test
           JWT_SECRET: ci-secret-only-for-tests
 
-      - name: 📋 Guardrails — Script de validação
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
