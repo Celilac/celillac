@@ -9,8 +9,8 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
 
   async create(product: Product): Promise<void> {
     await this.pool.query(
-      `INSERT INTO products (id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      `INSERT INTO products (id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id, price, category, image_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
       [
         product.id,
         product.name,
@@ -20,6 +20,9 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
         product.crossContamination,
         product.analysisStatus,
         product.partnerId || null,
+        product.price,
+        product.category,
+        product.imageUrl || null,
       ]
     );
   }
@@ -79,7 +82,7 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
 
     // Busca dados com paginação
     const dataQuery = `
-      SELECT id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id
+      SELECT id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id, price, category, image_url
       FROM products
       ${whereClause}
       ORDER BY name ASC
@@ -98,6 +101,9 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
           crossContamination: row.cross_contamination,
           analysisStatus:     row.analysis_status as AnalysisStatus,
           partnerId:          row.partner_id || undefined,
+          price:              row.price ? parseFloat(row.price) : 0,
+          category:           row.category,
+          imageUrl:           row.image_url || undefined,
         },
         row.id
       ).getValue()

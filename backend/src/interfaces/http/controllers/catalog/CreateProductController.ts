@@ -10,7 +10,7 @@ export class CreateProductController extends BaseController {
   }
 
   protected async executeImpl(req: Request, res: Response): Promise<void> {
-    const { name, brand, ingredients, hasGluten, crossContamination, partnerId } = req.body;
+    const { name, brand, ingredients, hasGluten, crossContamination, partnerId, price, category, imageUrl } = req.body;
 
     const result = await this.createProductUseCase.execute({
       name,
@@ -19,6 +19,9 @@ export class CreateProductController extends BaseController {
       hasGluten,
       crossContamination,
       partnerId,
+      price: price ? parseFloat(price) : undefined,
+      category,
+      imageUrl,
     });
 
     if (result.isFailure) {

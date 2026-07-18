@@ -25,6 +25,9 @@ export interface ProductSearchResponseDTO {
   crossContamination:  string;
   analysisStatus:      AnalysisStatus;
   partnerId?:          string;
+  price:               number;
+  category:            string;
+  imageUrl?:           string;
   compatibilityReport?: CompatibilityReport;
 }
 
@@ -72,6 +75,9 @@ export class SearchProductsUseCase {
         crossContamination: product.crossContamination,
         analysisStatus:     product.analysisStatus,
         partnerId:          product.partnerId,
+        price:              product.price,
+        category:           product.category,
+        imageUrl:           product.imageUrl,
       };
 
       // Se o perfil do usuário foi carregado, calcula o relatório de compatibilidade dinâmico

@@ -1,5 +1,5 @@
 // backend/tests/unit/domain/partner/Partner.spec.ts
-import { Partner } from '../../../../src/domain/partner/Partner';
+import { Partner, PartnerType } from '../../../../src/domain/partner/Partner';
 
 describe('Partner Domain Entity', () => {
   it('should successfully create a Partner instance with valid data', () => {
@@ -10,6 +10,7 @@ describe('Partner Domain Entity', () => {
       description: 'Restaurante 100% sem glúten e sem contaminação.',
       address:     'Rua das Flores, 123',
       phone:       '(11) 99999-9999',
+      type:        PartnerType.RESTAURANT,
       isActive:    true,
     });
 
@@ -21,6 +22,7 @@ describe('Partner Domain Entity', () => {
     expect(partner.description).toBe('Restaurante 100% sem glúten e sem contaminação.');
     expect(partner.address).toBe('Rua das Flores, 123');
     expect(partner.phone).toBe('(11) 99999-9999');
+    expect(partner.type).toBe(PartnerType.RESTAURANT);
     expect(partner.isActive).toBe(true);
   });
 
@@ -31,6 +33,7 @@ describe('Partner Domain Entity', () => {
       address:     'Rua das Flores, 123',
       description: '',
       phone:       '',
+      type:        PartnerType.RESTAURANT,
       isActive:    true,
     });
 
@@ -45,6 +48,7 @@ describe('Partner Domain Entity', () => {
       address:     'Rua das Flores, 123',
       description: '',
       phone:       '',
+      type:        PartnerType.RESTAURANT,
       isActive:    true,
     });
 
@@ -59,6 +63,7 @@ describe('Partner Domain Entity', () => {
       address:     '  ',
       description: '',
       phone:       '',
+      type:        PartnerType.RESTAURANT,
       isActive:    true,
     });
 
@@ -74,10 +79,26 @@ describe('Partner Domain Entity', () => {
       address:     'Rua das Flores, 123',
       description: '',
       phone:       '',
+      type:        PartnerType.RESTAURANT,
       isActive:    true,
     });
 
     expect(partnerResult.isFailure).toBe(true);
     expect(partnerResult.getError()).toContain('CNPJ inválido');
+  });
+
+  it('should fail to create a Partner if type is invalid', () => {
+    const partnerResult = Partner.create({
+      userId:      'user-uuid',
+      name:        'Sabor Celíaco',
+      address:     'Rua das Flores, 123',
+      description: '',
+      phone:       '',
+      type:        'INVALID_TYPE' as any,
+      isActive:    true,
+    });
+
+    expect(partnerResult.isFailure).toBe(true);
+    expect(partnerResult.getError()).toContain('Tipo de parceiro inválido');
   });
 });

@@ -2,6 +2,12 @@
 import { Entity } from '../Entity';
 import { Result } from '../Result';
 
+export enum PartnerType {
+  RESTAURANT           = 'RESTAURANT',
+  MARKET               = 'MARKET',
+  INDEPENDENT_PRODUCER = 'INDEPENDENT_PRODUCER',
+}
+
 export interface PartnerProps {
   userId:      string;
   name:        string;
@@ -9,6 +15,7 @@ export interface PartnerProps {
   description: string;
   address:     string;
   phone:       string;
+  type:        PartnerType;
   isActive:    boolean;
 }
 
@@ -27,6 +34,7 @@ export class Partner extends Entity<PartnerProps> {
   get description(): string { return this.props.description; }
   get address(): string { return this.props.address; }
   get phone(): string { return this.props.phone; }
+  get type(): PartnerType { return this.props.type; }
   get isActive(): boolean { return this.props.isActive; }
 
   static create(props: PartnerProps, id?: string): Result<Partner> {
@@ -45,6 +53,9 @@ export class Partner extends Entity<PartnerProps> {
     if (!props.address || props.address.trim().length === 0) {
       return Result.fail<Partner>('O endereço do parceiro é obrigatório.');
     }
+    if (!props.type || !Object.values(PartnerType).includes(props.type)) {
+      return Result.fail<Partner>('Tipo de parceiro inválido ou não informado.');
+    }
 
     return Result.ok<Partner>(
       new Partner(
@@ -55,6 +66,7 @@ export class Partner extends Entity<PartnerProps> {
           description: (props.description || '').trim(),
           address: props.address.trim(),
           phone: (props.phone || '').trim(),
+          type: props.type,
           isActive: props.isActive ?? true,
         },
         id

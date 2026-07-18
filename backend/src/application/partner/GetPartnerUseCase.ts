@@ -34,6 +34,7 @@ export class GetPartnerUseCase {
       description: partner.description,
       address:     partner.address,
       phone:       partner.phone,
+      type:        partner.type,
       isActive:    partner.isActive,
     });
   }

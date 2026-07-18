@@ -12,6 +12,9 @@ export interface ProductProps {
   crossContamination: string;
   analysisStatus:     AnalysisStatus;
   partnerId?:         string;
+  price:              number;
+  category:           string;
+  imageUrl?:          string;
 }
 
 /**
@@ -20,6 +23,8 @@ export interface ProductProps {
  * Regras:
  * 1. Produto sem ingredientes tem status PENDENTE_DE_ANALISE.
  * 2. cross_contamination é obrigatório (mesmo que string vazia).
+ * 3. preço não pode ser negativo.
+ * 4. categoria é obrigatória.
  */
 export class Product extends Entity<ProductProps> {
   private constructor(props: ProductProps, id?: string) {
@@ -33,6 +38,9 @@ export class Product extends Entity<ProductProps> {
   get crossContamination(): string { return this.props.crossContamination; }
   get analysisStatus(): AnalysisStatus { return this.props.analysisStatus; }
   get partnerId(): string | undefined { return this.props.partnerId; }
+  get price(): number { return this.props.price; }
+  get category(): string { return this.props.category; }
+  get imageUrl(): string | undefined { return this.props.imageUrl; }
 
   /**
    * Atualiza os ingredientes e recalcula o status de análise
@@ -43,7 +51,11 @@ export class Product extends Entity<ProductProps> {
   }
 
   static create(
-    props: Omit<ProductProps, 'analysisStatus'> & { analysisStatus?: AnalysisStatus },
+    props: Omit<ProductProps, 'analysisStatus' | 'price' | 'category'> & { 
+      analysisStatus?: AnalysisStatus, 
+      price?: number, 
+      category?: string 
+    },
     id?: string
   ): Result<Product> {
     if (!props.name || props.name.trim().length === 0) {
@@ -53,6 +65,16 @@ export class Product extends Entity<ProductProps> {
     // crossContamination é obrigatório (pode ser vazio, mas não undefined/null)
     if (props.crossContamination === undefined || props.crossContamination === null) {
       return Result.fail<Product>('O campo crossContamination é obrigatório.');
+    }
+
+    const price = props.price ?? 0.00;
+    if (price < 0) {
+      return Result.fail<Product>('O preço do produto não pode ser negativo.');
+    }
+
+    const category = props.category ? props.category.trim() : 'Geral';
+    if (category.length === 0) {
+      return Result.fail<Product>('A categoria do produto é obrigatória.');
     }
 
     const analysisStatus = props.analysisStatus ?? Product.determineAnalysisStatus(props.ingredients);
@@ -67,6 +89,9 @@ export class Product extends Entity<ProductProps> {
           crossContamination: props.crossContamination.trim(),
           analysisStatus,
           partnerId: props.partnerId,
+          price,
+          category,
+          imageUrl: props.imageUrl ? props.imageUrl.trim() : undefined,
         },
         id
       )

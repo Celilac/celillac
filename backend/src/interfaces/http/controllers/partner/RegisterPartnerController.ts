@@ -10,15 +10,15 @@ export class RegisterPartnerController extends BaseController {
 
   protected async executeImpl(req: Request, res: Response): Promise<void> {
     const userId = req.user?.id;
-    const { name, cnpj, description, address, phone } = req.body;
+    const { name, cnpj, description, address, phone, type } = req.body;
 
     if (!userId) {
       this.unauthorized(res, 'Usuário não autenticado.');
       return;
     }
 
-    if (!name || !address) {
-      this.badRequest(res, 'Os campos name e address são obrigatórios.');
+    if (!name || !address || !type) {
+      this.badRequest(res, 'Os campos name, address e type são obrigatórios.');
       return;
     }
 
@@ -29,6 +29,7 @@ export class RegisterPartnerController extends BaseController {
       description,
       address,
       phone,
+      type,
     });
 
     if (result.isFailure) {

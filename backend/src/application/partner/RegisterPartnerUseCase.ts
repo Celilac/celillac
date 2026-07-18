@@ -1,7 +1,7 @@
 // backend/src/application/partner/RegisterPartnerUseCase.ts
 import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
 import { IUserRepository } from '../../domain/iam/repositories/IUserRepository';
-import { Partner } from '../../domain/partner/Partner';
+import { Partner, PartnerType } from '../../domain/partner/Partner';
 import { Result } from '../../domain/Result';
 import { UserRole } from '../../domain/iam/value-objects/UserRole';
 
@@ -12,6 +12,7 @@ export interface RegisterPartnerDTO {
   description: string;
   address:     string;
   phone:       string;
+  type:        PartnerType;
 }
 
 export interface PartnerResponseDTO {
@@ -22,6 +23,7 @@ export interface PartnerResponseDTO {
   description: string;
   address:     string;
   phone:       string;
+  type:        PartnerType;
   isActive:    boolean;
 }
 
@@ -57,6 +59,7 @@ export class RegisterPartnerUseCase {
       description: dto.description,
       address:     dto.address,
       phone:       dto.phone,
+      type:        dto.type,
       isActive:    true,
     });
 
@@ -75,6 +78,7 @@ export class RegisterPartnerUseCase {
       description: partner.description,
       address:     partner.address,
       phone:       partner.phone,
+      type:        partner.type,
       isActive:    partner.isActive,
     });
   }

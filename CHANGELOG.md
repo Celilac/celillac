@@ -32,5 +32,6 @@ Histórico de entregas do projeto. Formato: `Data | Feature | Descrição`.
 | 2026-07-17 | HARNESS-024 | Gap Analysis — Bloco 5: `docs/HARNESS_EVALUATION.md` criado com auto-avaliação dos 11 critérios do PDF (§13); `docs/WORKSPACE_GUIDE.md` expandido com filosofia do harness |
 | 2026-07-17 | FEAT-025 | Módulo de Parceiros Comerciais (Partners): entidade de domínio `Partner`, tabela `partners` com FK `partner_id` em `products`, rotas `POST /partners` e `GET /partners/me` |
 | 2026-07-17 | FEAT-026 | Busca Avançada Filtrada: busca de produtos agora aceita `avoidAllergens`, `partnerId`, e calcula relatórios de compatibilidade dinâmicos para cada item |
+| 2026-07-18 | FEAT-027 | Correção de Gaps do PRD Parte 2: adicionado enum `PartnerType` e campo `type` em `partners`. Adicionado preço (`price`), categoria (`category`) e `imageUrl` em `Product`. Adicionado validação de parceiro ativo ao cadastrar produto |
 
 Ver [README.md](README.md) para o estado atual das funcionalidades e [`docs/`](docs/) para as especificações de cada bounded context.

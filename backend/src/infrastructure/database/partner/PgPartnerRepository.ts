@@ -8,8 +8,8 @@ export class PgPartnerRepository implements IPartnerRepository {
 
   async create(partner: Partner): Promise<void> {
     await this.pool.query(
-      `INSERT INTO partners (id, user_id, name, cnpj, description, address, phone, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      `INSERT INTO partners (id, user_id, name, cnpj, description, address, phone, type, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         partner.id,
         partner.userId,
@@ -18,6 +18,7 @@ export class PgPartnerRepository implements IPartnerRepository {
         partner.description,
         partner.address,
         partner.phone,
+        partner.type,
         partner.isActive,
       ]
     );
@@ -25,7 +26,7 @@ export class PgPartnerRepository implements IPartnerRepository {
 
   async findById(id: string): Promise<Partner | null> {
     const result = await this.pool.query(
-      `SELECT id, user_id, name, cnpj, description, address, phone, is_active 
+      `SELECT id, user_id, name, cnpj, description, address, phone, type, is_active 
        FROM partners WHERE id = $1 LIMIT 1`,
       [id]
     );
@@ -39,7 +40,7 @@ export class PgPartnerRepository implements IPartnerRepository {
 
   async findByUserId(userId: string): Promise<Partner | null> {
     const result = await this.pool.query(
-      `SELECT id, user_id, name, cnpj, description, address, phone, is_active 
+      `SELECT id, user_id, name, cnpj, description, address, phone, type, is_active 
        FROM partners WHERE user_id = $1 LIMIT 1`,
       [userId]
     );
@@ -54,14 +55,15 @@ export class PgPartnerRepository implements IPartnerRepository {
   async update(partner: Partner): Promise<void> {
     await this.pool.query(
       `UPDATE partners 
-       SET name = $1, cnpj = $2, description = $3, address = $4, phone = $5, is_active = $6, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $7`,
+       SET name = $1, cnpj = $2, description = $3, address = $4, phone = $5, type = $6, is_active = $7, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $8`,
       [
         partner.name,
         partner.cnpj || null,
         partner.description,
         partner.address,
         partner.phone,
+        partner.type,
         partner.isActive,
         partner.id,
       ]
@@ -77,6 +79,7 @@ export class PgPartnerRepository implements IPartnerRepository {
         description: row.description,
         address:     row.address,
         phone:       row.phone,
+        type:        row.type,
         isActive:    row.is_active,
       },
       row.id
