@@ -9,6 +9,7 @@ import { catalogRouter } from './interfaces/http/routes/catalog.routes';
 import { adminRouter } from './interfaces/http/routes/admin.routes';
 import { reviewsRoutes } from './interfaces/http/routes/reviews.routes';
 import { partnerRouter } from './interfaces/http/routes/partner.routes';
+import { favoriteRouter } from './interfaces/http/routes/favorite.routes';
 import { corsMiddleware, securityHeadersMiddleware } from './interfaces/http/middlewares/SecurityMiddleware';
 
 const app  = express();
@@ -30,6 +31,7 @@ app.use('/catalog',      catalogRouter);
 app.use('/admin',        adminRouter);
 app.use('/reviews',      reviewsRoutes);
 app.use('/',             partnerRouter);
+app.use('/',             favoriteRouter);
 
 // --- Middleware Global de Tratamento de Erros ---
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

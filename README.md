@@ -109,6 +109,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 🌐 Frontend (Web App + Landing Page) | ✅ Implementado | [`docs/features/frontend.md`](docs/features/frontend.md) |
 | 🛡️ Administração | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
 | ⭐ Avaliações e Confiança | ✅ Implementado | [`docs/features/reviews.md`](docs/features/reviews.md) |
+| ❤️ Favoritos | ✅ Implementado | [`docs/features/favorites.md`](docs/features/favorites.md) |
 | 📱 App Mobile | ✅ Implementado | [`frontend/mobile-app/`](frontend/mobile-app/) |
 
 ---
@@ -173,6 +174,7 @@ Usuário: celilac_user
 | `products` | Catálogo — nome, marca, ingredientes, status de análise |
 | `product_reviews` | Avaliações — user_id (FK), product_id (FK), rating, comment |
 | `product_reports` | Denúncias — reporter_id (FK), product_id (FK), reason, details, status |
+| `user_favorites` | Favoritos — user_id (FK), product_id (FK), partner_id (FK) |
 
 Detalhes de schema e estratégia de persistência em [`docs/DATABASE.md`](docs/DATABASE.md).
 
