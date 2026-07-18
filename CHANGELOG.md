@@ -34,5 +34,6 @@ Histórico de entregas do projeto. Formato: `Data | Feature | Descrição`.
 | 2026-07-17 | FEAT-026 | Busca Avançada Filtrada: busca de produtos agora aceita `avoidAllergens`, `partnerId`, e calcula relatórios de compatibilidade dinâmicos para cada item |
 | 2026-07-18 | FEAT-027 | Correção de Gaps do PRD Parte 2: adicionado enum `PartnerType` e campo `type` em `partners`. Adicionado preço (`price`), categoria (`category`) e `imageUrl` em `Product`. Adicionado validação de parceiro ativo ao cadastrar produto |
 | 2026-07-18 | FEAT-028 | Correção de Gaps do PRD Parte 3: adicionado visualização detalhada de produto (`GET /catalog/products/:id`), edição (`PUT /catalog/products/:id`) e inativação de produtos (`PATCH /catalog/products/:id/status`) por parceiros. Adicionado suporte a avaliações de parceiros comerciais e rota `GET /reviews/partner/:partnerId` |
+| 2026-07-18 | FEAT-029 | Correção de Gaps do PRD Parte 4: fluxo de aprovação de parceiros pelo administrador (`PATCH /partners/:id/status`). Novos parceiros iniciam como inativos/pendentes por padrão |
 
 Ver [README.md](README.md) para o estado atual das funcionalidades e [`docs/`](docs/) para as especificações de cada bounded context.

@@ -51,7 +51,7 @@ export class RegisterPartnerUseCase {
       return Result.fail<PartnerResponseDTO>('Este usuário já possui um parceiro comercial cadastrado.');
     }
 
-    // 4. Criar o Parceiro
+    // 4. Criar o Parceiro (inicia como inativo/pendente de aprovação)
     const partnerResult = Partner.create({
       userId:      dto.userId,
       name:        dto.name,
@@ -60,7 +60,7 @@ export class RegisterPartnerUseCase {
       address:     dto.address,
       phone:       dto.phone,
       type:        dto.type,
-      isActive:    true,
+      isActive:    false,
     });
 
     if (partnerResult.isFailure) {

@@ -37,6 +37,14 @@ export class Partner extends Entity<PartnerProps> {
   get type(): PartnerType { return this.props.type; }
   get isActive(): boolean { return this.props.isActive; }
 
+  activate(): void {
+    this.props.isActive = true;
+  }
+
+  inactivate(): void {
+    this.props.isActive = false;
+  }
+
   static create(props: PartnerProps, id?: string): Result<Partner> {
     if (!props.userId) {
       return Result.fail<Partner>('O ID de usuário do dono é obrigatório.');
