@@ -9,8 +9,8 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
 
   async create(product: Product): Promise<void> {
     await this.pool.query(
-      `INSERT INTO products (id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id, price, category, image_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      `INSERT INTO products (id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id, price, category, image_url, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
       [
         product.id,
         product.name,
@@ -23,6 +23,59 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
         product.price,
         product.category,
         product.imageUrl || null,
+        product.isActive,
+      ]
+    );
+  }
+
+  async findById(id: string): Promise<Product | null> {
+    const result = await this.pool.query(
+      `SELECT id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id, price, category, image_url, is_active
+       FROM products WHERE id = $1 LIMIT 1`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    const row = result.rows[0];
+    return Product.create(
+      {
+        name:               row.name,
+        brand:              row.brand,
+        ingredients:        row.ingredients,
+        hasGluten:          row.has_gluten,
+        crossContamination: row.cross_contamination,
+        analysisStatus:     row.analysis_status as AnalysisStatus,
+        partnerId:          row.partner_id || undefined,
+        price:              row.price ? parseFloat(row.price) : 0,
+        category:           row.category,
+        imageUrl:           row.image_url || undefined,
+        isActive:           row.is_active,
+      },
+      row.id
+    ).getValue();
+  }
+
+  async update(product: Product): Promise<void> {
+    await this.pool.query(
+      `UPDATE products
+       SET name = $1, brand = $2, ingredients = $3, has_gluten = $4, cross_contamination = $5, analysis_status = $6, partner_id = $7, price = $8, category = $9, image_url = $10, is_active = $11, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $12`,
+      [
+        product.name,
+        product.brand,
+        product.ingredients,
+        product.hasGluten,
+        product.crossContamination,
+        product.analysisStatus,
+        product.partnerId || null,
+        product.price,
+        product.category,
+        product.imageUrl || null,
+        product.isActive,
+        product.id,
       ]
     );
   }
@@ -33,6 +86,9 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
 
     const conditions: string[] = [];
     const queryParams: any[] = [];
+
+    // Por padrão na busca pública, retornamos apenas produtos ativos
+    conditions.push('is_active = TRUE');
 
     if (term) {
       queryParams.push(`%${term}%`);
@@ -82,7 +138,7 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
 
     // Busca dados com paginação
     const dataQuery = `
-      SELECT id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id, price, category, image_url
+      SELECT id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id, price, category, image_url, is_active
       FROM products
       ${whereClause}
       ORDER BY name ASC
@@ -104,6 +160,7 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
           price:              row.price ? parseFloat(row.price) : 0,
           category:           row.category,
           imageUrl:           row.image_url || undefined,
+          isActive:           row.is_active,
         },
         row.id
       ).getValue()

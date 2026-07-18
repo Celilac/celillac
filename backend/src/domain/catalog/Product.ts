@@ -15,6 +15,7 @@ export interface ProductProps {
   price:              number;
   category:           string;
   imageUrl?:          string;
+  isActive:           boolean;
 }
 
 /**
@@ -41,6 +42,21 @@ export class Product extends Entity<ProductProps> {
   get price(): number { return this.props.price; }
   get category(): string { return this.props.category; }
   get imageUrl(): string | undefined { return this.props.imageUrl; }
+  get isActive(): boolean { return this.props.isActive; }
+
+  /**
+   * Desativa o produto (exclusão lógica / indisponível)
+   */
+  inactivate(): void {
+    this.props.isActive = false;
+  }
+
+  /**
+   * Ativa o produto
+   */
+  activate(): void {
+    this.props.isActive = true;
+  }
 
   /**
    * Atualiza os ingredientes e recalcula o status de análise
@@ -51,10 +67,11 @@ export class Product extends Entity<ProductProps> {
   }
 
   static create(
-    props: Omit<ProductProps, 'analysisStatus' | 'price' | 'category'> & { 
+    props: Omit<ProductProps, 'analysisStatus' | 'price' | 'category' | 'isActive'> & { 
       analysisStatus?: AnalysisStatus, 
       price?: number, 
-      category?: string 
+      category?: string,
+      isActive?: boolean
     },
     id?: string
   ): Result<Product> {
@@ -78,6 +95,7 @@ export class Product extends Entity<ProductProps> {
     }
 
     const analysisStatus = props.analysisStatus ?? Product.determineAnalysisStatus(props.ingredients);
+    const isActive = props.isActive ?? true;
 
     return Result.ok<Product>(
       new Product(
@@ -92,6 +110,7 @@ export class Product extends Entity<ProductProps> {
           price,
           category,
           imageUrl: props.imageUrl ? props.imageUrl.trim() : undefined,
+          isActive,
         },
         id
       )

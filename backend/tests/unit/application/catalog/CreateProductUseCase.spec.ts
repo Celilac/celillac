@@ -33,6 +33,8 @@ describe('CreateProductUseCase', () => {
     repository = {
       create: jest.fn(),
       search: jest.fn(),
+      findById: jest.fn(),
+      update: jest.fn(),
     };
     partnerRepository = {
       create: jest.fn(),

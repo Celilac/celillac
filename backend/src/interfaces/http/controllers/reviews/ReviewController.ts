@@ -1,19 +1,21 @@
 import { Request, Response } from 'express';
 import { SubmitReviewUseCase } from '../../../../application/reviews/SubmitReviewUseCase';
 import { GetProductReviewsUseCase } from '../../../../application/reviews/GetProductReviewsUseCase';
+import { GetPartnerReviewsUseCase } from '../../../../application/reviews/GetPartnerReviewsUseCase';
 
 export class ReviewController {
   constructor(
-    private submitReviewUseCase: SubmitReviewUseCase,
-    private getProductReviewsUseCase: GetProductReviewsUseCase
+    private readonly submitReviewUseCase: SubmitReviewUseCase,
+    private readonly getProductReviewsUseCase: GetProductReviewsUseCase,
+    private readonly getPartnerReviewsUseCase: GetPartnerReviewsUseCase
   ) {}
 
   public async submit(req: Request, res: Response): Promise<Response> {
     try {
-      const { userId, productId, rating, comment } = req.body;
+      const { userId, productId, partnerId, rating, comment } = req.body;
 
-      if (!userId || !productId || rating === undefined) {
-        return res.status(400).json({ error: 'userId, productId e rating (1-5) são obrigatórios.' });
+      if (!userId || (!productId && !partnerId) || rating === undefined) {
+        return res.status(400).json({ error: 'Os campos userId, rating (1-5) e pelo menos um de productId ou partnerId são obrigatórios.' });
       }
 
       if (req.user?.id !== userId && req.user?.role !== 'ADMIN') {
@@ -23,15 +25,17 @@ export class ReviewController {
       const result = await this.submitReviewUseCase.execute({
         userId,
         productId,
+        partnerId,
         rating: Number(rating),
         comment,
       });
 
       if (result.isFailure) {
-        if (result.getError() === 'Produto não encontrado no catálogo.') {
-          return res.status(404).json({ error: result.getError() });
+        const error = result.getError();
+        if (error === 'Produto não encontrado no catálogo.' || error === 'Parceiro comercial não encontrado.') {
+          return res.status(404).json({ error });
         }
-        return res.status(400).json({ error: result.getError() });
+        return res.status(400).json({ error });
       }
 
       const review = result.getValue();
@@ -39,6 +43,7 @@ export class ReviewController {
         id: review.id,
         userId: review.userId,
         productId: review.productId,
+        partnerId: review.partnerId,
         rating: review.rating,
         comment: review.comment,
         createdAt: review.createdAt,
@@ -53,6 +58,22 @@ export class ReviewController {
       const { productId } = req.params;
 
       const result = await this.getProductReviewsUseCase.execute(productId);
+
+      if (result.isFailure) {
+        return res.status(400).json({ error: result.getError() });
+      }
+
+      return res.status(200).json(result.getValue());
+    } catch (error: any) {
+      return res.status(500).json({ error: 'Erro interno no servidor ao buscar avaliações.' });
+    }
+  }
+
+  public async getPartnerReviews(req: Request, res: Response): Promise<Response> {
+    try {
+      const { partnerId } = req.params;
+
+      const result = await this.getPartnerReviewsUseCase.execute(partnerId);
 
       if (result.isFailure) {
         return res.status(400).json({ error: result.getError() });

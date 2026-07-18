@@ -17,6 +17,8 @@ describe('SearchProductsUseCase', () => {
     repository = {
       create: jest.fn(),
       search: jest.fn(),
+      findById: jest.fn(),
+      update: jest.fn(),
     };
     foodProfileRepository = {
       findByUserId: jest.fn(),

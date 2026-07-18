@@ -19,4 +19,6 @@ export interface SearchProductQuery {
 export interface IProductCatalogRepository {
   create(product: Product): Promise<void>;
   search(query: SearchProductQuery): Promise<PaginatedResult<Product>>;
+  findById(id: string): Promise<Product | null>;
+  update(product: Product): Promise<void>;
 }

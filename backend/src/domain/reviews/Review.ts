@@ -3,7 +3,8 @@ import { Result } from '../Result';
 
 interface ReviewProps {
   userId: string;
-  productId: string;
+  productId?: string;
+  partnerId?: string;
   rating: number; // 1 a 5 estrelas
   comment?: string;
   createdAt: Date;
@@ -14,8 +15,12 @@ export class Review extends Entity<ReviewProps> {
     return this.props.userId;
   }
 
-  get productId(): string {
+  get productId(): string | undefined {
     return this.props.productId;
+  }
+
+  get partnerId(): string | undefined {
+    return this.props.partnerId;
   }
 
   get rating(): number {
@@ -35,22 +40,31 @@ export class Review extends Entity<ReviewProps> {
   }
 
   public static create(
-    props: { userId: string; productId: string; rating: number; comment?: string },
+    props: { userId: string; productId?: string; partnerId?: string; rating: number; comment?: string; createdAt?: Date },
     id?: string
   ): Result<Review> {
     if (!props.userId || props.userId.trim() === '') {
       return Result.fail<Review>('User ID é obrigatório.');
     }
-    if (!props.productId || props.productId.trim() === '') {
-      return Result.fail<Review>('Product ID é obrigatório.');
+    
+    const hasProduct = props.productId && props.productId.trim() !== '';
+    const hasPartner = props.partnerId && props.partnerId.trim() !== '';
+
+    if (!hasProduct && !hasPartner) {
+      return Result.fail<Review>('A avaliação deve estar associada a um produto ou a um parceiro comercial.');
     }
+
     if (props.rating < 1 || props.rating > 5) {
       return Result.fail<Review>('A avaliação deve ser entre 1 e 5 estrelas.');
     }
 
     const review = new Review({
-      ...props,
-      createdAt: new Date(),
+      userId: props.userId,
+      productId: hasProduct ? props.productId?.trim() : undefined,
+      partnerId: hasPartner ? props.partnerId?.trim() : undefined,
+      rating: props.rating,
+      comment: props.comment,
+      createdAt: props.createdAt ?? new Date(),
     }, id);
 
     return Result.ok<Review>(review);

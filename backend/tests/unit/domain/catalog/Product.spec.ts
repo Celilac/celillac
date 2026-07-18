@@ -14,6 +14,7 @@ describe('Product Entity', () => {
     expect(result.isSuccess).toBe(true);
     const product = result.getValue();
     expect(product.analysisStatus).toBe('ANALISADO');
+    expect(product.isActive).toBe(true); // Default
   });
 
   it('deve criar um produto PENDENTE_DE_ANALISE se não possuir ingredientes', () => {
@@ -28,6 +29,37 @@ describe('Product Entity', () => {
     expect(result.isSuccess).toBe(true);
     const product = result.getValue();
     expect(product.analysisStatus).toBe('PENDENTE_DE_ANALISE');
+  });
+
+  it('deve permitir criar produto inativo', () => {
+    const result = Product.create({
+      name: 'Arroz',
+      brand: 'Marca A',
+      ingredients: '',
+      hasGluten: false,
+      crossContamination: '',
+      isActive: false,
+    });
+
+    expect(result.isSuccess).toBe(true);
+    const product = result.getValue();
+    expect(product.isActive).toBe(false);
+  });
+
+  it('deve inativar e reativar produto', () => {
+    const product = Product.create({
+      name: 'Arroz',
+      brand: 'Marca A',
+      ingredients: '',
+      hasGluten: false,
+      crossContamination: '',
+    }).getValue();
+
+    expect(product.isActive).toBe(true);
+    product.inactivate();
+    expect(product.isActive).toBe(false);
+    product.activate();
+    expect(product.isActive).toBe(true);
   });
 
   it('deve falhar se crossContamination não for fornecido', () => {
