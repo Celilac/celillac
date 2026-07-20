@@ -6,8 +6,13 @@ O CeLiLac é uma plataforma de segurança alimentar focada em celíacos e pessoa
 ## Arquitetura e Tecnologias
 - **Backend:** Node.js/TypeScript, Clean Architecture, DDD.
 - **Banco de Dados:** PostgreSQL.
-- **Frontend:** Web (React/Next), Mobile (Flutter/React Native).
+- **Frontend:** Web (React/Next), Mobile (Flutter).
 - **Padronização:** O código deve seguir SOLID e ser altamente testado.
+
+## Identidade Visual (Marca)
+- Fonte única da marca: `frontend/web-app/public/brand/`. Use sempre `logo_with_transparent_background.png` (maior resolução, com alpha) para qualquer novo uso da logo — web ou mobile.
+- Mobile (`frontend/mobile-app`, Flutter): a logo mestre vive em `assets/brand/logo.png` (cópia do arquivo acima, registrada em `pubspec.yaml`) e todo ícone/splash gerado (mipmaps Android em `android/app/src/main/res/mipmap-*/ic_launcher.png`, `AppIcon.appiconset` no iOS, `drawable/launch_image.png` e `LaunchImage.imageset`) deriva dela. Para exibir a marca em telas, use o widget `lib/shared/widgets/brand_logo.dart` (`BrandLogo`) em vez de emoji ou texto solto.
+- Nunca reintroduzir os assets placeholder padrão do template Flutter (o ícone azul "F") nem emojis como substituto da logo.
 
 ## Regras Obrigatórias
 1. **Nunca implemente sem um plano:** Antes de qualquer código, crie um `PLAN.md` na tarefa.

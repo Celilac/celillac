@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../api/api_exception.dart';
 import '../../core/auth/session_controller.dart';
 import '../../core/theme/app_colors.dart';
+import '../../shared/widgets/brand_logo.dart';
 import '../../shared/widgets/loading_overlay.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -78,8 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('🌾', style: TextStyle(fontSize: 48)),
-                    const SizedBox(height: 8),
+                    const BrandLogo(),
                     const Text(
                       'CeLiLac',
                       style: TextStyle(
