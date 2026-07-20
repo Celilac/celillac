@@ -1,24 +1,48 @@
-name: CeLiLac CI
+name: CeLiLac CI — PR para Main
+
+# Valida Pull Requests abertos de develop → main.
+# Push direto na main é bloqueado pelo workflow protect-main.yml.
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   validate:
+    name: Validação Final — PR para Main
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: ⚙️ Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: '**/package-lock.json'
+
+      - name: 📦 Instalar dependências do Backend
+        working-directory: backend
+        run: npm ci
+
+      - name: 🏗️ Build
+        working-directory: backend
+        run: npm run build
+
+      - name: 🧪 Testes
+        working-directory: backend
+        run: npm test -- --passWithNoTests
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci-secret-only-for-tests
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
 
       - name: Run validate script
         run: bash harness/scripts/validate.sh

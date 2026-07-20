@@ -44,10 +44,14 @@ Esta seção define as limitações estritas de operação do Agente, baseadas n
 
 ### Ações Autônomas (Exemplos de Tarefas Permitidas)
 O Agente tem autonomia total para prosseguir sem interrupção nestes cenários:
-- Criar testes unitários e de integração para a suíte.
-- Implementar lógicas de validação em Value Objects.
-- Criar scripts de seed para popular dados fictícios.
+- Criar testes unitários para o motor de compatibilidade alimentar (`AllergenEngine.spec.ts`).
+- Criar testes de integração para o cadastro de produtos.
+- Implementar lógicas de validação em Value Objects (ex: `Email`, `Rating`).
+- Criar scripts de seed com dados fictícios em `harness/scripts/`.
 - Refatorar controllers para extrair lógica para Use Cases (Clean Architecture).
+- Implementar endpoint de busca de produtos compatíveis.
+- Criar componente visual de alerta alimentar no frontend web.
+- Atualizar documentação de API em `docs/API_CONTRACTS.md` após criar um endpoint.
 
 ### Ações Restritas (Exigem Pausa e Aprovação Humana Obrigatória)
 - ⚠️ Alterar regras de compatibilidade alimentar.
@@ -62,10 +66,12 @@ O Agente tem autonomia total para prosseguir sem interrupção nestes cenários:
 
 ## Arquivos de Consulta Obrigatória
 Antes de implementar qualquer nova funcionalidade, o Agente DEVE ler e compreender os seguintes documentos:
-- `docs/PRD.md` (Visão do produto e requisitos)
+- `docs/PRD.md` (Visão do produto, personas e requisitos)
 - `docs/DOMAIN_MODEL.md` (Contextos Delimitados e regras de negócio)
 - `docs/API_CONTRACTS.md` (Contratos de comunicação HTTP)
 - `docs/DATABASE.md` (Esquemas de banco e tabelas existentes)
+- `docs/ARCHITECTURE.md` (Regras de Clean Architecture e estrutura de camadas)
+- `docs/FRONTEND_STRATEGY.md` (Regras para agentes que atuam em interfaces web/mobile)
 
 ## Workflows de Execução
 O Agente DEVE adaptar seu comportamento de acordo com o tipo da tarefa solicitada, seguindo os fluxos abaixo:

@@ -22,7 +22,7 @@ const ALLERGEN_OPTIONS = [
 ];
 
 const SEVERITY_OPTIONS = [
-  { value: 'LIFESTYLE', label: '🧘 Estilo de vida (LIFESTYLE)' },
+  { value: 'LIFESTYLE', label: '🟣 Estilo de Vida (LIFESTYLE)' },
   { value: 'LOW',       label: '🟢 Baixo (LOW)' },
   { value: 'MEDIUM',    label: '🟡 Médio (MEDIUM)' },
   { value: 'HIGH',      label: '🟠 Alto (HIGH)' },

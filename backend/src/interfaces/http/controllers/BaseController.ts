@@ -42,6 +42,10 @@ export abstract class BaseController {
     return res.status(409).json({ error: message });
   }
 
+  protected notFound(res: Response, message: string): Response {
+    return res.status(404).json({ error: message });
+  }
+
   protected serverError(res: Response, message: string): Response {
     return res.status(500).json({ error: message });
   }

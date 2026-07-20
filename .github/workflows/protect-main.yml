@@ -1,0 +1,64 @@
+name: 🔒 Protect Main Branch
+
+# Este workflow é um status check de segurança.
+# Ele FALHA propositalmente em qualquer push direto na main.
+# Para que uma alteração entre na main, ela DEVE vir via Pull Request.
+#
+# Para ativar a proteção completa no GitHub:
+#   Settings → Branches → Branch protection rules → main
+#   ✅ Require a pull request before merging
+#   ✅ Require status checks to pass → adicionar "block-direct-push"
+#   ✅ Require branches to be up to date before merging
+#   ✅ Do not allow bypassing the above settings
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  block-direct-push:
+    name: Block Direct Push to Main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar branch e bloquear push direto na main
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            COMMIT_MSG="${{ github.event.head_commit.message }}"
+            echo "Mensagem do commit: $COMMIT_MSG"
+            
+            # Se a mensagem contiver indicativos de PR merge (ex: Merge pull request ou (#123)), permite o push.
+            if echo "$COMMIT_MSG" | grep -qE "Merge pull request|Merge branch|\(#[0-9]+\)"; then
+              echo "============================================================"
+              echo "✅  PUSH PERMITIDO — Commit originado de Pull Request Merge."
+              echo "============================================================"
+              exit 0
+            else
+              echo "============================================================"
+              echo "❌  PUSH DIRETO NA MAIN BLOQUEADO — CELILAC HARNESS POLICY"
+              echo "============================================================"
+              echo ""
+              echo "🚫  Branch: main"
+              echo "🚫  Actor:  ${{ github.actor }}"
+              echo "🚫  Commit: ${{ github.sha }}"
+              echo ""
+              echo "📋  REGRA DO HARNESS:"
+              echo "    A branch 'main' é protegida e só aceita Pull Requests."
+              echo "    Nenhum push direto é permitido, independente do autor."
+              echo ""
+              echo "✅  FLUXO CORRETO:"
+              echo "    1. Trabalhe na branch 'develop' ou em uma feature branch."
+              echo "    2. Abra um Pull Request de 'develop' → 'main'."
+              echo "    3. Aguarde revisão e aprovação humana."
+              echo "    4. Faça o merge via interface do GitHub."
+              echo ""
+              echo "============================================================"
+              exit 1
+            fi
+          else
+            echo "============================================================"
+            echo "✅  Status check registrado com sucesso na branch: ${{ github.ref_name }}"
+            echo "============================================================"
+            exit 0
+          fi

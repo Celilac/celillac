@@ -17,4 +17,9 @@ export interface IUserRepository {
    * Persiste um novo usuário.
    */
   save(user: User): Promise<void>;
+
+  /**
+   * Busca um usuário pelo ID.
+   */
+  findById(id: string): Promise<User | null>;
 }

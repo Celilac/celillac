@@ -13,11 +13,26 @@ export class SearchProductsController extends BaseController {
     const query = (req.query.query ?? req.query.q) as string; // aceita ambos: ?query= e ?q=
     const page = parseInt(req.query.page as string, 10);
     const limit = parseInt(req.query.limit as string, 10);
+    const partnerId = req.query.partnerId as string;
+    const onlyCompatible = req.query.onlyCompatible === 'true' || req.query.compatible === 'true';
+
+    // Parse de avoidAllergens (ex: ?avoidAllergens=GLUTEN,LACTOSE)
+    const avoidAllergensRaw = req.query.avoidAllergens as string;
+    const avoidAllergens = avoidAllergensRaw
+      ? avoidAllergensRaw.split(',').map((s) => s.trim().toUpperCase())
+      : undefined;
+
+    // Se o usuário estiver autenticado ou passar userId na query, usamos para compatibilidade
+    const userIdForCompatibility = req.user?.id || (req.query.userId as string);
 
     const result = await this.searchProductsUseCase.execute({
       query,
       page: isNaN(page) ? undefined : page,
       limit: isNaN(limit) ? undefined : limit,
+      avoidAllergens,
+      partnerId,
+      userIdForCompatibility,
+      onlyCompatible,
     });
 
     if (result.isFailure) {
