@@ -5,6 +5,7 @@ import '../../api/models/auth_models.dart';
 import '../../api/models/enums.dart';
 import '../../core/auth/session_controller.dart';
 import '../../core/theme/app_colors.dart';
+import '../../shared/widgets/brand_logo.dart';
 import '../../shared/widgets/loading_overlay.dart';
 
 final _strongPasswordRegex =
@@ -138,8 +139,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('🌾', style: TextStyle(fontSize: 48)),
-                    const SizedBox(height: 8),
+                    const BrandLogo(),
                     const Text(
                       'Criar Conta',
                       style: TextStyle(
