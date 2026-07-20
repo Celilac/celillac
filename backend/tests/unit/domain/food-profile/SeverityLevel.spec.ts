@@ -22,6 +22,10 @@ describe('SeverityLevel', () => {
       expect(SEVERITY_ORDER[SeverityLevel.LIFESTYLE]).toBe(0);
     });
 
+    it('LOW deve ter valor 1', () => {
+      expect(SEVERITY_ORDER[SeverityLevel.LOW]).toBe(1);
+    });
+
     it('FATAL deve ter valor máximo', () => {
       expect(SEVERITY_ORDER[SeverityLevel.FATAL]).toBe(4);
     });
