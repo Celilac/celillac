@@ -6,10 +6,11 @@
  * FATAL = Celíaco. Zero tolerância, incluindo traços.
  */
 export enum SeverityLevel {
-  LOW    = 'LOW',
-  MEDIUM = 'MEDIUM',
-  HIGH   = 'HIGH',
-  FATAL  = 'FATAL',
+  LIFESTYLE = 'LIFESTYLE',
+  LOW       = 'LOW',
+  MEDIUM    = 'MEDIUM',
+  HIGH      = 'HIGH',
+  FATAL     = 'FATAL',
 }
 
 /**
@@ -17,8 +18,9 @@ export enum SeverityLevel {
  * Usado pelo AllergenEngine para determinar o nível final do relatório.
  */
 export const SEVERITY_ORDER: Record<SeverityLevel, number> = {
-  [SeverityLevel.LOW]:    1,
-  [SeverityLevel.MEDIUM]: 2,
-  [SeverityLevel.HIGH]:   3,
-  [SeverityLevel.FATAL]:  4,
+  [SeverityLevel.LIFESTYLE]: 0,
+  [SeverityLevel.LOW]:       1,
+  [SeverityLevel.MEDIUM]:    2,
+  [SeverityLevel.HIGH]:      3,
+  [SeverityLevel.FATAL]:     4,
 };

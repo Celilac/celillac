@@ -22,10 +22,11 @@ const ALLERGEN_OPTIONS = [
 ];
 
 const SEVERITY_OPTIONS = [
-  { value: 'LOW',    label: '🟢 Baixo (LOW)' },
-  { value: 'MEDIUM', label: '🟡 Médio (MEDIUM)' },
-  { value: 'HIGH',   label: '🟠 Alto (HIGH)' },
-  { value: 'FATAL',  label: '🔴 Fatal — Celíaco (FATAL)' },
+  { value: 'LIFESTYLE', label: '🟣 Estilo de Vida (LIFESTYLE)' },
+  { value: 'LOW',       label: '🟢 Baixo (LOW)' },
+  { value: 'MEDIUM',    label: '🟡 Médio (MEDIUM)' },
+  { value: 'HIGH',      label: '🟠 Alto (HIGH)' },
+  { value: 'FATAL',     label: '🔴 Fatal — Celíaco (FATAL)' },
 ];
 
 interface Row { allergen: string; severity: string; }
