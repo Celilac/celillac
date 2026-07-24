@@ -2,16 +2,18 @@
 // frontend/web-app/src/contexts/AuthContext.tsx
 //
 // Estratégia de armazenamento do JWT:
-//   ✅ sessionStorage — persiste durante a sessão da aba (navegação client-side incluída)
-//   ✅ Limpo automaticamente ao fechar a aba
-//   ❌ localStorage — proibido (persiste indefinidamente, risco maior de XSS)
+//   ✅ localStorage — persiste entre abas e janelas do mesmo navegador
+//   ✅ Limpo explicitamente no logout (revogação via blacklist no backend)
+//   ✅ Token revogado no servidor na chamada de logout — mesmo que localStorage
+//      seja lido após o logout, o backend rejeita o token com 401.
 //
 // O token NÃO é exposto via window nem concatenado em logs.
 //
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { iamApi } from '@/api/iam';
 
-const SESSION_KEY_TOKEN  = 'celilac:token';
-const SESSION_KEY_USERID = 'celilac:userId';
+const STORAGE_KEY_TOKEN  = 'celilac:token';
+const STORAGE_KEY_USERID = 'celilac:userId';
 
 interface AuthState {
   token:  string | null;
@@ -20,7 +22,7 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   login:           (token: string, userId: string) => void;
-  logout:          () => void;
+  logout:          () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -29,36 +31,43 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [auth, setAuth] = useState<AuthState>({ token: null, userId: null });
 
-  // Restaura sessão do sessionStorage ao montar (sobrevive a navegação Next.js)
+  // Restaura sessão do localStorage ao montar (persiste entre abas e recargas)
   useEffect(() => {
     try {
-      const token  = sessionStorage.getItem(SESSION_KEY_TOKEN);
-      const userId = sessionStorage.getItem(SESSION_KEY_USERID);
+      const token  = localStorage.getItem(STORAGE_KEY_TOKEN);
+      const userId = localStorage.getItem(STORAGE_KEY_USERID);
       if (token && userId) {
         setAuth({ token, userId });
       }
     } catch {
-      // sessionStorage indisponível (SSR ou modo privado restrito) — sem ação
+      // localStorage indisponível (SSR ou modo privado restrito) — sem ação
     }
   }, []);
 
   const login = useCallback((token: string, userId: string) => {
     try {
-      sessionStorage.setItem(SESSION_KEY_TOKEN,  token);
-      sessionStorage.setItem(SESSION_KEY_USERID, userId);
+      localStorage.setItem(STORAGE_KEY_TOKEN,  token);
+      localStorage.setItem(STORAGE_KEY_USERID, userId);
     } catch {
       // Falha silenciosa — token só em memória como fallback
     }
     setAuth({ token, userId });
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    if (auth.token) {
+      try {
+        await iamApi.logout(auth.token);
+      } catch {
+        // Silencia erros para garantir logout client-side incondicional
+      }
+    }
     try {
-      sessionStorage.removeItem(SESSION_KEY_TOKEN);
-      sessionStorage.removeItem(SESSION_KEY_USERID);
+      localStorage.removeItem(STORAGE_KEY_TOKEN);
+      localStorage.removeItem(STORAGE_KEY_USERID);
     } catch { /* sem ação */ }
     setAuth({ token: null, userId: null });
-  }, []);
+  }, [auth.token]);
 
   return (
     <AuthContext.Provider value={{ ...auth, login, logout, isAuthenticated: !!auth.token }}>

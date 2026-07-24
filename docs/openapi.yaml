@@ -202,6 +202,18 @@ paths:
           description: Bad Request
         '401':
           description: Unauthorized
+  /iam/logout:
+    post:
+      summary: Revoga o token de acesso do usuário autenticado
+      tags:
+        - IAM
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK (Token revogado com sucesso)
+        '401':
+          description: Unauthorized (Token ausente, malformado, expirado ou revogado)
   /food-profile:
     post:
       summary: Cria o perfil alimentar de um usuário

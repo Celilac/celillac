@@ -1,6 +1,6 @@
 'use client';
 // frontend/web-app/src/app/partner/[id]/edit/page.tsx
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { partnerApi } from '@/api/partner';
@@ -11,7 +11,7 @@ import { HttpError } from '@/api/client';
 import styles from '../../partner.module.css';
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 const TYPE_OPTIONS = [
@@ -21,7 +21,7 @@ const TYPE_OPTIONS = [
 ];
 
 export default function EditPartnerPage({ params }: PageProps) {
-  const { id } = use(params);
+  const { id } = params;
   const { token, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();

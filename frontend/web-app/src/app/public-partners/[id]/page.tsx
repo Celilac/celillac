@@ -1,6 +1,6 @@
 'use client';
 // frontend/web-app/src/app/public-partners/[id]/page.tsx
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { partnerApi, PartnerSummary } from '@/api/partner';
@@ -9,14 +9,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
+import { Header } from '@/components/layout/Header';
 import styles from '../../partner/partner.module.css';
 
 interface PageProps {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }
 
 export default function PublicPartnerDetailPage({ params }: PageProps) {
-  const { id } = use(params);
+  const { id } = params;
   const { token } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
@@ -57,18 +58,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
 
   return (
     <div className="profile-page">
-      <header className="topbar">
-        <span className="topbar-title brand-lockup" onClick={() => router.push('/public-partners')} style={{ cursor: 'pointer' }}>
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">Celi<span>Lac</span></span>
-          <span className="brand-tagline">Guia de Estabelecimentos</span>
-        </span>
-        <nav className="topbar-actions">
-          <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-        </nav>
-      </header>
+      <Header />
 
       <main className={styles.container}>
         <div className={styles.header}>

@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
+import { Header } from '@/components/layout/Header';
 import styles from './partner.module.css';
 
 export default function PartnerListPage() {
@@ -72,18 +73,7 @@ export default function PartnerListPage() {
 
   return (
     <div className="profile-page">
-      <header className="topbar">
-        <span className="topbar-title brand-lockup" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">Celi<span>Lac</span></span>
-          <span className="brand-tagline">Portal do Parceiro</span>
-        </span>
-        <nav className="topbar-actions">
-          <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-        </nav>
-      </header>
+      <Header />
 
       <main className={styles.container}>
         <div className={styles.header}>

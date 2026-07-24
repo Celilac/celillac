@@ -11,6 +11,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 2rem;
   margin-bottom: 2.5rem;
   animation: fadeIn 0.6s ease-out;
 }
@@ -26,6 +27,13 @@
   font-weight: 800;
   letter-spacing: -0.025em;
   background: linear-gradient(135deg, #fff 0%, #a7f3d0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+:global(html[data-theme='light']) .title {
+  background: linear-gradient(135deg, var(--color-brand-navy) 0%, #059669 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -461,4 +469,92 @@ input:checked + .slider:before {
   .dashboardLayout {
     grid-template-columns: 1fr;
   }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+}
+
+/* ── Light Theme Overrides ── */
+:global(html[data-theme='light']) .card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+:global(html[data-theme='light']) .card:hover {
+  border-color: rgba(5, 150, 105, 0.3);
+  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.12);
+}
+
+:global(html[data-theme='light']) .formShell {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+:global(html[data-theme='light']) .input,
+:global(html[data-theme='light']) .select,
+:global(html[data-theme='light']) .textarea {
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: var(--color-text, #1C2B33);
+}
+
+:global(html[data-theme='light']) .input::placeholder,
+:global(html[data-theme='light']) .textarea::placeholder {
+  color: #94a3b8;
+}
+
+:global(html[data-theme='light']) .input:focus,
+:global(html[data-theme='light']) .select:focus,
+:global(html[data-theme='light']) .textarea:focus {
+  background: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+}
+
+:global(html[data-theme='light']) .label {
+  color: var(--color-text, #1C2B33);
+}
+
+:global(html[data-theme='light']) .partnerName {
+  color: var(--color-text, #1C2B33);
+}
+
+:global(html[data-theme='light']) .sectionTitle {
+  color: var(--color-text, #1C2B33);
+}
+
+:global(html[data-theme='light']) .metaItem {
+  background: rgba(0, 0, 0, 0.05);
+  color: #475569;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+:global(html[data-theme='light']) .emptyState {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+:global(html[data-theme='light']) .btnSecondary {
+  background: rgba(0, 0, 0, 0.04);
+  color: #374151;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+:global(html[data-theme='light']) .btnSecondary:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: #111827;
+}
+
+:global(html[data-theme='light']) .dialogOverlay {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+:global(html[data-theme='light']) .dialogCard {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
 }

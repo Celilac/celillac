@@ -115,6 +115,13 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `status` | VARCHAR | DEFAULT `PENDING` |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
 
+### Tabela: `blacklisted_tokens` (Tokens Revogados - Blacklist)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `token` | TEXT | PK |
+| `expires_at` | TIMESTAMP | NOT NULL |
+| *(índice)* | INDEX | `idx_blacklisted_tokens_expires_at` — otimiza queries de limpeza/expiração |
+
 ---
 
 ## 5. Estratégia de Migrations
