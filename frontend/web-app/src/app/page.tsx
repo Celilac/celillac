@@ -42,6 +42,19 @@ export default function DashboardPage() {
           >
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
+          <Link href="/public-partners" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
+            🏢 Estabelecimentos
+          </Link>
+          {isAuthenticated && (
+            <Link href="/partner" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
+              💼 Parceiro
+            </Link>
+          )}
+          {isAuthenticated && (
+            <Link href="/admin/partners" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
+              🛡️ Moderação
+            </Link>
+          )}
           <Link href="/profile" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
             ⚙️ Perfil
           </Link>

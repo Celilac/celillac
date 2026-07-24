@@ -3,7 +3,7 @@ import { InactivateProductUseCase } from '../../../../src/application/catalog/In
 import { IProductCatalogRepository } from '../../../../src/domain/catalog/repositories/IProductCatalogRepository';
 import { IPartnerRepository } from '../../../../src/domain/partner/repositories/IPartnerRepository';
 import { Product } from '../../../../src/domain/catalog/Product';
-import { Partner, PartnerType } from '../../../../src/domain/partner/Partner';
+import { Partner, PartnerType, PartnerApprovalStatus, PartnerOperationalStatus } from '../../../../src/domain/partner/Partner';
 
 describe('InactivateProductUseCase', () => {
   let repository: jest.Mocked<IProductCatalogRepository>;
@@ -18,7 +18,8 @@ describe('InactivateProductUseCase', () => {
     description: 'Restaurante sem glúten',
     phone: '1234-5678',
     type: PartnerType.RESTAURANT,
-    isActive: true,
+    approvalStatus: PartnerApprovalStatus.APPROVED,
+    operationalStatus: PartnerOperationalStatus.ACTIVE,
   }, 'partner-1').getValue();
 
   const mockAnotherPartner = Partner.create({
@@ -29,7 +30,8 @@ describe('InactivateProductUseCase', () => {
     description: 'Doces artesanais',
     phone: '1234-5678',
     type: PartnerType.INDEPENDENT_PRODUCER,
-    isActive: true,
+    approvalStatus: PartnerApprovalStatus.APPROVED,
+    operationalStatus: PartnerOperationalStatus.ACTIVE,
   }, 'partner-2').getValue();
 
   beforeEach(() => {
@@ -42,9 +44,10 @@ describe('InactivateProductUseCase', () => {
     partnerRepository = {
       create: jest.fn(),
       findById: jest.fn(),
-      findByUserId: jest.fn(),
+      findAllByUserId: jest.fn(),
+      findAll: jest.fn(),
       update: jest.fn(),
-    };
+    } as any;
     useCase = new InactivateProductUseCase(repository, partnerRepository);
   });
 
@@ -60,7 +63,7 @@ describe('InactivateProductUseCase', () => {
     }, 'prod-1').getValue();
 
     repository.findById.mockResolvedValue(product);
-    partnerRepository.findByUserId.mockResolvedValue(mockPartner);
+    partnerRepository.findAllByUserId.mockResolvedValue([mockPartner]);
 
     const result = await useCase.execute({
       id: 'prod-1',
@@ -85,7 +88,7 @@ describe('InactivateProductUseCase', () => {
     }, 'prod-1').getValue();
 
     repository.findById.mockResolvedValue(product);
-    partnerRepository.findByUserId.mockResolvedValue(mockPartner);
+    partnerRepository.findAllByUserId.mockResolvedValue([mockPartner]);
 
     const result = await useCase.execute({
       id: 'prod-1',
@@ -110,7 +113,7 @@ describe('InactivateProductUseCase', () => {
     }, 'prod-1').getValue();
 
     repository.findById.mockResolvedValue(product);
-    partnerRepository.findByUserId.mockResolvedValue(mockAnotherPartner);
+    partnerRepository.findAllByUserId.mockResolvedValue([mockAnotherPartner]);
 
     const result = await useCase.execute({
       id: 'prod-1',

@@ -5,7 +5,7 @@
 
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
-[![Mobile](https://img.shields.io/badge/Mobile-React%20Native%20%2B%20Expo-9cf)](#-mobile)
+[![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
 [![Tests](https://img.shields.io/badge/Tests-22%20suites%20%7C%2099%20passing-brightgreen)](#-testes)
 
 ---
@@ -36,11 +36,12 @@ celillac/
 ├── frontend/
 │   ├── web-app/             # Aplicação principal (Next.js 14, porta 3001)
 │   ├── landing-page/        # Landing page estática (Next.js 14, porta 3002)
-│   └── mobile-app/          # App React Native + Expo (Android/iOS)
-│       ├── src/lib/         # api.ts (HTTP) + auth.ts (decode JWT)
-│       ├── src/context/     # AuthContext (estado global + SecureStore)
-│       ├── src/screens/     # Login, Cadastro, Onboarding, Perfil, Busca, Scanner
-│       └── src/components/  # AlertBanner, RestrictionChip, LoadingSpinner
+│   └── mobile-app/          # App Mobile (Flutter)
+│       ├── lib/             # Código-fonte Dart
+│       │   ├── api/         # Chamadas HTTP/Cliente API
+│       │   ├── core/        # Temas, constantes e utilitários
+│       │   └── features/    # Features de negócio (Auth, Perfil, Scanner)
+│       └── test/            # Testes unitários e de widget
 ├── docs/                    # Documentação de arquitetura e contratos
 ├── harness/                 # Regras de governança da IA
 └── infra/docker/            # docker-compose.yml (PostgreSQL)
@@ -82,17 +83,14 @@ npm install
 npm run dev
 ```
 
-### 5. App Mobile (Android/iOS via Expo)
+### 5. App Mobile (Flutter)
 ```bash
 cd frontend/mobile-app
-npm install
-npm run android     # Emulador Android (requer Android Studio)
-npm run ios         # Simulador iOS (requer macOS + Xcode)
-npm start           # Expo Go (scan QR code no celular)
+flutter pub get
+flutter run
 ```
 
 > **Android Emulator:** A URL da API usa `http://10.0.2.2:3000` (localhost do emulador Android).  
-> **Dispositivo físico:** Altere `BASE_URL` em `src/lib/api.ts` para o IP da sua máquina.
 
 ---
 
@@ -210,7 +208,7 @@ O app mobile cobre o fluxo completo do consumidor no campo:
 | **Perfil** | Restrições ativas, aviso de revalidação e logout |
 
 **Segurança Mobile:**
-- Token JWT armazenado em **Keychain (iOS) / Keystore (Android)** via `expo-secure-store`
+- Token JWT armazenado em **Keychain (iOS) / Keystore (Android)** via `flutter_secure_storage`
 - Compatibilidade calculada **exclusivamente no backend** — nunca no dispositivo
 - Alertas visuais: ✅ SAFE · 🟡 WARNING · ⚠️ DANGER · ⛔ BLOCKED
 
@@ -224,7 +222,7 @@ O app mobile cobre o fluxo completo do consumidor no campo:
 - **CORS & Headers de Segurança:** CORS seguro para origens controladas e headers OWASP recomendados (`nosniff`, `DENY` clickjacking, etc.).
 - **`.env` nunca commitado** — apenas `.env.example` no repositório
 - **Motor de Alérgenos:** 100% das alterações exigem aprovação humana
-- **JWT mobile:** armazenado em Keychain/Keystore via `expo-secure-store` (não em AsyncStorage)
+- **JWT mobile:** armazenado em Keychain/Keystore via `flutter_secure_storage` (não em AsyncStorage)
 - **JWT web:** em `sessionStorage` e em memória — não armazenado em `localStorage`
 - **Seeds apenas** em ambiente local — nunca dados reais de usuários
 - **Agente de IA** segue `AGENTS.md` + `harness/guardrails.md` a cada tarefa

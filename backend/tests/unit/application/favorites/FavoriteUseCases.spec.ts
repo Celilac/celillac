@@ -6,7 +6,7 @@ import { IFavoriteRepository } from '../../../../src/domain/favorites/repositori
 import { IProductCatalogRepository } from '../../../../src/domain/catalog/repositories/IProductCatalogRepository';
 import { IPartnerRepository } from '../../../../src/domain/partner/repositories/IPartnerRepository';
 import { Product } from '../../../../src/domain/catalog/Product';
-import { Partner, PartnerType } from '../../../../src/domain/partner/Partner';
+import { Partner, PartnerType, PartnerApprovalStatus, PartnerOperationalStatus } from '../../../../src/domain/partner/Partner';
 import { Favorite } from '../../../../src/domain/favorites/Favorite';
 
 describe('Favorite Use Cases', () => {
@@ -34,7 +34,8 @@ describe('Favorite Use Cases', () => {
     description: 'Tudo gluten-free',
     phone: '1234-5678',
     type: PartnerType.INDEPENDENT_PRODUCER,
-    isActive: true,
+    approvalStatus: PartnerApprovalStatus.APPROVED,
+    operationalStatus: PartnerOperationalStatus.ACTIVE,
   }, 'partner-1').getValue();
 
   beforeEach(() => {
@@ -56,9 +57,10 @@ describe('Favorite Use Cases', () => {
     mockPartnerRepo = {
       create: jest.fn(),
       findById: jest.fn(),
-      findByUserId: jest.fn(),
+      findAllByUserId: jest.fn(),
+      findAll: jest.fn(),
       update: jest.fn(),
-    };
+    } as any;
 
     addUseCase = new AddFavoriteUseCase(mockFavoriteRepo, mockProductRepo, mockPartnerRepo);
     removeUseCase = new RemoveFavoriteUseCase(mockFavoriteRepo);

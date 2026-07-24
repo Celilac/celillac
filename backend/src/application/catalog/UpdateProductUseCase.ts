@@ -4,6 +4,7 @@ import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRe
 import { Product, AnalysisStatus } from '../../domain/catalog/Product';
 import { Result } from '../../domain/Result';
 import { ProductResponseDTO } from './CreateProductUseCase';
+import { VerifyPartnerPublicationCapability } from '../../domain/partner/services/VerifyPartnerPublicationCapability';
 
 export interface UpdateProductDTO {
   id:                 string;
@@ -32,15 +33,17 @@ export class UpdateProductUseCase {
       return Result.fail<ProductResponseDTO>('Produto não encontrado.');
     }
 
-    // 2. Buscar o parceiro do usuário solicitante
-    const partner = await this.partnerRepository.findByUserId(dto.partnerUserId);
+    // 2. Buscar todos os parceiros gerenciados pelo usuário solicitante
+    const partners = await this.partnerRepository.findAllByUserId(dto.partnerUserId);
+    const partner = partners.find(p => p.id === product.partnerId);
     if (!partner) {
-      return Result.fail<ProductResponseDTO>('Parceiro comercial não encontrado para este usuário.');
+      return Result.fail<ProductResponseDTO>('Acesso negado: Este produto pertence a outro parceiro comercial ou você não tem permissão sobre ele.');
     }
 
-    // 3. Validar se o parceiro é dono do produto
-    if (product.partnerId !== partner.id) {
-      return Result.fail<ProductResponseDTO>('Acesso negado: Este produto pertence a outro parceiro comercial.');
+    // 3. Validar se o parceiro pode atualizar o produto
+    const canPublish = VerifyPartnerPublicationCapability.check(partner);
+    if (!canPublish) {
+      return Result.fail<ProductResponseDTO>('O parceiro comercial não está autorizado a atualizar produtos (cadastro deve estar aprovado e não suspenso/inativo).');
     }
 
     // 4. Criar a nova entidade com os novos dados preservando o ID original

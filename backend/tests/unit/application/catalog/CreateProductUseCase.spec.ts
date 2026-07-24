@@ -2,7 +2,7 @@
 import { CreateProductUseCase } from '../../../../src/application/catalog/CreateProductUseCase';
 import { IProductCatalogRepository } from '../../../../src/domain/catalog/repositories/IProductCatalogRepository';
 import { IPartnerRepository } from '../../../../src/domain/partner/repositories/IPartnerRepository';
-import { Partner, PartnerType } from '../../../../src/domain/partner/Partner';
+import { Partner, PartnerType, PartnerApprovalStatus, PartnerOperationalStatus } from '../../../../src/domain/partner/Partner';
 
 describe('CreateProductUseCase', () => {
   let repository: jest.Mocked<IProductCatalogRepository>;
@@ -16,7 +16,8 @@ describe('CreateProductUseCase', () => {
     description: 'Cozinha sem contaminação',
     phone: '1234-5678',
     type: PartnerType.RESTAURANT,
-    isActive: true,
+    approvalStatus: PartnerApprovalStatus.APPROVED,
+    operationalStatus: PartnerOperationalStatus.ACTIVE,
   }, 'partner-1').getValue();
 
   const mockInactivePartner = Partner.create({
@@ -26,7 +27,8 @@ describe('CreateProductUseCase', () => {
     description: 'Doces artesanais',
     phone: '1234-5678',
     type: PartnerType.INDEPENDENT_PRODUCER,
-    isActive: false, // Inativo
+    approvalStatus: PartnerApprovalStatus.DRAFT, // Rascunho
+    operationalStatus: PartnerOperationalStatus.INACTIVE, // Inativo
   }, 'partner-2').getValue();
 
   beforeEach(() => {
@@ -39,9 +41,10 @@ describe('CreateProductUseCase', () => {
     partnerRepository = {
       create: jest.fn(),
       findById: jest.fn(),
-      findByUserId: jest.fn(),
+      findAllByUserId: jest.fn(),
+      findAll: jest.fn(),
       update: jest.fn(),
-    };
+    } as any;
     useCase = new CreateProductUseCase(repository, partnerRepository);
   });
 
@@ -114,7 +117,7 @@ describe('CreateProductUseCase', () => {
     });
 
     expect(result.isFailure).toBe(true);
-    expect(result.getError()).toContain('parceiro comercial está inativo ou suspenso');
+    expect(result.getError()).toContain('parceiro comercial não está autorizado a cadastrar produtos');
     expect(repository.create).not.toHaveBeenCalled();
   });
 

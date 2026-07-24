@@ -6,7 +6,7 @@ import { User } from '../../../../src/domain/iam/User';
 import { Email } from '../../../../src/domain/iam/value-objects/Email';
 import { PasswordHash } from '../../../../src/domain/iam/value-objects/PasswordHash';
 import { UserRole } from '../../../../src/domain/iam/value-objects/UserRole';
-import { Partner, PartnerType } from '../../../../src/domain/partner/Partner';
+import { PartnerType } from '../../../../src/domain/partner/Partner';
 
 describe('RegisterPartnerUseCase', () => {
   let partnerRepository: jest.Mocked<IPartnerRepository>;
@@ -20,9 +20,10 @@ describe('RegisterPartnerUseCase', () => {
     partnerRepository = {
       create: jest.fn(),
       findById: jest.fn(),
-      findByUserId: jest.fn(),
+      findAllByUserId: jest.fn(),
+      findAll: jest.fn(),
       update: jest.fn(),
-    };
+    } as any;
     userRepository = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
@@ -39,7 +40,7 @@ describe('RegisterPartnerUseCase', () => {
     }, 'user-1').getValue();
 
     userRepository.findById.mockResolvedValue(user);
-    partnerRepository.findByUserId.mockResolvedValue(null);
+    partnerRepository.findAllByUserId.mockResolvedValue([]);
 
     const result = await useCase.execute({
       userId: 'user-1',
@@ -55,7 +56,8 @@ describe('RegisterPartnerUseCase', () => {
     expect(partnerRepository.create).toHaveBeenCalled();
     const data = result.getValue();
     expect(data.name).toBe('Padaria CeliLac');
-    expect(data.isActive).toBe(false); // Inicia inativo (pendente de aprovação)
+    expect(data.approvalStatus).toBe('DRAFT'); // Inicia em rascunho
+    expect(data.operationalStatus).toBe('INACTIVE'); // Inicia inativo operacionalmente
   });
 
   it('deve falhar se o usuário não tiver papel de PARCEIRO', async () => {
@@ -78,40 +80,6 @@ describe('RegisterPartnerUseCase', () => {
 
     expect(result.isFailure).toBe(true);
     expect(result.getError()).toContain('papel de PARCEIRO');
-    expect(partnerRepository.create).not.toHaveBeenCalled();
-  });
-
-  it('deve falhar se o usuário já possuir parceiro comercial cadastrado', async () => {
-    const user = User.create({
-      email: makeValidEmail('carlos@teste.com'),
-      passwordHash: makeValidHash(),
-      role: UserRole.PARCEIRO,
-    }, 'user-1').getValue();
-
-    const existingPartner = Partner.create({
-      userId: 'user-1',
-      name: 'Existente',
-      address: 'Endereço',
-      description: '',
-      phone: '',
-      type: PartnerType.RESTAURANT,
-      isActive: true,
-    }).getValue();
-
-    userRepository.findById.mockResolvedValue(user);
-    partnerRepository.findByUserId.mockResolvedValue(existingPartner);
-
-    const result = await useCase.execute({
-      userId: 'user-1',
-      name: 'Padaria CeliLac',
-      description: 'Livre de glúten',
-      address: 'Rua Principal, 100',
-      phone: '1234-5678',
-      type: PartnerType.RESTAURANT,
-    });
-
-    expect(result.isFailure).toBe(true);
-    expect(result.getError()).toContain('já possui um parceiro comercial');
     expect(partnerRepository.create).not.toHaveBeenCalled();
   });
 });
