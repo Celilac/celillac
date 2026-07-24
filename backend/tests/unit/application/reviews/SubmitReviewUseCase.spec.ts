@@ -3,7 +3,7 @@ import { IReviewRepository } from '../../../../src/domain/reviews/repositories/I
 import { IProductRepository } from '../../../../src/domain/allergen-engine/repositories/IProductRepository';
 import { IPartnerRepository } from '../../../../src/domain/partner/repositories/IPartnerRepository';
 import { Product } from '../../../../src/domain/catalog/Product';
-import { Partner, PartnerType } from '../../../../src/domain/partner/Partner';
+import { Partner, PartnerType, PartnerApprovalStatus, PartnerOperationalStatus } from '../../../../src/domain/partner/Partner';
 import { Review } from '../../../../src/domain/reviews/Review';
 
 describe('SubmitReviewUseCase', () => {
@@ -20,7 +20,8 @@ describe('SubmitReviewUseCase', () => {
     description: '100% livre de glúten',
     phone: '1234-5678',
     type: PartnerType.RESTAURANT,
-    isActive: true,
+    approvalStatus: PartnerApprovalStatus.APPROVED,
+    operationalStatus: PartnerOperationalStatus.ACTIVE,
   }, 'partner-1').getValue();
 
   beforeEach(() => {
@@ -39,9 +40,10 @@ describe('SubmitReviewUseCase', () => {
     mockPartnerRepo = {
       create: jest.fn(),
       findById: jest.fn(),
-      findByUserId: jest.fn(),
+      findAllByUserId: jest.fn(),
+      findAll: jest.fn(),
       update: jest.fn(),
-    };
+    } as any;
 
     submitReviewUseCase = new SubmitReviewUseCase(mockReviewRepo, mockProductRepo, mockPartnerRepo);
   });

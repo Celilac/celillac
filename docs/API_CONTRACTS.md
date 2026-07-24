@@ -25,8 +25,17 @@
 6. [Avaliações (Social Proof)](#6-avaliacoes)
    - [POST /reviews](#post-reviews)
    - [GET /reviews/product/:productId](#get-reviewsproductproductid)
-7. [Enums de Domínio](#7-enums-de-domínio)
-8. [Regras para Agentes de IA](#8-regras-para-agentes-de-ia)
+7. [Gestão de Parceiros (Partners)](#7-gestão-de-parceiros-partners)
+   - [POST /partners](#post-partners)
+   - [GET /partners/me/all](#get-partnersmeall)
+   - [PUT /partners/:id](#put-partnersid)
+   - [POST /partners/:id/submit](#post-partnersidsubmit)
+   - [PATCH /partners/:id/operational-status](#patch-partnersidoperational-status)
+   - [GET /partners](#get-partners)
+   - [GET /admin/partners](#get-adminpartners)
+8. [Health Check](#8-health-check)
+9. [Enums de Domínio](#9-enums-de-domínio)
+10. [Regras para Agentes de IA](#10-regras-para-agentes-de-ia)
 
 ---
 
@@ -503,7 +512,193 @@ Recupera todas as avaliações de um produto específico e sua média.
 
 ---
 
-## 7. Health Check
+## 7. Gestão de Parceiros (Partners)
+
+### `POST /partners` 🔒
+Cadastra um novo perfil comercial de parceiro. Apenas para usuários com papel `PARCEIRO`.
+
+**Request Body:**
+```json
+{
+  "name": "Cantina Vegana Sem Glúten",
+  "cnpj": "12345678000195",
+  "description": "Pratos saudáveis livres de contaminação cruzada.",
+  "address": "Av. Paulista, 1000",
+  "phone": "11999998888",
+  "type": "RESTAURANT",
+  "city": "São Paulo",
+  "state": "SP",
+  "deliveryRegion": "Grande SP"
+}
+```
+
+**Response `201 Created`:**
+```json
+{
+  "id": "uuid-do-parceiro",
+  "userId": "uuid-do-dono",
+  "name": "Cantina Vegana Sem Glúten",
+  "cnpj": "12345678000195",
+  "description": "Pratos saudáveis livres de contaminação cruzada.",
+  "address": "Av. Paulista, 1000",
+  "phone": "11999998888",
+  "type": "RESTAURANT",
+  "approvalStatus": "DRAFT",
+  "operationalStatus": "INACTIVE",
+  "city": "São Paulo",
+  "state": "SP",
+  "deliveryRegion": "Grande SP"
+}
+```
+
+---
+
+### `GET /partners/me/all` 🔒
+Lista todos os parceiros comerciais vinculados ao usuário responsável logado.
+
+**Response `200 OK`:**
+```json
+[
+  {
+    "id": "uuid-do-parceiro",
+    "userId": "uuid-do-dono",
+    "name": "Cantina Vegana Sem Glúten",
+    "approvalStatus": "DRAFT",
+    "operationalStatus": "INACTIVE"
+  }
+]
+```
+
+---
+
+### `PUT /partners/:id` 🔒
+Atualiza os dados cadastrais do parceiro. Alterações críticas regridem o status de aprovação para `PENDING_REVIEW` automaticamente.
+
+**Request Body:**
+```json
+{
+  "name": "Novo Nome Cantina",
+  "address": "Novo Endereço, 123",
+  "phone": "11988887777"
+}
+```
+
+**Response `200 OK`:**
+```json
+{ "success": true }
+```
+
+---
+
+### `POST /partners/:id/submit` 🔒
+Submete o parceiro em rascunho (`DRAFT`) ou rejeitado (`REJECTED`) para análise da administração (`PENDING_REVIEW`).
+
+**Response `200 OK`:**
+```json
+{ "success": true }
+```
+
+---
+
+### `PATCH /partners/:id/operational-status` 🔒
+Altera a disponibilidade operacional (`ACTIVE`, `INACTIVE`, `TEMPORARILY_CLOSED`).
+
+**Request Body:**
+```json
+{
+  "status": "TEMPORARILY_CLOSED"
+}
+```
+
+**Response `200 OK`:**
+```json
+{ "success": true }
+```
+
+---
+
+### `GET /partners`
+Lista pública de parceiros aprovados (`APPROVED`) e operacionais (`ACTIVE` ou `TEMPORARILY_CLOSED`).
+
+**Response `200 OK`:**
+```json
+[
+  {
+    "id": "uuid-do-parceiro",
+    "name": "Cantina Vegana Sem Glúten",
+    "description": "Pratos saudáveis livres de contaminação cruzada.",
+    "type": "RESTAURANT",
+    "operationalStatus": "ACTIVE",
+    "city": "São Paulo",
+    "state": "SP"
+  }
+]
+```
+
+---
+
+### `GET /admin/partners` 🔒
+Listagem para moderação administrativa de todos os parceiros comerciais cadastrados. Restrito a usuários `ADMIN`.
+
+**Response `200 OK`:**
+```json
+[
+  {
+    "id": "uuid-do-parceiro",
+    "name": "Cantina Vegana Sem Glúten",
+    "approvalStatus": "PENDING_REVIEW",
+    "operationalStatus": "INACTIVE"
+  }
+]
+```
+
+---
+
+### `POST /partners/:id/approve` 🔒
+Aprova o parceiro. Apenas para `ADMIN`.
+
+**Response `200 OK`:**
+```json
+{ "success": true }
+```
+
+---
+
+### `POST /partners/:id/reject` 🔒
+Rejeita o parceiro informando o motivo. Apenas para `ADMIN`.
+
+**Request Body:**
+```json
+{
+  "reason": "Dados cadastrais inválidos ou CNPJ inativo."
+}
+```
+
+**Response `200 OK`:**
+```json
+{ "success": true }
+```
+
+---
+
+### `POST /partners/:id/suspend` 🔒
+Suspende a operação do parceiro por violação ou denúncia grave. Apenas para `ADMIN`.
+
+**Request Body:**
+```json
+{
+  "reason": "Contaminação cruzada detectada na lanchonete."
+}
+```
+
+**Response `200 OK`:**
+```json
+{ "success": true }
+```
+
+---
+
+## 8. Health Check
 
 ### `GET /health`
 
@@ -519,7 +714,19 @@ Verifica se o servidor está respondendo. **Público — sem autenticação.**
 
 ---
 
-## 8. Enums de Domínio
+## 9. Enums de Domínio
+
+### `PartnerApprovalStatus`
+*   `DRAFT` — Cadastro incompleto ou não enviado.
+*   `PENDING_REVIEW` — Sob análise administrativa.
+*   `APPROVED` — Aprovado para operar.
+*   `REJECTED` — Reprovado (exige motivo).
+*   `SUSPENDED` — Bloqueado por irregularidade (exige motivo).
+
+### `PartnerOperationalStatus`
+*   `ACTIVE` — Disponível para busca e atendimento.
+*   `INACTIVE` — Fora de operação.
+*   `TEMPORARILY_CLOSED` — Temporariamente fora de atendimento (exibe aviso).
 
 ### `AllergenType`
 
@@ -560,7 +767,7 @@ Valores aceitos nos campos `severity`:
 
 ---
 
-## 9. Regras para Agentes de IA
+## 10. Regras para Agentes de IA
 
 > Esta seção é direcionada a agentes de IA que consumirem esta documentação ao implementar Frontend, Mobile ou novas integrações.
 

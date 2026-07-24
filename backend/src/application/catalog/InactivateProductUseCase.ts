@@ -22,15 +22,11 @@ export class InactivateProductUseCase {
       return Result.fail<void>('Produto não encontrado.');
     }
 
-    // 2. Buscar o parceiro dono
-    const partner = await this.partnerRepository.findByUserId(dto.partnerUserId);
+    // 2. Buscar todos os parceiros gerenciados pelo usuário solicitante
+    const partners = await this.partnerRepository.findAllByUserId(dto.partnerUserId);
+    const partner = partners.find(p => p.id === product.partnerId);
     if (!partner) {
-      return Result.fail<void>('Parceiro comercial não encontrado para este usuário.');
-    }
-
-    // 3. Validar se o parceiro é dono
-    if (product.partnerId !== partner.id) {
-      return Result.fail<void>('Acesso negado: Este produto pertence a outro parceiro comercial.');
+      return Result.fail<void>('Acesso negado: Este produto pertence a outro parceiro comercial ou você não tem permissão sobre ele.');
     }
 
     // 4. Alterar status

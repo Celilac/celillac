@@ -3,6 +3,7 @@ import { IProductCatalogRepository } from '../../domain/catalog/repositories/IPr
 import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
 import { Product, AnalysisStatus } from '../../domain/catalog/Product';
 import { Result } from '../../domain/Result';
+import { VerifyPartnerPublicationCapability } from '../../domain/partner/services/VerifyPartnerPublicationCapability';
 
 export interface CreateProductDTO {
   name:               string;
@@ -47,8 +48,9 @@ export class CreateProductUseCase {
       if (!partner) {
         return Result.fail<ProductResponseDTO>('Parceiro comercial não encontrado no sistema.');
       }
-      if (!partner.isActive) {
-        return Result.fail<ProductResponseDTO>('O cadastro do parceiro comercial está inativo ou suspenso.');
+      const canPublish = VerifyPartnerPublicationCapability.check(partner);
+      if (!canPublish) {
+        return Result.fail<ProductResponseDTO>('O parceiro comercial não está autorizado a cadastrar produtos (cadastro deve estar aprovado e não suspenso/inativo).');
       }
     }
 

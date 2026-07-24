@@ -88,16 +88,19 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
     const queryParams: any[] = [];
 
     // Por padrão na busca pública, retornamos apenas produtos ativos
-    conditions.push('is_active = TRUE');
+    conditions.push('products.is_active = TRUE');
+
+    // Regra de ocultação lógica de produtos de parceiros não aprovados/inativos
+    conditions.push(`(products.partner_id IS NULL OR (partners.approval_status = 'APPROVED' AND partners.operational_status IN ('ACTIVE', 'TEMPORARILY_CLOSED')))`);
 
     if (term) {
       queryParams.push(`%${term}%`);
-      conditions.push(`(name ILIKE $${queryParams.length} OR brand ILIKE $${queryParams.length})`);
+      conditions.push(`(products.name ILIKE $${queryParams.length} OR products.brand ILIKE $${queryParams.length})`);
     }
 
     if (partnerId) {
       queryParams.push(partnerId);
-      conditions.push(`partner_id = $${queryParams.length}`);
+      conditions.push(`products.partner_id = $${queryParams.length}`);
     }
 
     if (avoidAllergens && avoidAllergens.length > 0) {
@@ -110,13 +113,13 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
         const allergenConditions: string[] = [];
 
         if (upperAllergen === AllergenType.GLUTEN) {
-          allergenConditions.push('has_gluten = TRUE');
+          allergenConditions.push('products.has_gluten = TRUE');
         }
 
         for (const t of terms) {
           queryParams.push(`%${t}%`);
-          allergenConditions.push(`ingredients ILIKE $${queryParams.length}`);
-          allergenConditions.push(`cross_contamination ILIKE $${queryParams.length}`);
+          allergenConditions.push(`products.ingredients ILIKE $${queryParams.length}`);
+          allergenConditions.push(`products.cross_contamination ILIKE $${queryParams.length}`);
         }
 
         if (allergenConditions.length > 0) {
@@ -131,17 +134,23 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    // Conta total
-    const countQuery = `SELECT COUNT(*) FROM products ${whereClause}`;
+    // Conta total usando DISTINCT para evitar contagem duplicada pelo LEFT JOIN
+    const countQuery = `
+      SELECT COUNT(DISTINCT products.id) 
+      FROM products 
+      LEFT JOIN partners ON products.partner_id = partners.id
+      ${whereClause}
+    `;
     const countResult = await this.pool.query(countQuery, queryParams);
     const total = parseInt(countResult.rows[0].count, 10);
 
-    // Busca dados com paginação
+    // Busca dados com paginação qualificando as colunas e usando JOIN
     const dataQuery = `
-      SELECT id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id, price, category, image_url, is_active
+      SELECT products.id, products.name, products.brand, products.ingredients, products.has_gluten, products.cross_contamination, products.analysis_status, products.partner_id, products.price, products.category, products.image_url, products.is_active
       FROM products
+      LEFT JOIN partners ON products.partner_id = partners.id
       ${whereClause}
-      ORDER BY name ASC
+      ORDER BY products.name ASC
       LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}
     `;
     const dataParams = [...queryParams, limit, offset];

@@ -27,4 +27,8 @@ export const catalogApi = {
   // Rota real do backend: GET /catalog/products?query=...
   search: (query: string, token: string) =>
     apiClient.get<CatalogPage>(`/catalog/products?query=${encodeURIComponent(query)}`, token),
+
+  // Buscar produtos pertencentes a um parceiro específico
+  listByPartner: (partnerId: string, token?: string) =>
+    apiClient.get<CatalogPage>(`/catalog/products?partnerId=${partnerId}`, token),
 };

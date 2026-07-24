@@ -1,33 +1,24 @@
-// backend/src/application/partner/GetPartnerUseCase.ts
+// backend/src/application/partner/ListPublicPartnersUseCase.ts
 import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
 import { Result } from '../../domain/Result';
 import { PartnerResponseDTO } from './RegisterPartnerUseCase';
+import { PartnerApprovalStatus, PartnerOperationalStatus } from '../../domain/partner/Partner';
 
-export interface GetPartnerDTO {
-  partnerId?: string;
-  userId?:    string;
-}
-
-export class GetPartnerUseCase {
+export class ListPublicPartnersUseCase {
   constructor(private readonly partnerRepository: IPartnerRepository) {}
 
-  async execute(dto: GetPartnerDTO): Promise<Result<PartnerResponseDTO>> {
-    let partner = null;
+  async execute(): Promise<Result<PartnerResponseDTO[]>> {
+    // 1. Buscar todos os parceiros
+    const allPartners = await this.partnerRepository.findAll();
 
-    if (dto.partnerId) {
-      partner = await this.partnerRepository.findById(dto.partnerId);
-    } else if (dto.userId) {
-      const partners = await this.partnerRepository.findAllByUserId(dto.userId);
-      partner = partners.length > 0 ? partners[0] : null;
-    } else {
-      return Result.fail<PartnerResponseDTO>('Parâmetro id ou userId é obrigatório para a busca.');
-    }
+    // 2. Filtrar apenas parceiros aprovados e operacionais (ACTIVE ou TEMPORARILY_CLOSED)
+    const publicPartners = allPartners.filter(partner => 
+      partner.approvalStatus === PartnerApprovalStatus.APPROVED &&
+      (partner.operationalStatus === PartnerOperationalStatus.ACTIVE || 
+       partner.operationalStatus === PartnerOperationalStatus.TEMPORARILY_CLOSED)
+    );
 
-    if (!partner) {
-      return Result.fail<PartnerResponseDTO>('Parceiro comercial não encontrado.');
-    }
-
-    return Result.ok<PartnerResponseDTO>({
+    const response: PartnerResponseDTO[] = publicPartners.map(partner => ({
       id:                 partner.id,
       userId:             partner.userId,
       name:               partner.name,
@@ -43,6 +34,8 @@ export class GetPartnerUseCase {
       city:               partner.city,
       state:              partner.state,
       deliveryRegion:     partner.deliveryRegion,
-    });
+    }));
+
+    return Result.ok<PartnerResponseDTO[]>(response);
   }
 }
