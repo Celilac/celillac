@@ -88,11 +88,7 @@ export default function ProfilePage() {
         await foodProfileApi.create({ userId, restrictions: rows }, token);
         setHasProfile(true);
       }
-      toast.success({
-        description: 'Perfil salvo com sucesso!',
-        actionLabel: 'Ver Dashboard',
-        onAction: () => router.push('/'),
-      });
+      router.push('/');
     } catch (err) {
       toast.error(err instanceof HttpError ? err.message : 'Erro ao salvar perfil.', 'Erro ao salvar perfil');
     } finally {

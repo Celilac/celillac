@@ -122,7 +122,53 @@
       "Bash(echo \"grep exit: $?\")",
       "Bash(git -C /Users/evertoncoimbradearaujo/Documents/GitHub/celillac remote -v)",
       "Bash(git -C /Users/evertoncoimbradearaujo/Documents/GitHub/celillac remote set-url origin https://github.com/Celilac/celillac.git)",
-      "Bash(git -C /Users/evertoncoimbradearaujo/Documents/GitHub/celillac branch -vv)"
+      "Bash(git -C /Users/evertoncoimbradearaujo/Documents/GitHub/celillac branch -vv)",
+      "Bash(flutter --version)",
+      "Bash(flutter create *)",
+      "Bash(flutter pub *)",
+      "Bash(flutter analyze *)",
+      "Bash(flutter test *)",
+      "Bash(flutter build *)",
+      "Bash(sips -g hasAlpha -g pixelWidth -g pixelHeight logo_with_transparent_background.png)",
+      "Bash(sips -g hasAlpha -g pixelWidth -g pixelHeight logo_with_white_background.png)",
+      "Bash(sips -g pixelWidth -g pixelHeight -g hasAlpha src/app/icon.png)",
+      "Bash(md5 src/app/icon.png public/brand/logo_with_transparent_background.png)",
+      "Bash(grep -E \"pubspec.yaml$|^frontend/mobile-app/lib/\")",
+      "Bash(grep -c \"\\\\.dart$\")",
+      "Bash(mkdir -p /Users/evertoncoimbradearaujo/Documents/GitHub/celillac/.claude/hooks *)",
+      "Bash(chmod +x /Users/evertoncoimbradearaujo/Documents/GitHub/celillac/.claude/hooks/sync-develop-after-pr.sh)",
+      "Bash(CLAUDE_PROJECT_DIR=/Users/evertoncoimbradearaujo/Documents/GitHub/celillac bash .claude/hooks/sync-develop-after-pr.sh)",
+      "Bash(echo \"jq exit: $?\")",
+      "Bash(gh repo *)",
+      "Bash(git -C /Users/evertoncoimbradearaujo/Documents/GitHub/celillac remote show origin)",
+      "Bash(grep -vE \"\\\\.lock$|pbxproj|xcconfig|\\\\.sh$\")",
+      "Bash(mv .claude/hooks/sync-main-after-pr.sh .claude/hooks/sync-develop-after-pr.sh)",
+      "Bash(chmod +x .claude/hooks/sync-develop-after-pr.sh)",
+      "Bash(chmod +x harness/hooks/pre-commit harness/hooks/pre-push)",
+      "Bash(grep -q \"refs/heads/main$\")",
+      "Bash(git symbolic-ref *)",
+      "Bash(git grep *)",
+      "Bash(awk '{print $1, $NF}')",
+      "Bash(git remote *)"
+    ],
+    "additionalDirectories": [
+      "/Users/evertoncoimbradearaujo/Documents/GitHub/celillac/.claude"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR:-.}/.claude/hooks/sync-develop-after-pr.sh\"",
+            "if": "Bash(gh pr create*)",
+            "timeout": 30,
+            "statusMessage": "Sincronizando develop local com origin/develop..."
+          }
+        ]
+      }
     ]
   }
 }
