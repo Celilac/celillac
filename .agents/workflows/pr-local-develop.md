@@ -1,6 +1,9 @@
-# Workflow: PR Detalhado com Revisor Fixo e Retorno Local para Main
+# Workflow: PR Detalhado com Revisor Fixo e Retorno Local para Develop
 
-Este workflow define como abrir PRs com descrição detalhada, sempre marcando `thevingance` como revisor, e como finalizar o trabalho localmente após o PR sem atualizar a `main` com o remoto.
+Este workflow define como abrir PRs com descrição detalhada, sempre marcando `thevingance` como revisor, e como finalizar o trabalho localmente após o PR sem atualizar a `develop` com o remoto.
+
+> [!IMPORTANT]
+> A branch `main` está congelada: este fluxo nunca abre PR contra `main` nem faz checkout/merge nela. O destino do PR e da integração local é sempre `develop`.
 
 ## Regras Obrigatórias
 1. Todo PR deve marcar `thevingance` como revisor.
@@ -12,8 +15,8 @@ Este workflow define como abrir PRs com descrição detalhada, sempre marcando `
    - validações executadas;
    - riscos conhecidos e pontos de atenção.
 3. Após a criação do PR, a branch de trabalho deve deixar de existir localmente.
-4. Tudo o que foi feito na branch deve permanecer integrado na `main` local.
-5. Este workflow **não** deve atualizar a `main` a partir do remoto. Não usar `git fetch`, `git pull` ou rebase com branch remota como parte deste fluxo.
+4. Tudo o que foi feito na branch deve permanecer integrado na `develop` local.
+5. Este workflow **não** deve atualizar a `develop` a partir do remoto. Não usar `git fetch`, `git pull` ou rebase com branch remota como parte deste fluxo.
 
 ---
 
@@ -70,12 +73,13 @@ npm run lint
 ```
 
 ### Passo 3: Criar o PR com descrição detalhada
-Ao criar o PR, inclua uma descrição detalhada e marque `thevingance` como reviewer.
+Ao criar o PR, inclua uma descrição detalhada, marque `thevingance` como reviewer e direcione para `develop`.
 
 Exemplo com GitHub CLI:
 
 ```bash
 gh pr create \
+  --base develop \
   --title "<titulo-claro-do-pr>" \
   --body-file <arquivo-com-descricao-detalhada.md> \
   --reviewer thevingance
@@ -85,6 +89,7 @@ Se preferir enviar a descrição inline:
 
 ```bash
 gh pr create \
+  --base develop \
   --title "<titulo-claro-do-pr>" \
   --body "<descricao-detalhada>" \
   --reviewer thevingance
@@ -93,25 +98,25 @@ gh pr create \
 > [!IMPORTANT]
 > A descrição do PR não deve ser curta ou genérica. O reviewer deve conseguir entender a entrega sem precisar reconstruir o contexto manualmente.
 
-### Passo 4: Voltar para a `main` local
-Depois de abrir o PR, retorne para a `main` local.
+### Passo 4: Voltar para a `develop` local
+Depois de abrir o PR, retorne para a `develop` local.
 
 ```bash
-git checkout main
+git checkout develop
 ```
 
-### Passo 5: Integrar localmente a branch na `main`
-Mescle localmente a branch de trabalho na `main`, preservando tudo o que foi feito localmente.
+### Passo 5: Integrar localmente a branch na `develop`
+Mescle localmente a branch de trabalho na `develop`, preservando tudo o que foi feito localmente.
 
 ```bash
 git merge <branch-de-trabalho>
 ```
 
 > [!IMPORTANT]
-> Não atualizar a `main` com remoto antes desse merge. A `main` aqui deve refletir apenas o estado local somado ao trabalho concluído na branch.
+> Não atualizar a `develop` com remoto antes desse merge. A `develop` aqui deve refletir apenas o estado local somado ao trabalho concluído na branch.
 
 ### Passo 6: Remover a branch local
-Após o merge local na `main`, remova a branch local que originou o PR.
+Após o merge local na `develop`, remova a branch local que originou o PR.
 
 ```bash
 git branch -d <branch-de-trabalho>
@@ -125,9 +130,9 @@ git branch -D <branch-de-trabalho>
 
 ### Passo 7: Confirmar estado final local
 Ao final, confirme que:
-- você está na `main` local;
+- você está na `develop` local;
 - a branch de trabalho não existe mais localmente;
-- o conteúdo dela está preservado na `main` local.
+- o conteúdo dela está preservado na `develop` local.
 
 ```bash
 git branch --show-current
@@ -139,8 +144,9 @@ git status
 
 ## Resultado Esperado
 Ao fim deste workflow:
-1. O PR foi criado com descrição detalhada.
+1. O PR foi criado com descrição detalhada, tendo `develop` como base.
 2. `thevingance` foi marcado como reviewer.
 3. A branch de trabalho não existe mais localmente.
-4. A `main` local contém tudo o que existia na branch.
+4. A `develop` local contém tudo o que existia na branch.
 5. Nenhuma atualização com o remoto foi feita durante o processo.
+6. A branch `main` não foi tocada em nenhum momento.
