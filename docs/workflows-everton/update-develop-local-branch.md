@@ -60,3 +60,17 @@ docker compose down
 # 3.2. Levanta os containers novamente, forçando o build de imagens locais e a recriação do zero
 docker compose up -d --build --force-recreate
 ```
+
+## 4. Resumir PRs de outros membros da equipe mergeadas no remoto
+
+Depois de atualizar a `develop` local (passo 2), sempre feche o workflow trazendo um resumo dos PRs que **outros integrantes da equipe** mergearam remotamente desde a última atualização — para o usuário avaliar se algo impacta o trabalho em andamento.
+
+```bash
+# 4.1. Liste os PRs mergeados recentemente contra develop
+gh pr list --base develop --state merged --limit 15 --json number,title,author,mergedAt,url
+
+# 4.2. Para cada PR de outro autor (não o próprio usuário) que entrou no pull do passo 2,
+# use `gh pr view <numero> --json title,author,body,files` para detalhar o que muda e por quê
+```
+
+Apresente o resumo final agrupado por autor, com número do PR, título e principais mudanças/riscos — focando apenas nos PRs de colegas (não nos do próprio usuário), já que são os que precisam de avaliação.
