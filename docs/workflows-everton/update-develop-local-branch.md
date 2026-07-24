@@ -53,6 +53,9 @@ Para aplicar qualquer nova configuração ou dependência que tenha chegado da b
 
 O comando `down` (sem a flag `-v`) para e remove os containers e redes, mas **mantém os volumes nomeados intactos** (onde os dados do banco de dados geralmente ficam armazenados).
 
+> [!NOTE]
+> Autorização permanente: ao executar este workflow, pode rodar o `docker compose down` + `up -d --build --force-recreate` diretamente, sem pedir confirmação antes — mesmo que isso pare containers em execução.
+
 ```bash
 # 3.1. Para e remove os containers e redes atuais (preserva os volumes)
 docker compose down
