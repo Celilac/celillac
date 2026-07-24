@@ -1,8 +1,0 @@
-feat(partner): expansao do modulo de parceiros comerciais e governanca
-
-- backend/use-cases: implementada maquina de estados de Partner (Draft, Pending Review, Approved, Rejected, Suspended) e status operacional (Active, Inactive, Temporarily Closed).
-- backend/catalog: adicionada barreira VerifyPartnerPublicationCapability e ocultacao logica de produtos de parceiros suspensos ou inativos no catalogo.
-- backend/http: criado PartnerController centralizado e mapeadas as rotas HTTP de parceiro.
-- frontend/api: adicionado partnerApi e patch no apiClient.
-- frontend/ui: criadas telas de portal, cadastro, edicao, dashboard, public-partners, detalhe publico e moderacao administrativa de parceiros.
-- testes: atualizada a suite com 153 testes unitarios com 93.8% de cobertura de codigo, build backend e frontend bem-sucedidos.
