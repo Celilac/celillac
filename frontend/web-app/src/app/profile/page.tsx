@@ -22,10 +22,11 @@ const ALLERGEN_OPTIONS = [
 ];
 
 const SEVERITY_OPTIONS = [
-  { value: 'LOW',    label: '🟢 Baixo (LOW)' },
-  { value: 'MEDIUM', label: '🟡 Médio (MEDIUM)' },
-  { value: 'HIGH',   label: '🟠 Alto (HIGH)' },
-  { value: 'FATAL',  label: '🔴 Fatal — Celíaco (FATAL)' },
+  { value: 'LIFESTYLE', label: '🟣 Estilo de Vida (LIFESTYLE)' },
+  { value: 'LOW',       label: '🟢 Baixo (LOW)' },
+  { value: 'MEDIUM',    label: '🟡 Médio (MEDIUM)' },
+  { value: 'HIGH',      label: '🟠 Alto (HIGH)' },
+  { value: 'FATAL',     label: '🔴 Fatal — Celíaco (FATAL)' },
 ];
 
 interface Row { allergen: string; severity: string; }
@@ -87,11 +88,7 @@ export default function ProfilePage() {
         await foodProfileApi.create({ userId, restrictions: rows }, token);
         setHasProfile(true);
       }
-      toast.success({
-        description: 'Perfil salvo com sucesso!',
-        actionLabel: 'Ver Dashboard',
-        onAction: () => router.push('/'),
-      });
+      router.push('/');
     } catch (err) {
       toast.error(err instanceof HttpError ? err.message : 'Erro ao salvar perfil.', 'Erro ao salvar perfil');
     } finally {

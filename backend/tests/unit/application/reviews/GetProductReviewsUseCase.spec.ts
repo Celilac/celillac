@@ -11,6 +11,8 @@ describe('GetProductReviewsUseCase', () => {
       save: jest.fn(),
       findByUserAndProduct: jest.fn(),
       findByProduct: jest.fn(),
+      findByUserAndPartner: jest.fn(),
+      findByPartner: jest.fn(),
     };
 
     getProductReviewsUseCase = new GetProductReviewsUseCase(mockReviewRepo);

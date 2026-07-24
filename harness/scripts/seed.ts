@@ -83,13 +83,14 @@ const USERS: Array<{
 ];
 
 const PRODUCTS: Array<{
-  id:                 string;
-  name:               string;
-  brand:              string;
-  ingredients:        string;
-  has_gluten:         boolean;
-  cross_contamination:string;
-  analysis_status:    string;
+  id:                  string;
+  name:                string;
+  brand:               string;
+  ingredients:         string;
+  has_gluten:          boolean;
+  cross_contamination: string;
+  analysis_status:     string;
+  partner_id?:         string;
 }> = [
   // ── SAFE para celíacos ─────────────────────────────────────────────────────
   {
@@ -100,6 +101,7 @@ const PRODUCTS: Array<{
     has_gluten:          false,
     cross_contamination: '',
     analysis_status:     'ANALISADO',
+    partner_id:          'c0000001-0000-0000-0000-000000000002', // Mercado Natural & Cia
   },
   {
     id:                  'b0000001-0000-0000-0000-000000000002',
@@ -109,6 +111,7 @@ const PRODUCTS: Array<{
     has_gluten:          false,
     cross_contamination: '',
     analysis_status:     'ANALISADO',
+    partner_id:          'c0000001-0000-0000-0000-000000000002', // Mercado Natural & Cia
   },
   {
     id:                  'b0000001-0000-0000-0000-000000000003',
@@ -225,6 +228,89 @@ const PRODUCTS: Array<{
     cross_contamination: 'Processado em ambiente com amendoim.',
     analysis_status:     'ANALISADO',
   },
+  // ── Produto de Parceiro 100% Seguro (Bistro Sem Glúten) ───────────────────
+  {
+    id:                  'b0000008-0000-0000-0000-000000000001',
+    name:                'Pão Francês Artesanal Sem Glúten',
+    brand:               'Bistro Sem Glúten Fit',
+    ingredients:         'farinha de arroz, polvilho doce, água, fermento biológico, sal',
+    has_gluten:          false,
+    cross_contamination: '100% livre de contaminação por glúten.',
+    analysis_status:     'ANALISADO',
+    partner_id:          'c0000001-0000-0000-0000-000000000001', // Bistro Sem Gluten Fit
+  },
+  {
+    id:                  'b0000008-0000-0000-0000-000000000002',
+    name:                'Bolo de Cenoura com Chocolate Sem Leite',
+    brand:               'Bistro Sem Glúten Fit',
+    ingredients:         'cenoura, farinha de arroz, açúcar, óleo, cacau em pó 50%',
+    has_gluten:          false,
+    cross_contamination: 'Livre de glúten e leite. Sem compartilhamento de maquinário.',
+    analysis_status:     'ANALISADO',
+    partner_id:          'c0000001-0000-0000-0000-000000000001', // Bistro Sem Gluten Fit
+  },
+];
+
+const PARTNERS: Array<{
+  id:                string;
+  emailResponsavel:  string;
+  name:              string;
+  cnpj?:             string;
+  description:       string;
+  address:           string;
+  phone:             string;
+  type:              string;
+  approvalStatus:    string;
+  operationalStatus: string;
+  city:              string;
+  state:             string;
+  deliveryRegion:    string;
+}> = [
+  {
+    id:                'c0000001-0000-0000-0000-000000000001',
+    emailResponsavel:  'parceiro.restaurante@seed.celilac.dev',
+    name:              'Bistro Sem Gluten Fit',
+    cnpj:              '12345678000195',
+    description:       'Um bistrô 100% livre de glúten e contaminação cruzada.',
+    address:           'Av. Paulista, 1000',
+    phone:             '11999998888',
+    type:              'RESTAURANT',
+    approvalStatus:    'APPROVED',
+    operationalStatus: 'ACTIVE',
+    city:              'São Paulo',
+    state:             'SP',
+    deliveryRegion:    'Grande São Paulo',
+  },
+  {
+    id:                'c0000001-0000-0000-0000-000000000002',
+    emailResponsavel:  'parceiro.restaurante@seed.celilac.dev',
+    name:              'Mercado Natural & Cia',
+    cnpj:              '98765432000121',
+    description:       'Mercearia com seleção de produtos embalados sem glúten e sem leite.',
+    address:           'Rua das Flores, 123',
+    phone:             '11988887777',
+    type:              'MARKET',
+    approvalStatus:    'APPROVED',
+    operationalStatus: 'ACTIVE',
+    city:              'São Paulo',
+    state:             'SP',
+    deliveryRegion:    'Zona Sul',
+  },
+  {
+    id:                'c0000001-0000-0000-0000-000000000003',
+    emailResponsavel:  'parceiro.restaurante@seed.celilac.dev',
+    name:              'Doceria Artesanal da Ana',
+    cnpj:              '',
+    description:       'Doces artesanais sem glúten e sem lactose sob encomenda.',
+    address:           'Rua XV de Novembro, 456',
+    phone:             '11977776666',
+    type:              'INDEPENDENT_PRODUCER',
+    approvalStatus:    'PENDING_REVIEW',
+    operationalStatus: 'INACTIVE',
+    city:              'Campinas',
+    state:             'SP',
+    deliveryRegion:    'Campinas e Região',
+  }
 ];
 
 // ─── Funções auxiliares ─────────────────────────────────────────────────────
@@ -239,6 +325,11 @@ async function createProductsTableIfNotExists(): Promise<void> {
       has_gluten          BOOLEAN NOT NULL DEFAULT FALSE,
       cross_contamination TEXT NOT NULL DEFAULT '',
       analysis_status     VARCHAR(50) NOT NULL DEFAULT 'PENDENTE_DE_ANALISE',
+      partner_id          UUID,
+      price               NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+      category            VARCHAR(100) NOT NULL DEFAULT 'Geral',
+      image_url           VARCHAR(500),
+      is_active           BOOLEAN NOT NULL DEFAULT TRUE,
       created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
@@ -246,6 +337,7 @@ async function createProductsTableIfNotExists(): Promise<void> {
 
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_has_gluten ON products(has_gluten)`);
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_status ON products(analysis_status)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_partner_id ON products(partner_id)`);
 
   console.log('  ✅ Tabela products garantida.');
 }
@@ -304,11 +396,52 @@ async function seedFoodProfiles(emailToId: Map<string, string>): Promise<void> {
   }
 }
 
+async function seedPartners(emailToId: Map<string, string>): Promise<void> {
+  for (const partner of PARTNERS) {
+    const userId = emailToId.get(partner.emailResponsavel)!;
+
+    await pool.query(
+      `INSERT INTO partners (id, user_id, name, cnpj, description, address, phone, type, approval_status, operational_status, city, state, delivery_region)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       ON CONFLICT (id) DO UPDATE SET
+         name               = EXCLUDED.name,
+         cnpj               = EXCLUDED.cnpj,
+         description        = EXCLUDED.description,
+         address            = EXCLUDED.address,
+         phone              = EXCLUDED.phone,
+         type               = EXCLUDED.type,
+         approval_status    = EXCLUDED.approval_status,
+         operational_status = EXCLUDED.operational_status,
+         city               = EXCLUDED.city,
+         state              = EXCLUDED.state,
+         delivery_region    = EXCLUDED.delivery_region,
+         updated_at         = CURRENT_TIMESTAMP`,
+      [
+        partner.id,
+        userId,
+        partner.name,
+        partner.cnpj || null,
+        partner.description,
+        partner.address,
+        partner.phone,
+        partner.type,
+        partner.approvalStatus,
+        partner.operationalStatus,
+        partner.city,
+        partner.state,
+        partner.deliveryRegion,
+      ]
+    );
+
+    console.log(`  🏢 [${partner.approvalStatus}/${partner.operationalStatus}] Partner: ${partner.name}`);
+  }
+}
+
 async function seedProducts(): Promise<void> {
   for (const product of PRODUCTS) {
     await pool.query(
-      `INSERT INTO products (id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO products (id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        ON CONFLICT (id) DO UPDATE SET
          name                = EXCLUDED.name,
          brand               = EXCLUDED.brand,
@@ -316,6 +449,7 @@ async function seedProducts(): Promise<void> {
          has_gluten          = EXCLUDED.has_gluten,
          cross_contamination = EXCLUDED.cross_contamination,
          analysis_status     = EXCLUDED.analysis_status,
+         partner_id          = EXCLUDED.partner_id,
          updated_at          = CURRENT_TIMESTAMP`,
       [
         product.id,
@@ -325,6 +459,7 @@ async function seedProducts(): Promise<void> {
         product.has_gluten,
         product.cross_contamination,
         product.analysis_status,
+        product.partner_id || null,
       ],
     );
 
@@ -364,7 +499,12 @@ async function main(): Promise<void> {
     await seedFoodProfiles(emailToId);
     console.log('');
 
-    // 4. Produtos
+    // 4. Parceiros
+    console.log('🏢 Inserindo parceiros comerciais…');
+    await seedPartners(emailToId);
+    console.log('');
+
+    // 5. Produtos
     console.log('🏪 Inserindo produtos…');
     await seedProducts();
     console.log('');
@@ -372,12 +512,14 @@ async function main(): Promise<void> {
     // Resumo final
     const { rows: userCount }    = await pool.query('SELECT COUNT(*) FROM users');
     const { rows: profileCount } = await pool.query('SELECT COUNT(*) FROM food_profiles');
+    const { rows: partnerCount } = await pool.query('SELECT COUNT(*) FROM partners');
     const { rows: productCount } = await pool.query('SELECT COUNT(*) FROM products');
 
     console.log('═'.repeat(55));
     console.log('✅ Seed concluído com sucesso!');
     console.log(`   👤 Usuários:    ${userCount[0].count}`);
     console.log(`   🥗 Perfis:      ${profileCount[0].count}`);
+    console.log(`   🏢 Parceiros:   ${partnerCount[0].count}`);
     console.log(`   🏪 Produtos:    ${productCount[0].count}`);
     console.log('');
     console.log('📋 Credenciais de teste:');

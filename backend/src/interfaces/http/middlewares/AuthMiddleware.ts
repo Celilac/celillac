@@ -48,3 +48,41 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
     res.status(401).json({ error: 'Token inválido ou expirado.' });
   }
 }
+
+export function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    next();
+    return;
+  }
+
+  const parts = authHeader.split(' ');
+
+  if (parts.length !== 2) {
+    next();
+    return;
+  }
+
+  const [scheme, token] = parts;
+
+  if (!/^Bearer$/i.test(scheme)) {
+    next();
+    return;
+  }
+
+  const secret = process.env.JWT_SECRET || 'secret';
+
+  try {
+    const decoded = jwt.verify(token, secret) as DecodedToken;
+    
+    req.user = {
+      id: decoded.sub,
+      role: decoded.role,
+    };
+  } catch (err) {
+    // Prossegue como visitante em caso de falha de token
+  }
+  
+  next();
+}

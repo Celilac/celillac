@@ -12,9 +12,13 @@ export interface SearchProductQuery {
   term:  string;
   page:  number;
   limit: number;
+  avoidAllergens?: string[];
+  partnerId?: string;
 }
 
 export interface IProductCatalogRepository {
   create(product: Product): Promise<void>;
   search(query: SearchProductQuery): Promise<PaginatedResult<Product>>;
+  findById(id: string): Promise<Product | null>;
+  update(product: Product): Promise<void>;
 }

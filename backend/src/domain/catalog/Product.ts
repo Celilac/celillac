@@ -11,6 +11,11 @@ export interface ProductProps {
   hasGluten:          boolean;
   crossContamination: string;
   analysisStatus:     AnalysisStatus;
+  partnerId?:         string;
+  price:              number;
+  category:           string;
+  imageUrl?:          string;
+  isActive:           boolean;
 }
 
 /**
@@ -19,6 +24,8 @@ export interface ProductProps {
  * Regras:
  * 1. Produto sem ingredientes tem status PENDENTE_DE_ANALISE.
  * 2. cross_contamination é obrigatório (mesmo que string vazia).
+ * 3. preço não pode ser negativo.
+ * 4. categoria é obrigatória.
  */
 export class Product extends Entity<ProductProps> {
   private constructor(props: ProductProps, id?: string) {
@@ -31,6 +38,25 @@ export class Product extends Entity<ProductProps> {
   get hasGluten(): boolean { return this.props.hasGluten; }
   get crossContamination(): string { return this.props.crossContamination; }
   get analysisStatus(): AnalysisStatus { return this.props.analysisStatus; }
+  get partnerId(): string | undefined { return this.props.partnerId; }
+  get price(): number { return this.props.price; }
+  get category(): string { return this.props.category; }
+  get imageUrl(): string | undefined { return this.props.imageUrl; }
+  get isActive(): boolean { return this.props.isActive; }
+
+  /**
+   * Desativa o produto (exclusão lógica / indisponível)
+   */
+  inactivate(): void {
+    this.props.isActive = false;
+  }
+
+  /**
+   * Ativa o produto
+   */
+  activate(): void {
+    this.props.isActive = true;
+  }
 
   /**
    * Atualiza os ingredientes e recalcula o status de análise
@@ -41,7 +67,12 @@ export class Product extends Entity<ProductProps> {
   }
 
   static create(
-    props: Omit<ProductProps, 'analysisStatus'> & { analysisStatus?: AnalysisStatus },
+    props: Omit<ProductProps, 'analysisStatus' | 'price' | 'category' | 'isActive'> & { 
+      analysisStatus?: AnalysisStatus, 
+      price?: number, 
+      category?: string,
+      isActive?: boolean
+    },
     id?: string
   ): Result<Product> {
     if (!props.name || props.name.trim().length === 0) {
@@ -53,7 +84,18 @@ export class Product extends Entity<ProductProps> {
       return Result.fail<Product>('O campo crossContamination é obrigatório.');
     }
 
+    const price = props.price ?? 0.00;
+    if (price < 0) {
+      return Result.fail<Product>('O preço do produto não pode ser negativo.');
+    }
+
+    const category = props.category ? props.category.trim() : 'Geral';
+    if (category.length === 0) {
+      return Result.fail<Product>('A categoria do produto é obrigatória.');
+    }
+
     const analysisStatus = props.analysisStatus ?? Product.determineAnalysisStatus(props.ingredients);
+    const isActive = props.isActive ?? true;
 
     return Result.ok<Product>(
       new Product(
@@ -64,6 +106,11 @@ export class Product extends Entity<ProductProps> {
           hasGluten: props.hasGluten,
           crossContamination: props.crossContamination.trim(),
           analysisStatus,
+          partnerId: props.partnerId,
+          price,
+          category,
+          imageUrl: props.imageUrl ? props.imageUrl.trim() : undefined,
+          isActive,
         },
         id
       )
