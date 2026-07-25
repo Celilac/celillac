@@ -2,12 +2,13 @@
 // frontend/web-app/src/app/profile/page.tsx
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { foodProfileApi } from '@/api/food-profile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
+import { Header } from '@/components/layout/Header';
 import { HttpError } from '@/api/client';
 
 const ALLERGEN_OPTIONS = [
@@ -33,7 +34,7 @@ const SEVERITY_OPTIONS = [
 interface Row { allergen: string; severity: string; }
 
 export default function ProfilePage() {
-  const { token, userId, isAuthenticated } = useAuth();
+  const { token, userId, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const toast = useToast();
@@ -45,8 +46,12 @@ export default function ProfilePage() {
 
   // Carrega perfil existente ao montar a página
   useEffect(() => {
-    if (!isAuthenticated || !token || !userId) {
-      setLoadingInit(false);
+    const localToken = typeof window !== 'undefined' ? localStorage.getItem('celilac:token') : null;
+    if (!isAuthenticated && !localToken) {
+      router.push('/auth/login');
+      return;
+    }
+    if (!token || !userId) {
       return;
     }
     foodProfileApi.getByUserId(userId, token)
@@ -61,10 +66,14 @@ export default function ProfilePage() {
         setHasProfile(false);
       })
       .finally(() => setLoadingInit(false));
-  }, [isAuthenticated, token, userId]);
+  }, [isAuthenticated, token, userId, router]);
 
   function addRow() {
-    setRows((prev) => [...prev, { allergen: 'LACTOSE', severity: 'MEDIUM' }]);
+    const availableOption = ALLERGEN_OPTIONS.find(
+      (opt) => !rows.some((row) => row.allergen === opt.value)
+    );
+    const nextAllergen = availableOption ? availableOption.value : 'OTHER';
+    setRows((prev) => [...prev, { allergen: nextAllergen, severity: 'MEDIUM' }]);
   }
 
   function removeRow(idx: number) {
@@ -100,21 +109,7 @@ export default function ProfilePage() {
   if (loadingInit) {
     return (
       <div className="profile-page">
-        <header className="topbar">
-          <span className="topbar-title brand-lockup">
-            <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-            <span className="brand-wordmark">Celi<span>Lac</span></span>
-            <span className="brand-tagline">Vivendo bem a vida</span>
-          </span>
-          <nav className="topbar-actions">
-            <Link href="/" className="btn btn-ghost home-button" id="profile-home-btn">
-              🏠 Início
-            </Link>
-            <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
-              {theme === 'dark' ? '☀️' : '🌙'}
-            </button>
-          </nav>
-        </header>
+        <Header />
         <main className="auth-shell profile-shell">
           <div className="auth-split-card profile-split-card">
             <aside className="auth-brand-panel">
@@ -135,21 +130,7 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-page">
-      <header className="topbar">
-        <span className="topbar-title brand-lockup">
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">Celi<span>Lac</span></span>
-          <span className="brand-tagline">Vivendo bem a vida</span>
-        </span>
-        <nav className="topbar-actions">
-          <Link href="/" className="btn btn-ghost home-button" id="profile-home-btn">
-            🏠 Início
-          </Link>
-          <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-        </nav>
-      </header>
+      <Header />
 
       <main className="auth-shell profile-shell">
         <div className="auth-split-card profile-split-card">

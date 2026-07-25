@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { useTheme } from '@/contexts/ThemeContext';
+import { Header } from '@/components/layout/Header';
 import styles from '../partner/partner.module.css';
 
 export default function PublicPartnersListPage() {
@@ -37,18 +38,7 @@ export default function PublicPartnersListPage() {
 
   return (
     <div className="profile-page">
-      <header className="topbar">
-        <span className="topbar-title brand-lockup" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">Celi<span>Lac</span></span>
-          <span className="brand-tagline">Guia de Estabelecimentos</span>
-        </span>
-        <nav className="topbar-actions">
-          <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-        </nav>
-      </header>
+      <Header />
 
       <main className={styles.container}>
         <div className={styles.header}>

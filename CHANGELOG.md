@@ -36,5 +36,6 @@ Histórico de entregas do projeto. Formato: `Data | Feature | Descrição`.
 | 2026-07-18 | FEAT-028 | Correção de Gaps do PRD Parte 3: adicionado visualização detalhada de produto (`GET /catalog/products/:id`), edição (`PUT /catalog/products/:id`) e inativação de produtos (`PATCH /catalog/products/:id/status`) por parceiros. Adicionado suporte a avaliações de parceiros comerciais e rota `GET /reviews/partner/:partnerId` |
 | 2026-07-18 | FEAT-029 | Correção de Gaps do PRD Parte 4: fluxo de aprovação de parceiros pelo administrador (`PATCH /partners/:id/status`). Novos parceiros iniciam como inativos/pendentes por padrão |
 | 2026-07-24 | FEAT-030 | Expansão de Partners: Gestão e Governança Completa. Múltiplos parceiros por usuário, estados detalhados no domínio, motivos de rejeição/suspensão, barreira de publicação, rotas de moderação/operação e UI premium (portal, cadastro, edição, moderação e perfil público) |
+| 2026-07-24 | FEAT-031 | Mecanismo de Logout e Invalidação de Tokens. Blacklist server-side em PostgreSQL, proteção de sessões no AuthMiddleware, chamada assíncrona na iamApi, botões visuais na Topbar do Dashboard e do Perfil, e redirecionamento de segurança para usuários não autenticados |
 
 Ver [README.md](README.md) para o estado atual das funcionalidades e [`docs/`](docs/) para as especificações de cada bounded context.

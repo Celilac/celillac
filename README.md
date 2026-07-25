@@ -119,7 +119,7 @@ cd backend
 npm test
 ```
 
-**22 suítes de teste | 99 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
+**32 suítes de teste | 157 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
@@ -134,6 +134,7 @@ npm test
 | `application/catalog/CreateProductUseCase`, `SearchProductsUseCase` | 100% |
 | `application/reviews/SubmitReviewUseCase`, `GetProductReviewsUseCase` | ~93% |
 | `application/admin/CreateReportUseCase`, `ListReportsUseCase`, `ReviewReportUseCase` | ~94% |
+| `application/iam/LogoutUserUseCase` | ~92.8% |
 | `interfaces/http/middlewares/AuthMiddleware` | ~91% |
 | `interfaces/http/middlewares/SecurityMiddleware` | 100% |
 
