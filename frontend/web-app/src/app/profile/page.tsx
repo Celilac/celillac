@@ -2,6 +2,7 @@
 // frontend/web-app/src/app/profile/page.tsx
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { foodProfileApi } from '@/api/food-profile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -106,6 +107,9 @@ export default function ProfilePage() {
             <span className="brand-tagline">Vivendo bem a vida</span>
           </span>
           <nav className="topbar-actions">
+            <Link href="/" className="btn btn-ghost home-button" id="profile-home-btn">
+              🏠 Início
+            </Link>
             <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
@@ -138,6 +142,9 @@ export default function ProfilePage() {
           <span className="brand-tagline">Vivendo bem a vida</span>
         </span>
         <nav className="topbar-actions">
+          <Link href="/" className="btn btn-ghost home-button" id="profile-home-btn">
+            🏠 Início
+          </Link>
           <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>

@@ -58,6 +58,11 @@ export default function DashboardPage() {
           <Link href="/profile" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
             ⚙️ Perfil
           </Link>
+          {isAuthenticated && (
+            <Link href="/" className="btn btn-ghost home-button" id="dashboard-home-btn" style={{ padding: '0.4rem 1rem' }}>
+              🏠 Início
+            </Link>
+          )}
           {!isAuthenticated && (
             <Link href="/auth/login" className="btn btn-em" style={{ padding: '0.4rem 1rem' }}>
               Entrar
