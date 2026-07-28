@@ -3,10 +3,13 @@ import { Entity } from '../Entity';
 import { Result } from '../Result';
 import { AllergenType } from './value-objects/AllergenType';
 import { SeverityLevel } from './value-objects/SeverityLevel';
+import { RestrictionType } from './value-objects/RestrictionType';
 
 export interface RestrictionProps {
   allergen: AllergenType;
   severity: SeverityLevel;
+  type?: RestrictionType;
+  notes?: string;
 }
 
 /**
@@ -16,7 +19,13 @@ export interface RestrictionProps {
  */
 export class Restriction extends Entity<RestrictionProps> {
   private constructor(props: RestrictionProps, id?: string) {
-    super(props, id);
+    super(
+      {
+        ...props,
+        type: props.type || RestrictionType.ALLERGY,
+      },
+      id,
+    );
   }
 
   get allergen(): AllergenType {
@@ -25,6 +34,14 @@ export class Restriction extends Entity<RestrictionProps> {
 
   get severity(): SeverityLevel {
     return this.props.severity;
+  }
+
+  get type(): RestrictionType {
+    return this.props.type || RestrictionType.ALLERGY;
+  }
+
+  get notes(): string | undefined {
+    return this.props.notes;
   }
 
   /**
@@ -41,6 +58,9 @@ export class Restriction extends Entity<RestrictionProps> {
     }
     if (!Object.values(SeverityLevel).includes(props.severity)) {
       return Result.fail<Restriction>(`Nível de severidade inválido: ${props.severity}.`);
+    }
+    if (props.type && !Object.values(RestrictionType).includes(props.type)) {
+      return Result.fail<Restriction>(`Tipo de restrição inválido: ${props.type}.`);
     }
     return Result.ok<Restriction>(new Restriction(props, id));
   }

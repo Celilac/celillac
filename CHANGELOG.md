@@ -37,5 +37,6 @@ Histórico de entregas do projeto. Formato: `Data | Feature | Descrição`.
 | 2026-07-18 | FEAT-029 | Correção de Gaps do PRD Parte 4: fluxo de aprovação de parceiros pelo administrador (`PATCH /partners/:id/status`). Novos parceiros iniciam como inativos/pendentes por padrão |
 | 2026-07-24 | FEAT-030 | Expansão de Partners: Gestão e Governança Completa. Múltiplos parceiros por usuário, estados detalhados no domínio, motivos de rejeição/suspensão, barreira de publicação, rotas de moderação/operação e UI premium (portal, cadastro, edição, moderação e perfil público) |
 | 2026-07-24 | FEAT-031 | Mecanismo de Logout e Invalidação de Tokens. Blacklist server-side em PostgreSQL, proteção de sessões no AuthMiddleware, chamada assíncrona na iamApi, botões visuais na Topbar do Dashboard e do Perfil, e redirecionamento de segurança para usuários não autenticados |
+| 2026-07-28 | FEAT-032 | Análise do Usuário Consumidor: Modelo DDD Consumer, Migration 012 (consumers, partner_favorites, partner_reviews, partner_reports), tipos de restrição e contaminação cruzada no FoodProfile, rotas /consumers/me, banner de perfil incompleto e badges visuais de compatibilidade no Web-App |
 
 Ver [README.md](README.md) para o estado atual das funcionalidades e [`docs/`](docs/) para as especificações de cada bounded context.

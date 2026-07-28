@@ -10,6 +10,7 @@ import { adminRouter } from './interfaces/http/routes/admin.routes';
 import { reviewsRoutes } from './interfaces/http/routes/reviews.routes';
 import { partnerRouter } from './interfaces/http/routes/partner.routes';
 import { favoriteRouter } from './interfaces/http/routes/favorite.routes';
+import { consumerRouter } from './interfaces/http/routes/consumer.routes';
 import { corsMiddleware, securityHeadersMiddleware } from './interfaces/http/middlewares/SecurityMiddleware';
 
 const app  = express();
@@ -25,6 +26,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/iam',          iamRouter);
+app.use('/consumers',    consumerRouter);
 app.use('/food-profile', foodProfileRouter);
 app.use('/compatibility', compatibilityRouter);
 app.use('/catalog',      catalogRouter);

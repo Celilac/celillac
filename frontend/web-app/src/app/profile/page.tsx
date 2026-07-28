@@ -31,7 +31,20 @@ const SEVERITY_OPTIONS = [
   { value: 'FATAL',     label: '🔴 Fatal — Celíaco (FATAL)' },
 ];
 
-interface Row { allergen: string; severity: string; }
+const RESTRICTION_TYPE_OPTIONS = [
+  { value: 'ALLERGY',            label: '⚠️ Alergia' },
+  { value: 'INTOLERANCE',        label: '🥛 Intolerância' },
+  { value: 'MEDICAL_RESTRICTION',label: '🏥 Restrição Médica' },
+  { value: 'DIETARY_PREFERENCE', label: '🥗 Preferência Alimentar' },
+  { value: 'LIFESTYLE',          label: '🌱 Estilo de Vida' },
+];
+
+interface Row {
+  allergen: string;
+  severity: string;
+  type?: string;
+  notes?: string;
+}
 
 export default function ProfilePage() {
   const { token, userId, isAuthenticated, logout } = useAuth();
@@ -39,12 +52,12 @@ export default function ProfilePage() {
   const router = useRouter();
   const toast = useToast();
 
-  const [rows,        setRows]        = useState<Row[]>([{ allergen: 'GLUTEN', severity: 'FATAL' }]);
-  const [hasProfile,  setHasProfile]  = useState(false);
+  const [rows, setRows] = useState<Row[]>([{ allergen: 'GLUTEN', severity: 'FATAL', type: 'ALLERGY' }]);
+  const [acceptsCrossContamination, setAcceptsCrossContamination] = useState(false);
+  const [hasProfile, setHasProfile] = useState(false);
   const [loadingInit, setLoadingInit] = useState(true);
-  const [loading,     setLoading]     = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // Carrega perfil existente ao montar a página
   useEffect(() => {
     const localToken = typeof window !== 'undefined' ? localStorage.getItem('celilac:token') : null;
     if (!isAuthenticated && !localToken) {
@@ -57,12 +70,17 @@ export default function ProfilePage() {
     foodProfileApi.getByUserId(userId, token)
       .then((profile) => {
         if (profile?.restrictions?.length) {
-          setRows(profile.restrictions.map((r) => ({ allergen: r.allergen, severity: r.severity })));
+          setRows(profile.restrictions.map((r: any) => ({
+            allergen: r.allergen,
+            severity: r.severity,
+            type: r.type || 'ALLERGY',
+            notes: r.notes || '',
+          })));
         }
+        setAcceptsCrossContamination(!!profile?.acceptsCrossContamination);
         setHasProfile(true);
       })
       .catch(() => {
-        // 404 = sem perfil ainda — estado padrão (create)
         setHasProfile(false);
       })
       .finally(() => setLoadingInit(false));
@@ -73,7 +91,7 @@ export default function ProfilePage() {
       (opt) => !rows.some((row) => row.allergen === opt.value)
     );
     const nextAllergen = availableOption ? availableOption.value : 'OTHER';
-    setRows((prev) => [...prev, { allergen: nextAllergen, severity: 'MEDIUM' }]);
+    setRows((prev) => [...prev, { allergen: nextAllergen, severity: 'MEDIUM', type: 'ALLERGY' }]);
   }
 
   function removeRow(idx: number) {
@@ -92,13 +110,18 @@ export default function ProfilePage() {
     }
     setLoading(true);
     try {
+      const payload = {
+        restrictions: rows,
+        acceptsCrossContamination,
+      };
       if (hasProfile) {
-        await foodProfileApi.update(userId, { restrictions: rows }, token);
+        await foodProfileApi.update(userId, payload, token);
       } else {
-        await foodProfileApi.create({ userId, restrictions: rows }, token);
+        await foodProfileApi.create({ userId, ...payload }, token);
         setHasProfile(true);
       }
-      router.push('/');
+      toast.success('Perfil alimentar atualizado com sucesso!', 'Salvo');
+      router.push('/dashboard');
     } catch (err) {
       toast.error(err instanceof HttpError ? err.message : 'Erro ao salvar perfil.', 'Erro ao salvar perfil');
     } finally {
@@ -144,19 +167,19 @@ export default function ProfilePage() {
             <div className="auth-card profile-card animate-slide">
               <div className="profile-heading">
                 <div>
-                  <p className="eyebrow">Personalização</p>
+                  <p className="eyebrow">Personalização de Segurança</p>
                   <h1 className="auth-title">Perfil Alimentar</h1>
                 </div>
               </div>
 
               <p className="auth-subtitle profile-intro">
-                Configure seus alérgenos e o nível de severidade. Esta informação alimenta o motor de compatibilidade no servidor.
+                Configure suas restrições, severidades e tolerâncias. O CeliLac usa estes dados para orientar suas buscas e emitir alertas de compatibilidade.
               </p>
 
               {hasProfile && (
                 <div role="note" className="profile-edit-note">
                   <span aria-hidden="true">✏️</span>
-                  <span>Editando perfil existente — alterações substituirão as restrições atuais.</span>
+                  <span>Editando perfil existente — alterações impactarão as próximas análises de compatibilidade.</span>
                 </div>
               )}
 
@@ -164,15 +187,15 @@ export default function ProfilePage() {
                 <div className="restriction-section">
                   <div className="section-heading">
                     <div>
-                      <h2>Suas restrições</h2>
-                      <p>Adicione pelo menos uma restrição para ativar seu perfil.</p>
+                      <h2>Suas restrições alimentares</h2>
+                      <p>Informe alérgenos, a severidade e o tipo de necessidade para cada um.</p>
                     </div>
                     <span className="restriction-count">{rows.length}</span>
                   </div>
-                  
+
                   <div className="allergen-list">
                     {rows.map((row, idx) => (
-                      <div key={idx} className="allergen-row">
+                      <div key={idx} className="allergen-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '0.5rem', marginBottom: '0.75rem' }}>
                         <select
                           id={`allergen-select-${idx}`}
                           className="field-input field-select"
@@ -195,6 +218,17 @@ export default function ProfilePage() {
                           ))}
                         </select>
 
+                        <select
+                          id={`type-select-${idx}`}
+                          className="field-input field-select"
+                          value={row.type || 'ALLERGY'}
+                          onChange={(e) => updateRow(idx, 'type', e.target.value)}
+                        >
+                          {RESTRICTION_TYPE_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
+
                         <button
                           type="button"
                           className="remove-btn"
@@ -208,6 +242,24 @@ export default function ProfilePage() {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem', padding: '1rem', background: 'var(--bg-secondary, #f8f9fa)', borderRadius: '8px', border: '1px solid var(--border-color, #e9ecef)' }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      id="accept-cross-contamination-chk"
+                      checked={acceptsCrossContamination}
+                      onChange={(e) => setAcceptsCrossContamination(e.target.checked)}
+                      style={{ marginTop: '0.25rem' }}
+                    />
+                    <div>
+                      <strong style={{ fontSize: '0.95rem', display: 'block' }}>Aceito risco de contaminação cruzada (traços)</strong>
+                      <span style={{ fontSize: '0.85rem', color: '#6c757d' }}>
+                        Desmarcado por padrão. Se você for celíaco ou alérgico severo, mantenha desmarcado para bloquear produtos com avisos de "pode conter traços".
+                      </span>
+                    </div>
+                  </label>
                 </div>
 
                 <button type="button" className="btn btn-ghost add-restriction-button" id="add-allergen-btn" onClick={addRow}>

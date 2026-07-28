@@ -5,23 +5,31 @@ import { Restriction } from './Restriction';
 import { AllergenType } from './value-objects/AllergenType';
 
 export interface FoodProfileProps {
-  userId:       string;
+  userId: string;
   restrictions: Restriction[];
+  acceptsCrossContamination?: boolean;
 }
 
 /**
  * FoodProfile — Agregado Raiz do Contexto Alimentar.
  *
- * Regras Críticas (DOMAIN_MODEL.md):
- *  1. Um perfil deve ter pelo menos uma restrição para ser considerado "Ativo".
- *  2. Mudanças em restrições FATAL exigem revalidação do histórico de consumo.
+ * Regras Críticas (DOMAIN_MODEL.md e Análise do Consumidor):
+ *  1. Um perfil deve ter pelo menos uma restrição para ser considerado "Ativo" / "Completo".
+ *  2. Mudanças em restrições FATAL ou de Alta Severidade sinalizam perfil crítico e exigem atenção.
  *  3. Não são permitidos alérgenos duplicados no mesmo perfil.
+ *  4. Controla a tolerância a risco de contaminação cruzada (padrão: false para segurança).
  */
 export class FoodProfile extends Entity<FoodProfileProps> {
   private _requiresHistoryRevalidation: boolean = false;
 
   private constructor(props: FoodProfileProps, id?: string) {
-    super(props, id);
+    super(
+      {
+        ...props,
+        acceptsCrossContamination: props.acceptsCrossContamination ?? false,
+      },
+      id,
+    );
   }
 
   get userId(): string {
@@ -32,25 +40,41 @@ export class FoodProfile extends Entity<FoodProfileProps> {
     return [...this.props.restrictions]; // retorna cópia para garantir imutabilidade
   }
 
+  get acceptsCrossContamination(): boolean {
+    return !!this.props.acceptsCrossContamination;
+  }
+
   /**
    * requiresHistoryRevalidation — sinalizado quando uma restrição FATAL é adicionada.
-   * A camada de Application deve tratar este sinal adequadamente.
    */
   get requiresHistoryRevalidation(): boolean {
     return this._requiresHistoryRevalidation;
   }
 
   /**
-   * isActive — Regra do DOMAIN_MODEL.md:
-   * "Um perfil deve ter pelo menos uma restrição para ser considerado 'Ativo'."
+   * isActive / isComplete — Perfil considerado configurado se possuir ao menos 1 restrição.
    */
   isActive(): boolean {
     return this.props.restrictions.length > 0;
   }
 
+  isComplete(): boolean {
+    return this.props.restrictions.length > 0;
+  }
+
+  /**
+   * isCritical — Retorna true se houver qualquer restrição com severidade FATAL/alta ou Doença Celíaca.
+   */
+  isCritical(): boolean {
+    return this.props.restrictions.some((r) => r.isFatal());
+  }
+
+  public setCrossContaminationTolerance(accepts: boolean): void {
+    this.props.acceptsCrossContamination = accepts;
+  }
+
   /**
    * addRestriction — Adiciona uma restrição com validação de duplicidade.
-   * Retorna Result para indicar sucesso ou erro de domínio.
    */
   addRestriction(restriction: Restriction): Result<void> {
     const duplicate = this.props.restrictions.find(
@@ -62,7 +86,6 @@ export class FoodProfile extends Entity<FoodProfileProps> {
 
     this.props.restrictions.push(restriction);
 
-    // Regra crítica: mudanças FATAL sinalizam necessidade de revalidação
     if (restriction.isFatal()) {
       this._requiresHistoryRevalidation = true;
     }
@@ -71,8 +94,20 @@ export class FoodProfile extends Entity<FoodProfileProps> {
   }
 
   /**
+   * removeRestriction — Remove uma restrição pelo tipo de alérgeno.
+   */
+  removeRestriction(allergen: AllergenType): Result<void> {
+    const index = this.props.restrictions.findIndex((r) => r.allergen === allergen);
+    if (index === -1) {
+      return Result.fail<void>(`Restrição ${allergen} não encontrada no perfil.`);
+    }
+
+    this.props.restrictions.splice(index, 1);
+    return Result.ok<void>(undefined as any);
+  }
+
+  /**
    * clearRestrictions — Remove todas as restrições e zera o sinalizador de revalidação.
-   * Utilizado durante processos de atualização total do perfil.
    */
   clearRestrictions(): void {
     this.props.restrictions = [];
@@ -96,7 +131,14 @@ export class FoodProfile extends Entity<FoodProfileProps> {
     }
 
     return Result.ok<FoodProfile>(
-      new FoodProfile({ ...props, restrictions: [...props.restrictions] }, id),
+      new FoodProfile(
+        {
+          ...props,
+          restrictions: [...props.restrictions],
+          acceptsCrossContamination: props.acceptsCrossContamination ?? false,
+        },
+        id,
+      ),
     );
   }
 }
