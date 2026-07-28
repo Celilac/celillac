@@ -64,15 +64,38 @@ docker compose down
 docker compose up -d --build --force-recreate
 ```
 
-## 4. Resumir PRs de outros membros da equipe mergeadas no remoto
+## 4. Aplicar migrations pendentes no banco local
+
+> [!IMPORTANT]
+> O `docker-compose.yml` só monta scripts de inicialização em `docker-entrypoint-initdb.d`, que o Postgres executa **apenas na primeira vez que o volume é criado**. Como o passo 3 preserva o volume de propósito, qualquer migration nova que tenha chegado da branch remota (via merge/pull do passo 2) **não é aplicada automaticamente** — o schema local fica defasado em silêncio, o que pode gerar erros confusos na aplicação (ex.: uma tabela referenciada pelo backend não existe, mas o erro aparece disfarçado de outra coisa, como token inválido).
+
+Como todas as migrations em `harness/scripts/migrations/` são escritas de forma idempotente (`CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `DROP CONSTRAINT IF EXISTS` etc.), é seguro reaplicar a sequência inteira a cada execução deste workflow — os objetos já existentes são simplesmente ignorados (com `NOTICE`, sem erro).
+
+> [!NOTE]
+> Autorização permanente: ao executar este workflow, pode aplicar as migrations pendentes diretamente contra o container do Postgres, sem pedir confirmação antes.
+
+```bash
+# 4.1. Aplica todas as migrations em ordem numérica contra o container do Postgres
+# Ajuste container/usuário/banco se o docker-compose.yml tiver sido alterado
+cd harness/scripts/migrations
+for f in $(ls *.sql | sort); do
+  echo "=== Aplicando $f ==="
+  docker exec -i celilac-postgres psql -U celilac_user -d celilac_db -v ON_ERROR_STOP=1 < "$f" || { echo "FALHOU em $f — pare e investigue antes de continuar."; break; }
+done
+cd -
+```
+
+*Nota: Se algum arquivo falhar com um erro que não seja "already exists" / "does not exist, skipping", pare e avalie manualmente antes de prosseguir — pode indicar uma migration não idempotente ou um conflito real de schema.*
+
+## 5. Resumir PRs de outros membros da equipe mergeadas no remoto
 
 Depois de atualizar a `develop` local (passo 2), sempre feche o workflow trazendo um resumo dos PRs que **outros integrantes da equipe** mergearam remotamente desde a última atualização — para o usuário avaliar se algo impacta o trabalho em andamento.
 
 ```bash
-# 4.1. Liste os PRs mergeados recentemente contra develop
+# 5.1. Liste os PRs mergeados recentemente contra develop
 gh pr list --base develop --state merged --limit 15 --json number,title,author,mergedAt,url
 
-# 4.2. Para cada PR de outro autor (não o próprio usuário) que entrou no pull do passo 2,
+# 5.2. Para cada PR de outro autor (não o próprio usuário) que entrou no pull do passo 2,
 # use `gh pr view <numero> --json title,author,body,files` para detalhar o que muda e por quê
 ```
 
