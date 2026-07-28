@@ -1,7 +1,7 @@
 // backend/src/interfaces/http/controllers/consumer/UpdateConsumerPreferencesController.ts
 import { Request, Response } from 'express';
 import { BaseController } from '../BaseController';
-import { UpdateConsumerPreferencesUseCase } from '../../../application/consumer/UpdateConsumerPreferencesUseCase';
+import { UpdateConsumerPreferencesUseCase } from '../../../../application/consumer/UpdateConsumerPreferencesUseCase';
 
 export class UpdateConsumerPreferencesController extends BaseController {
   constructor(private readonly useCase: UpdateConsumerPreferencesUseCase) {

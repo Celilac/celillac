@@ -1,7 +1,8 @@
 // backend/src/interfaces/http/controllers/consumer/AddRestrictionController.ts
 import { Request, Response } from 'express';
 import { BaseController } from '../BaseController';
-import { AddRestrictionUseCase } from '../../../application/food-profile/AddRestrictionUseCase';
+import { AddRestrictionUseCase } from '../../../../application/food-profile/AddRestrictionUseCase';
+import { Restriction } from '../../../../domain/food-profile/Restriction';
 
 export class AddRestrictionController extends BaseController {
   constructor(private readonly useCase: AddRestrictionUseCase) {
@@ -35,7 +36,7 @@ export class AddRestrictionController extends BaseController {
     return this.ok(res, {
       userId: profile.userId,
       acceptsCrossContamination: profile.acceptsCrossContamination,
-      restrictions: profile.restrictions.map((r) => ({
+      restrictions: profile.restrictions.map((r: Restriction) => ({
         id: r.id,
         allergen: r.allergen,
         severity: r.severity,
