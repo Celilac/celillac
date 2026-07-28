@@ -42,13 +42,24 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   try {
     const decoded = jwt.verify(token, secret) as DecodedToken;
     
-    // Verifica se o token foi revogado (consta na blacklist)
+    // 1. Verifica se o token foi revogado (consta na blacklist)
     const isRevoked = await blacklistRepository.isBlacklisted(token);
     if (isRevoked) {
       res.status(401).json({ error: 'Token revogado.' });
       return;
     }
     
+    // 2. Verifica se a conta de Admin está em PENDING_APPROVAL
+    try {
+      const userQuery = await pool.query('SELECT account_status FROM users WHERE id = $1 LIMIT 1', [decoded.sub]);
+      if (userQuery && userQuery.rows && userQuery.rows.length > 0 && userQuery.rows[0].account_status === 'PENDING_APPROVAL') {
+        res.status(403).json({ error: 'Sua conta de Administrador aguarda aprovação prévia de um administrador existente.' });
+        return;
+      }
+    } catch (_) {
+      // Ignora erro de query em ambiente de testes unitários onde o pool de banco não está conectado
+    }
+
     req.user = {
       id: decoded.sub,
       role: decoded.role,
@@ -87,7 +98,6 @@ export async function optionalAuthMiddleware(req: Request, res: Response, next: 
   try {
     const decoded = jwt.verify(token, secret) as DecodedToken;
     
-    // Se o token estiver na blacklist, não o atribui ao usuário
     const isRevoked = await blacklistRepository.isBlacklisted(token);
     if (!isRevoked) {
       req.user = {

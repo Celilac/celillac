@@ -11,7 +11,7 @@ export class UpdateFoodProfileController extends BaseController {
 
   protected async executeImpl(req: Request, res: Response): Promise<void> {
     const { userId } = req.params;
-    const { restrictions } = req.body;
+    const { restrictions, acceptsCrossContamination } = req.body;
 
     if (!userId) {
       this.badRequest(res, 'O parâmetro userId é obrigatório na URL.');
@@ -26,7 +26,11 @@ export class UpdateFoodProfileController extends BaseController {
       return;
     }
 
-    const result = await this.updateProfileUseCase.execute({ userId, restrictions });
+    const result = await this.updateProfileUseCase.execute({
+      userId,
+      restrictions,
+      acceptsCrossContamination,
+    });
 
     if (result.isFailure) {
       this.badRequest(res, result.getError());

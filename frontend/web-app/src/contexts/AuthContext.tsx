@@ -3,11 +3,8 @@
 //
 // Estratégia de armazenamento do JWT:
 //   ✅ localStorage — persiste entre abas e janelas do mesmo navegador
+//   ✅ Inicialização síncrona / SSR-safe para evitar falsos redirecionamentos no F5
 //   ✅ Limpo explicitamente no logout (revogação via blacklist no backend)
-//   ✅ Token revogado no servidor na chamada de logout — mesmo que localStorage
-//      seja lido após o logout, o backend rejeita o token com 401.
-//
-// O token NÃO é exposto via window nem concatenado em logs.
 //
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { iamApi } from '@/api/iam';
@@ -24,32 +21,50 @@ interface AuthContextValue extends AuthState {
   login:           (token: string, userId: string) => void;
   logout:          () => Promise<void>;
   isAuthenticated: boolean;
+  isInitializing:  boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [auth, setAuth] = useState<AuthState>({ token: null, userId: null });
+  // Restaura sessão do localStorage de forma síncrona no cliente se disponível
+  const [auth, setAuth] = useState<AuthState>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const token  = localStorage.getItem(STORAGE_KEY_TOKEN);
+        const userId = localStorage.getItem(STORAGE_KEY_USERID);
+        if (token && userId) {
+          return { token, userId };
+        }
+      } catch {
+        // Fallback silencioso
+      }
+    }
+    return { token: null, userId: null };
+  });
 
-  // Restaura sessão do localStorage ao montar (persiste entre abas e recargas)
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
+
   useEffect(() => {
     try {
       const token  = localStorage.getItem(STORAGE_KEY_TOKEN);
       const userId = localStorage.getItem(STORAGE_KEY_USERID);
-      if (token && userId) {
+      if (token && userId && (!auth.token || !auth.userId)) {
         setAuth({ token, userId });
       }
     } catch {
-      // localStorage indisponível (SSR ou modo privado restrito) — sem ação
+      // localStorage indisponível
+    } finally {
+      setIsInitializing(false);
     }
-  }, []);
+  }, [auth.token, auth.userId]);
 
   const login = useCallback((token: string, userId: string) => {
     try {
       localStorage.setItem(STORAGE_KEY_TOKEN,  token);
       localStorage.setItem(STORAGE_KEY_USERID, userId);
     } catch {
-      // Falha silenciosa — token só em memória como fallback
+      // Falha silenciosa
     }
     setAuth({ token, userId });
   }, []);
@@ -70,7 +85,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [auth.token]);
 
   return (
-    <AuthContext.Provider value={{ ...auth, login, logout, isAuthenticated: !!auth.token }}>
+    <AuthContext.Provider
+      value={{
+        ...auth,
+        login,
+        logout,
+        isAuthenticated: !!auth.token,
+        isInitializing,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

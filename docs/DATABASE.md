@@ -72,13 +72,56 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `role` | ENUM | `CELIACO`, `PARCEIRO`, `ADMIN` |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
 
+### Tabela: `consumers` (Consumidores)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `user_id` | UUID | FK → users.id, UNIQUE, NOT NULL |
+| `general_preferences` | JSONB | Preferências gerais do consumidor |
+| `is_food_profile_complete` | BOOLEAN | DEFAULT false |
+| `is_food_profile_critical` | BOOLEAN | DEFAULT false |
+| `status` | VARCHAR | `CONTA_CRIADA`, `PERFIL_INCOMPLETO`, `PERFIL_CONFIGURADO`, `PERFIL_CRITICO`, `ATIVO`, `INATIVO` |
+| `created_at` | TIMESTAMP | DEFAULT NOW() |
+| `updated_at` | TIMESTAMP | DEFAULT NOW() |
+
 ### Tabela: `food_profiles` (Perfil Alimentar)
 | Coluna | Tipo | Restrições |
 |:-------|:-----|:-----------|
 | `id` | UUID | PK |
 | `user_id` | UUID | FK → users.id, NOT NULL |
-| `restrictions` | JSONB | Armazena lista de `{ allergen, severity }` |
+| `restrictions` | JSONB | Armazena lista de `{ allergen, severity, type, notes }` |
+| `accepts_cross_contamination` | BOOLEAN | DEFAULT false |
 | `updated_at` | TIMESTAMP | DEFAULT NOW() |
+
+### Tabela: `partner_favorites` (Favoritos de Parceiros)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `consumer_id` | UUID | FK → users.id |
+| `partner_id` | UUID | FK → partners.id |
+| `created_at` | TIMESTAMP | DEFAULT NOW() |
+
+### Tabela: `partner_reviews` (Avaliações de Parceiros)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `consumer_id` | UUID | FK → users.id |
+| `partner_id` | UUID | FK → partners.id |
+| `rating` | INTEGER | 1–5, NOT NULL |
+| `comment` | TEXT | Opcional |
+| `created_at` | TIMESTAMP | DEFAULT NOW() |
+
+### Tabela: `partner_reports` (Denúncias de Parceiros)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `reporter_id` | UUID | FK → users.id |
+| `partner_id` | UUID | FK → partners.id |
+| `reason` | VARCHAR | Motivo da denúncia |
+| `details` | TEXT | Opcional |
+| `is_food_safety_risk` | BOOLEAN | DEFAULT false (Colocado no topo da fila de moderação se true) |
+| `status` | VARCHAR | DEFAULT `PENDING` |
+| `created_at` | TIMESTAMP | DEFAULT NOW() |
 
 ### Tabela: `products` (Catálogo)
 | Coluna | Tipo | Restrições |
@@ -112,6 +155,7 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `product_id` | UUID | FK → products.id |
 | `reason` | VARCHAR | `INCORRECT_INGREDIENTS`, `MISSING_ALLERGEN`, etc. |
 | `details` | TEXT | |
+| `is_food_safety_risk` | BOOLEAN | DEFAULT false (Priorizado no topo da fila de moderação) |
 | `status` | VARCHAR | DEFAULT `PENDING` |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
 

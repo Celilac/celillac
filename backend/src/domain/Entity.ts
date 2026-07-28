@@ -1,5 +1,5 @@
 // backend/src/domain/Entity.ts
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export abstract class Entity<T> {
   protected readonly _id: string;
@@ -7,7 +7,7 @@ export abstract class Entity<T> {
 
   constructor(props: T, id?: string) {
     this.props = props;
-    this._id   = id ?? uuidv4();
+    this._id   = id ?? randomUUID();
   }
 
   get id(): string {

@@ -12,7 +12,7 @@ import { Header } from '@/components/layout/Header';
 import styles from '../../partner/partner.module.css';
 
 export default function AdminPartnersPage() {
-  const { token, isAuthenticated } = useAuth();
+  const { token, isAuthenticated, isInitializing } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const toast = useToast();
@@ -20,13 +20,16 @@ export default function AdminPartnersPage() {
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
   const [loading,  setLoading]  = useState(true);
   
-  // Controle de diálogos de ação
+  // Controle de diálogos de ação e detalhes
   const [activePartner, setActivePartner] = useState<PartnerSummary | null>(null);
-  const [actionType,     setActionType]     = useState<'REJECT' | 'SUSPEND' | null>(null);
-  const [reason,         setReason]         = useState('');
-  const [updating,       setUpdating]       = useState(false);
+  const [detailPartner, setDetailPartner] = useState<PartnerSummary | null>(null);
+  const [actionType,    setActionType]    = useState<'REJECT' | 'SUSPEND' | null>(null);
+  const [reason,        setReason]        = useState('');
+  const [updating,      setUpdating]      = useState(false);
 
   useEffect(() => {
+    if (isInitializing) return;
+
     if (!isAuthenticated || !token) {
       router.push('/auth/login');
       return;
@@ -35,24 +38,23 @@ export default function AdminPartnersPage() {
     partnerApi.listAdminPartners(token)
       .then((data) => setPartners(data))
       .catch((err) => {
-        toast.error(
-          err instanceof HttpError ? err.message : 'Erro ao listar parceiros para administração.',
-          'Erro'
-        );
+        const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao listar parceiros para administração.';
+        toast.error(msg, 'Erro');
         router.push('/');
       })
       .finally(() => setLoading(false));
-  }, [isAuthenticated, token, router, toast]);
+  }, [isAuthenticated, token, isInitializing, router, toast]);
 
   async function handleApprove(id: string) {
     if (!token) return;
     setUpdating(true);
     try {
       await partnerApi.approve(id, token);
-      setPartners((prev) => prev.map((p) => p.id === id ? { ...p, approvalStatus: 'APPROVED', rejectionReason: undefined, suspensionReason: undefined } : p));
+      setPartners((prev) => prev.map((p) => p.id === id ? { ...p, approvalStatus: 'APPROVED', rejectionReason: undefined, suspensionReason: undefined, operationalStatus: 'ACTIVE' } : p));
       toast.success('Parceiro aprovado com sucesso!');
-    } catch (err) {
-      toast.error(err instanceof HttpError ? err.message : 'Erro ao aprovar parceiro.', 'Erro');
+    } catch (err: any) {
+      const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao aprovar parceiro.';
+      toast.error(msg, 'Erro');
     } finally {
       setUpdating(false);
     }
@@ -63,10 +65,11 @@ export default function AdminPartnersPage() {
     setUpdating(true);
     try {
       await partnerApi.reactivate(id, token);
-      setPartners((prev) => prev.map((p) => p.id === id ? { ...p, approvalStatus: 'APPROVED', suspensionReason: undefined } : p));
+      setPartners((prev) => prev.map((p) => p.id === id ? { ...p, approvalStatus: 'APPROVED', suspensionReason: undefined, operationalStatus: 'ACTIVE' } : p));
       toast.success('Parceiro reativado com sucesso!');
-    } catch (err) {
-      toast.error(err instanceof HttpError ? err.message : 'Erro ao reativar parceiro.', 'Erro');
+    } catch (err: any) {
+      const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao reativar parceiro.';
+      toast.error(msg, 'Erro');
     } finally {
       setUpdating(false);
     }
@@ -92,8 +95,9 @@ export default function AdminPartnersPage() {
         toast.success('Parceiro suspenso.');
       }
       closeModal();
-    } catch (err) {
-      toast.error(err instanceof HttpError ? err.message : 'Erro ao executar ação.', 'Erro');
+    } catch (err: any) {
+      const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao executar ação.';
+      toast.error(msg, 'Erro');
     } finally {
       setUpdating(false);
     }
@@ -111,7 +115,7 @@ export default function AdminPartnersPage() {
     setReason('');
   }
 
-  if (loading) {
+  if (loading || isInitializing) {
     return (
       <div className={styles.container}>
         <p className="profile-loading" role="status">Carregando painel de moderação…</p>
@@ -142,7 +146,7 @@ export default function AdminPartnersPage() {
         <div className={styles.header}>
           <div className={styles.titleArea}>
             <h1 className={styles.title}>Moderação de Parceiros</h1>
-            <p className={styles.subtitle}>Avalie novos cadastros e aplique suspensões de segurança no ecossistema.</p>
+            <p className={styles.subtitle}>Clique em um parceiro para visualizar os detalhes completos, avaliar cadastros e aplicar suspensões de segurança.</p>
           </div>
         </div>
 
@@ -155,7 +159,7 @@ export default function AdminPartnersPage() {
           ) : (
             partners.map((partner) => (
               <section key={partner.id} className={styles.card}>
-                <div className={styles.cardContent}>
+                <div className={styles.cardContent} style={{ cursor: 'pointer' }} onClick={() => setDetailPartner(partner)}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <h2 className={styles.partnerName}>{partner.name}</h2>
                     {getStatusLabel(partner.approvalStatus)}
@@ -182,6 +186,15 @@ export default function AdminPartnersPage() {
                 </div>
 
                 <div className={styles.cardActions} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${styles.btnSecondary}`}
+                    style={{ flex: '1 1 100%', marginBottom: '0.25rem' }}
+                    onClick={() => setDetailPartner(partner)}
+                  >
+                    👁️ Ver Detalhes do Parceiro
+                  </button>
+
                   {partner.approvalStatus === 'PENDING_REVIEW' && (
                     <>
                       <button 
@@ -244,14 +257,88 @@ export default function AdminPartnersPage() {
           )}
         </div>
 
+        {/* Modal de Visualização Completa de Detalhes com suporte a tema claro e escuro */}
+        {detailPartner && (
+          <div className={styles.dialogOverlay}>
+            <div className={styles.dialogCard} style={{ maxWidth: '600px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 className={styles.partnerName} style={{ fontSize: '1.3rem', margin: 0 }}>
+                  🏬 {detailPartner.name}
+                </h2>
+                {getStatusLabel(detailPartner.approvalStatus)}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem' }}>
+                <div>
+                  <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Descrição Comercial:</strong>
+                  <p className={styles.partnerDescription} style={{ marginTop: '0.25rem', WebkitLineClamp: 'none', lineClamp: 'none' }}>
+                    {detailPartner.description || 'Sem descrição cadastrada.'}
+                  </p>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div>
+                    <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>CNPJ / Registro:</strong>
+                    <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.cnpj || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Tipo:</strong>
+                    <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.type}</p>
+                  </div>
+                  <div>
+                    <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Telefone / Contato:</strong>
+                    <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.phone}</p>
+                  </div>
+                  <div>
+                    <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Cidade / Estado:</strong>
+                    <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.city ? `${detailPartner.city} - ${detailPartner.state}` : 'Não informado'}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Endereço Completo:</strong>
+                  <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.address}</p>
+                </div>
+
+                <div>
+                  <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Região de Entrega:</strong>
+                  <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.deliveryRegion || 'Não informada'}</p>
+                </div>
+
+                {detailPartner.rejectionReason && (
+                  <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', padding: '0.75rem', borderRadius: '8px', color: '#f87171' }}>
+                    <strong>Justificativa da Rejeição:</strong> {detailPartner.rejectionReason}
+                  </div>
+                )}
+
+                {detailPartner.suspensionReason && (
+                  <div style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', padding: '0.75rem', borderRadius: '8px', color: '#a78bfa' }}>
+                    <strong>Motivo da Suspensão:</strong> {detailPartner.suspensionReason}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  onClick={() => setDetailPartner(null)}
+                >
+                  Fechar Detalhes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modal de Justificativa */}
         {actionType && activePartner && (
           <div className={styles.dialogOverlay}>
             <div className={styles.dialogCard}>
-              <h2 style={{ fontSize: '1.25rem', color: '#fff', marginBottom: '0.75rem' }}>
+              <h2 className={styles.partnerName} style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>
                 {actionType === 'REJECT' ? 'Rejeitar Cadastro' : 'Suspender Estabelecimento'}
               </h2>
-              <p style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '1.25rem' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted, #9ca3af)', marginBottom: '1.25rem' }}>
                 {actionType === 'REJECT' 
                   ? `Forneça a justificativa para a rejeição do parceiro ${activePartner.name}. O responsável receberá essa orientação.` 
                   : `Forneça o motivo para a suspensão do parceiro ${activePartner.name}. A operação dele e exibição de produtos serão pausadas.`

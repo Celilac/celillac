@@ -3,40 +3,40 @@ import { Entity } from '../Entity';
 import { Result } from '../Result';
 
 export enum PartnerType {
-  RESTAURANT           = 'RESTAURANT',
-  MARKET               = 'MARKET',
+  RESTAURANT = 'RESTAURANT',
+  MARKET = 'MARKET',
   INDEPENDENT_PRODUCER = 'INDEPENDENT_PRODUCER',
 }
 
 export enum PartnerApprovalStatus {
-  DRAFT          = 'DRAFT',
+  DRAFT = 'DRAFT',
   PENDING_REVIEW = 'PENDING_REVIEW',
-  APPROVED       = 'APPROVED',
-  REJECTED       = 'REJECTED',
-  SUSPENDED      = 'SUSPENDED',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  SUSPENDED = 'SUSPENDED',
 }
 
 export enum PartnerOperationalStatus {
-  ACTIVE             = 'ACTIVE',
-  INACTIVE           = 'INACTIVE',
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
   TEMPORARILY_CLOSED = 'TEMPORARILY_CLOSED',
 }
 
 export interface PartnerProps {
-  userId:             string;
-  name:               string;
-  cnpj?:              string;
-  description:        string;
-  address:            string;
-  phone:              string;
-  type:               PartnerType;
-  approvalStatus?:    PartnerApprovalStatus;
+  userId: string;
+  name: string;
+  cnpj?: string;
+  description: string;
+  address: string;
+  phone: string;
+  type: PartnerType;
+  approvalStatus?: PartnerApprovalStatus;
   operationalStatus?: PartnerOperationalStatus;
-  rejectionReason?:   string;
-  suspensionReason?:  string;
-  city?:              string;
-  state?:             string;
-  deliveryRegion?:    string;
+  rejectionReason?: string;
+  suspensionReason?: string;
+  city?: string;
+  state?: string;
+  deliveryRegion?: string;
 }
 
 /**
@@ -66,7 +66,7 @@ export class Partner extends Entity<PartnerProps> {
   // Compatibilidade retroativa para código legado
   get isActive(): boolean {
     return this.approvalStatus === PartnerApprovalStatus.APPROVED &&
-           this.operationalStatus === PartnerOperationalStatus.ACTIVE;
+      this.operationalStatus === PartnerOperationalStatus.ACTIVE;
   }
 
   activate(): void {
@@ -102,6 +102,7 @@ export class Partner extends Entity<PartnerProps> {
       return Result.fail<void>('Apenas parceiros pendentes de revisão podem ser aprovados.');
     }
     this.props.approvalStatus = PartnerApprovalStatus.APPROVED;
+    this.props.operationalStatus = PartnerOperationalStatus.ACTIVE;
     this.props.rejectionReason = undefined;
     this.props.suspensionReason = undefined;
     return Result.ok<void>(undefined);
@@ -137,6 +138,7 @@ export class Partner extends Entity<PartnerProps> {
       return Result.fail<void>('Apenas parceiros suspensos podem ser reativados.');
     }
     this.props.approvalStatus = PartnerApprovalStatus.APPROVED;
+    this.props.operationalStatus = PartnerOperationalStatus.ACTIVE;
     this.props.suspensionReason = undefined;
     return Result.ok<void>(undefined);
   }
@@ -238,20 +240,20 @@ export class Partner extends Entity<PartnerProps> {
     return Result.ok<Partner>(
       new Partner(
         {
-          userId:            props.userId,
-          name:              props.name.trim(),
-          cnpj:              props.cnpj ? props.cnpj.trim() : undefined,
-          description:       (props.description || '').trim(),
-          address:           props.address.trim(),
-          phone:             (props.phone || '').trim(),
-          type:              props.type,
-          approvalStatus:    props.approvalStatus || PartnerApprovalStatus.DRAFT,
+          userId: props.userId,
+          name: props.name.trim(),
+          cnpj: props.cnpj ? props.cnpj.trim() : undefined,
+          description: (props.description || '').trim(),
+          address: props.address.trim(),
+          phone: (props.phone || '').trim(),
+          type: props.type,
+          approvalStatus: props.approvalStatus || PartnerApprovalStatus.DRAFT,
           operationalStatus: props.operationalStatus || PartnerOperationalStatus.INACTIVE,
-          rejectionReason:   props.rejectionReason,
-          suspensionReason:  props.suspensionReason,
-          city:              props.city ? props.city.trim() : undefined,
-          state:             props.state ? props.state.trim() : undefined,
-          deliveryRegion:    props.deliveryRegion ? props.deliveryRegion.trim() : undefined,
+          rejectionReason: props.rejectionReason,
+          suspensionReason: props.suspensionReason,
+          city: props.city ? props.city.trim() : undefined,
+          state: props.state ? props.state.trim() : undefined,
+          deliveryRegion: props.deliveryRegion ? props.deliveryRegion.trim() : undefined,
         },
         id
       )

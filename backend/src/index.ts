@@ -10,6 +10,7 @@ import { adminRouter } from './interfaces/http/routes/admin.routes';
 import { reviewsRoutes } from './interfaces/http/routes/reviews.routes';
 import { partnerRouter } from './interfaces/http/routes/partner.routes';
 import { favoriteRouter } from './interfaces/http/routes/favorite.routes';
+import { consumerRouter } from './interfaces/http/routes/consumer.routes';
 import { corsMiddleware, securityHeadersMiddleware } from './interfaces/http/middlewares/SecurityMiddleware';
 
 const app  = express();
@@ -17,7 +18,10 @@ const port = process.env.PORT ?? 3000;
 
 app.use(corsMiddleware);
 app.use(securityHeadersMiddleware);
-app.use(express.json());
+
+// Permite upload de imagens de avatar de até 10MB em base64
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // --- Rotas ---
 app.get('/health', (_req, res) => {
@@ -25,6 +29,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/iam',          iamRouter);
+app.use('/consumers',    consumerRouter);
 app.use('/food-profile', foodProfileRouter);
 app.use('/compatibility', compatibilityRouter);
 app.use('/catalog',      catalogRouter);
@@ -36,6 +41,10 @@ app.use('/',             favoriteRouter);
 // --- Middleware Global de Tratamento de Erros ---
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('[Error Handler]:', err);
+  if (err.type === 'entity.too.large') {
+    res.status(413).json({ error: 'O arquivo de imagem enviado é muito grande. O limite máximo é de 10MB.' });
+    return;
+  }
   res.status(500).json({ error: 'Ocorreu um erro interno no servidor.' });
 });
 
@@ -54,4 +63,3 @@ async function bootstrap(): Promise<void> {
 }
 
 bootstrap();
-
