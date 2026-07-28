@@ -41,12 +41,21 @@ export class PgFoodProfileRepository implements IFoodProfileRepository {
       })),
     );
 
-    await this.pool.query(
-      `INSERT INTO food_profiles (id, user_id, restrictions, accepts_cross_contamination)
-       VALUES ($1, $2, $3::jsonb, $4)
-       ON CONFLICT (user_id) DO UPDATE SET restrictions = EXCLUDED.restrictions, accepts_cross_contamination = EXCLUDED.accepts_cross_contamination`,
-      [profile.id, profile.userId, restrictionsJson, profile.acceptsCrossContamination],
-    );
+    const existing = await this.findByUserId(profile.userId);
+    if (existing) {
+      await this.pool.query(
+        `UPDATE food_profiles 
+         SET restrictions = $1::jsonb, accepts_cross_contamination = $2, updated_at = NOW()
+         WHERE user_id = $3`,
+        [restrictionsJson, profile.acceptsCrossContamination, profile.userId],
+      );
+    } else {
+      await this.pool.query(
+        `INSERT INTO food_profiles (id, user_id, restrictions, accepts_cross_contamination)
+         VALUES ($1, $2, $3::jsonb, $4)`,
+        [profile.id, profile.userId, restrictionsJson, profile.acceptsCrossContamination],
+      );
+    }
   }
 
   async update(profile: FoodProfile): Promise<void> {

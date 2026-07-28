@@ -61,6 +61,8 @@ export default function ProfilePage() {
   const router = useRouter();
   const toast = useToast();
 
+  const [mounted, setMounted] = useState(false);
+
   // Dados Pessoais Estendidos
   const [fullName, setFullName] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -74,6 +76,10 @@ export default function ProfilePage() {
   const [hasProfile, setHasProfile] = useState(false);
   const [loadingInit, setLoadingInit] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const localToken = typeof window !== 'undefined' ? localStorage.getItem('celilac:token') : null;
@@ -163,7 +169,7 @@ export default function ProfilePage() {
     }
     setLoading(true);
     try {
-      // 1. Atualiza Dados Pessoais do Usuário
+      // 1. Atualiza Dados Pessoais do Usuário (IAM)
       await apiClient.put('/iam/profile', {
         fullName,
         birthDate: birthDate ? birthDate : undefined,
@@ -171,23 +177,23 @@ export default function ProfilePage() {
         avatarUrl,
       }, token);
 
-      // 2. Atualiza/Cria Perfil Alimentar
+      // 2. Atualiza ou Cria o Perfil Alimentar
       const payload = {
         restrictions: rows,
         acceptsCrossContamination,
       };
-      
+
       try {
-        if (hasProfile) {
-          await foodProfileApi.update(userId, payload, token);
-        } else {
+        await foodProfileApi.update(userId, payload, token);
+        setHasProfile(true);
+      } catch (updateErr: any) {
+        const errMsg = updateErr?.message || '';
+        if (errMsg.includes('não encontrado') || updateErr?.status === 404 || updateErr?.status === 400) {
           await foodProfileApi.create({ userId, ...payload }, token);
           setHasProfile(true);
+        } else {
+          throw updateErr;
         }
-      } catch (err: any) {
-        // Fallback de criação caso o update retorne 400/404
-        await foodProfileApi.create({ userId, ...payload }, token);
-        setHasProfile(true);
       }
 
       toast.success('Seu perfil foi atualizado com sucesso!', 'Salvo');
@@ -199,7 +205,7 @@ export default function ProfilePage() {
     }
   }
 
-  if (loadingInit) {
+  if (!mounted || loadingInit) {
     return (
       <div className="profile-page">
         <Header />

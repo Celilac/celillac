@@ -1,6 +1,6 @@
 'use client';
 // frontend/web-app/src/components/common/UserAvatar.tsx
-import Image from 'next/image';
+import { useState, useEffect } from 'react';
 
 interface UserAvatarProps {
   avatarUrl?: string;
@@ -10,6 +10,12 @@ interface UserAvatarProps {
 }
 
 export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatarProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Gera as iniciais do nome como fallback simbólico
   const getInitials = () => {
     if (fullName && fullName.trim()) {
@@ -27,9 +33,36 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
 
   const initials = getInitials();
 
+  if (!mounted) {
+    return (
+      <span
+        suppressHydrationWarning
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, var(--color-emerald, #10b981) 0%, #059669 100%)',
+          color: '#ffffff',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontWeight: 'bold',
+          fontSize: size * 0.4,
+          border: '2px solid var(--color-emerald-light, #34d399)',
+          flexShrink: 0,
+          userSelect: 'none',
+          verticalAlign: 'middle',
+        }}
+      >
+        👤
+      </span>
+    );
+  }
+
   if (avatarUrl && avatarUrl.trim()) {
     return (
       <span
+        suppressHydrationWarning
         style={{
           width: size,
           height: size,
@@ -47,7 +80,6 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
           alt={fullName || 'Avatar do usuário'}
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           onError={(e) => {
-            // Oculta imagem quebrada e exibe fallback simbólico
             (e.target as HTMLElement).style.display = 'none';
           }}
         />
@@ -57,6 +89,7 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
 
   return (
     <span
+      suppressHydrationWarning
       style={{
         width: size,
         height: size,

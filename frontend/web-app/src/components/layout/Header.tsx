@@ -14,7 +14,12 @@ export function Header() {
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
 
+  const [mounted, setMounted] = useState(false);
   const [userInfo, setUserInfo] = useState<{ avatarUrl?: string; fullName?: string; email?: string; role?: string } | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (isAuthenticated && token && userId) {
@@ -36,42 +41,48 @@ export function Header() {
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
 
+        {mounted && isAuthenticated && (
+          <Link href="/dashboard" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
+            📊 Dashboard
+          </Link>
+        )}
+
         <Link href="/public-partners" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
           🏢 Estabelecimentos
         </Link>
 
-        {isAuthenticated && (userInfo?.role === 'PARCEIRO' || userInfo?.role === 'ADMIN') && (
+        {mounted && isAuthenticated && (userInfo?.role === 'PARCEIRO' || userInfo?.role === 'ADMIN') && (
           <Link href="/partner" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
             💼 Parceiro
           </Link>
         )}
 
-        {isAuthenticated && userInfo?.role === 'ADMIN' && (
+        {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
           <Link href="/admin/partners" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
             🛡️ Moderação
           </Link>
         )}
 
-        {isAuthenticated && userInfo?.role === 'ADMIN' && (
+        {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
           <Link href="/admin/users" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
             👥 Usuários
           </Link>
         )}
 
-        {isAuthenticated && (
+        {mounted && isAuthenticated && (
           <Link href="/profile" className="btn btn-ghost" style={{ padding: '0.3rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} id="topbar-profile-link">
             <UserAvatar avatarUrl={userInfo?.avatarUrl} fullName={userInfo?.fullName} email={userInfo?.email} size={30} />
             <span>Perfil</span>
           </Link>
         )}
 
-        {isAuthenticated && (
+        {mounted && isAuthenticated && (
           <button onClick={() => logout().then(() => router.push('/auth/login'))} className="btn btn-ghost" style={{ padding: '0.4rem 1rem', border: 'none', background: 'none', cursor: 'pointer' }} id="btn-logout">
             🚪 Sair
           </button>
         )}
 
-        {!isAuthenticated && (
+        {mounted && !isAuthenticated && (
           <Link href="/auth/login" className="btn btn-em" style={{ padding: '0.4rem 1rem' }}>
             Entrar
           </Link>

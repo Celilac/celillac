@@ -1,6 +1,5 @@
 'use client';
 // frontend/web-app/src/contexts/ThemeContext.tsx
-// Tema persistido em localStorage; aplicado via [data-theme] no <html> (ver script inline em layout.tsx).
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 type Theme = 'light' | 'dark';
@@ -18,15 +17,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
-    const current = document.documentElement.getAttribute('data-theme');
-    setTheme(current === 'light' ? 'light' : 'dark');
+    const stored = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
+    const attr = typeof document !== 'undefined' ? document.documentElement.getAttribute('data-theme') : null;
+    const initialTheme: Theme = (stored as Theme) || (attr === 'light' ? 'light' : 'dark');
+    
+    setTheme(initialTheme);
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', initialTheme);
+    }
   }, []);
 
   const toggleTheme = useCallback(() => {
     setTheme((prev) => {
       const next: Theme = prev === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', next);
-      localStorage.setItem(STORAGE_KEY, next);
+      if (typeof document !== 'undefined') {
+        document.documentElement.setAttribute('data-theme', next);
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, next);
+      }
       return next;
     });
   }, []);
