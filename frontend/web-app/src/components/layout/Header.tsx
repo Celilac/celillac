@@ -1,19 +1,28 @@
 'use client';
 // frontend/web-app/src/components/layout/Header.tsx
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { UserAvatar } from '@/components/common/UserAvatar';
+import { apiClient } from '@/api/client';
 
-/**
- * Header — Cabeçalho unificado de navegação global.
- * Centraliza os botões de controle de tema, navegação interna (Estabelecimentos, Parceiro, Moderação, Perfil) e Logout.
- */
 export function Header() {
-  const { isAuthenticated, logout } = useAuth();
+  const { token, userId, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
+
+  const [userInfo, setUserInfo] = useState<{ avatarUrl?: string; fullName?: string; email?: string } | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated && token && userId) {
+      apiClient.get<{ avatarUrl?: string; fullName?: string; email?: string }>('/iam/me', token)
+        .then((res) => setUserInfo(res))
+        .catch(() => setUserInfo(null));
+    }
+  }, [isAuthenticated, token, userId]);
 
   return (
     <header className="topbar">
@@ -22,7 +31,7 @@ export function Header() {
         <span className="brand-wordmark">Celi<span>Lac</span></span>
         <span className="brand-tagline">Vivendo bem a vida</span>
       </span>
-      <nav className="topbar-actions">
+      <nav className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
@@ -44,8 +53,9 @@ export function Header() {
         )}
         
         {isAuthenticated && (
-          <Link href="/profile" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
-            ⚙️ Perfil
+          <Link href="/profile" className="btn btn-ghost" style={{ padding: '0.3rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} id="topbar-profile-link">
+            <UserAvatar avatarUrl={userInfo?.avatarUrl} fullName={userInfo?.fullName} email={userInfo?.email} size={30} />
+            <span>Perfil</span>
           </Link>
         )}
         

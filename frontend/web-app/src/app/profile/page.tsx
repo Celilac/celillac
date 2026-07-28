@@ -1,14 +1,16 @@
 'use client';
 // frontend/web-app/src/app/profile/page.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { foodProfileApi } from '@/api/food-profile';
+import { apiClient } from '@/api/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
+import { UserAvatar } from '@/components/common/UserAvatar';
 import { HttpError } from '@/api/client';
 
 const ALLERGEN_OPTIONS = [
@@ -39,6 +41,13 @@ const RESTRICTION_TYPE_OPTIONS = [
   { value: 'LIFESTYLE',          label: '🌱 Estilo de Vida' },
 ];
 
+const GENDER_OPTIONS = [
+  { value: 'PREFIRO_NAO_INFORMAR', label: 'Prefiro não informar' },
+  { value: 'MASCULINO', label: 'Masculino' },
+  { value: 'FEMININO', label: 'Feminino' },
+  { value: 'OUTRO', label: 'Outro' },
+];
+
 interface Row {
   allergen: string;
   severity: string;
@@ -52,6 +61,14 @@ export default function ProfilePage() {
   const router = useRouter();
   const toast = useToast();
 
+  // Dados Pessoais Estendidos
+  const [fullName, setFullName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [gender, setGender] = useState('PREFIRO_NAO_INFORMAR');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [profileEvaluationStatus, setProfileEvaluationStatus] = useState('PENDING_EVALUATION');
+
+  // Restrições Alimentares
   const [rows, setRows] = useState<Row[]>([{ allergen: 'GLUTEN', severity: 'FATAL', type: 'ALLERGY' }]);
   const [acceptsCrossContamination, setAcceptsCrossContamination] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
@@ -67,6 +84,23 @@ export default function ProfilePage() {
     if (!token || !userId) {
       return;
     }
+
+    // Carrega dados de IAM / Perfil do Usuário
+    apiClient.get<any>('/iam/me', token)
+      .then((user) => {
+        if (user) {
+          setFullName(user.fullName || '');
+          if (user.birthDate) {
+            setBirthDate(new Date(user.birthDate).toISOString().split('T')[0]);
+          }
+          setGender(user.gender || 'PREFIRO_NAO_INFORMAR');
+          setAvatarUrl(user.avatarUrl || '');
+          setProfileEvaluationStatus(user.profileEvaluationStatus || 'PENDING_EVALUATION');
+        }
+      })
+      .catch(() => {});
+
+    // Carrega restrições alimentares
     foodProfileApi.getByUserId(userId, token)
       .then((profile) => {
         if (profile?.restrictions?.length) {
@@ -85,6 +119,25 @@ export default function ProfilePage() {
       })
       .finally(() => setLoadingInit(false));
   }, [isAuthenticated, token, userId, router]);
+
+  function handleImageUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Trava de 10MB conforme solicitação do usuário
+    const MAX_SIZE_BYTES = 10 * 1024 * 1024;
+    if (file.size > MAX_SIZE_BYTES) {
+      toast.error('O tamanho da foto de perfil não pode ultrapassar 10MB.', 'Arquivo muito grande');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarUrl(reader.result as string);
+      toast.info('Foto selecionada com sucesso! Clique em salvar para confirmar.', 'Foto alterada');
+    };
+    reader.readAsDataURL(file);
+  }
 
   function addRow() {
     const availableOption = ALLERGEN_OPTIONS.find(
@@ -110,6 +163,15 @@ export default function ProfilePage() {
     }
     setLoading(true);
     try {
+      // 1. Atualiza Dados Pessoais do Usuário
+      await apiClient.put('/iam/profile', {
+        fullName,
+        birthDate: birthDate ? birthDate : undefined,
+        gender,
+        avatarUrl,
+      }, token);
+
+      // 2. Atualiza Perfil Alimentar
       const payload = {
         restrictions: rows,
         acceptsCrossContamination,
@@ -120,7 +182,8 @@ export default function ProfilePage() {
         await foodProfileApi.create({ userId, ...payload }, token);
         setHasProfile(true);
       }
-      toast.success('Perfil alimentar atualizado com sucesso!', 'Salvo');
+
+      toast.success('Seu perfil foi atualizado com sucesso!', 'Salvo');
       router.push('/dashboard');
     } catch (err) {
       toast.error(err instanceof HttpError ? err.message : 'Erro ao salvar perfil.', 'Erro ao salvar perfil');
@@ -165,30 +228,84 @@ export default function ProfilePage() {
 
           <div className="auth-form-panel profile-form-panel">
             <div className="auth-card profile-card animate-slide">
-              <div className="profile-heading">
+              <div className="profile-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <p className="eyebrow">Personalização de Segurança</p>
-                  <h1 className="auth-title">Perfil Alimentar</h1>
+                  <p className="eyebrow">Personalização & Segurança</p>
+                  <h1 className="auth-title">Meu Perfil</h1>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.8rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', background: profileEvaluationStatus === 'APPROVED' ? '#d1fae5' : '#fef3c7', color: profileEvaluationStatus === 'APPROVED' ? '#065f46' : '#92400e' }}>
+                  {profileEvaluationStatus === 'APPROVED' ? '✅ Perfil Aprovado' : '⏳ Pendente de Avaliação'}
                 </div>
               </div>
 
               <p className="auth-subtitle profile-intro">
-                Configure suas restrições, severidades e tolerâncias. O CeliLac usa estes dados para orientar suas buscas e emitir alertas de compatibilidade.
+                Mantenha seus dados pessoais e restrições alimentares atualizados.
               </p>
 
-              {hasProfile && (
-                <div role="note" className="profile-edit-note">
-                  <span aria-hidden="true">✏️</span>
-                  <span>Editando perfil existente — alterações impactarão as próximas análises de compatibilidade.</span>
-                </div>
-              )}
-
               <form onSubmit={handleSave} id="profile-form">
+                {/* Seção 1: Dados Pessoais & Foto */}
+                <div className="restriction-section" style={{ marginBottom: '1.5rem' }}>
+                  <h2 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>👤 Dados Pessoais</h2>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                    <UserAvatar avatarUrl={avatarUrl} fullName={fullName} size={72} />
+                    <div>
+                      <label className="btn btn-ghost" style={{ cursor: 'pointer', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+                        📷 Selecionar Foto (Máx 10MB)
+                        <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
+                      </label>
+                      {avatarUrl && (
+                        <button type="button" onClick={() => setAvatarUrl('')} style={{ display: 'block', marginTop: '0.4rem', color: '#ef4444', background: 'none', border: 'none', fontSize: '0.8rem', cursor: 'pointer' }}>
+                          Remover foto
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="field">
+                      <label className="field-label">Nome Completo</label>
+                      <input
+                        type="text"
+                        className="field-input"
+                        placeholder="Seu nome completo"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label className="field-label">Data de Nascimento</label>
+                      <input
+                        type="date"
+                        className="field-input"
+                        value={birthDate}
+                        onChange={(e) => setBirthDate(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="field" style={{ gridColumn: 'span 2' }}>
+                      <label className="field-label">Gênero</label>
+                      <select
+                        className="field-input field-select"
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value)}
+                      >
+                        {GENDER_OPTIONS.map((g) => (
+                          <option key={g.value} value={g.value}>{g.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção 2: Restrições Alimentares */}
                 <div className="restriction-section">
                   <div className="section-heading">
                     <div>
-                      <h2>Suas restrições alimentares</h2>
-                      <p>Informe alérgenos, a severidade e o tipo de necessidade para cada um.</p>
+                      <h2>🥗 Restrições Alimentares</h2>
+                      <p>Informe alérgenos, severidade e o tipo de necessidade para cada um.</p>
                     </div>
                     <span className="restriction-count">{rows.length}</span>
                   </div>
@@ -267,7 +384,7 @@ export default function ProfilePage() {
                 </button>
 
                 <button type="submit" className="btn btn-em save-profile-button" id="save-profile-btn" disabled={loading || rows.length === 0}>
-                  {loading ? 'Salvando…' : hasProfile ? '💾 Atualizar perfil' : '💾 Criar perfil'}
+                  {loading ? 'Salvando…' : '💾 Salvar alterações do perfil'}
                 </button>
               </form>
             </div>

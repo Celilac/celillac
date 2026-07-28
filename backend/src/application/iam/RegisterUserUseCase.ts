@@ -9,15 +9,18 @@ import { IUserRepository } from '../../domain/iam/repositories/IUserRepository';
 import { Result } from '../../domain/Result';
 
 export interface RegisterUserDTO {
-  email:    string;
+  email: string;
   password: string;
-  role:     UserRole;
+  role: UserRole;
+  fullName?: string;
 }
 
 export interface RegisterUserResponseDTO {
-  id:    string;
+  id: string;
   email: string;
-  role:  string;
+  role: string;
+  accountStatus: string;
+  message?: string;
 }
 
 /**
@@ -27,7 +30,7 @@ export interface RegisterUserResponseDTO {
  *  1. Valida o e-mail via Email VO
  *  2. Verifica duplicidade no repositório
  *  3. Gera hash da senha com bcrypt
- *  4. Cria a entidade User
+ *  4. Cria a entidade User (Se role = ADMIN, accountStatus = PENDING_APPROVAL)
  *  5. Persiste via IUserRepository
  */
 export class RegisterUserUseCase {
@@ -49,19 +52,24 @@ export class RegisterUserUseCase {
       return Result.fail<RegisterUserResponseDTO>('Este e-mail já está em uso.');
     }
 
-    // 3. Hash da senha (bcryptjs — única dependência externa da Application)
-    const rawHash           = await bcrypt.hash(dto.password, RegisterUserUseCase.SALT_ROUNDS);
+    // 3. Hash da senha
+    const rawHash = await bcrypt.hash(dto.password, RegisterUserUseCase.SALT_ROUNDS);
     const passwordHashResult = PasswordHash.fromHash(rawHash);
     if (passwordHashResult.isFailure) {
       return Result.fail<RegisterUserResponseDTO>(passwordHashResult.getError());
     }
 
     // 4. Criar entidade User
+    const isAdmin = dto.role === UserRole.ADMIN;
     const userResult = User.create({
       email,
       passwordHash: passwordHashResult.getValue(),
-      role:         dto.role,
+      role: dto.role,
+      fullName: dto.fullName,
+      accountStatus: isAdmin ? 'PENDING_APPROVAL' : 'ACTIVE',
+      profileEvaluationStatus: 'PENDING_EVALUATION',
     });
+
     if (userResult.isFailure) {
       return Result.fail<RegisterUserResponseDTO>(userResult.getError());
     }
@@ -71,9 +79,13 @@ export class RegisterUserUseCase {
     await this.userRepository.save(user);
 
     return Result.ok<RegisterUserResponseDTO>({
-      id:    user.id,
+      id: user.id,
       email: user.email.value,
-      role:  user.role,
+      role: user.role,
+      accountStatus: user.accountStatus,
+      message: isAdmin
+        ? 'Conta de Administrador cadastrada com sucesso! Ela aguarda aprovação de um administrador existente para que você possa fazer login.'
+        : undefined,
     });
   }
 }
