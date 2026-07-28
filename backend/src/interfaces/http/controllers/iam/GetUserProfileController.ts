@@ -29,6 +29,7 @@ export class GetUserProfileController extends BaseController {
       avatarUrl: user.avatarUrl,
       accountStatus: user.accountStatus,
       profileEvaluationStatus: user.profileEvaluationStatus,
+      isEmailVerified: user.isEmailVerified,
     });
   }
 }

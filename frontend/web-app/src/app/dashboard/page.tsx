@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { catalogApi } from '@/api/catalog';
 import { compatibilityApi, CompatibilityResponse } from '@/api/compatibility';
 import { foodProfileApi } from '@/api/food-profile';
+import { apiClient } from '@/api/client';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import styles from './dashboard.module.css';
@@ -30,9 +31,11 @@ export default function DashboardPage() {
   const [report, setReport] = useState<ReportWithName | null>(null);
   const [loading, setLoading] = useState(false);
   const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState(true);
 
   useEffect(() => {
     if (isAuthenticated && token && userId) {
+      // Checa restrições alimentares
       foodProfileApi.getByUserId(userId, token)
         .then((profile) => {
           if (!profile || !profile.restrictions || profile.restrictions.length === 0) {
@@ -44,6 +47,17 @@ export default function DashboardPage() {
         .catch(() => {
           setIsProfileIncomplete(true);
         });
+
+      // Checa status de verificação de e-mail do usuário
+      apiClient.get<any>('/iam/me', token)
+        .then((u) => {
+          if (u && u.isEmailVerified === false) {
+            setIsEmailVerified(false);
+          } else {
+            setIsEmailVerified(true);
+          }
+        })
+        .catch(() => {});
     }
   }, [isAuthenticated, token, userId]);
 
@@ -104,6 +118,35 @@ export default function DashboardPage() {
         <h1 className={styles.title}>Meu Dashboard</h1>
         <p className={styles.subtitle}>Verifique seus produtos com transparência e segurança alimentar.</p>
       </header>
+
+      {/* Banner de E-mail Não Verificado */}
+      {!isEmailVerified && (
+        <div style={{
+          background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+          border: '1px solid #fca5a5',
+          color: '#991b1b',
+          padding: '1.25rem',
+          borderRadius: '12px',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '1rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+        }}>
+          <div>
+            <strong style={{ fontSize: '1.05rem', display: 'block', marginBottom: '0.25rem' }}>
+              📩 Verifique seu e-mail para desbloquear todas as funções
+            </strong>
+            <span style={{ fontSize: '0.9rem' }}>
+              Enviamos um código de verificação para o seu e-mail. Confirme seu e-mail para garantir a segurança da sua conta.
+            </span>
+          </div>
+          <Link href="/auth/verify-email" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: '0.6rem 1.2rem', textDecoration: 'none', background: '#dc2626' }}>
+            Verificar E-mail Agora
+          </Link>
+        </div>
+      )}
 
       {/* Banner de Perfil Incompleto */}
       {isProfileIncomplete && (

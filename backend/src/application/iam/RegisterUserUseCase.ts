@@ -6,6 +6,7 @@ import { PasswordHash } from '../../domain/iam/value-objects/PasswordHash';
 import { UserRole } from '../../domain/iam/value-objects/UserRole';
 import { User } from '../../domain/iam/User';
 import { IUserRepository } from '../../domain/iam/repositories/IUserRepository';
+import { SendEmailVerificationCodeUseCase } from './SendEmailVerificationCodeUseCase';
 import { Result } from '../../domain/Result';
 
 export interface RegisterUserDTO {
@@ -20,6 +21,7 @@ export interface RegisterUserResponseDTO {
   email: string;
   role: string;
   accountStatus: string;
+  isEmailVerified: boolean;
   message?: string;
 }
 
@@ -32,11 +34,15 @@ export interface RegisterUserResponseDTO {
  *  3. Gera hash da senha com bcrypt
  *  4. Cria a entidade User (Se role = ADMIN, accountStatus = PENDING_APPROVAL)
  *  5. Persiste via IUserRepository
+ *  6. Se não for Admin, dispara a geração do código OTP de verificação de e-mail
  */
 export class RegisterUserUseCase {
   private static readonly SALT_ROUNDS = 10;
 
-  constructor(private readonly userRepository: IUserRepository) {}
+  constructor(
+    private readonly userRepository: IUserRepository,
+    private readonly sendVerificationUseCase?: SendEmailVerificationCodeUseCase,
+  ) {}
 
   async execute(dto: RegisterUserDTO): Promise<Result<RegisterUserResponseDTO>> {
     // 1. Validar e-mail
@@ -68,6 +74,7 @@ export class RegisterUserUseCase {
       fullName: dto.fullName,
       accountStatus: isAdmin ? 'PENDING_APPROVAL' : 'ACTIVE',
       profileEvaluationStatus: 'PENDING_EVALUATION',
+      isEmailVerified: false,
     });
 
     if (userResult.isFailure) {
@@ -78,11 +85,21 @@ export class RegisterUserUseCase {
     // 5. Persistir
     await this.userRepository.save(user);
 
+    // 6. Enviar código de verificação por e-mail (se não for admin)
+    if (!isAdmin && this.sendVerificationUseCase) {
+      try {
+        await this.sendVerificationUseCase.execute(user.id);
+      } catch (err) {
+        console.error('[RegisterUserUseCase]: Erro ao enviar código de verificação:', err);
+      }
+    }
+
     return Result.ok<RegisterUserResponseDTO>({
       id: user.id,
       email: user.email.value,
       role: user.role,
       accountStatus: user.accountStatus,
+      isEmailVerified: user.isEmailVerified,
       message: isAdmin
         ? 'Conta de Administrador cadastrada com sucesso! Ela aguarda aprovação de um administrador existente para que você possa fazer login.'
         : undefined,

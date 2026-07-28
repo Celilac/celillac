@@ -18,6 +18,7 @@ export interface UserProps {
   avatarUrl?: string;
   accountStatus?: AccountStatus;
   profileEvaluationStatus?: ProfileEvaluationStatus;
+  isEmailVerified?: boolean;
 }
 
 /**
@@ -27,6 +28,7 @@ export interface UserProps {
  *  - Role deve ser um dos valores definidos em UserRole.
  *  - Contas de ADMIN criadas iniciam em PENDING_APPROVAL sem acesso até aprovação.
  *  - Suporta avatar/foto com limite máximo de 10MB.
+ *  - Controla o status de verificação do e-mail por código OTP.
  */
 export class User extends Entity<UserProps> {
   private constructor(props: UserProps, id?: string) {
@@ -37,6 +39,7 @@ export class User extends Entity<UserProps> {
           props.accountStatus ||
           (props.role === UserRole.ADMIN ? 'PENDING_APPROVAL' : 'ACTIVE'),
         profileEvaluationStatus: props.profileEvaluationStatus || 'PENDING_EVALUATION',
+        isEmailVerified: props.isEmailVerified ?? false,
       },
       id,
     );
@@ -78,6 +81,10 @@ export class User extends Entity<UserProps> {
     return this.props.profileEvaluationStatus || 'PENDING_EVALUATION';
   }
 
+  get isEmailVerified(): boolean {
+    return !!this.props.isEmailVerified;
+  }
+
   public isPendingAdminApproval(): boolean {
     return (
       this.props.role === UserRole.ADMIN &&
@@ -92,6 +99,10 @@ export class User extends Entity<UserProps> {
     }
   }
 
+  public verifyEmail(): void {
+    this.props.isEmailVerified = true;
+  }
+
   public updateProfileDetails(details: {
     fullName?: string;
     birthDate?: Date;
@@ -99,7 +110,6 @@ export class User extends Entity<UserProps> {
     avatarUrl?: string;
   }): Result<void> {
     if (details.avatarUrl) {
-      // Validação de limite de 10MB para imagem em base64 (10MB ~ 13.5MB de caracteres base64)
       if (details.avatarUrl.startsWith('data:image/') && details.avatarUrl.length > 14 * 1024 * 1024) {
         return Result.fail<void>('O tamanho da foto de perfil não pode exceder 10MB.');
       }
