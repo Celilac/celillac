@@ -6,7 +6,7 @@ import { AllergenType } from './value-objects/AllergenType';
 
 export interface FoodProfileProps {
   userId: string;
-  restrictions: Restriction[];
+  restrictions?: Restriction[];
   acceptsCrossContamination?: boolean;
 }
 
@@ -22,7 +22,7 @@ export interface FoodProfileProps {
 export class FoodProfile extends Entity<FoodProfileProps> {
   private _requiresHistoryRevalidation: boolean = false;
 
-  private constructor(props: FoodProfileProps, id?: string) {
+  private constructor(props: Required<FoodProfileProps>, id?: string) {
     super(
       {
         ...props,
@@ -37,11 +37,15 @@ export class FoodProfile extends Entity<FoodProfileProps> {
   }
 
   get restrictions(): Restriction[] {
-    return [...this.props.restrictions]; // retorna cópia para garantir imutabilidade
+    return [...(this.props.restrictions ?? [])]; // retorna cópia para garantir imutabilidade
   }
 
   get acceptsCrossContamination(): boolean {
     return !!this.props.acceptsCrossContamination;
+  }
+
+  public setAcceptsCrossContamination(accepts: boolean): void {
+    this.props.acceptsCrossContamination = accepts;
   }
 
   /**
@@ -55,18 +59,18 @@ export class FoodProfile extends Entity<FoodProfileProps> {
    * isActive / isComplete — Perfil considerado configurado se possuir ao menos 1 restrição.
    */
   isActive(): boolean {
-    return this.props.restrictions.length > 0;
+    return (this.props.restrictions ?? []).length > 0;
   }
 
   isComplete(): boolean {
-    return this.props.restrictions.length > 0;
+    return (this.props.restrictions ?? []).length > 0;
   }
 
   /**
    * isCritical — Retorna true se houver qualquer restrição com severidade FATAL/alta ou Doença Celíaca.
    */
   isCritical(): boolean {
-    return this.props.restrictions.some((r) => r.isFatal());
+    return (this.props.restrictions ?? []).some((r) => r.isFatal());
   }
 
   public setCrossContaminationTolerance(accepts: boolean): void {
@@ -77,6 +81,10 @@ export class FoodProfile extends Entity<FoodProfileProps> {
    * addRestriction — Adiciona uma restrição com validação de duplicidade.
    */
   addRestriction(restriction: Restriction): Result<void> {
+    if (!this.props.restrictions) {
+      this.props.restrictions = [];
+    }
+
     const duplicate = this.props.restrictions.find(
       (r) => r.allergen === restriction.allergen,
     );
@@ -97,6 +105,11 @@ export class FoodProfile extends Entity<FoodProfileProps> {
    * removeRestriction — Remove uma restrição pelo tipo de alérgeno.
    */
   removeRestriction(allergen: AllergenType): Result<void> {
+    if (!this.props.restrictions) {
+      this.props.restrictions = [];
+      return Result.fail<void>(`Restrição ${allergen} não encontrada no perfil.`);
+    }
+
     const index = this.props.restrictions.findIndex((r) => r.allergen === allergen);
     if (index === -1) {
       return Result.fail<void>(`Restrição ${allergen} não encontrada no perfil.`);
@@ -119,9 +132,11 @@ export class FoodProfile extends Entity<FoodProfileProps> {
       return Result.fail<FoodProfile>('O userId do perfil não pode ser vazio.');
     }
 
+    const initialRestrictions = props.restrictions ?? [];
+
     // Validar duplicidade nas restrições iniciais
     const allergensSeen = new Set<AllergenType>();
-    for (const restriction of props.restrictions) {
+    for (const restriction of initialRestrictions) {
       if (allergensSeen.has(restriction.allergen)) {
         return Result.fail<FoodProfile>(
           `Alérgeno ${restriction.allergen} duplicado nas restrições iniciais.`,
@@ -133,8 +148,8 @@ export class FoodProfile extends Entity<FoodProfileProps> {
     return Result.ok<FoodProfile>(
       new FoodProfile(
         {
-          ...props,
-          restrictions: [...props.restrictions],
+          userId: props.userId,
+          restrictions: [...initialRestrictions],
           acceptsCrossContamination: props.acceptsCrossContamination ?? false,
         },
         id,

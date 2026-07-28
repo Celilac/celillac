@@ -27,6 +27,7 @@ describe('RegisterPartnerUseCase', () => {
     userRepository = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
+      findAll: jest.fn(),
       save: jest.fn(),
     };
     useCase = new RegisterPartnerUseCase(partnerRepository, userRepository);

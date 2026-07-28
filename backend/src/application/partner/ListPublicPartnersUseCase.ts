@@ -2,7 +2,7 @@
 import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
 import { Result } from '../../domain/Result';
 import { PartnerResponseDTO } from './RegisterPartnerUseCase';
-import { PartnerApprovalStatus, PartnerOperationalStatus } from '../../domain/partner/Partner';
+import { PartnerApprovalStatus } from '../../domain/partner/Partner';
 
 export class ListPublicPartnersUseCase {
   constructor(private readonly partnerRepository: IPartnerRepository) {}
@@ -11,14 +11,12 @@ export class ListPublicPartnersUseCase {
     // 1. Buscar todos os parceiros
     const allPartners = await this.partnerRepository.findAll();
 
-    // 2. Filtrar apenas parceiros aprovados e operacionais (ACTIVE ou TEMPORARILY_CLOSED)
-    const publicPartners = allPartners.filter(partner => 
-      partner.approvalStatus === PartnerApprovalStatus.APPROVED &&
-      (partner.operationalStatus === PartnerOperationalStatus.ACTIVE || 
-       partner.operationalStatus === PartnerOperationalStatus.TEMPORARILY_CLOSED)
+    // 2. Filtrar apenas parceiros com cadastro aprovado
+    const publicPartners = allPartners.filter(
+      (partner) => partner.approvalStatus === PartnerApprovalStatus.APPROVED,
     );
 
-    const response: PartnerResponseDTO[] = publicPartners.map(partner => ({
+    const response: PartnerResponseDTO[] = publicPartners.map((partner) => ({
       id:                 partner.id,
       userId:             partner.userId,
       name:               partner.name,

@@ -14,11 +14,11 @@ export function Header() {
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
 
-  const [userInfo, setUserInfo] = useState<{ avatarUrl?: string; fullName?: string; email?: string } | null>(null);
+  const [userInfo, setUserInfo] = useState<{ avatarUrl?: string; fullName?: string; email?: string; role?: string } | null>(null);
 
   useEffect(() => {
     if (isAuthenticated && token && userId) {
-      apiClient.get<{ avatarUrl?: string; fullName?: string; email?: string }>('/iam/me', token)
+      apiClient.get<{ avatarUrl?: string; fullName?: string; email?: string; role?: string }>('/iam/me', token)
         .then((res) => setUserInfo(res))
         .catch(() => setUserInfo(null));
     }
@@ -35,36 +35,42 @@ export function Header() {
         <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
           {theme === 'dark' ? '☀️' : '🌙'}
         </button>
-        
+
         <Link href="/public-partners" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
           🏢 Estabelecimentos
         </Link>
-        
-        {isAuthenticated && (
+
+        {isAuthenticated && (userInfo?.role === 'PARCEIRO' || userInfo?.role === 'ADMIN') && (
           <Link href="/partner" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
             💼 Parceiro
           </Link>
         )}
-        
-        {isAuthenticated && (
+
+        {isAuthenticated && userInfo?.role === 'ADMIN' && (
           <Link href="/admin/partners" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
             🛡️ Moderação
           </Link>
         )}
-        
+
+        {isAuthenticated && userInfo?.role === 'ADMIN' && (
+          <Link href="/admin/users" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
+            👥 Usuários
+          </Link>
+        )}
+
         {isAuthenticated && (
           <Link href="/profile" className="btn btn-ghost" style={{ padding: '0.3rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} id="topbar-profile-link">
             <UserAvatar avatarUrl={userInfo?.avatarUrl} fullName={userInfo?.fullName} email={userInfo?.email} size={30} />
             <span>Perfil</span>
           </Link>
         )}
-        
+
         {isAuthenticated && (
           <button onClick={() => logout().then(() => router.push('/auth/login'))} className="btn btn-ghost" style={{ padding: '0.4rem 1rem', border: 'none', background: 'none', cursor: 'pointer' }} id="btn-logout">
             🚪 Sair
           </button>
         )}
-        
+
         {!isAuthenticated && (
           <Link href="/auth/login" className="btn btn-em" style={{ padding: '0.4rem 1rem' }}>
             Entrar

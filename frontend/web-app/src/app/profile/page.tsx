@@ -171,22 +171,29 @@ export default function ProfilePage() {
         avatarUrl,
       }, token);
 
-      // 2. Atualiza Perfil Alimentar
+      // 2. Atualiza/Cria Perfil Alimentar
       const payload = {
         restrictions: rows,
         acceptsCrossContamination,
       };
-      if (hasProfile) {
-        await foodProfileApi.update(userId, payload, token);
-      } else {
+      
+      try {
+        if (hasProfile) {
+          await foodProfileApi.update(userId, payload, token);
+        } else {
+          await foodProfileApi.create({ userId, ...payload }, token);
+          setHasProfile(true);
+        }
+      } catch (err: any) {
+        // Fallback de criação caso o update retorne 400/404
         await foodProfileApi.create({ userId, ...payload }, token);
         setHasProfile(true);
       }
 
       toast.success('Seu perfil foi atualizado com sucesso!', 'Salvo');
-      router.push('/dashboard');
-    } catch (err) {
-      toast.error(err instanceof HttpError ? err.message : 'Erro ao salvar perfil.', 'Erro ao salvar perfil');
+    } catch (err: any) {
+      const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao salvar perfil.';
+      toast.error(msg, 'Erro ao salvar perfil');
     } finally {
       setLoading(false);
     }

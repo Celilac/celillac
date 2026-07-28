@@ -5,15 +5,6 @@
 //
 // Esta é a ÚNICA camada autorizada a fazer chamadas HTTP.
 // Nenhum componente, página ou contexto deve usar fetch() diretamente.
-//
-// PROIBIDO no frontend:
-//   ❌ Importar AllergenEngine, RiskLevel, ou qualquer lógica do backend
-//   ❌ Recalcular compatibilidade com base em ingredientes
-//   ❌ Usar fetch() fora desta pasta src/api/
-//
-// CORRETO:
-//   ✅ Chamar compatibility.ts → POST /compatibility/check
-//   ✅ Renderizar o riskLevel retornado pelo Backend
 // ══════════════════════════════════════════════════════════════
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -46,12 +37,30 @@ async function request<T>(
     ...restOptions,
   });
 
+  const text = await response.text().catch(() => '');
+
   if (!response.ok) {
-    const body = await response.json().catch(() => ({ error: 'Erro desconhecido.' }));
-    throw new HttpError(response.status, (body as ApiError).error ?? 'Erro desconhecido.');
+    let errorMessage = 'Erro no servidor.';
+    if (text && text.trim()) {
+      try {
+        const body = JSON.parse(text);
+        errorMessage = body.error || body.message || errorMessage;
+      } catch (_) {
+        errorMessage = text;
+      }
+    }
+    throw new HttpError(response.status, errorMessage);
   }
 
-  return response.json() as Promise<T>;
+  if (!text || !text.trim()) {
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch (_) {
+    return {} as T;
+  }
 }
 
 export const apiClient = {

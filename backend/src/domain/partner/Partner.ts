@@ -41,7 +41,6 @@ export interface PartnerProps {
 
 /**
  * Partner — Entidade raiz do Bounded Context de Catálogo de Parceiros.
- * Mapeia estabelecimentos no ecossistema CeLiLac.
  */
 export class Partner extends Entity<PartnerProps> {
   private constructor(props: PartnerProps, id?: string) {
@@ -63,7 +62,6 @@ export class Partner extends Entity<PartnerProps> {
   get state(): string | undefined { return this.props.state; }
   get deliveryRegion(): string | undefined { return this.props.deliveryRegion; }
 
-  // Compatibilidade retroativa para código legado
   get isActive(): boolean {
     return this.approvalStatus === PartnerApprovalStatus.APPROVED &&
            this.operationalStatus === PartnerOperationalStatus.ACTIVE;
@@ -102,6 +100,7 @@ export class Partner extends Entity<PartnerProps> {
       return Result.fail<void>('Apenas parceiros pendentes de revisão podem ser aprovados.');
     }
     this.props.approvalStatus = PartnerApprovalStatus.APPROVED;
+    this.props.operationalStatus = PartnerOperationalStatus.ACTIVE;
     this.props.rejectionReason = undefined;
     this.props.suspensionReason = undefined;
     return Result.ok<void>(undefined);
@@ -137,6 +136,7 @@ export class Partner extends Entity<PartnerProps> {
       return Result.fail<void>('Apenas parceiros suspensos podem ser reativados.');
     }
     this.props.approvalStatus = PartnerApprovalStatus.APPROVED;
+    this.props.operationalStatus = PartnerOperationalStatus.ACTIVE;
     this.props.suspensionReason = undefined;
     return Result.ok<void>(undefined);
   }

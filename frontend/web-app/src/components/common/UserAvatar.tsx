@@ -29,7 +29,7 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
 
   if (avatarUrl && avatarUrl.trim()) {
     return (
-      <div
+      <span
         style={{
           width: size,
           height: size,
@@ -38,6 +38,8 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
           position: 'relative',
           border: '2px solid var(--color-emerald, #10b981)',
           flexShrink: 0,
+          display: 'inline-block',
+          verticalAlign: 'middle',
         }}
       >
         <img
@@ -49,19 +51,19 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
             (e.target as HTMLElement).style.display = 'none';
           }}
         />
-      </div>
+      </span>
     );
   }
 
   return (
-    <div
+    <span
       style={{
         width: size,
         height: size,
         borderRadius: '50%',
         background: 'linear-gradient(135deg, var(--color-emerald, #10b981) 0%, #059669 100%)',
         color: '#ffffff',
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontWeight: 'bold',
@@ -70,10 +72,11 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
         boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
         flexShrink: 0,
         userSelect: 'none',
+        verticalAlign: 'middle',
       }}
       title={fullName || email || 'Usuário'}
     >
       {initials}
-    </div>
+    </span>
   );
 }

@@ -16,7 +16,7 @@
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.11.3",
     "reflect-metadata": "^0.1.13",
-    "uuid": "^9.0.1"
+    "uuid": "^14.0.1"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

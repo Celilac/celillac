@@ -38,6 +38,15 @@ export class PgUserRepository implements IUserRepository {
     return this.mapRowToUser(result.rows[0]);
   }
 
+  async findAll(): Promise<User[]> {
+    const result = await this.pool.query(
+      `SELECT id, email, password_hash, role, full_name, birth_date, gender, avatar_url, account_status, profile_evaluation_status, is_email_verified
+       FROM users ORDER BY created_at DESC`,
+    );
+
+    return result.rows.map((row) => this.mapRowToUser(row));
+  }
+
   async save(user: User): Promise<void> {
     await this.pool.query(
       `INSERT INTO users (
