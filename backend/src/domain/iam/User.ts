@@ -5,6 +5,11 @@ import { Email } from './value-objects/Email';
 import { PasswordHash } from './value-objects/PasswordHash';
 import { UserRole } from './value-objects/UserRole';
 
+/**
+ * UserProps — shape das propriedades internas da entidade.
+ * Mantidas privadas via Entity<T>.props.
+ */
+
 export type AccountStatus = 'ACTIVE' | 'PENDING_APPROVAL' | 'BLOCKED';
 export type ProfileEvaluationStatus = 'PENDING_EVALUATION' | 'APPROVED' | 'REJECTED';
 

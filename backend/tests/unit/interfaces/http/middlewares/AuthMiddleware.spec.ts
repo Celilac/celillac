@@ -1,6 +1,7 @@
 // backend/tests/unit/interfaces/http/middlewares/AuthMiddleware.spec.ts
 import { authMiddleware } from '../../../../../src/interfaces/http/middlewares/AuthMiddleware';
 import { PgBlacklistTokenRepository } from '../../../../../src/infrastructure/database/iam/PgBlacklistTokenRepository';
+import { pool } from '../../../../../src/infrastructure/database/connection';
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
@@ -22,10 +23,13 @@ describe('AuthMiddleware', () => {
     };
     nextFunction = jest.fn();
     process.env.JWT_SECRET = 'test-secret-value';
-    
+    process.env.NODE_ENV = 'test';
+
     // Configura o comportamento padrão do mock para retornar falso (não revogado)
     (PgBlacklistTokenRepository.prototype.isBlacklisted as jest.Mock).mockReset();
     (PgBlacklistTokenRepository.prototype.isBlacklisted as jest.Mock).mockResolvedValue(false);
+
+    jest.restoreAllMocks();
   });
 
   it('deve retornar 401 se o header de autorização estiver ausente', async () => {
@@ -80,14 +84,84 @@ describe('AuthMiddleware', () => {
   it('deve retornar 401 se o token for valido mas estiver revogado (blacklist)', async () => {
     const token = jwt.sign({ sub: 'user-uuid-123', role: 'CELIACO' }, 'test-secret-value');
     mockRequest.headers = { authorization: `Bearer ${token}` };
-    
-    // Configura o mock do repositório para simular que o token está na blacklist
+
     (PgBlacklistTokenRepository.prototype.isBlacklisted as jest.Mock).mockResolvedValue(true);
 
     await authMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
     expect(mockResponse.status).toHaveBeenCalledWith(401);
     expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Token revogado.' });
+    expect(nextFunction).not.toHaveBeenCalled();
+  });
+
+  // ----------------------------------------------------------------------
+  // TESTES DE ACEITE DA ISSUE #26
+  // ----------------------------------------------------------------------
+
+  it('[Issue #26] NÃO deve disparar query de account_status no banco se o usuario NAO for ADMIN', async () => {
+    const token = jwt.sign({ sub: 'consumer-uuid-999', role: 'CELIACO' }, 'test-secret-value');
+    mockRequest.headers = { authorization: `Bearer ${token}` };
+
+    const poolSpy = jest.spyOn(pool, 'query');
+
+    await authMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+    expect(poolSpy).not.toHaveBeenCalled();
+    expect(nextFunction).toHaveBeenCalled();
+    expect(mockRequest.user).toEqual({ id: 'consumer-uuid-999', role: 'CELIACO' });
+  });
+
+  it('[Issue #26] deve retornar 403 se o usuario for ADMIN e account_status estiver em PENDING_APPROVAL', async () => {
+    const token = jwt.sign({ sub: 'admin-uuid-888', role: 'ADMIN' }, 'test-secret-value');
+    mockRequest.headers = { authorization: `Bearer ${token}` };
+
+    jest.spyOn(pool, 'query').mockImplementation(async () => ({
+      rows: [{ account_status: 'PENDING_APPROVAL' }],
+    } as any));
+
+    await authMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(403);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      error: 'Sua conta de Administrador aguarda aprovação prévia de um administrador existente.',
+    });
+    expect(nextFunction).not.toHaveBeenCalled();
+  });
+
+  it('[Issue #26] deve liberar acesso (next) se o usuario for ADMIN e account_status estiver em ACTIVE', async () => {
+    const token = jwt.sign({ sub: 'admin-uuid-777', role: 'ADMIN' }, 'test-secret-value');
+    mockRequest.headers = { authorization: `Bearer ${token}` };
+
+    jest.spyOn(pool, 'query').mockImplementation(async () => ({
+      rows: [{ account_status: 'ACTIVE' }],
+    } as any));
+
+    await authMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+    expect(nextFunction).toHaveBeenCalled();
+    expect(mockRequest.user).toEqual({ id: 'admin-uuid-777', role: 'ADMIN' });
+  });
+
+  it('[Issue #26] deve logar e retornar 500 em erro inesperado de banco em producao', async () => {
+    process.env.NODE_ENV = 'production';
+    const token = jwt.sign({ sub: 'admin-uuid-555', role: 'ADMIN' }, 'test-secret-value');
+    mockRequest.headers = { authorization: `Bearer ${token}` };
+
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(pool, 'query').mockImplementation(async () => {
+      throw new Error('PostgreSQL connection timeout');
+    });
+
+    await authMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      '[AuthMiddleware] Erro inesperado ao verificar aprovação de ADMIN:',
+      expect.any(Error),
+    );
+    expect(mockResponse.status).toHaveBeenCalledWith(500);
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      error: 'Erro ao verificar permissão do usuário.',
+    });
     expect(nextFunction).not.toHaveBeenCalled();
   });
 });
