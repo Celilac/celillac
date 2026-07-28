@@ -3,44 +3,45 @@ import { Entity } from '../Entity';
 import { Result } from '../Result';
 
 export enum PartnerType {
-  RESTAURANT           = 'RESTAURANT',
-  MARKET               = 'MARKET',
+  RESTAURANT = 'RESTAURANT',
+  MARKET = 'MARKET',
   INDEPENDENT_PRODUCER = 'INDEPENDENT_PRODUCER',
 }
 
 export enum PartnerApprovalStatus {
-  DRAFT          = 'DRAFT',
+  DRAFT = 'DRAFT',
   PENDING_REVIEW = 'PENDING_REVIEW',
-  APPROVED       = 'APPROVED',
-  REJECTED       = 'REJECTED',
-  SUSPENDED      = 'SUSPENDED',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  SUSPENDED = 'SUSPENDED',
 }
 
 export enum PartnerOperationalStatus {
-  ACTIVE             = 'ACTIVE',
-  INACTIVE           = 'INACTIVE',
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
   TEMPORARILY_CLOSED = 'TEMPORARILY_CLOSED',
 }
 
 export interface PartnerProps {
-  userId:             string;
-  name:               string;
-  cnpj?:              string;
-  description:        string;
-  address:            string;
-  phone:              string;
-  type:               PartnerType;
-  approvalStatus?:    PartnerApprovalStatus;
+  userId: string;
+  name: string;
+  cnpj?: string;
+  description: string;
+  address: string;
+  phone: string;
+  type: PartnerType;
+  approvalStatus?: PartnerApprovalStatus;
   operationalStatus?: PartnerOperationalStatus;
-  rejectionReason?:   string;
-  suspensionReason?:  string;
-  city?:              string;
-  state?:             string;
-  deliveryRegion?:    string;
+  rejectionReason?: string;
+  suspensionReason?: string;
+  city?: string;
+  state?: string;
+  deliveryRegion?: string;
 }
 
 /**
  * Partner — Entidade raiz do Bounded Context de Catálogo de Parceiros.
+ * Mapeia estabelecimentos no ecossistema CeLiLac.
  */
 export class Partner extends Entity<PartnerProps> {
   private constructor(props: PartnerProps, id?: string) {
@@ -62,9 +63,10 @@ export class Partner extends Entity<PartnerProps> {
   get state(): string | undefined { return this.props.state; }
   get deliveryRegion(): string | undefined { return this.props.deliveryRegion; }
 
+  // Compatibilidade retroativa para código legado
   get isActive(): boolean {
     return this.approvalStatus === PartnerApprovalStatus.APPROVED &&
-           this.operationalStatus === PartnerOperationalStatus.ACTIVE;
+      this.operationalStatus === PartnerOperationalStatus.ACTIVE;
   }
 
   activate(): void {
@@ -238,20 +240,20 @@ export class Partner extends Entity<PartnerProps> {
     return Result.ok<Partner>(
       new Partner(
         {
-          userId:            props.userId,
-          name:              props.name.trim(),
-          cnpj:              props.cnpj ? props.cnpj.trim() : undefined,
-          description:       (props.description || '').trim(),
-          address:           props.address.trim(),
-          phone:             (props.phone || '').trim(),
-          type:              props.type,
-          approvalStatus:    props.approvalStatus || PartnerApprovalStatus.DRAFT,
+          userId: props.userId,
+          name: props.name.trim(),
+          cnpj: props.cnpj ? props.cnpj.trim() : undefined,
+          description: (props.description || '').trim(),
+          address: props.address.trim(),
+          phone: (props.phone || '').trim(),
+          type: props.type,
+          approvalStatus: props.approvalStatus || PartnerApprovalStatus.DRAFT,
           operationalStatus: props.operationalStatus || PartnerOperationalStatus.INACTIVE,
-          rejectionReason:   props.rejectionReason,
-          suspensionReason:  props.suspensionReason,
-          city:              props.city ? props.city.trim() : undefined,
-          state:             props.state ? props.state.trim() : undefined,
-          deliveryRegion:    props.deliveryRegion ? props.deliveryRegion.trim() : undefined,
+          rejectionReason: props.rejectionReason,
+          suspensionReason: props.suspensionReason,
+          city: props.city ? props.city.trim() : undefined,
+          state: props.state ? props.state.trim() : undefined,
+          deliveryRegion: props.deliveryRegion ? props.deliveryRegion.trim() : undefined,
         },
         id
       )

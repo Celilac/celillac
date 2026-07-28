@@ -23,6 +23,12 @@ export interface UserProps {
 
 /**
  * User — Entidade raiz do contexto IAM.
+ * Regras de domínio:
+ *  - Nunca expõe senha em plaintext.
+ *  - Role deve ser um dos valores definidos em UserRole.
+ *  - Contas de ADMIN criadas iniciam em PENDING_APPROVAL sem acesso até aprovação.
+ *  - Suporta avatar/foto com limite máximo de 10MB.
+ *  - Controla o status de verificação do e-mail por código OTP.
  */
 export class User extends Entity<UserProps> {
   private constructor(props: UserProps, id?: string) {
