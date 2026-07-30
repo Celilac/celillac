@@ -5,6 +5,15 @@
 //
 // Esta é a ÚNICA camada autorizada a fazer chamadas HTTP.
 // Nenhum componente, página ou contexto deve usar fetch() diretamente.
+//
+// PROIBIDO no frontend:
+//   ❌ Importar AllergenEngine, RiskLevel, ou qualquer lógica do backend
+//   ❌ Recalcular compatibilidade com base em ingredientes
+//   ❌ Usar fetch() fora desta pasta src/api/
+//
+// CORRETO:
+//   ✅ Chamar compatibility.ts → POST /compatibility/check
+//   ✅ Renderizar o riskLevel retornado pelo Backend
 // ══════════════════════════════════════════════════════════════
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
@@ -64,7 +73,7 @@ async function request<T>(
 }
 
 export const apiClient = {
-  get:  <T>(path: string, token?: string) =>
+  get: <T>(path: string, token?: string) =>
     request<T>(path, { method: 'GET', headers: token ? { Authorization: `Bearer ${token}` } : {} }),
 
   post: <T>(path: string, body: unknown, token?: string) =>
