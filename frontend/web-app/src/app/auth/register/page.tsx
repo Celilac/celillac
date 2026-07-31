@@ -286,7 +286,7 @@ export default function RegisterPage() {
                 </div>
 
                 {role === 'ADMIN' && (
-                  <div style={{ padding: '0.75rem', background: '#fff3cd', border: '1px solid #ffe8a1', borderRadius: '8px', color: '#856404', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                  <div style={{ padding: 'var(--space-3)', background: 'var(--color-warning-bg)', border: '1px solid var(--color-warning-border)', borderRadius: 'var(--radius-sm)', color: 'var(--color-warning)', fontSize: 'var(--text-label)', marginBottom: '1rem' }}>
                     ⚠️ <strong>Atenção:</strong> Contas de Administrador requerem autorização/aprovação prévia de um administrador ativo antes que o acesso seja liberado.
                   </div>
                 )}

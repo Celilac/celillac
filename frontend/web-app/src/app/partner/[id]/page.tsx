@@ -101,7 +101,7 @@ export default function PartnerDashboardPage({ params }: PageProps) {
             <p style={{ marginTop: '0.25rem' }}>
               Motivo: <em>"{partner.rejectionReason || 'Não informado.'}"</em>
             </p>
-            <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => router.push(`/partner/${partner.id}/edit`)}>
+            <p style={{ fontSize: 'var(--text-label)', marginTop: '0.5rem', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => router.push(`/partner/${partner.id}/edit`)}>
               Clique aqui para corrigir os dados e enviar novamente.
             </p>
           </div>
@@ -118,7 +118,7 @@ export default function PartnerDashboardPage({ params }: PageProps) {
             <p style={{ marginTop: '0.25rem' }}>
               Motivo da suspensão: <em>"{partner.suspensionReason || 'Não informado.'}"</em>
             </p>
-            <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>
+            <p style={{ fontSize: 'var(--text-label)', marginTop: '0.5rem' }}>
               Sua listagem pública e produtos associados estão temporariamente ocultados. Entre em contato com o suporte para regularizar sua situação.
             </p>
           </div>
@@ -164,7 +164,7 @@ export default function PartnerDashboardPage({ params }: PageProps) {
     }
 
     return (
-      <div className={`${styles.alertBanner} ${styles.alertBannerInfo}`} style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#34d399', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+      <div className={`${styles.alertBanner} ${styles.alertBannerInfo}`} style={{ background: 'var(--color-status-approved-bg)', color: 'var(--color-status-approved)', borderColor: 'var(--color-status-approved-border)' }}>
         <span style={{ fontSize: '1.25rem' }}>✅</span>
         <div>
           <strong>Cadastro Aprovado e Homologado</strong>
@@ -222,7 +222,7 @@ export default function PartnerDashboardPage({ params }: PageProps) {
           <section className={styles.mainPanel}>
             <div className={styles.card} style={{ gap: '1rem' }}>
               <h2 className={styles.sectionTitle}>🏢 Informações Cadastrais</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.95rem', color: '#d1d5db' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: 'var(--text-body)', color: 'var(--color-text-muted)' }}>
                 <div>
                   <p style={{ marginBottom: '0.5rem' }}><strong>Razão/Nome Fantasia:</strong> {partner.name}</p>
                   <p style={{ marginBottom: '0.5rem' }}><strong>CNPJ:</strong> {partner.cnpj || 'Não informado (Pessoa Física)'}</p>
@@ -234,9 +234,9 @@ export default function PartnerDashboardPage({ params }: PageProps) {
                   <p style={{ marginBottom: '0.5rem' }}><strong>Telefone de Contato:</strong> {partner.phone}</p>
                 </div>
               </div>
-              <div style={{ marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
+              <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
                 <p><strong>Descrição Comercial:</strong></p>
-                <p style={{ color: '#9ca3af', marginTop: '0.25rem', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                <p style={{ color: 'var(--color-text-muted)', marginTop: '0.25rem', fontSize: 'var(--text-body)', lineHeight: '1.6' }}>
                   {partner.description || 'Nenhuma descrição adicionada.'}
                 </p>
               </div>
@@ -249,11 +249,11 @@ export default function PartnerDashboardPage({ params }: PageProps) {
               
               <div className={styles.toggleContainer}>
                 <div>
-                  <p style={{ fontWeight: '600', color: '#fff' }}>
-                    {partner.operationalStatus === 'ACTIVE' ? '🟢 Aberto' : 
+                  <p style={{ fontWeight: '600', color: 'var(--color-text)' }}>
+                    {partner.operationalStatus === 'ACTIVE' ? '🟢 Aberto' :
                      partner.operationalStatus === 'TEMPORARILY_CLOSED' ? '🟡 Temporariamente Fechado' : '🔴 Inativo'}
                   </p>
-                  <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>
+                  <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
                     {partner.operationalStatus === 'ACTIVE' ? 'Visível na busca e apto a operar.' : 'Exibe aviso de fechamento aos clientes.'}
                   </p>
                 </div>
@@ -269,7 +269,7 @@ export default function PartnerDashboardPage({ params }: PageProps) {
               </div>
 
               {partner.approvalStatus === 'SUSPENDED' && (
-                <p style={{ fontSize: '0.75rem', color: '#ef4444', fontStyle: 'italic' }}>
+                <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-status-rejected)', fontStyle: 'italic' }}>
                   * Controle operacional bloqueado devido a suspensão administrativa.
                 </p>
               )}

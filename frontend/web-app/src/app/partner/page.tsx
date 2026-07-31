@@ -105,13 +105,13 @@ export default function PartnerDashboardPage() {
                   </div>
 
                   {partner.approvalStatus === 'REJECTED' && partner.rejectionReason && (
-                    <p style={{ fontSize: '0.8rem', color: '#f87171', background: 'rgba(239,68,68,0.05)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.1)' }}>
+                    <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-status-rejected)', background: 'rgba(248,113,113,0.08)', padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(248,113,113,0.2)' }}>
                       <strong>Motivo da Rejeição:</strong> {partner.rejectionReason}
                     </p>
                   )}
 
                   {partner.approvalStatus === 'SUSPENDED' && partner.suspensionReason && (
-                    <p style={{ fontSize: '0.8rem', color: '#a78bfa', background: 'rgba(139,92,246,0.05)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(139,92,246,0.1)' }}>
+                    <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-status-suspended)', background: 'rgba(167,139,250,0.08)', padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(167,139,250,0.2)' }}>
                       <strong>Motivo da Suspensão:</strong> {partner.suspensionReason}
                     </p>
                   )}

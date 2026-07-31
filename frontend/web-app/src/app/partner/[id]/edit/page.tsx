@@ -140,7 +140,7 @@ export default function EditPartnerPage({ params }: PageProps) {
               <span style={{ fontSize: '1.25rem' }}>⚠️</span>
               <div>
                 <strong>Alerta de Alteração Crítica</strong>
-                <p style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>
+                <p style={{ marginTop: '0.25rem', fontSize: 'var(--text-label)' }}>
                   Qualquer alteração em campos de segurança (Nome Fantasia, Tipo, CNPJ, Endereço, Cidade, Estado ou Telefone) fará com que o perfil comercial <strong>regrida para análise (Sob Análise)</strong> até que a administração aprove novamente.
                 </p>
               </div>
