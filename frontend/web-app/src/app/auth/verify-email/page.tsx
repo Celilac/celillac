@@ -2,18 +2,16 @@
 // frontend/web-app/src/app/auth/verify-email/page.tsx
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { iamApi } from '@/api/iam';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
+import { Header } from '@/components/layout/Header';
 import { HttpError } from '@/api/client';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
   const { token, isAuthenticated } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const toast = useToast();
 
   const [digits, setDigits] = useState<string[]>(Array(6).fill(''));
@@ -22,6 +20,7 @@ export default function VerifyEmailPage() {
   const [countdown, setCountdown] = useState(0);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const hasAutoSent = useRef(false);
 
   useEffect(() => {
     const localToken = typeof window !== 'undefined' ? localStorage.getItem('celilac:token') : null;
@@ -29,6 +28,20 @@ export default function VerifyEmailPage() {
       router.push('/auth/login');
     }
   }, [isAuthenticated, router]);
+
+  // Dispara o envio automático de código OTP ao entrar na página
+  useEffect(() => {
+    const currentToken = token || (typeof window !== 'undefined' ? localStorage.getItem('celilac:token') : null);
+    if (currentToken && !hasAutoSent.current) {
+      hasAutoSent.current = true;
+      iamApi.resendEmailVerificationCode(currentToken)
+        .then(() => {
+          toast.info('Um código de verificação foi enviado para seu e-mail.', 'E-mail Enviado');
+          setCountdown(60);
+        })
+        .catch(() => {});
+    }
+  }, [token]);
 
   // Contador de 60 segundos para reenvio de código
   useEffect(() => {
@@ -129,27 +142,7 @@ export default function VerifyEmailPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)' }}>
-      <header className="topbar">
-        <span className="topbar-title brand-lockup" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">Celi<span>Lac</span></span>
-          <span className="brand-tagline">Vivendo bem a vida</span>
-        </span>
-        <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="btn btn-ghost"
-            aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
-            style={{ padding: '0.4rem 0.75rem' }}
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-          <Link href="/dashboard" className="btn btn-ghost" style={{ padding: '0.4rem 0.75rem' }}>
-            🏠 Voltar ao Dashboard
-          </Link>
-        </nav>
-      </header>
+      <Header />
 
       <div className="auth-shell" style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem' }}>
         <div className="auth-card animate-slide" style={{ maxWidth: '460px', width: '100%', padding: '2rem' }}>
