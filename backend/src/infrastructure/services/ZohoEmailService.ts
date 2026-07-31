@@ -96,6 +96,7 @@ export class ZohoEmailService implements IEmailService {
 
   private async sendEmailViaSmtpTls(toEmail: string, subject: string, htmlContent: string): Promise<void> {
     return new Promise((resolve) => {
+      console.log(`[ZohoEmailService]: Conectando via SMTP TLS (${this.smtpHost}:${this.smtpPort}) para enviar e-mail para ${toEmail}...`);
       const socket = tls.connect(
         {
           host: this.smtpHost,
@@ -156,7 +157,7 @@ export class ZohoEmailService implements IEmailService {
                 socket.end();
                 resolve();
               } else if (response.startsWith('5') || response.startsWith('4')) {
-                console.error(`[ZohoEmailService]: Resposta de erro do SMTP (${step}): ${response.trim()}`);
+                console.error(`[ZohoEmailService]: Resposta de erro do SMTP (passo ${step}): ${response.trim()}`);
                 socket.end();
                 resolve();
               }
@@ -197,6 +198,9 @@ export class ZohoEmailService implements IEmailService {
         res.on('data', (chunk) => (data += chunk));
         res.on('end', () => {
           console.log(`[ZohoEmailService]: Status ${res.statusCode} via ZeptoMail para ${toEmail}`);
+          if (res.statusCode !== 200) {
+            console.error(`[ZohoEmailService]: Resposta do ZeptoMail: ${data}`);
+          }
           resolve();
         });
       });
