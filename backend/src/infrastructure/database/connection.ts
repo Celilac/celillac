@@ -92,8 +92,11 @@ export async function testDatabaseConnection(): Promise<void> {
         city VARCHAR(100),
         state VARCHAR(50),
         delivery_region TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
 
       CREATE TABLE IF NOT EXISTS products (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -108,8 +111,11 @@ export async function testDatabaseConnection(): Promise<void> {
         image_url TEXT,
         is_active BOOLEAN DEFAULT true,
         analysis_status VARCHAR(50) DEFAULT 'PENDING',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
     `);
     console.log('[Database]: Conexão e sincronização de esquema com PostgreSQL estabelecida com sucesso.');
   } finally {
