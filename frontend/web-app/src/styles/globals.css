@@ -1,7 +1,7 @@
 /* frontend/web-app/src/styles/globals.css */
 /* Design system CeLiLac — Aplicação Principal */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400;500;600;700;800&display=swap');
 
 /* ═══════════════════════════════════════
    TOKENS DE DESIGN
@@ -78,7 +78,7 @@
   --color-text-subtle: #64748B;
 
   /* Fonte */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Espaçamentos */
   --space-1:  0.25rem;  --space-2: 0.5rem;   --space-3: 0.75rem;

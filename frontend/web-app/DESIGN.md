@@ -45,25 +45,25 @@ colors:
   status-suspended-border: "rgba(167,139,250,0.3)"
 typography:
   headline:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
+    fontFamily: "Sora, -apple-system, BlinkMacSystemFont, sans-serif"
     fontSize: "clamp(1.75rem, 3vw, 2.75rem)"
     fontWeight: 800
     lineHeight: 1.15
     letterSpacing: "-0.03em"
   title:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
+    fontFamily: "Sora, -apple-system, BlinkMacSystemFont, sans-serif"
     fontSize: "1.25rem"
     fontWeight: 700
     lineHeight: 1.3
     letterSpacing: "-0.01em"
   body:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
+    fontFamily: "Sora, -apple-system, BlinkMacSystemFont, sans-serif"
     fontSize: "0.9rem"
     fontWeight: 400
     lineHeight: 1.6
     letterSpacing: "normal"
   label:
-    fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif"
+    fontFamily: "Sora, -apple-system, BlinkMacSystemFont, sans-serif"
     fontSize: "0.8rem"
     fontWeight: 700
     lineHeight: 1.3
@@ -191,7 +191,7 @@ Cadastro de parceiro (aprovado/pendente/rejeitado/suspenso) usa uma paleta próp
 
 ## Typography
 
-**Display/Body/Label Font:** Inter (com fallback `-apple-system, BlinkMacSystemFont, sans-serif`), pesos 300–900 carregados via Google Fonts.
+**Display/Body/Label Font:** Sora (com fallback `-apple-system, BlinkMacSystemFont, sans-serif`), pesos 100–800 carregados via Google Fonts. Substituiu a Inter — comum demais para dar personalidade própria ao sistema (ver `overused-font` no detector) — por uma geométrica de terminais levemente arredondados, mais calorosa, mantendo excelente suporte a acentos do PT-BR.
 
 **Character:** Uma única família sans geométrica cobre todo o sistema — a hierarquia nasce do salto de peso (400 → 700 → 800), não de uma escala de tamanhos elaborada, mantendo a leitura calma e o painel legível em qualquer densidade de dado.
 

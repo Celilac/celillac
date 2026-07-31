@@ -101,9 +101,9 @@ export default function PartnerDashboardPage({ params }: PageProps) {
             <p style={{ marginTop: '0.25rem' }}>
               Motivo: <em>"{partner.rejectionReason || 'Não informado.'}"</em>
             </p>
-            <p style={{ fontSize: 'var(--text-label)', marginTop: '0.5rem', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => router.push(`/partner/${partner.id}/edit`)}>
+            <Link href={`/partner/${partner.id}/edit`} style={{ display: 'inline-block', fontSize: 'var(--text-label)', marginTop: '0.5rem', textDecoration: 'underline' }}>
               Clique aqui para corrigir os dados e enviar novamente.
-            </p>
+            </Link>
           </div>
         </div>
       );
