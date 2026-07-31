@@ -28,7 +28,7 @@ services:
     environment:
       DB_HOST: db
     ports:
-      - "3002:3002"
+      - "3002:3000"
     volumes:
       - ./backend/src:/app/src
     depends_on:
