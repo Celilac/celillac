@@ -130,11 +130,11 @@ export default function VerifyEmailPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)' }}>
       <header className="topbar">
-        <span className="topbar-title brand-lockup" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
+        <Link href="/" className="topbar-title brand-lockup">
           <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
           <span className="brand-wordmark">Celi<span>Lac</span></span>
           <span className="brand-tagline">Vivendo bem a vida</span>
-        </span>
+        </Link>
         <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <button
             type="button"

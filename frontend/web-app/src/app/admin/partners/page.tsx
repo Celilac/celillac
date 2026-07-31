@@ -1,6 +1,6 @@
 'use client';
 // frontend/web-app/src/app/admin/partners/page.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { partnerApi, PartnerSummary } from '@/api/partner';
@@ -26,6 +26,30 @@ export default function AdminPartnersPage() {
   const [actionType,    setActionType]    = useState<'REJECT' | 'SUSPEND' | null>(null);
   const [reason,        setReason]        = useState('');
   const [updating,      setUpdating]      = useState(false);
+
+  const detailCloseRef = useRef<HTMLButtonElement>(null);
+  const reasonCancelRef = useRef<HTMLButtonElement>(null);
+
+  // Foco inicial e fechar com Escape — os dois diálogos de moderação
+  // precisam de semântica de modal (WCAG 2.4.3 / 4.1.2).
+  useEffect(() => {
+    if (detailPartner) detailCloseRef.current?.focus();
+  }, [detailPartner]);
+
+  useEffect(() => {
+    if (actionType) reasonCancelRef.current?.focus();
+  }, [actionType]);
+
+  useEffect(() => {
+    if (!detailPartner && !actionType) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      if (detailPartner) setDetailPartner(null);
+      if (actionType) closeModal();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [detailPartner, actionType]);
 
   useEffect(() => {
     if (isInitializing) return;
@@ -159,7 +183,7 @@ export default function AdminPartnersPage() {
           ) : (
             partners.map((partner) => (
               <section key={partner.id} className={styles.card}>
-                <div className={styles.cardContent} style={{ cursor: 'pointer' }} onClick={() => setDetailPartner(partner)}>
+                <div className={styles.cardContent}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <h2 className={styles.partnerName}>{partner.name}</h2>
                     {getStatusLabel(partner.approvalStatus)}
@@ -173,13 +197,13 @@ export default function AdminPartnersPage() {
                   </div>
 
                   {partner.approvalStatus === 'REJECTED' && partner.rejectionReason && (
-                    <p style={{ fontSize: '0.8rem', color: '#f87171', background: 'rgba(239,68,68,0.05)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.1)' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--color-status-rejected)', background: 'rgba(248,113,113,0.08)', padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(248,113,113,0.2)' }}>
                       <strong>Motivo Rejeição:</strong> {partner.rejectionReason}
                     </p>
                   )}
 
                   {partner.approvalStatus === 'SUSPENDED' && partner.suspensionReason && (
-                    <p style={{ fontSize: '0.8rem', color: '#a78bfa', background: 'rgba(139,92,246,0.05)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(139,92,246,0.1)' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--color-status-suspended)', background: 'rgba(167,139,250,0.08)', padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(167,139,250,0.2)' }}>
                       <strong>Motivo Suspensão:</strong> {partner.suspensionReason}
                     </p>
                   )}
@@ -247,7 +271,7 @@ export default function AdminPartnersPage() {
                   )}
 
                   {partner.approvalStatus === 'DRAFT' && (
-                    <span style={{ fontSize: '0.8rem', color: '#9ca3af', fontStyle: 'italic' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
                       Rascunho: Aguardando envio pelo parceiro.
                     </span>
                   )}
@@ -259,10 +283,17 @@ export default function AdminPartnersPage() {
 
         {/* Modal de Visualização Completa de Detalhes com suporte a tema claro e escuro */}
         {detailPartner && (
-          <div className={styles.dialogOverlay}>
-            <div className={styles.dialogCard} style={{ maxWidth: '600px' }}>
+          <div className={styles.dialogOverlay} onClick={() => setDetailPartner(null)}>
+            <div
+              className={styles.dialogCard}
+              style={{ maxWidth: '600px' }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="detail-partner-heading"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 className={styles.partnerName} style={{ fontSize: '1.3rem', margin: 0 }}>
+                <h2 id="detail-partner-heading" className={styles.partnerName} style={{ fontSize: 'var(--text-title)', margin: 0 }}>
                   🏬 {detailPartner.name}
                 </h2>
                 {getStatusLabel(detailPartner.approvalStatus)}
@@ -270,7 +301,7 @@ export default function AdminPartnersPage() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.9rem' }}>
                 <div>
-                  <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Descrição Comercial:</strong>
+                  <strong className={styles.label} style={{ color: 'var(--color-text-muted)' }}>Descrição Comercial:</strong>
                   <p className={styles.partnerDescription} style={{ marginTop: '0.25rem', WebkitLineClamp: 'none', lineClamp: 'none' }}>
                     {detailPartner.description || 'Sem descrição cadastrada.'}
                   </p>
@@ -278,41 +309,41 @@ export default function AdminPartnersPage() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <div>
-                    <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>CNPJ / Registro:</strong>
+                    <strong className={styles.label} style={{ color: 'var(--color-text-muted)' }}>CNPJ / Registro:</strong>
                     <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.cnpj || 'Não informado'}</p>
                   </div>
                   <div>
-                    <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Tipo:</strong>
+                    <strong className={styles.label} style={{ color: 'var(--color-text-muted)' }}>Tipo:</strong>
                     <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.type}</p>
                   </div>
                   <div>
-                    <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Telefone / Contato:</strong>
+                    <strong className={styles.label} style={{ color: 'var(--color-text-muted)' }}>Telefone / Contato:</strong>
                     <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.phone}</p>
                   </div>
                   <div>
-                    <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Cidade / Estado:</strong>
+                    <strong className={styles.label} style={{ color: 'var(--color-text-muted)' }}>Cidade / Estado:</strong>
                     <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.city ? `${detailPartner.city} - ${detailPartner.state}` : 'Não informado'}</p>
                   </div>
                 </div>
 
                 <div>
-                  <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Endereço Completo:</strong>
+                  <strong className={styles.label} style={{ color: 'var(--color-text-muted)' }}>Endereço Completo:</strong>
                   <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.address}</p>
                 </div>
 
                 <div>
-                  <strong className={styles.label} style={{ color: 'var(--color-text-muted, #9ca3af)' }}>Região de Entrega:</strong>
+                  <strong className={styles.label} style={{ color: 'var(--color-text-muted)' }}>Região de Entrega:</strong>
                   <p style={{ marginTop: '0.25rem', fontWeight: 500 }}>{detailPartner.deliveryRegion || 'Não informada'}</p>
                 </div>
 
                 {detailPartner.rejectionReason && (
-                  <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', padding: '0.75rem', borderRadius: '8px', color: '#f87171' }}>
+                  <div style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', color: 'var(--color-status-rejected)' }}>
                     <strong>Justificativa da Rejeição:</strong> {detailPartner.rejectionReason}
                   </div>
                 )}
 
                 {detailPartner.suspensionReason && (
-                  <div style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', padding: '0.75rem', borderRadius: '8px', color: '#a78bfa' }}>
+                  <div style={{ background: 'rgba(167,139,250,0.08)', border: '1px solid rgba(167,139,250,0.2)', padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', color: 'var(--color-status-suspended)' }}>
                     <strong>Motivo da Suspensão:</strong> {detailPartner.suspensionReason}
                   </div>
                 )}
@@ -320,6 +351,7 @@ export default function AdminPartnersPage() {
 
               <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
                 <button
+                  ref={detailCloseRef}
                   type="button"
                   className={`${styles.btn} ${styles.btnPrimary}`}
                   onClick={() => setDetailPartner(null)}
@@ -333,12 +365,18 @@ export default function AdminPartnersPage() {
 
         {/* Modal de Justificativa */}
         {actionType && activePartner && (
-          <div className={styles.dialogOverlay}>
-            <div className={styles.dialogCard}>
-              <h2 className={styles.partnerName} style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>
+          <div className={styles.dialogOverlay} onClick={closeModal}>
+            <div
+              className={styles.dialogCard}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="reason-modal-heading"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 id="reason-modal-heading" className={styles.partnerName} style={{ fontSize: 'var(--text-title)', marginBottom: '0.75rem' }}>
                 {actionType === 'REJECT' ? 'Rejeitar Cadastro' : 'Suspender Estabelecimento'}
               </h2>
-              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted, #9ca3af)', marginBottom: '1.25rem' }}>
+              <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
                 {actionType === 'REJECT' 
                   ? `Forneça a justificativa para a rejeição do parceiro ${activePartner.name}. O responsável receberá essa orientação.` 
                   : `Forneça o motivo para a suspensão do parceiro ${activePartner.name}. A operação dele e exibição de produtos serão pausadas.`
@@ -360,9 +398,10 @@ export default function AdminPartnersPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
-                  <button 
-                    type="button" 
-                    className={`${styles.btn} ${styles.btnSecondary}`} 
+                  <button
+                    ref={reasonCancelRef}
+                    type="button"
+                    className={`${styles.btn} ${styles.btnSecondary}`}
                     style={{ flex: 1 }}
                     onClick={closeModal}
                     disabled={updating}

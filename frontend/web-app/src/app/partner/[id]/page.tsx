@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -178,11 +179,11 @@ export default function PartnerDashboardPage({ params }: PageProps) {
   return (
     <div className="profile-page">
       <header className="topbar">
-        <span className="topbar-title brand-lockup" onClick={() => router.push('/partner')} style={{ cursor: 'pointer' }}>
+        <Link href="/partner" className="topbar-title brand-lockup">
           <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
           <span className="brand-wordmark">Celi<span>Lac</span></span>
           <span className="brand-tagline">Painel de Controle</span>
-        </span>
+        </Link>
         <nav className="topbar-actions">
           <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
             {theme === 'dark' ? '☀️' : '🌙'}

@@ -43,12 +43,16 @@ const ALLERGEN_LABELS: Record<string, string> = {
   OTHER: '⚠️ Outro',
 };
 
+// Cores acompanham a mesma escala de gravidade do veredito do AllergenEngine
+// (ver DESIGN.md) — reforça que vermelho/laranja/amarelo/verde significam a
+// mesma coisa em toda a aplicação, seja no veredito de um produto ou na
+// severidade da própria restrição do usuário.
 const SEVERITY_BADGES: Record<string, { label: string; bg: string; color: string }> = {
-  FATAL: { label: '🔴 Fatal (Celíaco)', bg: '#fef2f2', color: '#991b1b' },
-  HIGH: { label: '🟠 Severidade Alta', bg: '#fff7ed', color: '#c2410c' },
-  MEDIUM: { label: '🟡 Severidade Média', bg: '#fefce8', color: '#a16207' },
-  LOW: { label: '🟢 Severidade Baixa', bg: '#f0fdf4', color: '#15803d' },
-  LIFESTYLE: { label: '🟣 Estilo de Vida', bg: '#faf5ff', color: '#7e22ce' },
+  FATAL: { label: '🔴 Fatal (Celíaco)', bg: 'var(--color-blocked-bg)', color: 'var(--color-blocked)' },
+  HIGH: { label: '🟠 Severidade Alta', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)' },
+  MEDIUM: { label: '🟡 Severidade Média', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)' },
+  LOW: { label: '🟢 Severidade Baixa', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)' },
+  LIFESTYLE: { label: '🟣 Estilo de Vida', bg: 'var(--color-status-suspended-bg)', color: 'var(--color-status-suspended)' },
 };
 
 export default function DashboardPage() {
@@ -143,12 +147,13 @@ export default function DashboardPage() {
       case 'SAFE':
         return { label: '🟢 COMPATÍVEL', text: 'Compatível com as informações disponíveis.', class: styles.statusSafe };
       case 'WARNING':
-        return { label: '🟡 ATENÇÃO', text: 'Possível risco de contaminação cruzada ou restrição moderada.', class: styles.statusWarning || styles.statusBlocked };
+        return { label: '🟡 ATENÇÃO', text: 'Possível risco de contaminação cruzada ou restrição moderada.', class: styles.statusWarning };
       case 'DANGER':
+        return { label: '🟠 RISCO ALTO', text: 'Risco relevante identificado para o seu perfil.', class: styles.statusDanger };
       case 'BLOCKED':
         return { label: '🔴 INCOMPATÍVEL', text: 'Contém ingrediente conflitante com seu perfil.', class: styles.statusBlocked };
       default:
-        return { label: '⚪ INDETERMINADO', text: 'Informações insuficientes para garantir compatibilidade.', class: styles.statusWarning || styles.statusBlocked };
+        return { label: '⚪ INDETERMINADO', text: 'Informações insuficientes para garantir compatibilidade.', class: styles.statusWarning };
     }
   };
 
@@ -165,27 +170,26 @@ export default function DashboardPage() {
         {/* Banner de E-mail Não Verificado */}
         {mounted && !isEmailVerified && (
           <div style={{
-            background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
-            border: '1px solid #fca5a5',
-            color: '#991b1b',
-            padding: '1.25rem',
-            borderRadius: '12px',
-            marginBottom: '1.5rem',
+            background: 'var(--color-danger-bg)',
+            border: '1px solid var(--color-danger-border)',
+            color: 'var(--color-danger)',
+            padding: 'var(--space-6)',
+            borderRadius: 'var(--radius-md)',
+            marginBottom: 'var(--space-6)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '1rem',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+            gap: 'var(--space-4)',
           }}>
             <div>
-              <strong style={{ fontSize: '1.05rem', display: 'block', marginBottom: '0.25rem' }}>
+              <strong style={{ fontSize: 'var(--text-title)', display: 'block', marginBottom: 'var(--space-1)' }}>
                 📩 Verifique seu e-mail para desbloquear todas as funções
               </strong>
-              <span style={{ fontSize: '0.9rem' }}>
+              <span style={{ fontSize: 'var(--text-body)' }}>
                 Enviamos um código de verificação para o seu e-mail. Confirme seu e-mail para garantir a segurança da sua conta.
               </span>
             </div>
-            <Link href="/auth/verify-email" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: '0.6rem 1.2rem', textDecoration: 'none', background: '#dc2626' }}>
+            <Link href="/auth/verify-email" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: 'var(--space-3) var(--space-6)', textDecoration: 'none', background: 'var(--color-danger)' }}>
               Verificar E-mail Agora
             </Link>
           </div>
@@ -194,27 +198,26 @@ export default function DashboardPage() {
         {/* Banner de Perfil Incompleto */}
         {mounted && isProfileIncomplete && (
           <div style={{
-            background: 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)',
-            border: '1px solid #ffe8a1',
-            color: '#856404',
-            padding: '1.25rem',
-            borderRadius: '12px',
-            marginBottom: '1.5rem',
+            background: 'var(--color-warning-bg)',
+            border: '1px solid var(--color-warning-border)',
+            color: 'var(--color-warning)',
+            padding: 'var(--space-6)',
+            borderRadius: 'var(--radius-md)',
+            marginBottom: 'var(--space-6)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '1rem',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+            gap: 'var(--space-4)',
           }}>
             <div>
-              <strong style={{ fontSize: '1.05rem', display: 'block', marginBottom: '0.25rem' }}>
+              <strong style={{ fontSize: 'var(--text-title)', display: 'block', marginBottom: 'var(--space-1)' }}>
                 ⚠️ Perfil Alimentar Incompleto
               </strong>
-              <span style={{ fontSize: '0.9rem' }}>
+              <span style={{ fontSize: 'var(--text-body)' }}>
                 Seu perfil alimentar ainda não possui restrições configuradas. A análise de compatibilidade alimentar será limitada até que você configure seu perfil.
               </span>
             </div>
-            <Link href="/profile" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: '0.6rem 1.2rem', textDecoration: 'none' }}>
+            <Link href="/profile" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: 'var(--space-3) var(--space-6)', textDecoration: 'none' }}>
               Configurar Agora
             </Link>
           </div>
@@ -226,7 +229,7 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 className={styles.cardTitle} style={{ margin: 0 }}>🥗 Meu Perfil Alimentar</h2>
               {mounted && isAuthenticated && (
-                <Link href="/profile" className="btn btn-ghost" style={{ fontSize: '0.85rem', padding: '0.3rem 0.7rem' }}>
+                <Link href="/profile" className="btn btn-ghost" style={{ fontSize: 'var(--text-label)', padding: 'var(--space-2) var(--space-3)' }}>
                   ⚙️ Editar Perfil
                 </Link>
               )}
@@ -235,30 +238,30 @@ export default function DashboardPage() {
             {mounted && isAuthenticated ? (
               userRestrictions.length > 0 ? (
                 <div>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+                  <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
                     Alérgenos ativos configurados para sua proteção:
                   </p>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
                     {userRestrictions.map((res, index) => {
                       const allergenLabel = ALLERGEN_LABELS[res.allergen] || res.allergen;
-                      const badgeInfo = SEVERITY_BADGES[res.severity] || { label: res.severity, bg: '#f3f4f6', color: '#374151' };
+                      const badgeInfo = SEVERITY_BADGES[res.severity] || { label: res.severity, bg: 'var(--color-elevated)', color: 'var(--color-text-muted)' };
 
                       return (
                         <div key={index} style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          padding: '0.6rem 0.85rem',
-                          borderRadius: '8px',
-                          background: 'var(--bg-secondary, rgba(255,255,255,0.05))',
-                          border: '1px solid var(--border-color, rgba(255,255,255,0.1))'
+                          padding: 'var(--space-3) var(--space-4)',
+                          borderRadius: 'var(--radius-md)',
+                          background: 'var(--color-elevated)',
+                          border: '1px solid var(--color-border)'
                         }}>
-                          <span style={{ fontWeight: '600', fontSize: '0.95rem' }}>{allergenLabel}</span>
+                          <span style={{ fontWeight: '600', fontSize: 'var(--text-body)' }}>{allergenLabel}</span>
                           <span style={{
-                            padding: '0.2rem 0.6rem',
-                            borderRadius: '12px',
-                            fontSize: '0.75rem',
+                            padding: 'var(--space-1) var(--space-3)',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: 'var(--text-label)',
                             fontWeight: 'bold',
                             background: badgeInfo.bg,
                             color: badgeInfo.color
@@ -271,12 +274,12 @@ export default function DashboardPage() {
                   </div>
 
                   <div style={{
-                    padding: '0.6rem 0.85rem',
-                    borderRadius: '8px',
-                    fontSize: '0.85rem',
-                    background: acceptsCrossContamination ? '#fffbeb' : '#f0fdf4',
-                    border: acceptsCrossContamination ? '1px solid #fde68a' : '1px solid #bbf7d0',
-                    color: acceptsCrossContamination ? '#b45309' : '#15803d'
+                    padding: 'var(--space-3) var(--space-4)',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-label)',
+                    background: acceptsCrossContamination ? 'var(--color-warning-bg)' : 'var(--color-safe-bg)',
+                    border: acceptsCrossContamination ? '1px solid var(--color-warning-border)' : '1px solid var(--color-safe-border)',
+                    color: acceptsCrossContamination ? 'var(--color-warning)' : 'var(--color-safe)'
                   }}>
                     {acceptsCrossContamination ? (
                       <span>⚠️ <strong>Contaminação Cruzada:</strong> Aceita risco de traços.</span>
@@ -326,7 +329,7 @@ export default function DashboardPage() {
             </form>
 
             {mounted && !isAuthenticated && (
-              <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+              <p style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>
                 ⚠️ Faça{' '}
                 <Link href="/auth/login" style={{ color: 'var(--color-emerald)' }}>login</Link>{' '}
                 para verificar compatibilidade com seu perfil.
@@ -337,7 +340,7 @@ export default function DashboardPage() {
               const badge = getCompatibilityBadge(report.riskLevel);
               return (
                 <div className={styles.reportArea}>
-                  <h3 style={{ marginBottom: '1rem', color: '#fff' }}>Produto: {report.productName}</h3>
+                  <h3 style={{ marginBottom: 'var(--space-4)', color: 'var(--color-text)' }}>Produto: {report.productName}</h3>
                   <div className={badge.class}>
                     <strong>{badge.label}</strong>
                     <p className={styles.reason}>{badge.text}</p>

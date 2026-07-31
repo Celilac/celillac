@@ -15,6 +15,7 @@ export function Header() {
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<{ avatarUrl?: string; fullName?: string; email?: string; role?: string } | null>(null);
 
   useEffect(() => {
@@ -31,14 +32,28 @@ export function Header() {
 
   return (
     <header className="topbar">
-      <span className="topbar-title brand-lockup" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
+      <Link href="/" className="topbar-title brand-lockup">
         <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
         <span className="brand-wordmark">Celi<span>Lac</span></span>
         <span className="brand-tagline">Vivendo bem a vida</span>
-      </span>
-      <nav className="topbar-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        {isAuthenticated && (
-          <Link href="/" className="btn btn-ghost home-button" id="header-home-btn">
+      </Link>
+      <button
+        type="button"
+        className="topbar-nav-toggle"
+        onClick={() => setMenuOpen((open) => !open)}
+        aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+        aria-expanded={menuOpen}
+        aria-controls="topbar-nav"
+      >
+        {menuOpen ? '✕' : '☰'}
+      </button>
+
+      <nav
+        id="topbar-nav"
+        className={`topbar-actions${menuOpen ? ' topbar-actions--open' : ''}`}
+      >
+        {mounted && isAuthenticated && (
+          <Link href="/" className="btn btn-ghost home-button" id="header-home-btn" onClick={() => setMenuOpen(false)}>
             🏠 Início
           </Link>
         )}
@@ -48,48 +63,53 @@ export function Header() {
         </button>
 
         {mounted && isAuthenticated && (
-          <Link href="/dashboard" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
+          <Link href="/dashboard" className="btn btn-ghost" onClick={() => setMenuOpen(false)}>
             📊 Dashboard
           </Link>
         )}
 
-        <Link href="/public-partners" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
+        <Link href="/public-partners" className="btn btn-ghost" onClick={() => setMenuOpen(false)}>
           🏢 Estabelecimentos
         </Link>
 
         {mounted && isAuthenticated && (userInfo?.role === 'PARCEIRO' || userInfo?.role === 'ADMIN') && (
-          <Link href="/partner" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
+          <Link href="/partner" className="btn btn-ghost" onClick={() => setMenuOpen(false)}>
             💼 Parceiro
           </Link>
         )}
 
         {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
-          <Link href="/admin/partners" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
+          <Link href="/admin/partners" className="btn btn-ghost" onClick={() => setMenuOpen(false)}>
             🛡️ Moderação
           </Link>
         )}
 
         {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
-          <Link href="/admin/users" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
+          <Link href="/admin/users" className="btn btn-ghost" onClick={() => setMenuOpen(false)}>
             👥 Usuários
           </Link>
         )}
 
         {mounted && isAuthenticated && (
-          <Link href="/profile" className="btn btn-ghost" style={{ padding: '0.3rem 0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }} id="topbar-profile-link">
+          <Link href="/profile" className="btn btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} id="topbar-profile-link" onClick={() => setMenuOpen(false)}>
             <UserAvatar avatarUrl={userInfo?.avatarUrl} fullName={userInfo?.fullName} email={userInfo?.email} size={30} />
             <span>Perfil</span>
           </Link>
         )}
 
         {mounted && isAuthenticated && (
-          <button onClick={() => logout().then(() => router.push('/auth/login'))} className="btn btn-ghost" style={{ padding: '0.4rem 1rem', border: 'none', background: 'none', cursor: 'pointer' }} id="btn-logout">
+          <button
+            onClick={() => { setMenuOpen(false); logout().then(() => router.push('/auth/login')); }}
+            className="btn btn-ghost"
+            style={{ border: 'none', background: 'none', cursor: 'pointer' }}
+            id="btn-logout"
+          >
             🚪 Sair
           </button>
         )}
 
         {mounted && !isAuthenticated && (
-          <Link href="/auth/login" className="btn btn-em" style={{ padding: '0.4rem 1rem' }}>
+          <Link href="/auth/login" className="btn btn-em" onClick={() => setMenuOpen(false)}>
             Entrar
           </Link>
         )}
