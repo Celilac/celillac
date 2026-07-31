@@ -32,7 +32,7 @@ export interface RegisterUserResponseDTO {
  *  1. Valida o e-mail via Email VO
  *  2. Verifica duplicidade no repositório
  *  3. Gera hash da senha com bcrypt
- *  4. Regra de Primeiro Admin (Bootstrap): Se for o primeiro ADMIN da plataforma, é aprovado automaticamente.
+ *  4. Regra de Primeiro Admin (Bootstrap): Se for o primeiro ADMIN real da plataforma, é aprovado automaticamente.
  *  5. Cria a entidade User
  *  6. Persiste via IUserRepository
  *  7. Se não for Admin pendente, dispara a geração do código OTP de verificação de e-mail
@@ -72,13 +72,13 @@ export class RegisterUserUseCase {
 
     if (isAdmin) {
       const allUsers = await this.userRepository.findAll();
-      const hasExistingActiveAdmin = allUsers.some(
-        (u) => u.role === UserRole.ADMIN && u.accountStatus === 'ACTIVE',
+      const realActiveAdmins = allUsers.filter(
+        (u) => u.role === UserRole.ADMIN && u.accountStatus === 'ACTIVE' && u.email.value !== 'admin@celilac.com.br',
       );
 
-      // Se já existe ao menos 1 admin ativo no sistema, exige aprovação prévia.
-      // Se for o PRIMEIRO admin da plataforma (bootstrap), é aprovado automaticamente!
-      accountStatus = hasExistingActiveAdmin ? 'PENDING_APPROVAL' : 'ACTIVE';
+      // Se já existe ao menos 1 admin real ativo no sistema, exige aprovação prévia.
+      // Se for o PRIMEIRO admin real da plataforma (bootstrap), é aprovado automaticamente!
+      accountStatus = realActiveAdmins.length > 0 ? 'PENDING_APPROVAL' : 'ACTIVE';
     }
 
     // 5. Criar entidade User
