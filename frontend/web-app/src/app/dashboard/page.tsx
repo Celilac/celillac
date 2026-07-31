@@ -71,31 +71,34 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (isAuthenticated && token && userId) {
-      // Checa restrições alimentares do usuário
-      foodProfileApi.getByUserId(userId, token)
-        .then((profile) => {
-          if (!profile || !profile.restrictions || profile.restrictions.length === 0) {
-            setIsProfileIncomplete(true);
-            setUserRestrictions([]);
-          } else {
-            setIsProfileIncomplete(false);
-            setUserRestrictions(profile.restrictions);
-          }
-          setAcceptsCrossContamination(!!profile?.acceptsCrossContamination);
-        })
-        .catch(() => {
-          setIsProfileIncomplete(true);
-          setUserRestrictions([]);
-        });
-
-      // Checa status de verificação de e-mail do usuário
+      // Checa os dados do usuário para verificar role e status de e-mail
       apiClient.get<any>('/iam/me', token)
         .then((u) => {
-          if (u && u.isEmailVerified === false) {
-            setIsEmailVerified(false);
-          } else {
-            setIsEmailVerified(true);
+          setIsEmailVerified(u?.isEmailVerified !== false);
+          
+          const role = u?.role;
+          // Contas corporativas e operacionais (ADMIN e PARCEIRO) não exigem perfil alimentar de consumidor
+          if (role === 'ADMIN' || role === 'PARCEIRO') {
+            setIsProfileIncomplete(false);
+            return;
           }
+
+          // Para consumidores e celíacos, verifica as restrições cadastradas
+          foodProfileApi.getByUserId(userId, token)
+            .then((profile) => {
+              if (!profile || !profile.restrictions || profile.restrictions.length === 0) {
+                setIsProfileIncomplete(true);
+                setUserRestrictions([]);
+              } else {
+                setIsProfileIncomplete(false);
+                setUserRestrictions(profile.restrictions);
+              }
+              setAcceptsCrossContamination(!!profile?.acceptsCrossContamination);
+            })
+            .catch(() => {
+              setIsProfileIncomplete(true);
+              setUserRestrictions([]);
+            });
         })
         .catch(() => {});
     }
