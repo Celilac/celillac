@@ -34,10 +34,13 @@ export class ReviewReportUseCase {
       id: report.id,
       reporterId: report.reporterId,
       productId: report.productId,
+      partnerId: report.partnerId,
       reason: report.reason,
+      isFoodSafetyRisk: report.isFoodSafetyRisk,
       status: report.status,
       details: report.details,
       createdAt: report.createdAt.toISOString(),
+      updatedAt: report.updatedAt.toISOString(),
     });
   }
 }
