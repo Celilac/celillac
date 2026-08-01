@@ -37,6 +37,11 @@
 8. [Health Check](#8-health-check)
 9. [Enums de Domínio](#9-enums-de-domínio)
 10. [Regras para Agentes de IA](#10-regras-para-agentes-de-ia)
+11. [Consumidor (Consumer)](#11-consumidor-consumer)
+   - [GET /consumer/me](#get-consumerme)
+   - [PUT /consumer/preferences](#put-consumerpreferences)
+   - [POST /consumer/restrictions](#post-consumerrestrictions)
+   - [DELETE /consumer/restrictions/:allergen](#delete-consumerrestrictionsallergen)
 
 ---
 
@@ -838,3 +843,112 @@ Usuário abre o app
                                     Dashboard: POST /compatibility/check
                                     para cada produto verificado
 ```
+
+---
+
+## 11. Consumidor (Consumer)
+
+### `GET /consumer/me` 🔒
+
+Retorna os dados consolidados do Consumidor logado, seu perfil alimentar associado e se há alertas de perfil incompleto. **Caso o consumidor ainda não exista, ele é auto-criado de forma transparente.**
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Response Body (200 OK):**
+```json
+{
+  "consumer": {
+    "id": "consumer-uuid-123",
+    "userId": "user-uuid-456",
+    "generalPreferences": {
+      "theme": "dark"
+    },
+    "profileEvaluationStatus": "PENDING_EVALUATION",
+    "hasIncompleteProfileWarning": false
+  },
+  "foodProfile": {
+    "id": "profile-uuid-789",
+    "userId": "user-uuid-456",
+    "restrictions": [
+      {
+        "allergen": "GLUTEN",
+        "severity": "FATAL",
+        "type": "ALLERGY",
+        "notes": "Celíaco grave"
+      }
+    ],
+    "acceptsCrossContamination": false
+  },
+  "hasIncompleteProfileWarning": false
+}
+```
+
+---
+
+### `PUT /consumer/preferences` 🔒
+
+Atualiza as preferências gerais de interface do consumidor.
+
+**Request Body:**
+```json
+{
+  "generalPreferences": {
+    "theme": "light",
+    "notificationsEnabled": true
+  }
+}
+```
+
+**Response Body (200 OK):**
+```json
+{
+  "id": "consumer-uuid-123",
+  "userId": "user-uuid-456",
+  "generalPreferences": {
+    "theme": "light",
+    "notificationsEnabled": true
+  }
+}
+```
+
+---
+
+### `POST /consumer/restrictions` 🔒
+
+Adiciona uma nova restrição alimentar diretamente ao perfil do consumidor logado.
+
+**Request Body:**
+```json
+{
+  "allergen": "LACTOSE",
+  "severity": "MEDIUM",
+  "type": "INTOLERANCE",
+  "notes": "Intolerância leve"
+}
+```
+
+**Response Body (200 OK / 201 Created):**
+```json
+{
+  "success": true,
+  "message": "Restrição adicionada com sucesso."
+}
+```
+
+---
+
+### `DELETE /consumer/restrictions/:allergen` 🔒
+
+Remove uma restrição alimentar existente por tipo de alérgeno.
+
+**Response Body (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Restrição removida com sucesso."
+}
+```
+

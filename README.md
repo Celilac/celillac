@@ -104,6 +104,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | Contexto | Status | Doc |
 |:---------|:-------|:----|
 | 🔐 IAM & Autenticação | ✅ Implementado | [`docs/features/iam.md`](docs/features/iam.md) |
+| 👤 Consumidor | ✅ Implementado | [`docs/features/consumer.md`](docs/features/consumer.md) |
 | 🥗 Perfil Alimentar | ✅ Implementado | [`docs/features/food-profile.md`](docs/features/food-profile.md) |
 | ⚠️ Motor de Alérgenos (Core Domain) | ✅ Implementado | [`docs/features/allergen-engine.md`](docs/features/allergen-engine.md) |
 | 🛒 Catálogo de Produtos | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
