@@ -18,9 +18,9 @@ O `AllergenEngine` é o **Serviço de Domínio Central** do CeLiLac. Ele calcula
 
 ---
 
-## 2. Regras do Motor (Aprovadas em 2026-06-30)
+## 2. Regras do Motor (Aprovadas em 2026-06-30, atualizado R9 em 2026-08-01 - Issue #31)
 
-As 8 regras abaixo são a **única definição oficial** de como o motor funciona. Alterações exigem aprovação humana e atualização deste documento.
+As 9 regras abaixo são a **única definição oficial** de como o motor funciona. Alterações exigem aprovação humana e atualização deste documento.
 
 | ID | Regra | Condição | Resultado |
 |:---|:------|:---------|:----------|
@@ -30,12 +30,13 @@ As 8 regras abaixo são a **única definição oficial** de como o motor funcion
 | **R4** | Restrição FATAL + alérgeno nos **traços** (cross_contamination) | severity = FATAL, found in crossContamination | `BLOCKED` |
 | **R5** | Restrição HIGH + alérgeno nos **ingredientes** | severity = HIGH, found in ingredients | `DANGER` |
 | **R6** | Restrição MEDIUM ou LOW + alérgeno nos **ingredientes** | severity = MEDIUM\|LOW, found in ingredients | `WARNING` |
-| **R7** | Traços para severidades não-FATAL | found in crossContamination, severity ≠ FATAL | `WARNING` |
+| **R7** | Traços para severidades não-FATAL (com tolerância ativada) | found in crossContamination, severity ≠ FATAL, acceptsCrossContamination = true | `WARNING` |
 | **R8** | Risco final = maior entre todos os conflitos | múltiplos conflitos encontrados | RiskLevel mais alto vence |
+| **R9** | Invariante 11.5: Traços + Não-Tolerância a Contaminação Cruzada | found in crossContamination, severity = HIGH, acceptsCrossContamination = false | `DANGER` (eleva de WARNING para DANGER) |
 
 > **Nota sobre R1:** O princípio da precaução prioriza a segurança do celíaco. Um produto sem informação é tratado como produto perigoso — nunca como produto seguro.
 
-> **Nota sobre R8:** Todos os conflitos são retornados no `conflicts[]`, não apenas o mais grave. O usuário tem direito à informação completa.
+> **Nota sobre R9 (Invariante 11.5):** Quando o consumidor declara `acceptsCrossContamination = false` (padrão do sistema para máxima segurança), o alérgeno detectado nos traços para restrições de severidade `HIGH` eleva o risco para `DANGER`. Para severidade `FATAL`, o resultado é sempre `BLOCKED` independente da tolerância declarada.
 
 ---
 

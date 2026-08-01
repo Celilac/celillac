@@ -58,7 +58,8 @@
 - **Regras:**
     - O motor deve ser agnóstico a banco de dados (Pure Domain Service).
     - Deve suportar "Traços de Alérgenos" como um modificador de risco.
-    - As 8 regras do motor (R1–R8) estão definidas em `docs/ALLERGEN_ENGINE.md` e são imutáveis sem aprovação humana.
+    - Respeita a **Invariante 11.5 (Tolerância a Contaminação Cruzada)**: se `acceptsCrossContamination === false`, traços para severidades `HIGH` elevam o risco de `WARNING` para `DANGER`. Para `FATAL`, o resultado é sempre `BLOCKED` (invariante biológica imutável).
+    - As 9 regras do motor (R1–R9) estão definidas em `docs/ALLERGEN_ENGINE.md` e são imutáveis sem aprovação humana.
     - ⚠️ **Contexto de máxima criticidade** — qualquer alteração exige aprovação humana.
 
 ---

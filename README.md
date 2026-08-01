@@ -132,7 +132,7 @@ cd backend
 npm test
 ```
 
-**35 suítes de teste | 172 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
+**38 suítes de teste | 182 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|

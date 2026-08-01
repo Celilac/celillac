@@ -182,3 +182,78 @@ describe('TC-09: Perfil sem restrições — produto qualquer', () => {
     expect(report.isCompatible).toBe(true);
   });
 });
+
+// ============================================================
+// TC-10: Invariante 11.5 — HIGH + traços + acceptsCrossContamination=false → DANGER
+// ============================================================
+describe('TC-10: Invariante 11.5 — HIGH + traços + não aceita contaminação cruzada', () => {
+  it('deve retornar DANGER quando a severidade é HIGH e o consumidor NÃO aceita contaminação cruzada', () => {
+    const profile = FoodProfile.create({
+      userId: 'user-test',
+      restrictions: [makeRestriction(AllergenType.NUTS, SeverityLevel.HIGH)],
+      acceptsCrossContamination: false,
+    }).getValue();
+
+    const product = makeProduct({
+      hasGluten: false,
+      ingredients: 'chocolate, açúcar, cacau',
+      crossContamination: 'Pode conter traços de nozes e amendoim.',
+    });
+
+    const report = AllergenEngine.check(profile, product);
+
+    expect(report.riskLevel).toBe(RiskLevel.DANGER);
+    expect(report.isCompatible).toBe(false);
+    expect(report.conflicts).toHaveLength(1);
+    expect(report.conflicts[0].allergen).toBe(AllergenType.NUTS);
+  });
+});
+
+// ============================================================
+// TC-11: Invariante 11.5 — HIGH + traços + acceptsCrossContamination=true → WARNING
+// ============================================================
+describe('TC-11: Invariante 11.5 — HIGH + traços + aceita contaminação cruzada', () => {
+  it('deve retornar WARNING quando a severidade é HIGH mas o consumidor aceita contaminação cruzada', () => {
+    const profile = FoodProfile.create({
+      userId: 'user-test',
+      restrictions: [makeRestriction(AllergenType.NUTS, SeverityLevel.HIGH)],
+      acceptsCrossContamination: true,
+    }).getValue();
+
+    const product = makeProduct({
+      hasGluten: false,
+      ingredients: 'chocolate, açúcar, cacau',
+      crossContamination: 'Pode conter traços de nozes.',
+    });
+
+    const report = AllergenEngine.check(profile, product);
+
+    expect(report.riskLevel).toBe(RiskLevel.WARNING);
+    expect(report.isCompatible).toBe(false);
+    expect(report.conflicts).toHaveLength(1);
+  });
+});
+
+// ============================================================
+// TC-12: Invariante 11.5 — FATAL + traços + acceptsCrossContamination=true → BLOCKED (Invariante Inviolável)
+// ============================================================
+describe('TC-12: Invariante 11.5 — FATAL + traços + aceita contaminação cruzada', () => {
+  it('deve retornar BLOCKED independente de acceptsCrossContamination quando a severidade é FATAL', () => {
+    const profile = FoodProfile.create({
+      userId: 'user-test',
+      restrictions: [makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL)],
+      acceptsCrossContamination: true,
+    }).getValue();
+
+    const product = makeProduct({
+      hasGluten: false,
+      ingredients: 'arroz, milho, sal',
+      crossContamination: 'Pode conter traços de trigo.',
+    });
+
+    const report = AllergenEngine.check(profile, product);
+
+    expect(report.riskLevel).toBe(RiskLevel.BLOCKED);
+    expect(report.isCompatible).toBe(false);
+  });
+});

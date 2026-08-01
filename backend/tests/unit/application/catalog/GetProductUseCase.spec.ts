@@ -67,6 +67,7 @@ describe('GetProductUseCase', () => {
     const profile = FoodProfile.create({
       userId: 'user-1',
       restrictions: [restriction],
+      acceptsCrossContamination: true,
     }).getValue();
 
     foodProfileRepository.findByUserId.mockResolvedValue(profile);
