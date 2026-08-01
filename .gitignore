@@ -4,8 +4,14 @@ dist/
 *.env.local
 coverage/
 
-# IDE / AI Agent Configs
+# IDE / AI Agent Configs & Caches
 .claude/
 .gemini/
 .vscode/
 *.tsbuildinfo
+.agents/
+.codex/
+.impeccable/
+.github/hooks/
+.github/skills/
+walkthrough.md
