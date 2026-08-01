@@ -66,6 +66,23 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function handlePromoteToAdmin(userId: string) {
+    if (!token) return;
+    setUpdating(true);
+    try {
+      await apiClient.patch(`/admin/users/${userId}/promote`, {}, token);
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, role: 'ADMIN', accountStatus: 'ACTIVE', profileEvaluationStatus: 'APPROVED' } : u))
+      );
+      toast.success('Usuário promovido a Administrador com sucesso!');
+    } catch (err: any) {
+      const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao promover usuário a administrador.';
+      toast.error(msg, 'Erro');
+    } finally {
+      setUpdating(false);
+    }
+  }
+
   async function handleEvaluateProfile(userId: string, newStatus: 'APPROVED' | 'REJECTED') {
     if (!token) return;
     setUpdating(true);
@@ -100,7 +117,7 @@ export default function AdminUsersPage() {
           <div className={styles.titleArea}>
             <h1 className={styles.title}>Gestão de Usuários & Administradores</h1>
             <p className={styles.subtitle}>
-              Modere cadastros de administradores pendentes e avalie perfis de usuários.
+              Modere cadastros, avalie perfis e promova colaboradores a Administradores da plataforma.
             </p>
           </div>
         </div>
@@ -167,6 +184,19 @@ export default function AdminUsersPage() {
                     </button>
                   )}
 
+                  {user.role !== 'ADMIN' && (
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnSecondary}`}
+                      style={{ flex: '1 1 100%' }}
+                      onClick={() => handlePromoteToAdmin(user.id)}
+                      disabled={updating}
+                      id={`promote-admin-${user.id}`}
+                    >
+                      👑 Promover a Administrador
+                    </button>
+                  )}
+
                   {user.profileEvaluationStatus === 'PENDING_EVALUATION' && (
                     <>
                       <button
@@ -205,7 +235,7 @@ export default function AdminUsersPage() {
                     </button>
                   )}
 
-                  {user.profileEvaluationStatus === 'APPROVED' && (
+                  {user.profileEvaluationStatus === 'APPROVED' && user.role !== 'ADMIN' && (
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnDanger}`}

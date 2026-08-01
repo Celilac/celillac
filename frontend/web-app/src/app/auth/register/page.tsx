@@ -72,7 +72,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'CELIACO' | 'PARCEIRO' | 'ADMIN'>('CELIACO');
+  const [role, setRole] = useState<'CELIACO' | 'PARCEIRO'>('CELIACO');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -115,18 +115,10 @@ export default function RegisterPage() {
       const normalizedEmail = email.trim().toLowerCase();
       const user = await iamApi.register({ email: normalizedEmail, password, role, fullName: fullName.trim() } as any);
       
-      if (role === 'ADMIN') {
-        toast.warning(
-          'Conta de Administrador cadastrada! Ela aguarda aprovação de um Administrador existente antes do primeiro acesso.',
-          'Cadastro Pendente',
-        );
-        router.push('/auth/login');
-      } else {
-        const session = await iamApi.login({ email: normalizedEmail, password });
-        login(session.token, user.id);
-        toast.success('Conta criada com sucesso!');
-        router.push('/profile');
-      }
+      const session = await iamApi.login({ email: normalizedEmail, password });
+      login(session.token, user.id);
+      toast.success('Conta criada com sucesso!');
+      router.push('/profile');
     } catch (err) {
       toast.error(err instanceof HttpError ? err.message : 'Erro ao criar conta.', 'Erro ao criar conta');
     } finally {
@@ -281,15 +273,8 @@ export default function RegisterPage() {
                   >
                     <option value="CELIACO">Eu possuo restrições/Opto por comida saudável</option>
                     <option value="PARCEIRO">Sou/Quero ser parceiro/fornecedor</option>
-                    <option value="ADMIN">🛡️ Administrador do Sistema</option>
                   </select>
                 </div>
-
-                {role === 'ADMIN' && (
-                  <div style={{ padding: '0.75rem', background: '#fff3cd', border: '1px solid #ffe8a1', borderRadius: '8px', color: '#856404', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                    ⚠️ <strong>Atenção:</strong> Contas de Administrador requerem autorização/aprovação prévia de um administrador ativo antes que o acesso seja liberado.
-                  </div>
-                )}
 
                 <button
                   type="submit"
