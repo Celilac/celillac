@@ -121,7 +121,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 🛡️ Administração & Moderação | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
 | ⭐ Avaliações e Confiança | ✅ Implementado | [`docs/features/reviews.md`](docs/features/reviews.md) |
 | ❤️ Favoritos | ✅ Implementado | [`docs/features/favorites.md`](docs/features/favorites.md) |
-| 📱 App Mobile (Flutter) | ✅ Implementado | [`frontend/mobile-app/`](frontend/mobile-app/) |
+| 📱 App Mobile (Flutter) | ✅ Implementado | [`docs/features/mobile-app.md`](docs/features/mobile-app.md) |
 
 ---
 
