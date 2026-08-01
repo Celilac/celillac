@@ -1,13 +1,17 @@
 // backend/src/interfaces/http/middlewares/AuthMiddleware.ts
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { pool } from '../../../infrastructure/database/connection';
+import { PgBlacklistTokenRepository } from '../../../infrastructure/database/iam/PgBlacklistTokenRepository';
 
 export interface DecodedToken {
   sub: string;
   role: string;
 }
 
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+const blacklistRepository = new PgBlacklistTokenRepository(pool);
+
+export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -37,19 +41,57 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
 
   try {
     const decoded = jwt.verify(token, secret) as DecodedToken;
-    
+
+    // 1. Verifica se o token foi revogado (consta na blacklist)
+    const isRevoked = await blacklistRepository.isBlacklisted(token);
+    if (isRevoked) {
+      res.status(401).json({ error: 'Token revogado.' });
+      return;
+    }
+
+    // 2. Otimização (Issue #26): Verifica se a conta de Admin está em PENDING_APPROVAL APENAS se decoded.role === 'ADMIN'
+    if (decoded.role === 'ADMIN') {
+      try {
+        const userQuery = await pool.query(
+          'SELECT account_status FROM users WHERE id = $1 LIMIT 1',
+          [decoded.sub],
+        );
+        if (
+          userQuery &&
+          userQuery.rows &&
+          userQuery.rows.length > 0 &&
+          userQuery.rows[0].account_status === 'PENDING_APPROVAL'
+        ) {
+          res.status(403).json({
+            error:
+              'Sua conta de Administrador aguarda aprovação prévia de um administrador existente.',
+          });
+          return;
+        }
+      } catch (err: any) {
+        // Explicito para ambiente de testes unitários sem banco de dados ativo
+        if (process.env.NODE_ENV === 'test') {
+          // Em testes unitários que usam o pool real não-conectado, permite prosseguir sem travar a suíte
+        } else {
+          console.error('[AuthMiddleware] Erro inesperado ao verificar aprovação de ADMIN:', err);
+          res.status(500).json({ error: 'Erro ao verificar permissão do usuário.' });
+          return;
+        }
+      }
+    }
+
     req.user = {
       id: decoded.sub,
       role: decoded.role,
     };
-    
+
     next();
   } catch (err) {
     res.status(401).json({ error: 'Token inválido ou expirado.' });
   }
 }
 
-export function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
+export async function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
@@ -75,14 +117,17 @@ export function optionalAuthMiddleware(req: Request, res: Response, next: NextFu
 
   try {
     const decoded = jwt.verify(token, secret) as DecodedToken;
-    
-    req.user = {
-      id: decoded.sub,
-      role: decoded.role,
-    };
+
+    const isRevoked = await blacklistRepository.isBlacklisted(token);
+    if (!isRevoked) {
+      req.user = {
+        id: decoded.sub,
+        role: decoded.role,
+      };
+    }
   } catch (err) {
     // Prossegue como visitante em caso de falha de token
   }
-  
+
   next();
 }

@@ -2,16 +2,15 @@
 // frontend/web-app/src/contexts/AuthContext.tsx
 //
 // Estratégia de armazenamento do JWT:
-//   ✅ sessionStorage — persiste durante a sessão da aba (navegação client-side incluída)
-//   ✅ Limpo automaticamente ao fechar a aba
-//   ❌ localStorage — proibido (persiste indefinidamente, risco maior de XSS)
-//
-// O token NÃO é exposto via window nem concatenado em logs.
+//   ✅ localStorage — persiste entre abas e janelas do mesmo navegador
+//   ✅ Inicialização síncrona / SSR-safe para evitar falsos redirecionamentos no F5
+//   ✅ Limpo explicitamente no logout (revogação via blacklist no backend)
 //
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { iamApi } from '@/api/iam';
 
-const SESSION_KEY_TOKEN  = 'celilac:token';
-const SESSION_KEY_USERID = 'celilac:userId';
+const STORAGE_KEY_TOKEN  = 'celilac:token';
+const STORAGE_KEY_USERID = 'celilac:userId';
 
 interface AuthState {
   token:  string | null;
@@ -20,48 +19,81 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   login:           (token: string, userId: string) => void;
-  logout:          () => void;
+  logout:          () => Promise<void>;
   isAuthenticated: boolean;
+  isInitializing:  boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [auth, setAuth] = useState<AuthState>({ token: null, userId: null });
+  // Restaura sessão do localStorage de forma síncrona no cliente se disponível
+  const [auth, setAuth] = useState<AuthState>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const token  = localStorage.getItem(STORAGE_KEY_TOKEN);
+        const userId = localStorage.getItem(STORAGE_KEY_USERID);
+        if (token && userId) {
+          return { token, userId };
+        }
+      } catch {
+        // Fallback silencioso
+      }
+    }
+    return { token: null, userId: null };
+  });
 
-  // Restaura sessão do sessionStorage ao montar (sobrevive a navegação Next.js)
+  const [isInitializing, setIsInitializing] = useState<boolean>(true);
+
   useEffect(() => {
     try {
-      const token  = sessionStorage.getItem(SESSION_KEY_TOKEN);
-      const userId = sessionStorage.getItem(SESSION_KEY_USERID);
-      if (token && userId) {
+      const token  = localStorage.getItem(STORAGE_KEY_TOKEN);
+      const userId = localStorage.getItem(STORAGE_KEY_USERID);
+      if (token && userId && (!auth.token || !auth.userId)) {
         setAuth({ token, userId });
       }
     } catch {
-      // sessionStorage indisponível (SSR ou modo privado restrito) — sem ação
+      // localStorage indisponível
+    } finally {
+      setIsInitializing(false);
     }
-  }, []);
+  }, [auth.token, auth.userId]);
 
   const login = useCallback((token: string, userId: string) => {
     try {
-      sessionStorage.setItem(SESSION_KEY_TOKEN,  token);
-      sessionStorage.setItem(SESSION_KEY_USERID, userId);
+      localStorage.setItem(STORAGE_KEY_TOKEN,  token);
+      localStorage.setItem(STORAGE_KEY_USERID, userId);
     } catch {
-      // Falha silenciosa — token só em memória como fallback
+      // Falha silenciosa
     }
     setAuth({ token, userId });
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    if (auth.token) {
+      try {
+        await iamApi.logout(auth.token);
+      } catch {
+        // Silencia erros para garantir logout client-side incondicional
+      }
+    }
     try {
-      sessionStorage.removeItem(SESSION_KEY_TOKEN);
-      sessionStorage.removeItem(SESSION_KEY_USERID);
+      localStorage.removeItem(STORAGE_KEY_TOKEN);
+      localStorage.removeItem(STORAGE_KEY_USERID);
     } catch { /* sem ação */ }
     setAuth({ token: null, userId: null });
-  }, []);
+  }, [auth.token]);
 
   return (
-    <AuthContext.Provider value={{ ...auth, login, logout, isAuthenticated: !!auth.token }}>
+    <AuthContext.Provider
+      value={{
+        ...auth,
+        login,
+        logout,
+        isAuthenticated: !!auth.token,
+        isInitializing,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

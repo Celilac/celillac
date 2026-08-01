@@ -12,8 +12,9 @@ export interface RestrictionDTO {
 }
 
 export interface CreateFoodProfileDTO {
-  userId:       string;
-  restrictions: RestrictionDTO[];
+  userId:                     string;
+  restrictions:               RestrictionDTO[];
+  acceptsCrossContamination?: boolean;
 }
 
 export interface FoodProfileResponseDTO {
@@ -64,7 +65,12 @@ export class CreateFoodProfileUseCase {
     }
 
     // 3. Construir FoodProfile aggregate
-    const profileResult = FoodProfile.create({ userId: dto.userId, restrictions });
+    const profileResult = FoodProfile.create({
+      userId: dto.userId,
+      restrictions,
+      acceptsCrossContamination: dto.acceptsCrossContamination,
+    });
+
     if (profileResult.isFailure) {
       return Result.fail<FoodProfileResponseDTO>(profileResult.getError());
     }

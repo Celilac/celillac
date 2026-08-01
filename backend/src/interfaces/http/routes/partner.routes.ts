@@ -31,8 +31,8 @@ const userRepository = new PgUserRepository(pool);
 const registerPartnerUseCase = new RegisterPartnerUseCase(partnerRepository, userRepository);
 const getPartnerUseCase = new GetPartnerUseCase(partnerRepository);
 const approvePartnerUseCase = new ApprovePartnerUseCase(partnerRepository, userRepository);
-const submitPartnerForReviewUseCase = new SubmitPartnerForReviewUseCase(partnerRepository);
-const updatePartnerUseCase = new UpdatePartnerUseCase(partnerRepository);
+const submitPartnerForReviewUseCase = new SubmitPartnerForReviewUseCase(partnerRepository, userRepository);
+const updatePartnerUseCase = new UpdatePartnerUseCase(partnerRepository, userRepository);
 const rejectPartnerUseCase = new RejectPartnerUseCase(partnerRepository, userRepository);
 const suspendPartnerUseCase = new SuspendPartnerUseCase(partnerRepository, userRepository);
 const reactivatePartnerUseCase = new ReactivatePartnerUseCase(partnerRepository, userRepository);
@@ -56,18 +56,16 @@ const partnerController = new PartnerController(
   listPublicPartnersUseCase
 );
 
-// --- Rotas Públicas ---
-// Listar parceiros públicos
-router.get('/partners', (req, res) => partnerController.listPublicPartners(req, res));
-// Obter dados públicos de um parceiro específico
-router.get('/partners/:id', (req, res) => partnerController.getPartner(req, res));
+// ══════════════════════════════════════════════════════════════
+// ⚠️ ATENÇÃO: Rotas específicas (/partners/me/all e /partners/me)
+// DEVEM ser registradas ANTES das rotas parametrizadas (/partners/:id)
+// ══════════════════════════════════════════════════════════════
 
 // --- Rotas Autenticadas (Dono / Parceiro) ---
-// Cadastrar um novo parceiro
-router.post('/partners', authMiddleware, (req, res) => partnerController.register(req, res));
 // Listar os parceiros administrados pelo usuário logado
 router.get('/partners/me/all', authMiddleware, (req, res) => partnerController.listUserPartners(req, res));
-// Obter o primeiro parceiro cadastrado do usuário logado (mantido para compatibilidade retroativa)
+
+// Obter o primeiro parceiro cadastrado do usuário logado (legado)
 router.get('/partners/me', authMiddleware, (req, res) => {
   req.params.id = ''; // força busca por req.user.id no GetPartnerUseCase
   const userId = req.user?.id;
@@ -77,22 +75,39 @@ router.get('/partners/me', authMiddleware, (req, res) => {
     return res.status(200).json({ success: true, data: result.getValue() });
   }).catch(err => res.status(500).json({ success: false, error: err.message }));
 });
-// Atualizar cadastro do parceiro
-router.put('/partners/:id', authMiddleware, (req, res) => partnerController.update(req, res));
+
+// Cadastrar um novo parceiro
+router.post('/partners', authMiddleware, (req, res) => partnerController.register(req, res));
+
 // Submeter parceiro para revisão
 router.post('/partners/:id/submit', authMiddleware, (req, res) => partnerController.submitForReview(req, res));
+
 // Atualizar status operacional (Ativo, Inativo, Fechado)
 router.patch('/partners/:id/operational-status', authMiddleware, (req, res) => partnerController.updateOperationalStatus(req, res));
+
+// Atualizar cadastro do parceiro
+router.put('/partners/:id', authMiddleware, (req, res) => partnerController.update(req, res));
+
+// --- Rotas Públicas e Parametrizadas ---
+// Listar parceiros públicos
+router.get('/partners', (req, res) => partnerController.listPublicPartners(req, res));
+
+// Obter dados de um parceiro específico
+router.get('/partners/:id', (req, res) => partnerController.getPartner(req, res));
 
 // --- Rotas Administrativas (Administração) ---
 // Listar todos os parceiros para moderação
 router.get('/admin/partners', authMiddleware, (req, res) => partnerController.listAdminPartners(req, res));
+
 // Aprovar parceiro
 router.post('/partners/:id/approve', authMiddleware, (req, res) => partnerController.approve(req, res));
+
 // Rejeitar parceiro (exige motivo no body)
 router.post('/partners/:id/reject', authMiddleware, (req, res) => partnerController.reject(req, res));
+
 // Suspender parceiro (exige motivo no body)
 router.post('/partners/:id/suspend', authMiddleware, (req, res) => partnerController.suspend(req, res));
+
 // Reativar parceiro
 router.post('/partners/:id/reactivate', authMiddleware, (req, res) => partnerController.reactivate(req, res));
 

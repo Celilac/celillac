@@ -41,6 +41,7 @@ describe('ApprovePartnerUseCase', () => {
     userRepository = {
       findByEmail: jest.fn(),
       findById: jest.fn(),
+      findAll: jest.fn(),
       save: jest.fn(),
     };
     useCase = new ApprovePartnerUseCase(partnerRepository, userRepository);
@@ -64,7 +65,7 @@ describe('ApprovePartnerUseCase', () => {
     expect(result.isSuccess).toBe(true);
     expect(partnerRepository.update).toHaveBeenCalled();
     expect(mockPartner.approvalStatus).toBe(PartnerApprovalStatus.APPROVED);
-    expect(mockPartner.operationalStatus).toBe(PartnerOperationalStatus.INACTIVE); // Inicia inativo por padrão após aprovação
+    expect(mockPartner.operationalStatus).toBe(PartnerOperationalStatus.ACTIVE);
   });
 
   it('deve falhar se o usuário solicitante não for ADMIN', async () => {

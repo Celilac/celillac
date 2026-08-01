@@ -63,16 +63,17 @@ function PasswordEyeIcon({ visible }: { visible: boolean }) {
 }
 
 export default function RegisterPage() {
-  const router   = useRouter();
+  const router = useRouter();
   const { login } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const toast    = useToast();
+  const toast = useToast();
 
-  const [email,    setEmail]    = useState('');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role,     setRole]     = useState<'CELIACO' | 'PARCEIRO'>('CELIACO');
-  const [loading,  setLoading]  = useState(false);
+  const [role, setRole] = useState<'CELIACO' | 'PARCEIRO'>('CELIACO');
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -112,8 +113,8 @@ export default function RegisterPage() {
 
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      const user = await iamApi.register({ email: normalizedEmail, password, role });
-      // Após cadastro, faz login automático para obter o token
+      const user = await iamApi.register({ email: normalizedEmail, password, role, fullName: fullName.trim() } as any);
+      
       const session = await iamApi.login({ email: normalizedEmail, password });
       login(session.token, user.id);
       toast.success('Conta criada com sucesso!');
@@ -178,6 +179,18 @@ export default function RegisterPage() {
               <p className="auth-subtitle">Configure seu perfil alimentar e coma com segurança.</p>
 
               <form className="auth-form" onSubmit={handleSubmit} id="register-form">
+                <div className="field">
+                  <label className="field-label" htmlFor="register-fullname">Nome completo</label>
+                  <input
+                    id="register-fullname"
+                    type="text"
+                    className="field-input"
+                    placeholder="Seu Nome Completo"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                </div>
+
                 <div className="field">
                   <label className="field-label" htmlFor="register-email">E-mail</label>
                   <input

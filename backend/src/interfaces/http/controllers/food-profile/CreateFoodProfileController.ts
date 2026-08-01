@@ -10,7 +10,7 @@ export class CreateFoodProfileController extends BaseController {
   }
 
   protected async executeImpl(req: Request, res: Response): Promise<void> {
-    const { userId, restrictions } = req.body;
+    const { userId, restrictions, acceptsCrossContamination } = req.body;
 
     if (!userId) {
       this.badRequest(res, 'O campo userId é obrigatório.');
@@ -25,7 +25,11 @@ export class CreateFoodProfileController extends BaseController {
       return;
     }
 
-    const result = await this.createProfileUseCase.execute({ userId, restrictions });
+    const result = await this.createProfileUseCase.execute({
+      userId,
+      restrictions,
+      acceptsCrossContamination,
+    });
 
     if (result.isFailure) {
       const error = result.getError();

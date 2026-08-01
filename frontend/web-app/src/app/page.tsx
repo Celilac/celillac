@@ -1,12 +1,15 @@
 'use client';
-// frontend/web-app/src/app/page.tsx — Dashboard
+// frontend/web-app/src/app/page.tsx — Home
 // ⚠️ REGRA: compatibilidade consultada via POST /compatibility/check (Backend)
 //    O riskLevel é RENDERIZADO, nunca calculado aqui.
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { Header } from '@/components/layout/Header';
 import type { RiskLevel } from '@/api/compatibility';
 
 // Dados de demonstração — serão substituídos por dados reais do backend
@@ -17,69 +20,40 @@ const DEMO_CHECKS: Array<{ product: string; riskLevel: RiskLevel; date: string }
   { product: 'Chocolate 70% Cacau',  riskLevel: 'DANGER',  date: 'Ontem, 16:20' },
 ];
 
-export default function DashboardPage() {
-  const { isAuthenticated, userId } = useAuth();
+export default function Home() {
+  const { isAuthenticated, userId, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const router = useRouter();
+
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
-      {/* ── Topbar ── */}
-      <header className="topbar">
-        <span className="topbar-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">
-            Celi<span>Lac</span>
-          </span>
-          <span className="brand-tagline">Vivendo bem a vida</span>
-        </span>
-        <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="btn btn-ghost"
-            aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
-            style={{ padding: '0.4rem 0.75rem' }}
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-          <Link href="/public-partners" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
-            🏢 Estabelecimentos
-          </Link>
-          {isAuthenticated && (
-            <Link href="/partner" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
-              💼 Parceiro
-            </Link>
-          )}
-          {isAuthenticated && (
-            <Link href="/admin/partners" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
-              🛡️ Moderação
-            </Link>
-          )}
-          <Link href="/profile" className="btn btn-ghost" style={{ padding: '0.4rem 1rem' }}>
-            ⚙️ Perfil
-          </Link>
-          {!isAuthenticated && (
-            <Link href="/auth/login" className="btn btn-em" style={{ padding: '0.4rem 1rem' }}>
-              Entrar
-            </Link>
-          )}
-        </nav>
-      </header>
+      <Header />
 
       <main className="page-container">
         {/* ── Header ── */}
-        <div className="page-header">
-          <h1 className="page-title">Dashboard</h1>
+        <div className="page-header" style={{ marginBottom: '2rem' }}>
+          <h1 className="page-title">Plataforma CeLiLac</h1>
           <p className="page-subtitle">
-            Verificações recentes de compatibilidade — resultados processados pelo motor de alérgenos no servidor.
+            Segurança alimentar transparente e confiável para celíacos e pessoas com restrições alimentares.
           </p>
+          <div style={{ marginTop: '1.25rem' }}>
+            <Link href="/dashboard" className="btn btn-em" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.7rem 1.5rem', fontSize: '1rem', textDecoration: 'none' }}>
+              🔍 Acessar Analisador de Produtos (Dashboard) →
+            </Link>
+          </div>
         </div>
 
         {/* ── Cards de resumo ── */}
         <div className="cards-grid" style={{ marginBottom: '2rem' }}>
           <div className="card">
             <p className="card-title">Status do Perfil</p>
-            {isAuthenticated ? (
+            {mounted && isAuthenticated ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>ID: {userId?.substring(0, 12)}…</span>
                 <RiskBadge riskLevel="SAFE" showLabel />

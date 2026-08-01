@@ -6,7 +6,8 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-22%20suites%20%7C%2099%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-35%20suites%20%7C%20172%20passing-brightgreen)](#-testes)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20%2B%20Oracle%20Cloud-orange)](#-segurança--governança)
 
 ---
 
@@ -26,13 +27,15 @@
 
 ```
 celillac/
+├── .github/
+│   └── workflows/           # CI/CD: ci-tests.yml (testes & build) e cd-deploy.yml (VPS SSH)
 ├── backend/                 # API Node.js/TypeScript (Clean Architecture + DDD)
 │   ├── src/
 │   │   ├── domain/          # Coração: entidades, VOs, interfaces (zero dependências)
 │   │   ├── application/     # Casos de uso
 │   │   ├── infrastructure/  # PostgreSQL (pg), repositórios
 │   │   └── interfaces/      # Controllers HTTP (Express)
-│   └── tests/unit/          # 13 suítes | 68 testes
+│   └── tests/unit/          # 35 suítes | 172 testes
 ├── frontend/
 │   ├── web-app/             # Aplicação principal (Next.js 14, porta 3001)
 │   ├── landing-page/        # Landing page estática (Next.js 14, porta 3002)
@@ -44,7 +47,7 @@ celillac/
 │       └── test/            # Testes unitários e de widget
 ├── docs/                    # Documentação de arquitetura e contratos
 ├── harness/                 # Regras de governança da IA
-└── infra/docker/            # docker-compose.yml (PostgreSQL)
+└── infra/docker/            # docker-compose.yml (PostgreSQL + Full Stack Container)
 ```
 
 ---
@@ -100,15 +103,16 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 
 | Contexto | Status | Doc |
 |:---------|:-------|:----|
-| 🔐 IAM | ✅ Implementado | [`docs/features/iam.md`](docs/features/iam.md) |
+| 🔐 IAM & Autenticação | ✅ Implementado | [`docs/features/iam.md`](docs/features/iam.md) |
 | 🥗 Perfil Alimentar | ✅ Implementado | [`docs/features/food-profile.md`](docs/features/food-profile.md) |
 | ⚠️ Motor de Alérgenos (Core Domain) | ✅ Implementado | [`docs/features/allergen-engine.md`](docs/features/allergen-engine.md) |
 | 🛒 Catálogo de Produtos | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
+| 🏪 Gestão de Parceiros Comerciais | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
 | 🌐 Frontend (Web App + Landing Page) | ✅ Implementado | [`docs/features/frontend.md`](docs/features/frontend.md) |
-| 🛡️ Administração | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
+| 🛡️ Administração & Moderação | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
 | ⭐ Avaliações e Confiança | ✅ Implementado | [`docs/features/reviews.md`](docs/features/reviews.md) |
 | ❤️ Favoritos | ✅ Implementado | [`docs/features/favorites.md`](docs/features/favorites.md) |
-| 📱 App Mobile | ✅ Implementado | [`frontend/mobile-app/`](frontend/mobile-app/) |
+| 📱 App Mobile (Flutter) | ✅ Implementado | [`frontend/mobile-app/`](frontend/mobile-app/) |
 
 ---
 
@@ -119,22 +123,24 @@ cd backend
 npm test
 ```
 
-**22 suítes de teste | 99 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
+**35 suítes de teste | 172 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
 | `domain/Result.spec.ts` | 100% |
 | `domain/iam/Email`, `PasswordHash`, `User` | 100% |
 | `domain/food-profile/SeverityLevel`, `Restriction`, `FoodProfile` | 100% |
-| `domain/allergen-engine/AllergenEngine` ← 9 casos críticos | ~94% |
+| `domain/allergen-engine/AllergenEngine` ← 9 casos críticos | ~98% |
 | `domain/catalog/Product` | 100% |
-| `domain/reviews/Review` | ~82% |
-| `application/food-profile/UpdateFoodProfileUseCase` | ~95% |
+| `domain/partner/Partner` | ~97.7% |
+| `domain/reviews/Review` | 95% |
+| `application/food-profile/UpdateFoodProfileUseCase` | ~90.4% |
 | `application/allergen-engine/CheckCompatibilityUseCase` | 100% |
 | `application/catalog/CreateProductUseCase`, `SearchProductsUseCase` | 100% |
-| `application/reviews/SubmitReviewUseCase`, `GetProductReviewsUseCase` | ~93% |
+| `application/reviews/SubmitReviewUseCase`, `GetProductReviewsUseCase` | ~94% |
 | `application/admin/CreateReportUseCase`, `ListReportsUseCase`, `ReviewReportUseCase` | ~94% |
-| `interfaces/http/middlewares/AuthMiddleware` | ~91% |
+| `application/iam/LogoutUserUseCase` | ~92.8% |
+| `interfaces/http/middlewares/AuthMiddleware` | ~73.7% |
 | `interfaces/http/middlewares/SecurityMiddleware` | 100% |
 
 Para relatório de cobertura: `npm test -- --coverage`.
@@ -167,12 +173,15 @@ Usuário: celilac_user
 
 | Tabela | Descrição |
 |:-------|:----------|
-| `users` | IAM — id, email, password_hash, role |
-| `food_profiles` | Perfil — user_id (FK), restrictions (JSONB) |
-| `products` | Catálogo — nome, marca, ingredientes, status de análise |
+| `users` | IAM — id, email, password_hash, role, full_name, avatar_url, account_status |
+| `food_profiles` | Perfil — user_id (FK), restrictions (JSONB), accepts_cross_contamination |
+| `partners` | Parceiros — name, cnpj, address, phone, type, approval_status, operational_status, updated_at |
+| `products` | Catálogo — nome, marca, ingredientes, status de análise, partner_id (FK) |
 | `product_reviews` | Avaliações — user_id (FK), product_id (FK), rating, comment |
 | `product_reports` | Denúncias — reporter_id (FK), product_id (FK), reason, details, status |
 | `user_favorites` | Favoritos — user_id (FK), product_id (FK), partner_id (FK) |
+| `email_verifications` | Verificação de e-mail OTP — user_id (FK), code, expires_at, is_used |
+| `blacklisted_tokens` | Tokens JWT revogados — token (PK), expires_at |
 
 Detalhes de schema e estratégia de persistência em [`docs/DATABASE.md`](docs/DATABASE.md).
 
@@ -216,6 +225,7 @@ O app mobile cobre o fluxo completo do consumidor no campo:
 
 ## 🔒 Segurança & Governança
 
+- **Pipelines CI/CD no GitHub Actions:** `.github/workflows/ci-tests.yml` executa 100% das 35 suítes de teste e builds em cada PR/push; `.github/workflows/cd-deploy.yml` realiza o deploy automatizado via SSH no Docker da VPS Oracle Cloud ao aprovar o merge na `main`.
 - **Middleware JWT no Backend:** validação do cabeçalho `Authorization: Bearer <token>` em todas as rotas de domínio privadas (perfil, avaliações, compatibilidade).
 - **Proteção contra IDOR/BOLA:** checagem estrita de identidade em nível de controller. Um usuário comum só pode ler/escrever em dados vinculados ao seu próprio id.
 - **Tratamento de Erro Global:** Express configurado para ocultar logs detalhados e stack traces internos, retornando um status `500` genérico e limpo.

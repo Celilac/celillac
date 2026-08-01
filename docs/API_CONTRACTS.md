@@ -14,6 +14,7 @@
 2. [IAM — Autenticação](#2-iam--autenticação)
    - [POST /iam/register](#post-iamregister)
    - [POST /iam/login](#post-iamlogin)
+   - [POST /iam/logout](#post-iamlogout)
 3. [Perfil Alimentar](#3-perfil-alimentar)
    - [POST /food-profile](#post-food-profile)
    - [GET /food-profile/:userId](#get-food-profileuserid)
@@ -179,6 +180,32 @@ curl -X POST http://localhost:3000/iam/login \
   -H "Content-Type: application/json" \
   -d '{"email": "celiaco@celilac.dev", "password": "Senha@1234"}'
 # → { "token": "eyJ...", "expiresIn": "7d" }
+```
+
+---
+
+### `POST /iam/logout`
+
+Revoga o token JWT do usuário autenticado inserindo-o na blacklist. 🔒 **Autenticação obrigatória — Bearer Token.**
+
+**Request Body:**
+*(Nenhum)*
+
+**Response `200 OK`:**
+*(Corpo vazio)*
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `401` | `"Token de autenticação não fornecido."` | Header Authorization ausente |
+| `401` | `"Token de autenticação malformado."` | Esquema incorreto ou formato do token inválido |
+| `401` | `"Token inválido ou expirado."` | Assinatura JWT falhou ou tempo expirou |
+| `401` | `"Token revogado."` | O token enviado já consta na blacklist de tokens revogados |
+
+**Exemplo (curl):**
+```bash
+curl -X POST http://localhost:3000/iam/logout \
+  -H "Authorization: Bearer <seu-jwt-token>"
 ```
 
 ---

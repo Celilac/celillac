@@ -2,30 +2,31 @@
 // frontend/web-app/src/app/admin/partners/page.tsx
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
+import { Header } from '@/components/layout/Header';
 import styles from '../../partner/partner.module.css';
 
 export default function AdminPartnersPage() {
-  const { token, isAuthenticated } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { token, isAuthenticated, isInitializing } = useAuth();
   const router = useRouter();
   const toast = useToast();
 
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
   const [loading,  setLoading]  = useState(true);
   
-  // Controle de diálogos de ação
+  // Controle de diálogos de ação e detalhes
   const [activePartner, setActivePartner] = useState<PartnerSummary | null>(null);
-  const [actionType,     setActionType]     = useState<'REJECT' | 'SUSPEND' | null>(null);
-  const [reason,         setReason]         = useState('');
-  const [updating,       setUpdating]       = useState(false);
+  const [detailPartner, setDetailPartner] = useState<PartnerSummary | null>(null);
+  const [actionType,    setActionType]    = useState<'REJECT' | 'SUSPEND' | null>(null);
+  const [reason,        setReason]        = useState('');
+  const [updating,      setUpdating]      = useState(false);
 
   useEffect(() => {
+    if (isInitializing) return;
+
     if (!isAuthenticated || !token) {
       router.push('/auth/login');
       return;
@@ -34,24 +35,26 @@ export default function AdminPartnersPage() {
     partnerApi.listAdminPartners(token)
       .then((data) => setPartners(data))
       .catch((err) => {
-        toast.error(
-          err instanceof HttpError ? err.message : 'Erro ao listar parceiros para administração.',
-          'Erro'
-        );
+        const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao listar parceiros para administração.';
+        toast.error(msg, 'Erro');
         router.push('/');
       })
       .finally(() => setLoading(false));
-  }, [isAuthenticated, token, router, toast]);
+  }, [isAuthenticated, token, isInitializing, router, toast]);
 
   async function handleApprove(id: string) {
     if (!token) return;
     setUpdating(true);
     try {
       await partnerApi.approve(id, token);
-      setPartners((prev) => prev.map((p) => p.id === id ? { ...p, approvalStatus: 'APPROVED', rejectionReason: undefined, suspensionReason: undefined } : p));
+      setPartners((prev) => prev.map((p) => p.id === id ? { ...p, approvalStatus: 'APPROVED', rejectionReason: undefined, suspensionReason: undefined, operationalStatus: 'ACTIVE' } : p));
+      if (detailPartner?.id === id) {
+        setDetailPartner((prev) => prev ? { ...prev, approvalStatus: 'APPROVED', operationalStatus: 'ACTIVE' } : null);
+      }
       toast.success('Parceiro aprovado com sucesso!');
-    } catch (err) {
-      toast.error(err instanceof HttpError ? err.message : 'Erro ao aprovar parceiro.', 'Erro');
+    } catch (err: any) {
+      const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao aprovar parceiro.';
+      toast.error(msg, 'Erro');
     } finally {
       setUpdating(false);
     }
@@ -62,10 +65,14 @@ export default function AdminPartnersPage() {
     setUpdating(true);
     try {
       await partnerApi.reactivate(id, token);
-      setPartners((prev) => prev.map((p) => p.id === id ? { ...p, approvalStatus: 'APPROVED', suspensionReason: undefined } : p));
+      setPartners((prev) => prev.map((p) => p.id === id ? { ...p, approvalStatus: 'APPROVED', suspensionReason: undefined, operationalStatus: 'ACTIVE' } : p));
+      if (detailPartner?.id === id) {
+        setDetailPartner((prev) => prev ? { ...prev, approvalStatus: 'APPROVED', operationalStatus: 'ACTIVE' } : null);
+      }
       toast.success('Parceiro reativado com sucesso!');
-    } catch (err) {
-      toast.error(err instanceof HttpError ? err.message : 'Erro ao reativar parceiro.', 'Erro');
+    } catch (err: any) {
+      const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao reativar parceiro.';
+      toast.error(msg, 'Erro');
     } finally {
       setUpdating(false);
     }
@@ -91,8 +98,10 @@ export default function AdminPartnersPage() {
         toast.success('Parceiro suspenso.');
       }
       closeModal();
-    } catch (err) {
-      toast.error(err instanceof HttpError ? err.message : 'Erro ao executar ação.', 'Erro');
+      setDetailPartner(null);
+    } catch (err: any) {
+      const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao executar ação.';
+      toast.error(msg, 'Erro');
     } finally {
       setUpdating(false);
     }
@@ -110,7 +119,7 @@ export default function AdminPartnersPage() {
     setReason('');
   }
 
-  if (loading) {
+  if (loading || isInitializing) {
     return (
       <div className={styles.container}>
         <p className="profile-loading" role="status">Carregando painel de moderação…</p>
@@ -135,24 +144,13 @@ export default function AdminPartnersPage() {
 
   return (
     <div className="profile-page">
-      <header className="topbar">
-        <span className="topbar-title brand-lockup" onClick={() => router.push('/')} style={{ cursor: 'pointer' }}>
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">Celi<span>Lac</span></span>
-          <span className="brand-tagline">Painel Administrativo</span>
-        </span>
-        <nav className="topbar-actions">
-          <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-        </nav>
-      </header>
+      <Header />
 
       <main className={styles.container}>
         <div className={styles.header}>
           <div className={styles.titleArea}>
             <h1 className={styles.title}>Moderação de Parceiros</h1>
-            <p className={styles.subtitle}>Avalie novos cadastros e aplique suspensões de segurança no ecossistema.</p>
+            <p className={styles.subtitle}>Gerencie cadastros de fornecedores, aprove estabelecimentos e garanta a conformidade da plataforma.</p>
           </div>
         </div>
 
@@ -166,7 +164,7 @@ export default function AdminPartnersPage() {
             partners.map((partner) => (
               <section key={partner.id} className={styles.card}>
                 <div className={styles.cardContent}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
                     <h2 className={styles.partnerName}>{partner.name}</h2>
                     {getStatusLabel(partner.approvalStatus)}
                   </div>
@@ -192,6 +190,15 @@ export default function AdminPartnersPage() {
                 </div>
 
                 <div className={styles.cardActions} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${styles.btnSecondary}`}
+                    style={{ flex: '1 1 100%', marginBottom: '0.25rem' }}
+                    onClick={() => setDetailPartner(partner)}
+                  >
+                    👁️ Ver Detalhes do Parceiro
+                  </button>
+
                   {partner.approvalStatus === 'PENDING_REVIEW' && (
                     <>
                       <button 
@@ -254,14 +261,121 @@ export default function AdminPartnersPage() {
           )}
         </div>
 
+        {/* Modal de Visualização Completa de Detalhes com Design System Premium */}
+        {detailPartner && (
+          <div className={styles.dialogOverlay} onClick={() => setDetailPartner(null)}>
+            <div className={styles.dialogCard} style={{ maxWidth: '640px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <h2 className={styles.modalTitle}>
+                    🏬 {detailPartner.name}
+                  </h2>
+                  {getStatusLabel(detailPartner.approvalStatus)}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDetailPartner(null)}
+                  style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', opacity: 0.7 }}
+                  aria-label="Fechar"
+                >
+                  ✖️
+                </button>
+              </div>
+
+              <div className={styles.detailSection}>
+                <div className={styles.detailBox}>
+                  <span className={styles.detailLabel}>Descrição Comercial</span>
+                  <p className={styles.detailValue} style={{ marginTop: '0.35rem', lineHeight: '1.6' }}>
+                    {detailPartner.description || 'Nenhuma descrição comercial cadastrada.'}
+                  </p>
+                </div>
+
+                <div className={styles.infoGrid}>
+                  <div className={styles.detailGroup}>
+                    <span className={styles.detailLabel}>CNPJ / Registro</span>
+                    <p className={styles.detailValue}>{detailPartner.cnpj || 'Não informado (Pessoa Física)'}</p>
+                  </div>
+                  <div className={styles.detailGroup}>
+                    <span className={styles.detailLabel}>Tipo de Fornecedor</span>
+                    <p className={styles.detailValue}>{detailPartner.type}</p>
+                  </div>
+                  <div className={styles.detailGroup}>
+                    <span className={styles.detailLabel}>Telefone de Contato</span>
+                    <p className={styles.detailValue}>{detailPartner.phone}</p>
+                  </div>
+                  <div className={styles.detailGroup}>
+                    <span className={styles.detailLabel}>Cidade / Estado</span>
+                    <p className={styles.detailValue}>{detailPartner.city ? `${detailPartner.city} - ${detailPartner.state}` : 'Não informado'}</p>
+                  </div>
+                </div>
+
+                <div className={styles.detailBox}>
+                  <span className={styles.detailLabel}>📍 Endereço Completo</span>
+                  <p className={styles.detailValue} style={{ marginTop: '0.25rem' }}>{detailPartner.address}</p>
+                </div>
+
+                <div className={styles.detailBox}>
+                  <span className={styles.detailLabel}>🚚 Região de Atendimento / Entrega</span>
+                  <p className={styles.detailValue} style={{ marginTop: '0.25rem' }}>{detailPartner.deliveryRegion || 'Local'}</p>
+                </div>
+
+                {detailPartner.rejectionReason && (
+                  <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', padding: '0.85rem', borderRadius: '12px', color: '#f87171' }}>
+                    <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Motivo da Rejeição:</strong>
+                    <span>{detailPartner.rejectionReason}</span>
+                  </div>
+                )}
+
+                {detailPartner.suspensionReason && (
+                  <div style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', padding: '0.85rem', borderRadius: '12px', color: '#a78bfa' }}>
+                    <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Motivo da Suspensão:</strong>
+                    <span>{detailPartner.suspensionReason}</span>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ marginTop: '1.75rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                {detailPartner.approvalStatus === 'PENDING_REVIEW' && (
+                  <>
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnPrimary}`}
+                      onClick={() => handleApprove(detailPartner.id)}
+                      disabled={updating}
+                    >
+                      ✔️ Aprovar Cadastro
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnDanger}`}
+                      onClick={() => openModal(detailPartner, 'REJECT')}
+                      disabled={updating}
+                    >
+                      ❌ Rejeitar
+                    </button>
+                  </>
+                )}
+
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                  onClick={() => setDetailPartner(null)}
+                >
+                  Fechar Detalhes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modal de Justificativa */}
         {actionType && activePartner && (
-          <div className={styles.dialogOverlay}>
-            <div className={styles.dialogCard}>
-              <h2 style={{ fontSize: '1.25rem', color: '#fff', marginBottom: '0.75rem' }}>
+          <div className={styles.dialogOverlay} onClick={closeModal}>
+            <div className={styles.dialogCard} onClick={(e) => e.stopPropagation()}>
+              <h2 className={styles.modalTitle} style={{ marginBottom: '0.75rem' }}>
                 {actionType === 'REJECT' ? 'Rejeitar Cadastro' : 'Suspender Estabelecimento'}
               </h2>
-              <p style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '1.25rem' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted, #9ca3af)', marginBottom: '1.25rem' }}>
                 {actionType === 'REJECT' 
                   ? `Forneça a justificativa para a rejeição do parceiro ${activePartner.name}. O responsável receberá essa orientação.` 
                   : `Forneça o motivo para a suspensão do parceiro ${activePartner.name}. A operação dele e exibição de produtos serão pausadas.`

@@ -8,8 +8,9 @@ import { Result } from '../../domain/Result';
 import { FoodProfileResponseDTO, RestrictionDTO } from './CreateFoodProfileUseCase';
 
 export interface UpdateFoodProfileDTO {
-  userId:       string;
-  restrictions: RestrictionDTO[];
+  userId:                     string;
+  restrictions:               RestrictionDTO[];
+  acceptsCrossContamination?: boolean;
 }
 
 /**
@@ -33,6 +34,9 @@ export class UpdateFoodProfileUseCase {
 
     // Limpa as restrições antigas e sinalizador de revalidação
     profile.clearRestrictions();
+    if (dto.acceptsCrossContamination !== undefined) {
+      profile.setAcceptsCrossContamination(dto.acceptsCrossContamination);
+    }
 
     // 2. Construir e adicionar novas Restriction entities
     for (const r of dto.restrictions) {

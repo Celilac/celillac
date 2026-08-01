@@ -14,12 +14,18 @@ export interface IUserRepository {
   findByEmail(email: string): Promise<User | null>;
 
   /**
-   * Persiste um novo usuário.
+   * Persiste um usuário (criação ou atualização).
    */
   save(user: User): Promise<void>;
 
   /**
    * Busca um usuário pelo ID.
+   * @returns User se encontrado, null caso contrário.
    */
   findById(id: string): Promise<User | null>;
+
+  /**
+   * Retorna todos os usuários cadastrados na plataforma.
+   */
+  findAll(): Promise<User[]>;
 }
