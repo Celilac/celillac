@@ -16,7 +16,20 @@
 //   ✅ Renderizar o riskLevel retornado pelo Backend
 // ══════════════════════════════════════════════════════════════
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+function getApiBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // Se o envUrl não estiver definido ou se for localhost, mas o navegador estiver em um IP/domínio remoto (ex: VPS Oracle 163.176.195.210)
+    if (!envUrl || (envUrl.includes('localhost') && hostname !== 'localhost' && hostname !== '127.0.0.1')) {
+      const protocol = window.location.protocol;
+      return `${protocol}//${hostname}:3002`;
+    }
+  }
+
+  return envUrl ?? 'http://localhost:3000';
+}
 
 export interface ApiError {
   error: string;
@@ -37,8 +50,9 @@ async function request<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const { headers: optionHeaders, ...restOptions } = options;
+  const baseUrl = getApiBaseUrl();
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(`${baseUrl}${path}`, {
     headers: {
       'Content-Type': 'application/json',
       ...(optionHeaders ?? {}),

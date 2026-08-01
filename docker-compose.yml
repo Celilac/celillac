@@ -11,8 +11,21 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./harness/scripts/init_db.sql:/docker-entrypoint-initdb.d/01_init_db.sql:ro
-      - ./harness/scripts/migrations/001_create_products_table.sql:/docker-entrypoint-initdb.d/02_create_products_table.sql:ro
+      - ./harness/scripts/init_db.sql:/docker-entrypoint-initdb.d/00_init_db.sql:ro
+      - ./harness/scripts/migrations/001_create_products_table.sql:/docker-entrypoint-initdb.d/001_create_products_table.sql:ro
+      - ./harness/scripts/migrations/002_create_product_reports_table.sql:/docker-entrypoint-initdb.d/002_create_product_reports_table.sql:ro
+      - ./harness/scripts/migrations/003_create_product_reviews_table.sql:/docker-entrypoint-initdb.d/003_create_product_reviews_table.sql:ro
+      - ./harness/scripts/migrations/004_create_partners_table.sql:/docker-entrypoint-initdb.d/004_create_partners_table.sql:ro
+      - ./harness/scripts/migrations/005_add_partner_id_to_products.sql:/docker-entrypoint-initdb.d/005_add_partner_id_to_products.sql:ro
+      - ./harness/scripts/migrations/006_add_fields_to_products_and_partners.sql:/docker-entrypoint-initdb.d/006_add_fields_to_products_and_partners.sql:ro
+      - ./harness/scripts/migrations/007_add_product_status_and_partner_reviews.sql:/docker-entrypoint-initdb.d/007_add_product_status_and_partner_reviews.sql:ro
+      - ./harness/scripts/migrations/008_create_favorites_table.sql:/docker-entrypoint-initdb.d/008_create_favorites_table.sql:ro
+      - ./harness/scripts/migrations/009_update_partners_states_and_details.sql:/docker-entrypoint-initdb.d/009_update_partners_states_and_details.sql:ro
+      - ./harness/scripts/migrations/010_create_blacklisted_tokens_table.sql:/docker-entrypoint-initdb.d/010_create_blacklisted_tokens_table.sql:ro
+      - ./harness/scripts/migrations/011_add_type_to_partners.sql:/docker-entrypoint-initdb.d/011_add_type_to_partners.sql:ro
+      - ./harness/scripts/migrations/012_create_consumers_and_partner_interactions.sql:/docker-entrypoint-initdb.d/012_create_consumers_and_partner_interactions.sql:ro
+      - ./harness/scripts/migrations/013_add_user_profile_fields_and_admin_approval.sql:/docker-entrypoint-initdb.d/013_add_user_profile_fields_and_admin_approval.sql:ro
+      - ./harness/scripts/migrations/014_create_email_verifications_table.sql:/docker-entrypoint-initdb.d/014_create_email_verifications_table.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U celilac_user -d celilac_db"]
       interval: 5s
@@ -28,7 +41,7 @@ services:
     environment:
       DB_HOST: db
     ports:
-      - "3002:3002"
+      - "3002:3000"
     volumes:
       - ./backend/src:/app/src
     depends_on:

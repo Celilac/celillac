@@ -222,16 +222,16 @@ export default function PartnerDashboardPage({ params }: PageProps) {
           <section className={styles.mainPanel}>
             <div className={styles.card} style={{ gap: '1rem' }}>
               <h2 className={styles.sectionTitle}>🏢 Informações Cadastrais</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: 'var(--text-body)', color: 'var(--color-text-muted)' }}>
+              <div className={styles.infoGrid}>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>Razão/Nome Fantasia:</strong> {partner.name}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>CNPJ:</strong> {partner.cnpj || 'Não informado (Pessoa Física)'}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>Tipo:</strong> {partner.type}</p>
+                  <p className={styles.infoRow}><strong>Razão/Nome Fantasia:</strong> <span>{partner.name}</span></p>
+                  <p className={styles.infoRow}><strong>CNPJ:</strong> <span>{partner.cnpj || 'Não informado (Pessoa Física)'}</span></p>
+                  <p className={styles.infoRow}><strong>Tipo:</strong> <span>{partner.type}</span></p>
                 </div>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>Cidade/Estado:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não cadastrado'}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>Região Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>Telefone de Contato:</strong> {partner.phone}</p>
+                  <p className={styles.infoRow}><strong>Cidade/Estado:</strong> <span>{partner.city ? `${partner.city} - ${partner.state}` : 'Não cadastrado'}</span></p>
+                  <p className={styles.infoRow}><strong>Região Atendimento:</strong> <span>{partner.deliveryRegion || 'Local'}</span></p>
+                  <p className={styles.infoRow}><strong>Telefone de Contato:</strong> <span>{partner.phone}</span></p>
                 </div>
               </div>
               <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
@@ -257,12 +257,12 @@ export default function PartnerDashboardPage({ params }: PageProps) {
                     {partner.operationalStatus === 'ACTIVE' ? 'Visível na busca e apto a operar.' : 'Exibe aviso de fechamento aos clientes.'}
                   </p>
                 </div>
-                <label className={styles.switch} id="operational-toggle">
+                <label className={styles.switch}>
                   <input 
                     type="checkbox" 
                     checked={partner.operationalStatus === 'ACTIVE'}
                     onChange={handleToggleOperationalStatus}
-                    disabled={partner.approvalStatus === 'SUSPENDED' || updating}
+                    disabled={updating}
                   />
                   <span className={styles.slider}></span>
                 </label>

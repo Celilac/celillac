@@ -79,6 +79,23 @@
   overflow: hidden;
 }
 
+.infoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+
+.infoRow {
+  margin-bottom: 0.5rem;
+  color: #e5e7eb;
+}
+
+.infoRow strong {
+  color: #9ca3af;
+  font-weight: 600;
+}
+
 .partnerMeta {
   display: flex;
   flex-wrap: wrap;
@@ -387,7 +404,7 @@ input:checked + .slider:before {
   transform: translateX(24px);
 }
 
-/* Moderation Dialog */
+/* Modal Dialog */
 .dialogOverlay {
   position: fixed;
   top: 0;
@@ -399,6 +416,8 @@ input:checked + .slider:before {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+  padding: 1rem;
 }
 
 .dialogCard {
@@ -407,13 +426,79 @@ input:checked + .slider:before {
   border-radius: var(--radius-lg);
   padding: var(--space-8);
   width: 100%;
-  max-width: 500px;
-  box-shadow: var(--shadow-md);
-  animation: dialogIn 0.2s ease-out both;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-@keyframes dialogIn {
-  from { opacity: 0; transform: scale(0.98); }
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.modalTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detailSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.detailGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.detailLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+}
+
+.detailValue {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #f3f4f6;
+  margin: 0;
+}
+
+.detailBox {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+/* Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 0; transform: translateY(0); }
+}
+
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
 
@@ -426,9 +511,150 @@ input:checked + .slider:before {
   .dashboardLayout {
     grid-template-columns: 1fr;
   }
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
   .header {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-4);
   }
+}
+
+/* ── Light Theme Overrides ── */
+:global(html[data-theme='light']) .card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+:global(html[data-theme='light']) .card:hover {
+  border-color: rgba(5, 150, 105, 0.3);
+  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.12);
+}
+
+:global(html[data-theme='light']) .partnerName {
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .sectionTitle {
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .subtitle {
+  color: #475569;
+}
+
+:global(html[data-theme='light']) .infoRow {
+  color: #1e293b;
+}
+
+:global(html[data-theme='light']) .infoRow strong {
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .partnerDescription {
+  color: #334155;
+}
+
+:global(html[data-theme='light']) .formShell {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+:global(html[data-theme='light']) .input,
+:global(html[data-theme='light']) .select,
+:global(html[data-theme='light']) .textarea {
+  background: #f8fafc;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .input::placeholder,
+:global(html[data-theme='light']) .textarea::placeholder {
+  color: #64748b;
+}
+
+:global(html[data-theme='light']) .input:focus,
+:global(html[data-theme='light']) .select:focus,
+:global(html[data-theme='light']) .textarea:focus {
+  background: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+}
+
+:global(html[data-theme='light']) .label {
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .metaItem {
+  background: rgba(0, 0, 0, 0.05);
+  color: #475569;
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+:global(html[data-theme='light']) .emptyState {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #475569;
+}
+
+:global(html[data-theme='light']) .emptyState h2 {
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .btnSecondary {
+  background: #f1f5f9;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+:global(html[data-theme='light']) .btnSecondary:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .toggleContainer {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+:global(html[data-theme='light']) .toggleContainer strong {
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .slider {
+  background-color: #cbd5e1;
+}
+
+:global(html[data-theme='light']) .dialogOverlay {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+:global(html[data-theme='light']) .dialogCard {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
+}
+
+:global(html[data-theme='light']) .modalHeader {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+:global(html[data-theme='light']) .modalTitle {
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .detailLabel {
+  color: #64748b;
+}
+
+:global(html[data-theme='light']) .detailValue {
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .detailBox {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.08);
 }
