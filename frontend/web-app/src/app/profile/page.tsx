@@ -299,7 +299,7 @@ export default function ProfilePage() {
                   <h1 className="auth-title">Meu Perfil</h1>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.8rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 'bold', background: profileEvaluationStatus === 'APPROVED' ? '#d1fae5' : '#fef3c7', color: profileEvaluationStatus === 'APPROVED' ? '#065f46' : '#92400e' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', padding: 'var(--space-2) var(--space-3)', borderRadius: 'var(--radius-full)', fontSize: 'var(--text-label)', fontWeight: 'bold', background: profileEvaluationStatus === 'APPROVED' ? 'var(--color-status-approved-bg)' : 'var(--color-status-pending-bg)', color: profileEvaluationStatus === 'APPROVED' ? 'var(--color-status-approved)' : 'var(--color-status-pending)' }}>
                   {profileEvaluationStatus === 'APPROVED' ? '✅ Perfil Aprovado' : '⏳ Pendente de Avaliação'}
                 </div>
               </div>
@@ -367,17 +367,17 @@ export default function ProfilePage() {
               <form onSubmit={handleSave} id="profile-form">
                 {/* Seção 1: Dados Pessoais & Foto */}
                 <div className="restriction-section" style={{ marginBottom: '1.5rem' }}>
-                  <h2 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>👤 Dados Pessoais</h2>
+                  <h2 style={{ fontSize: 'var(--text-title)', marginBottom: 'var(--space-4)' }}>👤 Dados Pessoais</h2>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.25rem' }}>
                     <UserAvatar avatarUrl={avatarUrl} fullName={fullName} size={72} />
                     <div>
-                      <label className="btn btn-ghost" style={{ cursor: 'pointer', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+                      <label className="btn btn-ghost" style={{ cursor: 'pointer', padding: 'var(--space-2) var(--space-3)', fontSize: 'var(--text-body)' }}>
                         📷 Selecionar Foto (Máx 10MB)
                         <input type="file" accept="image/*" onChange={handleImageUpload} style={{ display: 'none' }} />
                       </label>
                       {avatarUrl && (
-                        <button type="button" onClick={() => setAvatarUrl('')} style={{ display: 'block', marginTop: '0.4rem', color: '#ef4444', background: 'none', border: 'none', fontSize: '0.8rem', cursor: 'pointer' }}>
+                        <button type="button" onClick={() => setAvatarUrl('')} style={{ display: 'block', marginTop: 'var(--space-2)', color: 'var(--color-status-rejected)', background: 'none', border: 'none', fontSize: 'var(--text-label)', cursor: 'pointer' }}>
                           Remover foto
                         </button>
                       )}
@@ -482,7 +482,7 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem', padding: '1rem', background: 'var(--bg-secondary, #f8f9fa)', borderRadius: '8px', border: '1px solid var(--border-color, #e9ecef)' }}>
+                <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem', padding: 'var(--space-4)', background: 'var(--color-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
                   <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: 'pointer' }}>
                     <input
                       type="checkbox"
@@ -492,8 +492,8 @@ export default function ProfilePage() {
                       style={{ marginTop: '0.25rem' }}
                     />
                     <div>
-                      <strong style={{ fontSize: '0.95rem', display: 'block' }}>Aceito risco de contaminação cruzada (traços)</strong>
-                      <span style={{ fontSize: '0.85rem', color: '#6c757d' }}>
+                      <strong style={{ fontSize: 'var(--text-body)', display: 'block' }}>Aceito risco de contaminação cruzada (traços)</strong>
+                      <span style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>
                         Desmarcado por padrão. Se você for celíaco ou alérgico severo, mantenha desmarcado para bloquear produtos com avisos de "pode conter traços".
                       </span>
                     </div>

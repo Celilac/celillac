@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -100,9 +101,9 @@ export default function PartnerDashboardPage({ params }: PageProps) {
             <p style={{ marginTop: '0.25rem' }}>
               Motivo: <em>"{partner.rejectionReason || 'Não informado.'}"</em>
             </p>
-            <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => router.push(`/partner/${partner.id}/edit`)}>
+            <Link href={`/partner/${partner.id}/edit`} style={{ display: 'inline-block', fontSize: 'var(--text-label)', marginTop: '0.5rem', textDecoration: 'underline' }}>
               Clique aqui para corrigir os dados e enviar novamente.
-            </p>
+            </Link>
           </div>
         </div>
       );
@@ -117,7 +118,7 @@ export default function PartnerDashboardPage({ params }: PageProps) {
             <p style={{ marginTop: '0.25rem' }}>
               Motivo da suspensão: <em>"{partner.suspensionReason || 'Não informado.'}"</em>
             </p>
-            <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>
+            <p style={{ fontSize: 'var(--text-label)', marginTop: '0.5rem' }}>
               Sua listagem pública e produtos associados estão temporariamente ocultados. Entre em contato com o suporte para regularizar sua situação.
             </p>
           </div>
@@ -178,11 +179,11 @@ export default function PartnerDashboardPage({ params }: PageProps) {
   return (
     <div className="profile-page">
       <header className="topbar">
-        <span className="topbar-title brand-lockup" onClick={() => router.push('/partner')} style={{ cursor: 'pointer' }}>
+        <Link href="/partner" className="topbar-title brand-lockup">
           <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
           <span className="brand-wordmark">Celi<span>Lac</span></span>
           <span className="brand-tagline">Painel de Controle</span>
-        </span>
+        </Link>
         <nav className="topbar-actions">
           <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
             {theme === 'dark' ? '☀️' : '🌙'}

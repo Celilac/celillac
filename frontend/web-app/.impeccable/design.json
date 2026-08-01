@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-30T12:00:00.000Z",
+  "title": "Design System: CeLiLac Web App",
+  "extensions": {
+    "colorMeta": {
+      "emerald-active": { "role": "primary", "displayName": "Esmeralda Ativa", "canonical": "#10B981", "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7"] },
+      "navy-deep": { "role": "secondary", "displayName": "Navy Profundo", "canonical": "#244151", "tonalRamp": ["#0b1a20", "#132732", "#1a3441", "#244151", "#3a5d70", "#5a7f92", "#8aa8b6", "#c3d6de"] },
+      "gold-beacon": { "role": "tertiary", "displayName": "Dourado Farol", "canonical": "#E1A118", "tonalRamp": ["#3d2a04", "#5c3f06", "#7a530a", "#996810", "#b8811a", "#e1a118", "#f0bb4a", "#f8d78a"] },
+      "bg": { "role": "neutral", "displayName": "Fundo", "canonical": "#091115" },
+      "surface": { "role": "neutral", "displayName": "Superfície", "canonical": "#101C23" },
+      "elevated": { "role": "neutral", "displayName": "Elevado", "canonical": "#244151" },
+      "border": { "role": "neutral", "displayName": "Borda", "canonical": "rgba(255,255,255,0.07)" },
+      "text": { "role": "neutral", "displayName": "Texto", "canonical": "#F1F5F9" },
+      "text-muted": { "role": "neutral", "displayName": "Texto Muted", "canonical": "#94A3B8" },
+      "text-subtle": { "role": "neutral", "displayName": "Texto Subtle", "canonical": "#64748B" },
+      "safe": { "role": "status", "displayName": "Verde Seguro", "canonical": "#22C55E", "tonalRamp": ["#052e16", "#14532d", "#166534", "#15803d", "#16a34a", "#22c55e", "#4ade80", "#86efac"], "note": "Tema claro usa #15803D (não o canonical) para manter contraste ≥4.5:1." },
+      "warning": { "role": "status", "displayName": "Amarelo Atenção", "canonical": "#EAB308", "tonalRamp": ["#422006", "#713f12", "#854d0e", "#a16207", "#ca8a04", "#eab308", "#facc15", "#fde047"], "note": "Tema claro usa #854D0E (não o canonical) para manter contraste ≥4.5:1." },
+      "danger": { "role": "status", "displayName": "Âmbar Perigo", "canonical": "#F59E0B", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fcd34d"], "note": "Tema claro usa #9A3412 (não o canonical) para manter contraste ≥4.5:1." },
+      "blocked": { "role": "status", "displayName": "Vermelho Bloqueado", "canonical": "#EF4444", "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fca5a5"], "note": "Tema claro usa #B91C1C (não o canonical) para manter contraste ≥4.5:1." },
+      "info": { "role": "status", "displayName": "Azul Informativo", "canonical": "#3B82F6" },
+      "status-approved": { "role": "admin-status", "displayName": "Status: Aprovado", "canonical": "#34D399", "tonalRamp": ["#022c1e", "#043d2b", "#065f46", "#047857", "#10b981", "#34d399", "#6ee7b7", "#a7f3d0"] },
+      "status-pending": { "role": "admin-status", "displayName": "Status: Pendente", "canonical": "#FBBF24", "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a"] },
+      "status-rejected": { "role": "admin-status", "displayName": "Status: Rejeitado", "canonical": "#F87171", "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fca5a5"] },
+      "status-suspended": { "role": "admin-status", "displayName": "Status: Suspenso", "canonical": "#A78BFA", "tonalRamp": ["#2e1065", "#4c1d95", "#5b21b6", "#6d28d9", "#7c3aed", "#8b5cf6", "#a78bfa", "#c4b5fd"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "Títulos de página (dashboard, page-title). Token: --text-headline." },
+      "title": { "displayName": "Title", "purpose": "Título de card, de autenticação e de seção. Token: --text-title." },
+      "body": { "displayName": "Body", "purpose": "Texto corrido, rótulos de formulário, conteúdo de card. Token: --text-body." },
+      "label": { "displayName": "Label", "purpose": "Rótulo de campo, eyebrow, texto de badge. Token: --text-label." }
+    },
+    "shadows": [
+      { "name": "shadow-sm", "value": "0 1px 8px rgba(0,0,0,0.3)", "purpose": "Uso pontual em elementos pequenos de destaque." },
+      { "name": "shadow-md", "value": "0 4px 20px rgba(0,0,0,0.4)", "purpose": "Cartão de autenticação em repouso; hover de elementos maiores." },
+      { "name": "shadow-glow", "value": "0 0 30px rgba(16,185,129,0.35)", "purpose": "Hover do botão primário." }
+    ],
+    "motion": [
+      { "name": "transition-fast", "value": "0.15s ease", "purpose": "Hover de nav-link e ícones." },
+      { "name": "transition-standard", "value": "0.2s ease", "purpose": "Hover de cards, botões e inputs." },
+      { "name": "entrance-fade", "value": "0.4s ease both (fadeIn keyframe)", "purpose": "Entrada de toasts e seções." },
+      { "name": "entrance-slide", "value": "0.4s ease both (slideUp keyframe)", "purpose": "Entrada de cards com leve deslocamento vertical." },
+      { "name": "reduced-motion", "value": "@media (prefers-reduced-motion: reduce)", "purpose": "Remove animation/transform de entrada e hover, preservando a mudança de estado (o conteúdo continua aparecendo)." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px", "note": "Abaixo deste ponto a navegação da topbar colapsa atrás de um menu hambúrguer." },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Botão de ação primária — única cor de ação do sistema.",
+      "html": "<button class=\"ds-btn-primary\">Entrar</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 9999px; font-weight: 600; font-size: 0.9rem; border: none; background: #10B981; color: #fff; transition: all 0.2s ease; } .ds-btn-primary:hover { background: #059669; box-shadow: 0 0 30px rgba(16,185,129,0.35); transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); } @media (prefers-reduced-motion: reduce) { .ds-btn-primary:hover { transform: none; } }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Ação secundária — usada em navegação (topbar) e ações não-primárias.",
+      "html": "<button class=\"ds-btn-ghost\">🏠 Início</button>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; border-radius: 9999px; font-weight: 600; font-size: 0.9rem; background: transparent; color: #94A3B8; border: 1px solid rgba(255,255,255,0.07); transition: all 0.2s ease; } .ds-btn-ghost:hover { background: rgba(255,255,255,0.05); color: #F1F5F9; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Contêiner padrão — quase plano, separado por borda, sem sombra em repouso.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-title\">Perfil Alimentar</div><p>Restrições ativas e severidade configuradas.</p></div>",
+      "css": ".ds-card { background: #101C23; border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 1.5rem; transition: border-color 0.2s ease; } .ds-card:hover { border-color: rgba(255,255,255,0.15); } .ds-card-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; color: #F1F5F9; }"
+    },
+    {
+      "name": "Field Input",
+      "kind": "input",
+      "refersTo": "field-input",
+      "description": "Campo de formulário — foco em esmeralda com anel suave.",
+      "html": "<div class=\"ds-field\"><label class=\"ds-field-label\">E-mail</label><input class=\"ds-field-input\" type=\"email\" placeholder=\"voce@exemplo.com\" /></div>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 0.5rem; } .ds-field-label { font-size: 0.8rem; font-weight: 700; color: #94A3B8; letter-spacing: 0.06em; text-transform: uppercase; } .ds-field-input { width: 100%; padding: 0.75rem 1rem; background: #244151; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; color: #F1F5F9; font-size: 0.9rem; outline: none; transition: border-color 0.2s ease; } .ds-field-input:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); } .ds-field-input::placeholder { color: #64748B; }"
+    },
+    {
+      "name": "Risk Badge (Blocked)",
+      "kind": "chip",
+      "refersTo": "risk-badge-blocked",
+      "description": "Componente-assinatura: veredito do AllergenEngine, sempre ícone + texto + cor. BLOCKED é o único com fonte maior — o estado mais grave do sistema. As 4 variantes (SAFE/WARNING/DANGER/BLOCKED) usam tons diferentes no tema claro para manter contraste WCAG AA.",
+      "html": "<span class=\"ds-risk-badge ds-risk-badge--blocked\" role=\"status\" aria-label=\"Risco: Bloqueado\"><span aria-hidden=\"true\">⛔</span>Bloqueado</span>",
+      "css": ".ds-risk-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.625rem 1rem; border-radius: 9999px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; border: 1px solid; white-space: nowrap; font-size: 0.8rem; } .ds-risk-badge--blocked { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.35); color: #EF4444; font-size: 0.9rem; }"
+    },
+    {
+      "name": "Status Badge (Aprovado)",
+      "kind": "chip",
+      "refersTo": "status-badge-approved",
+      "description": "Status administrativo de cadastro de parceiro — paleta própria, nunca compartilhada com o Risk Badge (The Separate-Axes Rule).",
+      "html": "<span class=\"ds-status-badge ds-status-badge--approved\">Aprovado</span>",
+      "css": ".ds-status-badge { font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.5rem 0.75rem; border-radius: 9999px; display: inline-flex; align-items: center; } .ds-status-badge--approved { background: rgba(52,211,153,0.15); color: #34D399; border: 1px solid rgba(52,211,153,0.3); }"
+    },
+    {
+      "name": "Toast Snackbar",
+      "kind": "custom",
+      "description": "Componente-assinatura: bloco de ícone sólido carrega a cor da variante; corpo da mensagem fica em fundo neutro para manter o texto legível.",
+      "html": "<div class=\"ds-toast ds-toast--success\"><div class=\"ds-toast-icon\">✅</div><div class=\"ds-toast-body\"><div class=\"ds-toast-title\">Perfil atualizado</div><div class=\"ds-toast-message\">Suas restrições alimentares foram salvas.</div></div></div>",
+      "css": ".ds-toast { display: flex; align-items: stretch; overflow: hidden; max-width: 460px; border-radius: 16px; border: 1px solid; box-shadow: 0 4px 20px rgba(0,0,0,0.4); } .ds-toast-icon { flex-shrink: 0; width: 54px; display: flex; align-items: center; justify-content: center; color: #fff; } .ds-toast-body { flex: 1; background: #244151; padding: 0.75rem 2rem 0.75rem 1rem; } .ds-toast-title { font-size: 0.85rem; font-weight: 700; color: #F1F5F9; margin-bottom: 0.25rem; } .ds-toast-message { font-size: 0.85rem; color: #F1F5F9; } .ds-toast--success .ds-toast-icon { background-color: #22C55E; } .ds-toast--success { border-color: rgba(34,197,94,0.3); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Sala de Controle de Confiança",
+    "overview": "O web-app é um painel escuro por padrão, onde cada tela existe para que Carlos (parceiro) e Lara (admin) tomem decisões de segurança alimentar com clareza total. A marca — navy profundo e dourado — vive na periferia: no logo, no wordmark, no painel de marca das telas de autenticação. No dia a dia da interface, uma única cor de ação (esmeralda) governa tudo que é clicável, e os quatro vereditos de risco (SAFE/WARNING/DANGER/BLOCKED) são a voz mais forte do sistema, sempre com ícone e texto ao lado da cor. A superfície é quase plana — fundo, card e elemento elevado são apenas tons diferentes do mesmo azul-escuro, separados por borda sutil, nunca por sombra decorativa. Sombra é reservada para os poucos momentos que merecem peso: o cartão de login/cadastro, o hover de um botão ou card. Animações são curtas e calmas (fadeIn, slideUp, 0,4–0,6s), reforçando o tom acolhedor e tranquilizador sem nunca competir com um alerta de risco.",
+    "keyCharacteristics": [
+      "Tema escuro como padrão, com tema claro espelhado via [data-theme='light'] — inclusive os 4 tons de risco, escurecidos no claro para manter contraste WCAG AA.",
+      "Uma cor de ação só (esmeralda); marca (navy/dourado) fica fora da interação diária.",
+      "Vereditos de risco nunca dependem só de cor — ícone + texto + cor sempre juntos.",
+      "Status administrativo (aprovado/pendente/rejeitado/suspenso) tem paleta própria, nunca compartilhada com a paleta de Risco.",
+      "Superfícies quase planas; sombra é reservada para poucos momentos de destaque.",
+      "Botões e badges em pill (raio total); cards e inputs em raio médio/grande.",
+      "Navegação com muitos itens colapsa atrás de um menu hambúrguer abaixo de 768px, com alvos de toque ≥44px."
+    ],
+    "rules": [
+      { "name": "The One Signal Rule", "body": "A qualquer momento, só uma cor forte fala: ou o acento de ação esmeralda, ou a cor de um veredito de risco — nunca as duas competindo na mesma tela.", "section": "colors" },
+      { "name": "The Periphery Rule", "body": "Navy e dourado vivem nas bordas da experiência (logo, wordmark, painel de marca do auth) — nunca no cromo interativo do dia a dia, que permanece esmeralda + neutros.", "section": "colors" },
+      { "name": "The Never-Color-Alone Rule", "body": "Nenhum veredito de risco pode ser identificado só pela cor; ícone e rótulo de texto acompanham sempre (WCAG 2.1 AA, ver PRODUCT.md).", "section": "colors" },
+      { "name": "The Rarity Rule", "body": "Dourado aparece só em dois lugares (wordmark, glow do painel de auth); sua raridade é o que o torna especial.", "section": "colors" },
+      { "name": "The Blocked-Is-Loudest Rule", "body": "BLOCKED nunca pode parecer visualmente mais discreto que DANGER — hoje é o único badge com tamanho de fonte maior; essa hierarquia não pode ser invertida ou suavizada.", "section": "colors" },
+      { "name": "The Separate-Axes Rule", "body": "Risco alimentar (SAFE/WARNING/DANGER/BLOCKED) e status administrativo (aprovado/pendente/rejeitado/suspenso) nunca compartilham token de cor, mesmo quando o valor coincidiria — são conceitos diferentes e precisam evoluir independentemente.", "section": "colors" },
+      { "name": "The Weight Contrast Rule", "body": "Hierarquia é carregada por contraste de peso (400→700→800) mais do que por salto de tamanho — a escala tipográfica permanece compacta, mas a hierarquia continua inequívoca.", "section": "typography" },
+      { "name": "The Earned Shadow Rule", "body": "Sombra só aparece onde o momento importa (entrada de autenticação, hover de destaque); cards e inputs comuns permanecem planos, separados só por borda.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do parear todo veredito de risco com ícone + texto + cor — nunca só cor (WCAG 2.1 AA, ver PRODUCT.md).",
+      "Do reservar esmeralda para ações/interação primária; reservar dourado só para marca (wordmark, painel de auth).",
+      "Do usar raio pílula em elementos acionáveis (botões, badges) e raio médio/grande em contêineres.",
+      "Do manter sombra \"conquistada\" — só no cartão de autenticação e em estados de hover/destaque.",
+      "Do manter BLOCKED como o veredito visualmente mais forte do sistema (nunca mais discreto que DANGER).",
+      "Do dar semântica de modal a todo diálogo customizado (role=\"dialog\", aria-modal, Escape, foco inicial).",
+      "Do oferecer alternativa a prefers-reduced-motion que preserve a mudança de estado, removendo só deslocamento/tempo.",
+      "Do colapsar navegação com muitos itens atrás de um menu abaixo de 768px, com alvos de toque ≥44px."
+    ],
+    "donts": [
+      "Don't introduzir glassmorphism/blur no sistema canônico — a linguagem plana-com-borda é a fonte da verdade.",
+      "Don't deixar um componente estilizado com tokens :root reintroduzir um valor literal de tema escuro ou claro que quebre sob [data-theme='light'].",
+      "Don't misturar a cor de ação (esmeralda) com a cor de um veredito de risco na mesma composição — só uma fala por vez (The One Signal Rule).",
+      "Don't compartilhar token de cor entre Risco alimentar e Status administrativo, mesmo que o hex coincida (The Separate-Axes Rule).",
+      "Don't deixar um veredito de risco cair visualmente em cima de outro por falta de uma classe/variante dedicada — os 4 riskLevel sempre precisam de 4 tratamentos visuais distintos."
+    ]
+  }
+}

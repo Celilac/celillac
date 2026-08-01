@@ -80,7 +80,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
             <span style={{ fontSize: '1.25rem' }}>⚠️</span>
             <div>
               <strong>Temporariamente Fechado</strong>
-              <p style={{ marginTop: '0.25rem', fontSize: '0.85rem' }}>
+              <p style={{ marginTop: 'var(--space-1)', fontSize: 'var(--text-label)' }}>
                 Este estabelecimento está temporariamente indisponível no momento. Você ainda pode visualizar os produtos dele, mas observe os avisos operacionais.
               </p>
             </div>
@@ -92,18 +92,18 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
             {/* Detalhes do parceiro com variáveis adaptativas de tema */}
             <div className={styles.card} style={{ gap: '1rem' }}>
               <h2 className={styles.sectionTitle}>ℹ️ Sobre o Estabelecimento</h2>
-              <p className={styles.partnerDescription} style={{ fontSize: '0.95rem', lineHeight: '1.6', WebkitLineClamp: 'none', lineClamp: 'none' }}>
+              <p className={styles.partnerDescription} style={{ fontSize: 'var(--text-body)', lineHeight: '1.6', WebkitLineClamp: 'none', lineClamp: 'none' }}>
                 {partner.description || 'Este parceiro ainda não forneceu uma descrição detalhada.'}
               </p>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', fontSize: '0.9rem', color: 'var(--color-text-muted, #9ca3af)', borderTop: '1px solid var(--color-border, rgba(255,255,255,0.08))', paddingTop: '1rem' }}>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text, #fff)' }}>📍 Endereço:</strong> {partner.address}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text, #fff)' }}>🌆 Cidade:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não informada'}</p>
+                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>📍 Endereço:</strong> {partner.address}</p>
+                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🌆 Cidade:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não informada'}</p>
                 </div>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text, #fff)' }}>📞 Contato:</strong> {partner.phone}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text, #fff)' }}>🚗 Região Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
+                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>📞 Contato:</strong> {partner.phone}</p>
+                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🚗 Região Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
                 </div>
               </div>
             </div>
@@ -123,19 +123,19 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                   {products.map((product) => (
                     <div key={product.id} className={styles.card} style={{ padding: '1.25rem', gap: '0.5rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <h3 className={styles.partnerName} style={{ fontSize: '1.1rem', fontWeight: '700' }}>{product.name}</h3>
+                        <h3 className={styles.partnerName} style={{ fontSize: 'var(--text-title)', fontWeight: '700' }}>{product.name}</h3>
                         {product.hasGluten ? (
-                          <span className={`${styles.badge} ${styles.badgeRejected}`} style={{ fontSize: '0.6rem' }}>Contém Glúten</span>
+                          <span className={`${styles.badge} ${styles.badgeRejected}`}>Contém Glúten</span>
                         ) : (
-                          <span className={`${styles.badge} ${styles.badgeApproved}`} style={{ fontSize: '0.6rem' }}>Sem Glúten</span>
+                          <span className={`${styles.badge} ${styles.badgeApproved}`}>Sem Glúten</span>
                         )}
                       </div>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted, #9ca3af)' }}>Marca: {product.brand}</p>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #9ca3af)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>Marca: {product.brand}</p>
+                      <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         Ingredientes: {product.ingredients}
                       </p>
                       {product.crossContamination && (
-                        <p style={{ fontSize: '0.8rem', color: '#fbbf24', fontStyle: 'italic' }}>
+                        <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-warning)', fontStyle: 'italic' }}>
                           ⚠️ Traços: {product.crossContamination}
                         </p>
                       )}
@@ -151,8 +151,8 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
               <h2 className={styles.sectionTitle}>🛡️ Certificação CeLiLac</h2>
               <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
                 <Image src="/brand/logo_with_transparent_background.png" alt="Selo" width={100} height={100} />
-                <h3 className={styles.partnerName} style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: '700' }}>Parceiro Homologado</h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted, #9ca3af)', marginTop: '0.5rem', lineHeight: '1.4' }}>
+                <h3 className={styles.partnerName} style={{ marginTop: '1rem', fontSize: 'var(--text-title)', fontWeight: '700' }}>Parceiro Homologado</h3>
+                <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', marginTop: '0.5rem', lineHeight: '1.4' }}>
                   Este parceiro comercial declarou conformidade e responsabilidade no manejo de alimentos para celíacos.
                 </p>
               </div>

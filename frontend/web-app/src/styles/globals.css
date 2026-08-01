@@ -1,7 +1,7 @@
 /* frontend/web-app/src/styles/globals.css */
 /* Design system CeLiLac — Aplicação Principal */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@100;200;300;400;500;600;700;800&display=swap');
 
 /* ═══════════════════════════════════════
    TOKENS DE DESIGN
@@ -23,6 +23,7 @@
   --color-wordmark-gold: var(--color-brand-gold);
 
   --color-emerald:     #10B981;
+  --color-emerald-hover: #059669;
   --color-emerald-dim: rgba(16,185,129,0.12);
   --color-emerald-glow:rgba(16,185,129,0.35);
 
@@ -48,13 +49,36 @@
   --color-info-bg:     rgba(59,130,246,0.1);
   --color-info-border: rgba(59,130,246,0.3);
 
+  /* Status Administrativo — cadastro de parceiro (aprovado/pendente/rejeitado/suspenso).
+     Deliberadamente separado da paleta de Risco acima: BLOCKED/DANGER/WARNING/SAFE
+     pertencem exclusivamente ao veredito do AllergenEngine (ver DESIGN.md, "The Blocked-Is-Loudest Rule");
+     status de cadastro nunca deve reutilizar esses tokens. */
+  --color-status-approved:  #34D399;
+  --color-status-approved-bg: rgba(52,211,153,0.15);
+  --color-status-approved-border: rgba(52,211,153,0.3);
+  --color-status-pending:   #FBBF24;
+  --color-status-pending-bg: rgba(251,191,36,0.15);
+  --color-status-pending-border: rgba(251,191,36,0.3);
+  --color-status-rejected:  #F87171;
+  --color-status-rejected-bg: rgba(248,113,113,0.15);
+  --color-status-rejected-border: rgba(248,113,113,0.3);
+  --color-status-suspended: #A78BFA;
+  --color-status-suspended-bg: rgba(167,139,250,0.15);
+  --color-status-suspended-border: rgba(167,139,250,0.3);
+
+  /* Tipografia — 4 papéis (ver DESIGN.md) */
+  --text-headline: clamp(1.75rem, 3vw, 2.75rem);
+  --text-title:    1.25rem;
+  --text-body:     0.9rem;
+  --text-label:    0.8rem;
+
   /* Texto */
   --color-text:        #F1F5F9;
   --color-text-muted:  #94A3B8;
   --color-text-subtle: #64748B;
 
   /* Fonte */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
 
   /* Espaçamentos */
   --space-1:  0.25rem;  --space-2: 0.5rem;   --space-3: 0.75rem;
@@ -86,6 +110,20 @@
   --color-text:        #1C2B33;
   --color-text-muted:  #51616B;
   --color-text-subtle: #7C8B93;
+
+  /* Risco — escurecidos para manter ≥4.5:1 sobre fundo claro (WCAG AA).
+     No tema escuro os tons originais já contrastam bem contra o fundo quase-preto;
+     aqui a versão crua (#22C55E etc.) reprova contraste sobre branco/quase-branco. */
+  --color-safe:        #15803D;
+  --color-warning:     #854D0E;
+  --color-danger:      #9A3412;
+  --color-blocked:     #B91C1C;
+
+  /* Status Administrativo — escurecidos para o mesmo motivo acima */
+  --color-status-approved:  #047857;
+  --color-status-pending:   #92400E;
+  --color-status-rejected:  #B91C1C;
+  --color-status-suspended: #6D28D9;
 }
 
 /* ═══════════════════════════════════════
@@ -109,53 +147,12 @@ button { cursor: pointer; font-family: inherit; }
 /* ═══════════════════════════════════════
    LAYOUT
 ═══════════════════════════════════════ */
-.app-shell {
-  display: flex;
-  min-height: 100vh;
-}
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
 .page-container {
   max-width: 1100px;
   margin: 0 auto;
   padding: var(--space-8) var(--space-6);
   width: 100%;
 }
-
-/* ═══════════════════════════════════════
-   SIDEBAR
-═══════════════════════════════════════ */
-.sidebar {
-  width: 240px;
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
-  padding: var(--space-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-6);
-}
-.sidebar-logo {
-  font-size: 1.25rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--color-border);
-}
-.sidebar-logo span { color: var(--color-emerald); }
-.sidebar-nav { display: flex; flex-direction: column; gap: var(--space-1); }
-.nav-link {
-  display: flex; align-items: center; gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-  font-size: 0.875rem; font-weight: 500;
-  color: var(--color-text-muted);
-  transition: all 0.15s ease;
-}
-.nav-link:hover { background: rgba(255,255,255,0.05); color: var(--color-text); }
-.nav-link.active { background: var(--color-emerald-dim); color: var(--color-emerald); }
 
 /* ═══════════════════════════════════════
    TOPBAR
@@ -167,18 +164,56 @@ button { cursor: pointer; font-family: inherit; }
   border-bottom: 1px solid var(--color-border);
   position: sticky; top: 0; z-index: 10;
 }
-.topbar-title { font-size: 1rem; font-weight: 600; }
+.topbar-title { font-size: var(--text-body); font-weight: 600; }
 .brand-wordmark { font-weight: 800; font-size: 1.1rem; color: var(--color-wordmark-navy); }
 .brand-wordmark span { color: var(--color-wordmark-gold); }
 .brand-tagline {
   display: none;
-  font-size: 0.75rem; font-weight: 400;
+  font-size: var(--text-label); font-weight: 400;
   color: var(--color-text-subtle);
   padding-left: var(--space-2);
   border-left: 1px solid var(--color-border);
 }
 @media (min-width: 640px) {
   .brand-tagline { display: inline-block; }
+}
+
+.topbar-actions { display: flex; align-items: center; gap: var(--space-2); }
+
+/* Menu mobile — abaixo de 768px a navegação vira um painel empilhado
+   por trás de um botão hambúrguer, com alvos de toque ≥44px. */
+.topbar-nav-toggle {
+  display: none;
+  align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+  background: transparent; border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text); font-size: 1.1rem;
+  cursor: pointer;
+}
+
+@media (max-width: 767px) {
+  .topbar-nav-toggle { display: inline-flex; }
+
+  .topbar-actions {
+    display: none;
+    position: absolute;
+    top: 100%; left: 0; right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+    padding: var(--space-3);
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+  }
+  .topbar-actions.topbar-actions--open { display: flex; }
+  .topbar-actions .btn {
+    width: 100%;
+    justify-content: flex-start;
+    min-height: 44px;
+    padding: var(--space-3) var(--space-4);
+  }
 }
 
 /* ═══════════════════════════════════════
@@ -194,20 +229,20 @@ button { cursor: pointer; font-family: inherit; }
   transition: border-color 0.2s ease;
 }
 .card:hover { border-color: var(--color-border-hover); }
-.card-title { font-size: 1rem; font-weight: 600; margin-bottom: var(--space-4); }
+.card-title { font-size: var(--text-title); font-weight: 600; margin-bottom: var(--space-4); }
 
 /* Button */
 .btn {
   display: inline-flex; align-items: center; gap: var(--space-2);
   padding: var(--space-3) var(--space-6);
   border-radius: var(--radius-full);
-  font-weight: 600; font-size: 0.875rem;
+  font-weight: 600; font-size: var(--text-body);
   border: none; transition: all 0.2s ease;
 }
 .btn-em {
   background: var(--color-emerald); color: #fff;
 }
-.btn-em:hover { background: #059669; box-shadow: var(--shadow-glow); transform: translateY(-1px); }
+.btn-em:hover { background: var(--color-emerald-hover); box-shadow: var(--shadow-glow); transform: translateY(-1px); }
 .btn-ghost {
   background: transparent; color: var(--color-text-muted);
   border: 1px solid var(--color-border);
@@ -217,19 +252,19 @@ button { cursor: pointer; font-family: inherit; }
 
 /* Input */
 .field { display: flex; flex-direction: column; gap: var(--space-2); }
-.field-label { font-size: 0.8rem; font-weight: 600; color: var(--color-text-muted); letter-spacing: 0.05em; text-transform: uppercase; }
+.field-label { font-size: var(--text-label); font-weight: 600; color: var(--color-text-muted); letter-spacing: 0.05em; text-transform: uppercase; }
 .field-input {
   width: 100%; padding: var(--space-3) var(--space-4);
   background: var(--color-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  color: var(--color-text); font-size: 0.9rem;
+  color: var(--color-text); font-size: var(--text-body);
   font-family: inherit; transition: border-color 0.2s ease;
   outline: none;
 }
 .field-input:focus { border-color: var(--color-emerald); box-shadow: 0 0 0 3px var(--color-emerald-dim); }
 .field-input::placeholder { color: var(--color-text-subtle); }
-.field-hint { font-size: 0.8rem; color: var(--color-text-subtle); }
+.field-hint { font-size: var(--text-label); color: var(--color-text-subtle); }
 .field-select {
   appearance: none;
   cursor: pointer;
@@ -262,7 +297,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 
 /* Error message */
-.field-error { font-size: 0.8rem; color: var(--color-blocked); }
+.field-error { font-size: var(--text-label); color: var(--color-blocked); }
 
 /* ═══════════════════════════════════════
    RISK BADGE — Alertas Alimentares
@@ -272,14 +307,16 @@ button { cursor: pointer; font-family: inherit; }
   display: inline-flex; align-items: center; gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-full);
-  font-size: 0.8rem; font-weight: 700;
+  font-size: var(--text-label); font-weight: 700;
   letter-spacing: 0.05em; text-transform: uppercase;
   border: 1px solid; white-space: nowrap;
 }
 .risk-badge.SAFE    { background: var(--color-safe-bg);    border-color: var(--color-safe-border);    color: var(--color-safe); }
 .risk-badge.WARNING { background: var(--color-warning-bg); border-color: var(--color-warning-border); color: var(--color-warning); }
 .risk-badge.DANGER  { background: var(--color-danger-bg);  border-color: var(--color-danger-border);  color: var(--color-danger); }
-.risk-badge.BLOCKED { background: var(--color-blocked-bg); border-color: var(--color-blocked-border); color: var(--color-blocked); font-size: 0.9rem; }
+/* BLOCKED usa --text-body (maior que --text-label) de propósito — é o único
+   veredito com fonte maior, reforçando "The Blocked-Is-Loudest Rule" (DESIGN.md). */
+.risk-badge.BLOCKED { background: var(--color-blocked-bg); border-color: var(--color-blocked-border); color: var(--color-blocked); font-size: var(--text-body); }
 
 /* ═══════════════════════════════════════
    AUTH PAGES
@@ -330,7 +367,7 @@ button { cursor: pointer; font-family: inherit; }
   }
   .auth-brand-panel-wordmark span { color: var(--color-wordmark-gold); }
   .auth-brand-panel-tagline {
-    font-size: 1rem; color: var(--color-text-muted); text-align: center;
+    font-size: var(--text-body); color: var(--color-text-muted); text-align: center;
     max-width: 320px;
   }
 }
@@ -352,12 +389,12 @@ button { cursor: pointer; font-family: inherit; }
 @media (min-width: 1024px) {
   .auth-logo { display: none; }
 }
-.auth-title { font-size: 1.25rem; font-weight: 700; margin-bottom: var(--space-2); }
-.auth-subtitle { font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: var(--space-4); }
+.auth-title { font-size: var(--text-title); font-weight: 700; margin-bottom: var(--space-2); }
+.auth-subtitle { font-size: var(--text-body); color: var(--color-text-muted); margin-bottom: var(--space-4); }
 .auth-form { display: flex; flex-direction: column; gap: var(--space-3); }
 .auth-form .field-input,
 .auth-form .field-select { padding-top: var(--space-2); padding-bottom: var(--space-2); }
-.auth-footer-link { text-align: center; font-size: 0.8rem; color: var(--color-text-muted); margin-top: var(--space-3); }
+.auth-footer-link { text-align: center; font-size: var(--text-label); color: var(--color-text-muted); margin-top: var(--space-3); }
 .auth-footer-link a { color: var(--color-emerald); font-weight: 600; }
 
 /* ═══════════════════════════════════════
@@ -370,8 +407,8 @@ button { cursor: pointer; font-family: inherit; }
   background: var(--color-bg);
 }
 .brand-lockup { display: flex; align-items: center; gap: var(--space-2); }
-.topbar-actions { display: flex; align-items: center; gap: var(--space-3); }
 .theme-button { padding: 0.4rem 0.75rem; }
+.home-button { padding: 0.4rem 1rem; }
 .profile-shell { min-height: calc(100dvh - 65px); padding-top: var(--space-8); padding-bottom: var(--space-8); }
 .profile-split-card { max-width: 960px; }
 .profile-form-panel { padding: var(--space-8); }
@@ -381,7 +418,7 @@ button { cursor: pointer; font-family: inherit; }
 .eyebrow {
   margin-bottom: var(--space-2);
   color: var(--color-emerald);
-  font-size: 0.72rem;
+  font-size: var(--text-label);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -398,7 +435,7 @@ button { cursor: pointer; font-family: inherit; }
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   color: var(--color-text-muted);
-  font-size: 0.8rem;
+  font-size: var(--text-label);
   line-height: 1.5;
 }
 .restriction-section {
@@ -408,8 +445,8 @@ button { cursor: pointer; font-family: inherit; }
   border-radius: var(--radius-md);
 }
 .section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-4); }
-.section-heading h2 { font-size: 0.95rem; font-weight: 700; }
-.section-heading p { margin-top: 0.2rem; color: var(--color-text-subtle); font-size: 0.75rem; }
+.section-heading h2 { font-size: var(--text-title); font-weight: 700; }
+.section-heading p { margin-top: 0.2rem; color: var(--color-text-subtle); font-size: var(--text-label); }
 .restriction-count {
   display: inline-flex;
   align-items: center;
@@ -420,7 +457,7 @@ button { cursor: pointer; font-family: inherit; }
   border-radius: var(--radius-full);
   background: var(--color-emerald-dim);
   color: var(--color-emerald);
-  font-size: 0.75rem;
+  font-size: var(--text-label);
   font-weight: 700;
 }
 .allergen-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
@@ -441,8 +478,8 @@ button { cursor: pointer; font-family: inherit; }
    DASHBOARD
 ═══════════════════════════════════════ */
 .page-header { margin-bottom: var(--space-8); }
-.page-title { font-size: 1.75rem; font-weight: 800; letter-spacing: -0.03em; }
-.page-subtitle { color: var(--color-text-muted); font-size: 0.9rem; margin-top: var(--space-2); }
+.page-title { font-size: var(--text-headline); font-weight: 800; letter-spacing: -0.03em; }
+.page-subtitle { color: var(--color-text-muted); font-size: var(--text-body); margin-top: var(--space-2); }
 
 .cards-grid {
   display: grid;
@@ -470,7 +507,19 @@ button { cursor: pointer; font-family: inherit; }
 ═══════════════════════════════════════ */
 @keyframes fadeIn      { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp     { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes pulse-glow  { 0%,100% { box-shadow: 0 0 0 0 var(--color-emerald-glow); } 50% { box-shadow: 0 0 20px 4px var(--color-emerald-glow); } }
 
 .animate-fade  { animation: fadeIn 0.4s ease both; }
 .animate-slide { animation: slideUp 0.4s ease both; }
+
+/* Reduced motion: mantém a mudança de estado (o conteúdo aparece), remove o
+   deslocamento/tempo — nunca um "kill" global que apagaria também o feedback
+   de foco e transição de tema. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade, .animate-slide {
+    animation: none;
+  }
+  .btn:hover,
+  .card:hover {
+    transform: none;
+  }
+}

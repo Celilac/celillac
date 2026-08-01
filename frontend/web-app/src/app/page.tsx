@@ -43,7 +43,7 @@ export default function Home() {
             Segurança alimentar transparente e confiável para celíacos e pessoas com restrições alimentares.
           </p>
           <div style={{ marginTop: '1.25rem' }}>
-            <Link href="/dashboard" className="btn btn-em" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.7rem 1.5rem', fontSize: '1rem', textDecoration: 'none' }}>
+            <Link href="/dashboard" className="btn btn-em" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.7rem 1.5rem', fontSize: 'var(--text-body)', textDecoration: 'none' }}>
               🔍 Acessar Analisador de Produtos (Dashboard) →
             </Link>
           </div>
@@ -109,8 +109,8 @@ export default function Home() {
                 }}
               >
                 <div>
-                  <p style={{ fontWeight: 600, fontSize: '0.9rem' }}>{item.product}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--color-text-subtle)', marginTop: '2px' }}>{item.date}</p>
+                  <p style={{ fontWeight: 600, fontSize: 'var(--text-body)' }}>{item.product}</p>
+                  <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-subtle)', marginTop: '2px' }}>{item.date}</p>
                 </div>
                 <RiskBadge riskLevel={item.riskLevel} />
               </div>
