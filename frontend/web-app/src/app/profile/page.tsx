@@ -77,6 +77,12 @@ export default function ProfilePage() {
   const [loadingInit, setLoadingInit] = useState(true);
   const [loading, setLoading] = useState(false);
 
+  // Status de Participação do Consumidor (Issue #30)
+  const [consumerStatus, setConsumerStatus] = useState<string>('CONTA_CRIADA');
+  const [statusChangedAt, setStatusChangedAt] = useState<string | null>(null);
+  const [statusChangeReason, setStatusChangeReason] = useState<string>('');
+  const [loadingConsumerStatus, setLoadingConsumerStatus] = useState<boolean>(false);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -106,6 +112,21 @@ export default function ProfilePage() {
       })
       .catch(() => {});
 
+    // Carrega status consolidado do consumidor
+    apiClient.get<any>('/consumer/me', token)
+      .then((data) => {
+        if (data?.consumer) {
+          setConsumerStatus(data.consumer.status || 'CONTA_CRIADA');
+          if (data.consumer.statusChangedAt) {
+            setStatusChangedAt(data.consumer.statusChangedAt);
+          }
+          if (data.consumer.statusChangeReason) {
+            setStatusChangeReason(data.consumer.statusChangeReason);
+          }
+        }
+      })
+      .catch(() => {});
+
     // Carrega restrições alimentares
     foodProfileApi.getByUserId(userId, token)
       .then((profile) => {
@@ -125,6 +146,28 @@ export default function ProfilePage() {
       })
       .finally(() => setLoadingInit(false));
   }, [isAuthenticated, token, userId, router]);
+
+  async function handleToggleConsumerStatus(action: 'ACTIVATE' | 'DEACTIVATE') {
+    if (!token) return;
+    setLoadingConsumerStatus(true);
+    try {
+      const res = await apiClient.patch<any>('/consumer/status', {
+        action,
+        reason: action === 'DEACTIVATE' ? 'Desativado pelo próprio consumidor via painel' : 'Reativado pelo consumidor via painel',
+      }, token);
+      setConsumerStatus(res.status);
+      if (res.statusChangedAt) setStatusChangedAt(res.statusChangedAt);
+      if (res.statusChangeReason) setStatusChangeReason(res.statusChangeReason);
+      toast.success(
+        action === 'DEACTIVATE' ? 'Seu perfil de consumidor foi desativado.' : 'Seu perfil de consumidor foi reativado com sucesso!',
+        'Status Atualizado'
+      );
+    } catch (err: any) {
+      toast.error('Erro ao alterar status do consumidor.', 'Erro');
+    } finally {
+      setLoadingConsumerStatus(false);
+    }
+  }
 
   function handleImageUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -196,6 +239,15 @@ export default function ProfilePage() {
         }
       }
 
+      // Re-busca o status atualizado do consumidor
+      apiClient.get<any>('/consumer/me', token)
+        .then((data) => {
+          if (data?.consumer) {
+            setConsumerStatus(data.consumer.status || 'CONTA_CRIADA');
+          }
+        })
+        .catch(() => {});
+
       toast.success('Seu perfil foi atualizado com sucesso!', 'Salvo');
     } catch (err: any) {
       const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao salvar perfil.';
@@ -255,6 +307,62 @@ export default function ProfilePage() {
               <p className="auth-subtitle profile-intro">
                 Mantenha seus dados pessoais e restrições alimentares atualizados.
               </p>
+
+              {/* Card de Status de Participação do Consumidor (Issue #30) */}
+              <div style={{
+                background: consumerStatus === 'INATIVO' ? 'rgba(239, 68, 68, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                border: `1px solid ${consumerStatus === 'INATIVO' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+                borderRadius: '12px',
+                padding: '16px 20px',
+                marginBottom: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '16px'
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{ fontSize: '1.2rem' }}>{consumerStatus === 'INATIVO' ? '🔴' : '🟢'}</span>
+                    <strong style={{ fontSize: '1rem', color: theme === 'dark' ? '#f8fafc' : '#0f172a' }}>
+                      Status do Consumidor: {consumerStatus === 'INATIVO' ? 'INATIVO' : 'ATIVO'}
+                    </strong>
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>
+                    {consumerStatus === 'INATIVO'
+                      ? 'Seu perfil de consumidor está inativo. Você pode reativá-lo a qualquer momento.'
+                      : 'Seu perfil de consumidor está ativo e configurado na plataforma.'}
+                  </p>
+                  {statusChangedAt && (
+                    <span style={{ display: 'block', marginTop: '4px', fontSize: '0.75rem', color: theme === 'dark' ? '#64748b' : '#94a3b8' }}>
+                      Última alteração: {new Date(statusChangedAt).toLocaleString('pt-BR')} {statusChangeReason ? `— ${statusChangeReason}` : ''}
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  disabled={loadingConsumerStatus}
+                  onClick={() => handleToggleConsumerStatus(consumerStatus === 'INATIVO' ? 'ACTIVATE' : 'DEACTIVATE')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    background: consumerStatus === 'INATIVO' ? '#10b981' : '#ef4444',
+                    color: '#ffffff',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {loadingConsumerStatus
+                    ? 'Processando…'
+                    : consumerStatus === 'INATIVO'
+                      ? '🟢 Reativar Perfil'
+                      : '🔴 Desativar Perfil'}
+                </button>
+              </div>
 
               <form onSubmit={handleSave} id="profile-form">
                 {/* Seção 1: Dados Pessoais & Foto */}

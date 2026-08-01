@@ -916,6 +916,32 @@ Atualiza as preferências gerais de interface do consumidor.
 
 ---
 
+### `PATCH /consumer/status` 🔒
+
+Alterna o status de participação do perfil de consumidor entre `ATIVO` e `INATIVO` registrando rastreabilidade de auditoria.
+
+**Request Body:**
+```json
+{
+  "action": "DEACTIVATE",
+  "reason": "Pausa temporária solicitada pelo usuário"
+}
+```
+
+**Response Body (200 OK):**
+```json
+{
+  "id": "consumer-uuid-123",
+  "userId": "user-uuid-456",
+  "status": "INATIVO",
+  "statusChangedAt": "2026-08-01T17:50:00.000Z",
+  "statusChangedBy": "user-uuid-456",
+  "statusChangeReason": "Pausa temporária solicitada pelo usuário"
+}
+```
+
+---
+
 ### `POST /consumer/restrictions` 🔒
 
 Adiciona uma nova restrição alimentar diretamente ao perfil do consumidor logado.

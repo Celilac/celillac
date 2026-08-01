@@ -1,5 +1,6 @@
 // backend/src/application/food-profile/CreateFoodProfileUseCase.ts
 import { IFoodProfileRepository } from '../../domain/food-profile/repositories/IFoodProfileRepository';
+import { IConsumerRepository } from '../../domain/consumer/repositories/IConsumerRepository';
 import { FoodProfile } from '../../domain/food-profile/FoodProfile';
 import { Restriction } from '../../domain/food-profile/Restriction';
 import { AllergenType } from '../../domain/food-profile/value-objects/AllergenType';
@@ -37,10 +38,14 @@ export interface FoodProfileResponseDTO {
  *  2. Constrói as Restriction entities
  *  3. Constrói o FoodProfile aggregate
  *  4. Persiste via IFoodProfileRepository
- *  5. Sinaliza se há necessidade de revalidação histórica
+ *  5. Sincroniza o estado no agregado Consumer (se IConsumerRepository estiver injetado)
+ *  6. Sinaliza se há necessidade de revalidação histórica
  */
 export class CreateFoodProfileUseCase {
-  constructor(private readonly profileRepository: IFoodProfileRepository) {}
+  constructor(
+    private readonly profileRepository: IFoodProfileRepository,
+    private readonly consumerRepository?: IConsumerRepository,
+  ) {}
 
   async execute(dto: CreateFoodProfileDTO): Promise<Result<FoodProfileResponseDTO>> {
     // 1. Verificar perfil existente
@@ -76,8 +81,17 @@ export class CreateFoodProfileUseCase {
     }
     const profile = profileResult.getValue();
 
-    // 4. Persistir
+    // 4. Persistir perfil alimentar
     await this.profileRepository.save(profile);
+
+    // 5. Sincronizar estado no agregado Consumer
+    if (this.consumerRepository) {
+      const consumer = await this.consumerRepository.findByUserId(dto.userId);
+      if (consumer) {
+        consumer.markFoodProfileState(profile.isComplete(), profile.isCritical());
+        await this.consumerRepository.save(consumer);
+      }
+    }
 
     return Result.ok<FoodProfileResponseDTO>(this.toDTO(profile));
   }

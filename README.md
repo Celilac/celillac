@@ -13,6 +13,7 @@
 
 ## Índice
 
+- [Ambiente de Demonstração (VPS)](#-ambiente-de-demonstração--produção-vps-oracle-cloud)
 - [Estrutura do Monorepo](#-estrutura-do-monorepo)
 - [Como Começar](#-como-começar)
 - [Funcionalidades](#-funcionalidades)
@@ -20,6 +21,13 @@
 - [Arquitetura](#️-arquitetura)
 - [Documentação](#-documentação)
 - [Segurança & Governança](#-segurança--governança)
+
+---
+
+## 🌐 Ambiente de Demonstração / Produção (VPS Oracle Cloud)
+
+- 💻 **Web App (Next.js)**: [http://163.176.195.210:3003](http://163.176.195.210:3003)
+- ⚙️ **Backend API (Node.js)**: [http://163.176.195.210:3002](http://163.176.195.210:3002)
 
 ---
 
