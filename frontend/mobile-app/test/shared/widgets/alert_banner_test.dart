@@ -24,7 +24,7 @@ void main() {
     await _pump(tester, RiskLevel.safe);
     expect(_backgroundOf(tester), AppColors.riskSafeBg);
     expect(find.text('✅'), findsOneWidget);
-    expect(find.text('SEGURO'), findsOneWidget);
+    expect(find.text('COMPATÍVEL'), findsOneWidget);
   });
 
   testWidgets('WARNING renders amber background and warning label', (tester) async {

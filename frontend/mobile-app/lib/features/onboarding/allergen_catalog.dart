@@ -21,10 +21,13 @@ const List<SeverityLevel> onboardingSeverities = [
   SeverityLevel.fatal,
 ];
 
+// Descreve o grau de risco/tolerância (severidade), não o diagnóstico.
+// O tipo de condição (alergia, intolerância, restrição médica etc.) é
+// informado separadamente pelo usuário e não deve ser inferido daqui.
 const Map<SeverityLevel, String> severityDescriptions = {
   SeverityLevel.lifestyle: 'Preferência pessoal, sem risco médico',
-  SeverityLevel.low: 'Sensibilidade leve',
-  SeverityLevel.medium: 'Intolerância moderada',
-  SeverityLevel.high: 'Alergia severa',
-  SeverityLevel.fatal: 'Doença celíaca / grave',
+  SeverityLevel.low: 'Risco leve — traços geralmente tolerados',
+  SeverityLevel.medium: 'Risco moderado — traços geralmente tolerados',
+  SeverityLevel.high: 'Risco alto ao ingerir o alérgeno',
+  SeverityLevel.fatal: 'Risco crítico — zero tolerância, incluindo traços',
 };

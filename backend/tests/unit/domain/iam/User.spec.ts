@@ -99,4 +99,35 @@ describe('User Entity', () => {
       expect(result.getError()).toBe('Role de usuário inválida.');
     });
   });
+
+  describe('updateProfileDetails() — whatsappPhone', () => {
+    const makeUser = () =>
+      User.create({
+        email:        makeValidEmail(),
+        passwordHash: makeValidHash(),
+        role:         UserRole.CELIACO,
+      }).getValue();
+
+    it('deve atualizar o whatsappPhone quando válido', () => {
+      const user = makeUser();
+      const result = user.updateProfileDetails({ whatsappPhone: '+5511987654321' });
+      expect(result.isSuccess).toBe(true);
+      expect(user.whatsappPhone?.value).toBe('+5511987654321');
+    });
+
+    it('deve falhar ao atualizar com whatsappPhone em formato inválido', () => {
+      const user = makeUser();
+      const result = user.updateProfileDetails({ whatsappPhone: '11987654321' });
+      expect(result.isFailure).toBe(true);
+      expect(user.whatsappPhone).toBeUndefined();
+    });
+
+    it('não deve alterar o whatsappPhone quando o campo não é informado', () => {
+      const user = makeUser();
+      user.updateProfileDetails({ whatsappPhone: '+5511987654321' });
+      const result = user.updateProfileDetails({ fullName: 'Novo Nome' });
+      expect(result.isSuccess).toBe(true);
+      expect(user.whatsappPhone?.value).toBe('+5511987654321');
+    });
+  });
 });

@@ -15,7 +15,7 @@ export interface FoodProfileProps {
  *
  * Regras Críticas (DOMAIN_MODEL.md e Análise do Consumidor):
  *  1. Um perfil deve ter pelo menos uma restrição para ser considerado "Ativo" / "Completo".
- *  2. Mudanças em restrições FATAL ou de Alta Severidade sinalizam perfil crítico e exigem atenção.
+ *  2. Mudanças em restrições FATAL sinalizam perfil crítico e exigem atenção (revalidação).
  *  3. Não são permitidos alérgenos duplicados no mesmo perfil.
  *  4. Controla a tolerância a risco de contaminação cruzada (padrão: false para segurança).
  */
@@ -67,7 +67,9 @@ export class FoodProfile extends Entity<FoodProfileProps> {
   }
 
   /**
-   * isCritical — Retorna true se houver qualquer restrição com severidade FATAL/alta ou Doença Celíaca.
+   * isCritical — Retorna true se houver qualquer restrição com severidade FATAL
+   * (independente do alérgeno ou do tipo de condição — ex.: doença celíaca,
+   * alergia grave/anafilática).
    */
   isCritical(): boolean {
     return (this.props.restrictions ?? []).some((r) => r.isFatal());
@@ -79,6 +81,10 @@ export class FoodProfile extends Entity<FoodProfileProps> {
 
   /**
    * addRestriction — Adiciona uma restrição com validação de duplicidade.
+   * A duplicidade é verificada por (allergen + type): um mesmo alérgeno pode
+   * ter mais de uma restrição registrada desde que sejam de tipos diferentes
+   * (ex.: OTHER/LIFESTYLE para dieta vegetariana e OTHER/ALLERGY para um
+   * alérgeno não listado, simultaneamente).
    */
   addRestriction(restriction: Restriction): Result<void> {
     if (!this.props.restrictions) {
@@ -86,10 +92,12 @@ export class FoodProfile extends Entity<FoodProfileProps> {
     }
 
     const duplicate = this.props.restrictions.find(
-      (r) => r.allergen === restriction.allergen,
+      (r) => r.allergen === restriction.allergen && r.type === restriction.type,
     );
     if (duplicate) {
-      return Result.fail<void>(`Alérgeno ${restriction.allergen} já existe neste perfil.`);
+      return Result.fail<void>(
+        `Já existe uma restrição do tipo ${restriction.type} para o alérgeno ${restriction.allergen} neste perfil.`,
+      );
     }
 
     this.props.restrictions.push(restriction);
@@ -134,15 +142,16 @@ export class FoodProfile extends Entity<FoodProfileProps> {
 
     const initialRestrictions = props.restrictions ?? [];
 
-    // Validar duplicidade nas restrições iniciais
-    const allergensSeen = new Set<AllergenType>();
+    // Validar duplicidade nas restrições iniciais (mesmo alérgeno + mesmo tipo)
+    const seen = new Set<string>();
     for (const restriction of initialRestrictions) {
-      if (allergensSeen.has(restriction.allergen)) {
+      const key = `${restriction.allergen}:${restriction.type}`;
+      if (seen.has(key)) {
         return Result.fail<FoodProfile>(
-          `Alérgeno ${restriction.allergen} duplicado nas restrições iniciais.`,
+          `Restrição do tipo ${restriction.type} para o alérgeno ${restriction.allergen} duplicada nas restrições iniciais.`,
         );
       }
-      allergensSeen.add(restriction.allergen);
+      seen.add(key);
     }
 
     return Result.ok<FoodProfile>(

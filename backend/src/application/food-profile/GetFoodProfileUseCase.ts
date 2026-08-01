@@ -36,6 +36,8 @@ export class GetFoodProfileUseCase {
         id:       r.id,
         allergen: r.allergen,
         severity: r.severity,
+        type:     r.type,
+        notes:    r.notes,
       })),
     };
   }

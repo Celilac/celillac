@@ -23,17 +23,21 @@ Calcula a compatibilidade entre um `FoodProfile` e um produto, retornando um rel
 |:------|:---------|:----------|
 | R1 | Produto sem ingredientes declarados | `BLOCKED` (precaução) |
 | R2 | Perfil sem restrições | `SAFE` |
-| R3 | Celíaco (`FATAL`) + glúten nos ingredientes | `BLOCKED` |
-| **R4** | **Celíaco (`FATAL`) + traços de glúten (`cross_contamination`)** | **`BLOCKED`** |
+| R3 | Restrição `FATAL` (qualquer alérgeno) + alérgeno nos ingredientes | `BLOCKED` |
+| **R4** | **Restrição `FATAL` (qualquer alérgeno) + traços do alérgeno (`cross_contamination`)** | **`BLOCKED`** |
 | R5 | `HIGH` + alérgeno presente | `DANGER` |
 | R6 | `MEDIUM`/`LOW` + alérgeno presente | `WARNING` |
 | R7 | Múltiplos conflitos | Risco mais alto prevalece |
 | R8 | Múltiplos conflitos | Todos retornados (sem omissão) |
 
+> `FATAL` é um nível de severidade, não um diagnóstico — aplica-se a qualquer
+> alérgeno (ex.: doença celíaca em `GLUTEN`, mas também uma alergia anafilática a
+> `NUTS`). Ver [`ALLERGEN_ENGINE.md`](../ALLERGEN_ENGINE.md#4-níveis-de-severidade-do-perfil-severitylevel).
+
 ## Níveis de risco
 
 ```
-⛔ BLOCKED  — Celíaco ou produto sem ingredientes
+⛔ BLOCKED  — Restrição FATAL correspondente encontrada, ou produto sem ingredientes
 ⚠️ DANGER   — Alérgeno de alta severidade
 🟡 WARNING  — Alérgeno de baixa/média severidade
 ✅ SAFE     — Nenhum conflito encontrado

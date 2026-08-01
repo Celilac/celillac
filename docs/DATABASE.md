@@ -70,7 +70,12 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `email` | VARCHAR | UNIQUE, NOT NULL |
 | `password_hash` | VARCHAR | NOT NULL |
 | `role` | ENUM | `CELIACO`, `PARCEIRO`, `ADMIN` |
+| `whatsapp_phone` | VARCHAR(20) | Opcional. Formato E.164 com DDI do Brasil obrigatório (`+55DDDNNNNNNNNN`) |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
+
+> Nota: `full_name`, `birth_date`, `gender`, `avatar_url`, `account_status`, `profile_evaluation_status`
+> e `is_email_verified` também existem na tabela (migration 013) mas ainda não foram
+> documentados aqui — fora do escopo desta atualização.
 
 ### Tabela: `consumers` (Consumidores)
 | Coluna | Tipo | Restrições |

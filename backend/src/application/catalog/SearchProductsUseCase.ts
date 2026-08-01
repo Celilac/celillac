@@ -1,8 +1,10 @@
 // backend/src/application/catalog/SearchProductsUseCase.ts
 import { IProductCatalogRepository, PaginatedResult } from '../../domain/catalog/repositories/IProductCatalogRepository';
 import { IFoodProfileRepository } from '../../domain/food-profile/repositories/IFoodProfileRepository';
+import { FoodProfile } from '../../domain/food-profile/FoodProfile';
 import { AllergenEngine } from '../../domain/allergen-engine/AllergenEngine';
 import { CompatibilityReport } from '../../domain/allergen-engine/CompatibilityReport';
+import { toProductSnapshot } from './mappers/toProductSnapshot';
 import { Result } from '../../domain/Result';
 import { AnalysisStatus } from '../../domain/catalog/Product';
 
@@ -43,16 +45,16 @@ export class SearchProductsUseCase {
     const limit = Math.min(100, Math.max(1, dto.limit || 20));
     
     let avoidAllergens = dto.avoidAllergens ? [...dto.avoidAllergens] : [];
-    let userProfile: any = null;
+    let userProfile: FoodProfile | null = null;
 
     // Se fornecido o usuário para compatibilidade, carregamos o perfil
     if (dto.userIdForCompatibility && this.foodProfileRepository) {
       userProfile = await this.foodProfileRepository.findByUserId(dto.userIdForCompatibility);
-      
+
       // Se for solicitado retornar apenas produtos compatíveis (SAFE) e o usuário tiver restrições,
       // nós adicionamos todos os alérgenos do perfil aos alérgenos a evitar no banco de dados.
       if (dto.onlyCompatible && userProfile && userProfile.isActive()) {
-        const profileAllergens = userProfile.restrictions.map((r: any) => r.allergen);
+        const profileAllergens = userProfile.restrictions.map((r) => r.allergen);
         avoidAllergens = Array.from(new Set([...avoidAllergens, ...profileAllergens]));
       }
     }
@@ -82,15 +84,7 @@ export class SearchProductsUseCase {
 
       // Se o perfil do usuário foi carregado, calcula o relatório de compatibilidade dinâmico
       if (userProfile) {
-        // Adaptador de Product para ProductSnapshot do AllergenEngine
-        const productSnapshot = {
-          id:                 product.id,
-          name:               product.name,
-          ingredients:        product.ingredients,
-          hasGluten:          product.hasGluten,
-          crossContamination: product.crossContamination,
-        };
-        response.compatibilityReport = AllergenEngine.check(userProfile, productSnapshot);
+        response.compatibilityReport = AllergenEngine.check(userProfile, toProductSnapshot(product));
       }
 
       return response;

@@ -3,9 +3,10 @@ import { FoodProfile } from '../../../../src/domain/food-profile/FoodProfile';
 import { Restriction } from '../../../../src/domain/food-profile/Restriction';
 import { AllergenType } from '../../../../src/domain/food-profile/value-objects/AllergenType';
 import { SeverityLevel } from '../../../../src/domain/food-profile/value-objects/SeverityLevel';
+import { RestrictionType } from '../../../../src/domain/food-profile/value-objects/RestrictionType';
 
-const makeRestriction = (allergen: AllergenType, severity: SeverityLevel) =>
-  Restriction.create({ allergen, severity }).getValue();
+const makeRestriction = (allergen: AllergenType, severity: SeverityLevel, type?: RestrictionType) =>
+  Restriction.create({ allergen, severity, type }).getValue();
 
 const USER_ID = 'user-uuid-123';
 
@@ -62,15 +63,32 @@ describe('FoodProfile Aggregate Root', () => {
       expect(profile.requiresHistoryRevalidation).toBe(false);
     });
 
-    it('deve impedir duplicidade de alérgeno no mesmo perfil', () => {
+    it('deve impedir duplicidade de alérgeno + tipo no mesmo perfil', () => {
       const profile = FoodProfile.create({
         userId: USER_ID,
-        restrictions: [makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL)],
+        restrictions: [makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL, RestrictionType.ALLERGY)],
       }).getValue();
-      // Tentar adicionar GLUTEN novamente
-      const result = profile.addRestriction(makeRestriction(AllergenType.GLUTEN, SeverityLevel.HIGH));
+      // Tentar adicionar GLUTEN/ALLERGY novamente
+      const result = profile.addRestriction(
+        makeRestriction(AllergenType.GLUTEN, SeverityLevel.HIGH, RestrictionType.ALLERGY),
+      );
       expect(result.isFailure).toBe(true);
-      expect(result.getError()).toBe('Alérgeno GLUTEN já existe neste perfil.');
+      expect(result.getError()).toBe(
+        'Já existe uma restrição do tipo ALLERGY para o alérgeno GLUTEN neste perfil.',
+      );
+    });
+
+    it('RN-CONSUMER-03: deve permitir o mesmo alérgeno com tipos diferentes (ex.: OTHER/LIFESTYLE + OTHER/ALLERGY)', () => {
+      const profile = FoodProfile.create({
+        userId: USER_ID,
+        restrictions: [makeRestriction(AllergenType.OTHER, SeverityLevel.LIFESTYLE, RestrictionType.LIFESTYLE)],
+      }).getValue();
+      // Vegetariano (OTHER/LIFESTYLE) + alergia a um alérgeno não listado (OTHER/ALLERGY) simultaneamente
+      const result = profile.addRestriction(
+        makeRestriction(AllergenType.OTHER, SeverityLevel.HIGH, RestrictionType.ALLERGY),
+      );
+      expect(result.isSuccess).toBe(true);
+      expect(profile.restrictions).toHaveLength(2);
     });
   });
 
@@ -81,14 +99,24 @@ describe('FoodProfile Aggregate Root', () => {
       expect(result.getError()).toBe('O userId do perfil não pode ser vazio.');
     });
 
-    it('deve falhar se houver alérgenos duplicados nas restrições iniciais', () => {
+    it('deve falhar se houver alérgeno + tipo duplicados nas restrições iniciais', () => {
       const restrictions = [
-        makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL),
-        makeRestriction(AllergenType.GLUTEN, SeverityLevel.HIGH), // duplicado
+        makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL, RestrictionType.ALLERGY),
+        makeRestriction(AllergenType.GLUTEN, SeverityLevel.HIGH, RestrictionType.ALLERGY), // duplicado
       ];
       const result = FoodProfile.create({ userId: USER_ID, restrictions });
       expect(result.isFailure).toBe(true);
-      expect(result.getError()).toContain('duplicado');
+      expect(result.getError()).toContain('duplicada');
+    });
+
+    it('não deve falhar quando o mesmo alérgeno aparece com tipos diferentes nas restrições iniciais', () => {
+      const restrictions = [
+        makeRestriction(AllergenType.OTHER, SeverityLevel.LIFESTYLE, RestrictionType.LIFESTYLE),
+        makeRestriction(AllergenType.OTHER, SeverityLevel.HIGH, RestrictionType.ALLERGY),
+      ];
+      const result = FoodProfile.create({ userId: USER_ID, restrictions });
+      expect(result.isSuccess).toBe(true);
+      expect(result.getValue().restrictions).toHaveLength(2);
     });
   });
 });

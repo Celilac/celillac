@@ -67,6 +67,7 @@ export default function ProfilePage() {
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState('PREFIRO_NAO_INFORMAR');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [whatsappPhone, setWhatsappPhone] = useState('');
   const [profileEvaluationStatus, setProfileEvaluationStatus] = useState('PENDING_EVALUATION');
 
   // Restrições Alimentares
@@ -100,6 +101,7 @@ export default function ProfilePage() {
           }
           setGender(user.gender || 'PREFIRO_NAO_INFORMAR');
           setAvatarUrl(user.avatarUrl || '');
+          setWhatsappPhone(user.whatsappPhone || '');
           setProfileEvaluationStatus(user.profileEvaluationStatus || 'PENDING_EVALUATION');
         }
       })
@@ -174,6 +176,7 @@ export default function ProfilePage() {
         birthDate: birthDate ? birthDate : undefined,
         gender,
         avatarUrl,
+        whatsappPhone: whatsappPhone ? whatsappPhone : undefined,
       }, token);
 
       // 2. Atualiza ou Cria o Perfil Alimentar
@@ -286,6 +289,18 @@ export default function ProfilePage() {
                       <option key={g.value} value={g.value}>{g.label}</option>
                     ))}
                   </select>
+                </div>
+
+                <div className="field">
+                  <label className="field-label">WhatsApp</label>
+                  <input
+                    type="tel"
+                    className="field-input"
+                    placeholder="+5511987654321"
+                    value={whatsappPhone}
+                    onChange={(e) => setWhatsappPhone(e.target.value)}
+                  />
+                  <span className="field-hint">Formato: +55DDDNNNNNNNNN</span>
                 </div>
               </div>
             </section>

@@ -3,7 +3,7 @@
 import type { RiskLevel } from '@/api/compatibility';
 
 const RISK_CONFIG: Record<RiskLevel, { icon: string; label: string }> = {
-  SAFE:    { icon: '✅', label: 'Seguro' },
+  SAFE:    { icon: '✅', label: 'Compatível' },
   WARNING: { icon: '🟡', label: 'Atenção' },
   DANGER:  { icon: '⚠️', label: 'Perigo' },
   BLOCKED: { icon: '⛔', label: 'Bloqueado' },

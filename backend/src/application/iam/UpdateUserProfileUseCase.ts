@@ -9,6 +9,7 @@ export interface UpdateUserProfileInput {
   birthDate?: string | Date;
   gender?: string;
   avatarUrl?: string;
+  whatsappPhone?: string;
 }
 
 export class UpdateUserProfileUseCase {
@@ -33,6 +34,7 @@ export class UpdateUserProfileUseCase {
       birthDate: parsedBirthDate,
       gender: input.gender,
       avatarUrl: input.avatarUrl,
+      whatsappPhone: input.whatsappPhone,
     });
 
     if (updateRes.isFailure) {

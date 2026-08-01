@@ -4,6 +4,7 @@ import { Result } from '../Result';
 import { Email } from './value-objects/Email';
 import { PasswordHash } from './value-objects/PasswordHash';
 import { UserRole } from './value-objects/UserRole';
+import { WhatsappPhone } from './value-objects/WhatsappPhone';
 
 /**
  * UserProps — shape das propriedades internas da entidade.
@@ -21,6 +22,7 @@ export interface UserProps {
   birthDate?: Date;
   gender?: string;
   avatarUrl?: string;
+  whatsappPhone?: WhatsappPhone;
   accountStatus?: AccountStatus;
   profileEvaluationStatus?: ProfileEvaluationStatus;
   isEmailVerified?: boolean;
@@ -78,6 +80,10 @@ export class User extends Entity<UserProps> {
     return this.props.avatarUrl;
   }
 
+  get whatsappPhone(): WhatsappPhone | undefined {
+    return this.props.whatsappPhone;
+  }
+
   get accountStatus(): AccountStatus {
     return this.props.accountStatus || 'ACTIVE';
   }
@@ -123,6 +129,7 @@ export class User extends Entity<UserProps> {
     birthDate?: Date;
     gender?: string;
     avatarUrl?: string;
+    whatsappPhone?: string;
   }): Result<void> {
     if (details.avatarUrl) {
       if (details.avatarUrl.startsWith('data:image/') && details.avatarUrl.length > 14 * 1024 * 1024) {
@@ -130,10 +137,20 @@ export class User extends Entity<UserProps> {
       }
     }
 
+    let whatsappPhone: WhatsappPhone | undefined;
+    if (details.whatsappPhone !== undefined) {
+      const phoneResult = WhatsappPhone.create(details.whatsappPhone);
+      if (phoneResult.isFailure) {
+        return Result.fail<void>(phoneResult.getError());
+      }
+      whatsappPhone = phoneResult.getValue();
+    }
+
     if (details.fullName !== undefined) this.props.fullName = details.fullName;
     if (details.birthDate !== undefined) this.props.birthDate = details.birthDate;
     if (details.gender !== undefined) this.props.gender = details.gender;
     if (details.avatarUrl !== undefined) this.props.avatarUrl = details.avatarUrl;
+    if (whatsappPhone !== undefined) this.props.whatsappPhone = whatsappPhone;
 
     return Result.ok<void>(undefined as any);
   }
