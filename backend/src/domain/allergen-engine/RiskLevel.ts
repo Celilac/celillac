@@ -4,14 +4,17 @@
  * RiskLevel — Nível de risco de compatibilidade entre perfil e produto.
  * ⚠️ ARQUIVO CRÍTICO — Qualquer alteração exige aprovação humana (GUARDRAILS.md #1)
  *
- * SAFE    → Produto compatível. Nenhum alérgeno do perfil encontrado.
- * WARNING → Alérgeno de severidade LOW ou MEDIUM encontrado.
- * DANGER  → Alérgeno de severidade HIGH encontrado.
- * BLOCKED → Alérgeno de severidade FATAL ou produto sem ingredientes.
+ * SAFE        → Produto compatível. Nenhum alérgeno do perfil encontrado.
+ * WARNING     → Alérgeno de severidade LOW ou MEDIUM encontrado.
+ * DANGER      → Alérgeno de severidade HIGH encontrado.
+ * BLOCKED     → Alérgeno de severidade FATAL ou produto sem ingredientes.
+ * UNEVALUATED → Perfil incompleto ou sem restrições ativas. Compatibilidade não avaliada (RN-CONSUMER-07).
  */
 export enum RiskLevel {
-  SAFE    = 'SAFE',
-  WARNING = 'WARNING',
-  DANGER  = 'DANGER',
-  BLOCKED = 'BLOCKED',
+  SAFE        = 'SAFE',
+  WARNING     = 'WARNING',
+  DANGER      = 'DANGER',
+  BLOCKED     = 'BLOCKED',
+  UNEVALUATED = 'UNEVALUATED',
 }
+

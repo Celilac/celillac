@@ -6,6 +6,10 @@ import { FoodProfile } from '../../../../src/domain/food-profile/FoodProfile';
 import { ProductSnapshot } from '../../../../src/domain/allergen-engine/ProductSnapshot';
 import { RiskLevel } from '../../../../src/domain/allergen-engine/RiskLevel';
 
+import { Restriction } from '../../../../src/domain/food-profile/Restriction';
+import { AllergenType } from '../../../../src/domain/food-profile/value-objects/AllergenType';
+import { SeverityLevel } from '../../../../src/domain/food-profile/value-objects/SeverityLevel';
+
 describe('CheckCompatibilityUseCase', () => {
   let profileRepository: jest.Mocked<IFoodProfileRepository>;
   let productRepository: jest.Mocked<IProductRepository>;
@@ -43,7 +47,10 @@ describe('CheckCompatibilityUseCase', () => {
   });
 
   it('deve verificar a compatibilidade e retornar o relatório (SAFE)', async () => {
-    profileRepository.findByUserId.mockResolvedValue(FoodProfile.create({ userId: 'user-id', restrictions: [] }).getValue());
+    const restriction = Restriction.create({ allergen: AllergenType.GLUTEN, severity: SeverityLevel.FATAL }).getValue();
+    const profile = FoodProfile.create({ userId: 'user-id', restrictions: [restriction] }).getValue();
+    profileRepository.findByUserId.mockResolvedValue(profile);
+
     const mockProduct: ProductSnapshot = {
       id: 'prod-id',
       name: 'Arroz',
@@ -58,5 +65,23 @@ describe('CheckCompatibilityUseCase', () => {
     expect(result.isSuccess).toBe(true);
     expect(result.getValue().isCompatible).toBe(true);
     expect(result.getValue().riskLevel).toBe(RiskLevel.SAFE);
+  });
+
+  it('deve retornar UNEVALUATED para perfil sem restrições ativas (RN-CONSUMER-07)', async () => {
+    profileRepository.findByUserId.mockResolvedValue(FoodProfile.create({ userId: 'user-id', restrictions: [] }).getValue());
+    const mockProduct: ProductSnapshot = {
+      id: 'prod-id',
+      name: 'Arroz',
+      ingredients: 'Arroz cru',
+      hasGluten: false,
+      crossContamination: '',
+    };
+    productRepository.findById.mockResolvedValue(mockProduct);
+
+    const result = await useCase.execute({ userId: 'user-id', productId: 'prod-id' });
+
+    expect(result.isSuccess).toBe(true);
+    expect(result.getValue().isCompatible).toBe(false);
+    expect(result.getValue().riskLevel).toBe(RiskLevel.UNEVALUATED);
   });
 });

@@ -25,7 +25,7 @@ As 9 regras abaixo são a **única definição oficial** de como o motor funcion
 | ID | Regra | Condição | Resultado |
 |:---|:------|:---------|:----------|
 | **R1** | Produto sem ingredientes declarados | `product.ingredients` vazio ou ausente | `BLOCKED` (princípio da precaução) |
-| **R2** | Perfil sem restrições ativas | `profile.isActive() === false` | `SAFE` (sem dados para bloquear) |
+| **R2** | Perfil sem restrições ativas | `profile.isActive() === false` | `UNEVALUATED` (perfil incompleto - RN-CONSUMER-07) |
 | **R3** | Restrição FATAL + alérgeno nos **ingredientes** | severity = FATAL, found in ingredients | `BLOCKED` |
 | **R4** | Restrição FATAL + alérgeno nos **traços** (cross_contamination) | severity = FATAL, found in crossContamination | `BLOCKED` |
 | **R5** | Restrição HIGH + alérgeno nos **ingredientes** | severity = HIGH, found in ingredients | `DANGER` |
@@ -36,6 +36,8 @@ As 9 regras abaixo são a **única definição oficial** de como o motor funcion
 
 > **Nota sobre R1:** O princípio da precaução prioriza a segurança do celíaco. Um produto sem informação é tratado como produto perigoso — nunca como produto seguro.
 
+> **Nota sobre R2 (RN-CONSUMER-07 / Issue #32):** Se o consumidor não configurou perfil alimentar completo (`restrictions.length === 0`), o sistema retorna `UNEVALUATED` e `isCompatible = false`. Isso impede a falsa sensação de segurança de exibir produtos como seguros para perfis sem dados configurados.
+
 > **Nota sobre R9 (Invariante 11.5):** Quando o consumidor declara `acceptsCrossContamination = false` (padrão do sistema para máxima segurança), o alérgeno detectado nos traços para restrições de severidade `HIGH` eleva o risco para `DANGER`. Para severidade `FATAL`, o resultado é sempre `BLOCKED` independente da tolerância declarada.
 
 ---
@@ -43,15 +45,16 @@ As 9 regras abaixo são a **única definição oficial** de como o motor funcion
 ## 3. Tipos de Risco (`RiskLevel`)
 
 ```
-SAFE    → Nenhum alérgeno do perfil encontrado no produto.
-WARNING → Alérgeno de severidade LOW ou MEDIUM encontrado (ingredientes ou traços não-FATAL).
-DANGER  → Alérgeno de severidade HIGH encontrado nos ingredientes.
-BLOCKED → Alérgeno FATAL encontrado (ingredientes ou traços) OU produto sem ingredientes.
+SAFE        → Nenhum alérgeno do perfil encontrado no produto.
+WARNING     → Alérgeno de severidade LOW ou MEDIUM encontrado (ingredientes ou traços não-FATAL).
+DANGER      → Alérgeno de severidade HIGH encontrado nos ingredientes.
+BLOCKED     → Alérgeno FATAL encontrado (ingredientes ou traços) OU produto sem ingredientes.
+UNEVALUATED → Perfil alimentar incompleto / sem restrições ativas. Compatibilidade não avaliada (RN-CONSUMER-07).
 ```
 
 **Ordenação numérica (usada internamente):**
 ```
-SAFE = 0  <  WARNING = 1  <  DANGER = 2  <  BLOCKED = 3
+UNEVALUATED = -1  <  SAFE = 0  <  WARNING = 1  <  DANGER = 2  <  BLOCKED = 3
 ```
 
 ---
@@ -94,7 +97,7 @@ O motor detecta alérgenos por busca de texto em `ingredients` e `crossContamina
 AllergenEngine.check(profile, productSnapshot)
         │
         ├── perfil.isActive() === false?
-        │       └── retorna SAFE ("Perfil sem restrições ativas.")
+        │       └── retorna UNEVALUATED ("Perfil sem restrições ativas. Configure seu perfil...")
         │
         ├── product.ingredients vazio?
         │       └── retorna BLOCKED ("Produto sem ingredientes. Princípio da precaução.")

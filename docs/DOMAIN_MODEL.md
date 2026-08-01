@@ -54,10 +54,11 @@
 ## 5. Compatibilidade Alimentar (Core Engine)
 - **Responsabilidade:** Calcular o match entre Perfil Alimentar e Produto. É o coração do CeLiLac.
 - **Entidades:** `CompatibilityReport`.
-- **Value Objects:** `RiskLevel` (SAFE, WARNING, DANGER, BLOCKED), `ConflictDetail`.
+- **Value Objects:** `RiskLevel` (SAFE, WARNING, DANGER, BLOCKED, UNEVALUATED), `ConflictDetail`.
 - **Regras:**
     - O motor deve ser agnóstico a banco de dados (Pure Domain Service).
     - Deve suportar "Traços de Alérgenos" como um modificador de risco.
+    - Respeita a **RN-CONSUMER-07 / Invariante 11.6**: se o consumidor possui perfil incompleto/sem restrições (`!profile.isActive()`), o sistema retorna `UNEVALUATED` e `isCompatible = false`, eliminando a falsa sensação de segurança.
     - Respeita a **Invariante 11.5 (Tolerância a Contaminação Cruzada)**: se `acceptsCrossContamination === false`, traços para severidades `HIGH` elevam o risco de `WARNING` para `DANGER`. Para `FATAL`, o resultado é sempre `BLOCKED` (invariante biológica imutável).
     - As 9 regras do motor (R1–R9) estão definidas em `docs/ALLERGEN_ENGINE.md` e são imutáveis sem aprovação humana.
     - ⚠️ **Contexto de máxima criticidade** — qualquer alteração exige aprovação humana.

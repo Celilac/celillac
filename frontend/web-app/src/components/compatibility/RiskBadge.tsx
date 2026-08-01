@@ -3,10 +3,11 @@
 import type { RiskLevel } from '@/api/compatibility';
 
 const RISK_CONFIG: Record<RiskLevel, { icon: string; label: string }> = {
-  SAFE:    { icon: '✅', label: 'Seguro' },
-  WARNING: { icon: '🟡', label: 'Atenção' },
-  DANGER:  { icon: '⚠️', label: 'Perigo' },
-  BLOCKED: { icon: '⛔', label: 'Bloqueado' },
+  SAFE:        { icon: '✅', label: 'Seguro' },
+  WARNING:     { icon: '🟡', label: 'Atenção' },
+  DANGER:      { icon: '⚠️', label: 'Perigo' },
+  BLOCKED:     { icon: '⛔', label: 'Bloqueado' },
+  UNEVALUATED: { icon: '⚪', label: 'Perfil Incompleto' },
 };
 
 interface RiskBadgeProps {

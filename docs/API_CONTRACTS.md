@@ -390,6 +390,7 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
 | `WARNING` | 🟡 | Alérgeno de baixa/média severidade presente | Amarelo |
 | `DANGER` | ⚠️ | Alérgeno de alta severidade presente | Laranja |
 | `BLOCKED` | ⛔ | FATAL detectado ou produto sem ingredientes | **Vermelho — destaque máximo** |
+| `UNEVALUATED` | ⚪ | Perfil alimentar incompleto / sem restrições ativas | **Cinza/Neutro — orienta configuração de perfil (RN-CONSUMER-07)** |
 
 > ⚠️ `BLOCKED` deve ter **destaque visual obrigatório** (vermelho + ícone de perigo) conforme `FRONTEND_STRATEGY.md`: *"Alertas alimentares devem ter destaque visual (vermelho/ícones de perigo)."*
 
@@ -788,6 +789,18 @@ Valores aceitos nos campos `severity`:
 | `FATAL` | 4 | Alérgeno **ou traços** detectados → `BLOCKED` |
 
 > ⚠️ `FATAL` é o nível para **Doença Celíaca diagnosticada**. Um produto com `cross_contamination` contendo qualquer menção a glúten resulta em `BLOCKED` — sem exceção. Esta é uma regra de segurança alimentar crítica validada nos casos de teste TC-02 e TC-04.
+
+### `RiskLevel`
+
+Valores possíveis de nível de risco de compatibilidade:
+
+| Valor | Português | Significado no Motor |
+|:------|:----------|:---------------------|
+| `SAFE` | Seguro | Nenhum alérgeno do perfil foi encontrado |
+| `WARNING` | Atenção | Conflito de severidade LOW/MEDIUM ou traços |
+| `DANGER` | Perigo | Conflito de severidade HIGH em ingredientes ou traços sem tolerância |
+| `BLOCKED` | Bloqueado | Conflito FATAL ou produto sem lista de ingredientes declarados |
+| `UNEVALUATED` | Não Avaliado / Perfil Incompleto | Perfil sem restrições ativas — não avaliado para evitar falsa segurança (RN-CONSUMER-07) |
 
 ### `UserRole`
 

@@ -2,7 +2,7 @@
 
 > **Bounded Context:** Compatibilidade Alimentar (Core Engine)  
 > **Status:** Concluído e Homologado  
-> **Última Atualização:** 2026-08-01 (FEAT-045 / Issue #31)  
+> **Última Atualização:** 2026-08-01 (FEAT-046 / Issue #32)  
 > **Documento Conceitual Primário:** [`docs/ALLERGEN_ENGINE.md`](../ALLERGEN_ENGINE.md)
 
 ---
@@ -18,7 +18,7 @@ O `AllergenEngine` é o serviço de domínio puro e agnóstico a banco de dados 
 | Regra | Condição | Resultado |
 |:---|:---|:---|
 | **R1** | Produto sem ingredientes declarados | `BLOCKED` *(princípio da precaução)* |
-| **R2** | Perfil sem restrições ativas | `SAFE` *(sem dados para bloquear)* |
+| **R2** | Perfil sem restrições ativas | `UNEVALUATED` *(perfil incompleto - RN-CONSUMER-07)* |
 | **R3** | Restrição `FATAL` + alérgeno nos ingredientes | `BLOCKED` |
 | **R4** | Restrição `FATAL` + alérgeno nos traços (contaminação cruzada) | `BLOCKED` |
 | **R5** | Restrição `HIGH` + alérgeno nos ingredientes | `DANGER` |
@@ -33,7 +33,8 @@ O `AllergenEngine` é o serviço de domínio puro e agnóstico a banco de dados 
 
 Suíte de testes mantida em [`backend/tests/unit/domain/allergen-engine/AllergenEngine.spec.ts`](../../backend/tests/unit/domain/allergen-engine/AllergenEngine.spec.ts):
 
-- **TC-01 a TC-09**: Casos críticos fundamentais (produto com glúten, traços, sem glúten, severidades `HIGH`/`MEDIUM`, ausência de ingredientes, múltiplas restrições e perfil inativo).
+- **TC-01 a TC-08**: Casos críticos fundamentais (produto com glúten, traços, sem glúten, severidades `HIGH`/`MEDIUM`, ausência de ingredientes, múltiplas restrições).
+- **TC-09**: Perfil inativo (sem restrições) → `UNEVALUATED` e `isCompatible = false` *(RN-CONSUMER-07 / Issue #32)*.
 - **TC-10**: Severidade `HIGH` + traços + `acceptsCrossContamination = false` → retorne `DANGER`.
 - **TC-11**: Severidade `HIGH` + traços + `acceptsCrossContamination = true` → retorne `WARNING`.
 - **TC-12**: Severidade `FATAL` + traços + `acceptsCrossContamination = true` → retorne `BLOCKED` *(invariante biológica imutável)*.

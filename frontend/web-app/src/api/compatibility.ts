@@ -8,7 +8,7 @@
 //
 import { apiClient } from './client';
 
-export type RiskLevel = 'SAFE' | 'WARNING' | 'DANGER' | 'BLOCKED';
+export type RiskLevel = 'SAFE' | 'WARNING' | 'DANGER' | 'BLOCKED' | 'UNEVALUATED';
 
 export interface ConflictDetail {
   allergen: string;

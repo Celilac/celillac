@@ -19,7 +19,7 @@ import { RiskLevel } from './RiskLevel';
  *
  * Regras implementadas (aprovadas em 2026-06-30):
  *  R1. Produto sem ingredientes declarados → BLOCKED (princípio da precaução).
- *  R2. Perfil sem restrições → SAFE (sem dados para bloquear).
+ *  R2. Perfil sem restrições → UNEVALUATED (sem dados suficientes para avaliar - RN-CONSUMER-07).
  *  R3. FATAL + alérgeno presente nos ingredientes → BLOCKED.
  *  R4. FATAL + alérgeno nos traços (cross_contamination) → BLOCKED.
  *  R5. HIGH + alérgeno presente → DANGER.
@@ -33,9 +33,13 @@ export class AllergenEngine {
    * Agnóstico a banco de dados — recebe apenas objetos de domínio.
    */
   static check(profile: FoodProfile, product: ProductSnapshot): CompatibilityReport {
-    // R2: Perfil sem restrições → SAFE
+    // R2: Perfil sem restrições → UNEVALUATED (RN-CONSUMER-07 / Invariante 11.6: não gerar falsa segurança)
     if (!profile.isActive()) {
-      return AllergenEngine.buildReport(RiskLevel.SAFE, [], 'Perfil sem restrições ativas.');
+      return AllergenEngine.buildReport(
+        RiskLevel.UNEVALUATED,
+        [],
+        'Perfil sem restrições ativas. Configure seu perfil para avaliar a compatibilidade do produto.',
+      );
     }
 
     // R1: Produto sem ingredientes → BLOCKED (princípio da precaução)
@@ -175,10 +179,11 @@ export class AllergenEngine {
 
   private static riskOrder(risk: RiskLevel): number {
     const order: Record<RiskLevel, number> = {
-      [RiskLevel.SAFE]:    0,
-      [RiskLevel.WARNING]: 1,
-      [RiskLevel.DANGER]:  2,
-      [RiskLevel.BLOCKED]: 3,
+      [RiskLevel.UNEVALUATED]: -1,
+      [RiskLevel.SAFE]:        0,
+      [RiskLevel.WARNING]:     1,
+      [RiskLevel.DANGER]:      2,
+      [RiskLevel.BLOCKED]:     3,
     };
     return order[risk];
   }

@@ -170,16 +170,18 @@ describe('TC-08: Múltiplas restrições, todas em conflito', () => {
 });
 
 // ============================================================
-// TC-09: Perfil inativo (sem restrições) + qualquer produto → SAFE
+// TC-09: Perfil inativo (sem restrições) + qualquer produto → UNEVALUATED
+// REGRA CRÍTICA (RN-CONSUMER-07): perfil incompleto não deve gerar falsa segurança
 // ============================================================
-describe('TC-09: Perfil sem restrições — produto qualquer', () => {
-  it('deve retornar SAFE pois não há dados de restrição', () => {
+describe('TC-09: Perfil sem restrições — produto qualquer (RN-CONSUMER-07)', () => {
+  it('deve retornar UNEVALUATED e isCompatible=false para evitar falsa segurança', () => {
     const profile = makeProfile([]);
     const product = makeProduct({ hasGluten: true });
     const report  = AllergenEngine.check(profile, product);
 
-    expect(report.riskLevel).toBe(RiskLevel.SAFE);
-    expect(report.isCompatible).toBe(true);
+    expect(report.riskLevel).toBe(RiskLevel.UNEVALUATED);
+    expect(report.isCompatible).toBe(false);
+    expect(report.reasoning).toContain('Perfil sem restrições');
   });
 });
 

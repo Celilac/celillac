@@ -16,6 +16,7 @@ const _riskConfig = <RiskLevel, _RiskConfig>{
   RiskLevel.warning: _RiskConfig(AppColors.riskWarningBg, '🟡', 'ATENÇÃO'),
   RiskLevel.danger: _RiskConfig(AppColors.riskDangerBg, '⚠️', 'PERIGO'),
   RiskLevel.blocked: _RiskConfig(AppColors.riskBlockedBg, '⛔', 'BLOQUEADO'),
+  RiskLevel.unevaluated: _RiskConfig(AppColors.riskUnevaluatedBg, '⚪', 'PERFIL INCOMPLETO'),
 };
 
 /// Banner de resultado de compatibilidade.
