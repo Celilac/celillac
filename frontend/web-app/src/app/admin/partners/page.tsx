@@ -188,11 +188,7 @@ export default function AdminPartnersPage() {
             partners.map((partner) => (
               <section key={partner.id} className={styles.card}>
                 <div className={styles.cardContent}>
-<<<<<<< HEAD
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-=======
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
->>>>>>> develop
                     <h2 className={styles.partnerName}>{partner.name}</h2>
                     {getStatusLabel(partner.approvalStatus)}
                   </div>
@@ -408,7 +404,6 @@ export default function AdminPartnersPage() {
         {/* Modal de Justificativa */}
         {actionType && activePartner && (
           <div className={styles.dialogOverlay} onClick={closeModal}>
-<<<<<<< HEAD
             <div
               className={styles.dialogCard}
               role="dialog"
@@ -416,11 +411,7 @@ export default function AdminPartnersPage() {
               aria-labelledby="reason-modal-heading"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 id="reason-modal-heading" className={styles.partnerName} style={{ fontSize: 'var(--text-title)', marginBottom: '0.75rem' }}>
-=======
-            <div className={styles.dialogCard} onClick={(e) => e.stopPropagation()}>
-              <h2 className={styles.modalTitle} style={{ marginBottom: '0.75rem' }}>
->>>>>>> develop
+              <h2 id="reason-modal-heading" className={styles.modalTitle} style={{ marginBottom: '0.75rem' }}>
                 {actionType === 'REJECT' ? 'Rejeitar Cadastro' : 'Suspender Estabelecimento'}
               </h2>
               <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>

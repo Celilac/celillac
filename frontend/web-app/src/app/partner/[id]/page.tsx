@@ -164,7 +164,6 @@ export default function PartnerDashboardPage({ params }: PageProps) {
     }
 
     return (
-    return (
       <div className={`${styles.alertBanner} ${styles.alertBannerInfo}`} style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
         <span style={{ fontSize: '1.25rem' }}>✅</span>
         <div>
@@ -267,8 +266,6 @@ export default function PartnerDashboardPage({ params }: PageProps) {
                   <span className={styles.slider}></span>
                 </label>
               </div>
-            </div>
-          </aside>
             </div>
           </aside>
         </div>
