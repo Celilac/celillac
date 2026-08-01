@@ -104,6 +104,12 @@ export class User extends Entity<UserProps> {
     }
   }
 
+  public promoteToAdmin(): void {
+    this.props.role = UserRole.ADMIN;
+    this.props.accountStatus = 'ACTIVE';
+    this.props.profileEvaluationStatus = 'APPROVED';
+  }
+
   public evaluateProfile(status: ProfileEvaluationStatus): void {
     this.props.profileEvaluationStatus = status;
   }

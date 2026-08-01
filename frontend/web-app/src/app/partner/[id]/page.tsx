@@ -164,7 +164,8 @@ export default function PartnerDashboardPage({ params }: PageProps) {
     }
 
     return (
-      <div className={`${styles.alertBanner} ${styles.alertBannerInfo}`} style={{ background: 'var(--color-status-approved-bg)', color: 'var(--color-status-approved)', borderColor: 'var(--color-status-approved-border)' }}>
+    return (
+      <div className={`${styles.alertBanner} ${styles.alertBannerInfo}`} style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
         <span style={{ fontSize: '1.25rem' }}>✅</span>
         <div>
           <strong>Cadastro Aprovado e Homologado</strong>
@@ -222,21 +223,21 @@ export default function PartnerDashboardPage({ params }: PageProps) {
           <section className={styles.mainPanel}>
             <div className={styles.card} style={{ gap: '1rem' }}>
               <h2 className={styles.sectionTitle}>🏢 Informações Cadastrais</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: 'var(--text-body)', color: 'var(--color-text-muted)' }}>
+              <div className={styles.infoGrid}>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>Razão/Nome Fantasia:</strong> {partner.name}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>CNPJ:</strong> {partner.cnpj || 'Não informado (Pessoa Física)'}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>Tipo:</strong> {partner.type}</p>
+                  <p className={styles.infoRow}><strong>Razão/Nome Fantasia:</strong> <span>{partner.name}</span></p>
+                  <p className={styles.infoRow}><strong>CNPJ:</strong> <span>{partner.cnpj || 'Não informado (Pessoa Física)'}</span></p>
+                  <p className={styles.infoRow}><strong>Tipo:</strong> <span>{partner.type}</span></p>
                 </div>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>Cidade/Estado:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não cadastrado'}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>Região Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong>Telefone de Contato:</strong> {partner.phone}</p>
+                  <p className={styles.infoRow}><strong>Cidade/Estado:</strong> <span>{partner.city ? `${partner.city} - ${partner.state}` : 'Não cadastrado'}</span></p>
+                  <p className={styles.infoRow}><strong>Região Atendimento:</strong> <span>{partner.deliveryRegion || 'Local'}</span></p>
+                  <p className={styles.infoRow}><strong>Telefone de Contato:</strong> <span>{partner.phone}</span></p>
                 </div>
               </div>
-              <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
-                <p><strong>Descrição Comercial:</strong></p>
-                <p style={{ color: 'var(--color-text-muted)', marginTop: '0.25rem', fontSize: 'var(--text-body)', lineHeight: '1.6' }}>
+              <div style={{ marginTop: '0.5rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
+                <p className={styles.infoRow}><strong>Descrição Comercial:</strong></p>
+                <p className={styles.partnerDescription} style={{ marginTop: '0.25rem' }}>
                   {partner.description || 'Nenhuma descrição adicionada.'}
                 </p>
               </div>
@@ -249,30 +250,25 @@ export default function PartnerDashboardPage({ params }: PageProps) {
               
               <div className={styles.toggleContainer}>
                 <div>
-                  <p style={{ fontWeight: '600', color: 'var(--color-text)' }}>
-                    {partner.operationalStatus === 'ACTIVE' ? '🟢 Aberto' :
-                     partner.operationalStatus === 'TEMPORARILY_CLOSED' ? '🟡 Temporariamente Fechado' : '🔴 Inativo'}
-                  </p>
-                  <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
-                    {partner.operationalStatus === 'ACTIVE' ? 'Visível na busca e apto a operar.' : 'Exibe aviso de fechamento aos clientes.'}
+                  <strong>{partner.operationalStatus === 'ACTIVE' ? '🟢 Aberto' : '🔴 Fechado'}</strong>
+                  <p style={{ fontSize: '0.8rem', marginTop: '0.25rem' }} className={styles.subtitle}>
+                    {partner.operationalStatus === 'ACTIVE' 
+                      ? 'Visível para clientes e aceitando pedidos.' 
+                      : 'Exibe aviso de fechamento aos clientes.'}
                   </p>
                 </div>
-                <label className={styles.switch} id="operational-toggle">
+                <label className={styles.switch}>
                   <input 
                     type="checkbox" 
                     checked={partner.operationalStatus === 'ACTIVE'}
                     onChange={handleToggleOperationalStatus}
-                    disabled={partner.approvalStatus === 'SUSPENDED' || updating}
+                    disabled={updating}
                   />
                   <span className={styles.slider}></span>
                 </label>
               </div>
-
-              {partner.approvalStatus === 'SUSPENDED' && (
-                <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-status-rejected)', fontStyle: 'italic' }}>
-                  * Controle operacional bloqueado devido a suspensão administrativa.
-                </p>
-              )}
+            </div>
+          </aside>
             </div>
           </aside>
         </div>
