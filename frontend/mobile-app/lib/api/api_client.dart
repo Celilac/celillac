@@ -6,8 +6,11 @@ import 'package:http/http.dart' as http;
 import 'api_exception.dart';
 import 'models/auth_models.dart';
 import 'models/compatibility_models.dart';
+import 'models/favorite_models.dart';
 import 'models/food_profile_models.dart';
 import 'models/product_models.dart';
+import 'models/report_models.dart';
+import 'models/review_models.dart';
 
 /// Camada única de comunicação HTTP do app mobile (docs/API_CONTRACTS.md §9).
 /// NUNCA chamar a API de outro lugar do app — apenas via este cliente.
@@ -17,17 +20,12 @@ class ApiClient {
   final http.Client _httpClient;
   String? _authToken;
 
-  /// Porta do backend em dev. O valor documentado em API_CONTRACTS.md/.env.example
-  /// é 3000, mas o backend local atual roda em 3002 (backend/.env) — ajuste aqui
-  /// se a porta do seu ambiente for diferente.
   static const int _devPort = 3002;
 
   static String get _baseUrl {
     if (Platform.isAndroid) {
-      // Emulador Android → localhost da máquina hospedeira.
       return 'http://10.0.2.2:$_devPort';
     }
-    // Simulador iOS ou dispositivo físico com túnel local.
     return 'http://localhost:$_devPort';
   }
 
@@ -51,6 +49,9 @@ class ApiClient {
     switch (method) {
       case 'POST':
         response = await _httpClient.post(uri, headers: headers, body: jsonEncode(body ?? {}));
+        break;
+      case 'DELETE':
+        response = await _httpClient.delete(uri, headers: headers);
         break;
       case 'GET':
       default:
@@ -125,6 +126,99 @@ class ApiClient {
       method: 'POST',
       body: {'userId': userId, 'productId': productId},
       parse: (json) => CompatibilityReport.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  // ─── Favorites ──────────────────────────────────────────────────────────
+
+  Future<FavoriteItem> addFavorite({String? productId, String? partnerId}) {
+    return _request(
+      '/favorites',
+      method: 'POST',
+      body: {
+        if (productId != null) 'productId': productId,
+        if (partnerId != null) 'partnerId': partnerId,
+      },
+      parse: (json) => FavoriteItem.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<void> removeFavorite(String targetId) {
+    return _request(
+      '/favorites/$targetId',
+      method: 'DELETE',
+      parse: (_) {},
+    );
+  }
+
+  Future<List<FavoriteItem>> getFavorites() {
+    return _request(
+      '/favorites',
+      parse: (json) => (json as List<dynamic>)
+          .map((e) => FavoriteItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  // ─── Reviews ────────────────────────────────────────────────────────────
+
+  Future<ReviewItem> submitReview({
+    String? productId,
+    String? partnerId,
+    required int rating,
+    String? comment,
+  }) {
+    return _request(
+      '/reviews',
+      method: 'POST',
+      body: {
+        if (productId != null) 'productId': productId,
+        if (partnerId != null) 'partnerId': partnerId,
+        'rating': rating,
+        if (comment != null && comment.isNotEmpty) 'comment': comment,
+      },
+      parse: (json) => ReviewItem.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<List<ReviewItem>> getProductReviews(String productId) {
+    return _request(
+      '/reviews/product/$productId',
+      parse: (json) => (json as List<dynamic>)
+          .map((e) => ReviewItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Future<List<ReviewItem>> getPartnerReviews(String partnerId) {
+    return _request(
+      '/reviews/partner/$partnerId',
+      parse: (json) => (json as List<dynamic>)
+          .map((e) => ReviewItem.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  // ─── Reports ────────────────────────────────────────────────────────────
+
+  Future<ReportItem> createReport({
+    String? productId,
+    String? partnerId,
+    required String reason,
+    String? details,
+    bool isFoodSafetyRisk = false,
+  }) {
+    return _request(
+      '/admin/reports',
+      method: 'POST',
+      body: {
+        if (productId != null) 'productId': productId,
+        if (partnerId != null) 'partnerId': partnerId,
+        'reason': reason,
+        if (details != null && details.isNotEmpty) 'details': details,
+        'isFoodSafetyRisk': isFoodSafetyRisk,
+      },
+      parse: (json) => ReportItem.fromJson(json as Map<String, dynamic>),
     );
   }
 }

@@ -1,33 +1,27 @@
-# Feature: Favoritos (RF19)
+# Módulo de Favoritos (Saved Favorites)
 
-**Status:** ✅ Implementado
-**Entregue em:** 2026-07-18
-**Regras de domínio:** [`docs/DOMAIN_MODEL.md`](../DOMAIN_MODEL.md)
+## 📌 Status
+✅ Implementado (Backend & Frontend Web/Mobile)
 
-## Descrição
-Permite que consumidores autenticados favoritem tanto produtos individuais quanto parceiros comerciais (estabelecimentos) para acesso rápido no perfil do usuário.
+## 📖 Descrição
+Este módulo permite que os consumidores autenticados salvem produtos e parceiros comerciais (restaurantes, lojas, produtores) para acesso rápido e personalizado nas interfaces Web e Mobile.
 
-## Endpoints
+## 🔗 Domínio
+Regras de negócio conceituais sobre gestão de favoritos podem ser encontradas em [`docs/DOMAIN_MODEL.md`](../DOMAIN_MODEL.md).
 
-| Método | Rota | Autenticação | Descrição |
-|:-------|:-----|:------------:|:----------|
-| `POST` | `/favorites` | Sim | Adiciona um produto ou parceiro comercial aos favoritos |
-| `DELETE`| `/favorites/:targetId` | Sim | Remove a associação de favoritos |
-| `GET`  | `/favorites` | Sim | Retorna a lista de favoritos do usuário autenticado |
+## 🚀 Endpoints
+Para contratos completos de request/response, consulte [`docs/API_CONTRACTS.md`](../API_CONTRACTS.md).
 
-## Domínio e Entidades
-- `Favorite`: Entidade que representa o vínculo de favorito.
-- Validação: O favorito deve possuir o `userId` e pelo menos um alvo válido (`productId` ou `partnerId`).
+| Método | Rota | Descrição | Restrição |
+|:-------|:-----|:----------|:----------|
+| `POST` | `/favorites` | Adiciona um produto (`productId`) ou parceiro (`partnerId`) aos favoritos. | Usuários Autenticados |
+| `DELETE` | `/favorites/:targetId` | Remove um item da lista de favoritos. | Usuários Autenticados |
+| `GET` | `/favorites` | Lista todos os favoritos salvos pelo consumidor autenticado. | Usuários Autenticados |
 
-## Banco de Dados
-Mapeado na tabela `user_favorites` (migration `008`):
-- `id` UUID PK
-- `user_id` UUID FK -> users
-- `product_id` UUID FK -> products (nullable)
-- `partner_id` UUID FK -> partners (nullable)
-- Constraints de unicidade para evitar duplicados por usuário por alvo.
+## 🏗️ Entidades Principais
+- `Favorite`: Entidade que representa a associação de preferência entre um consumidor e um produto ou parceiro comercial.
 
-## Testes
-
-- `backend/tests/unit/domain/favorites/Favorite.spec.ts`
-- `backend/tests/unit/application/favorites/FavoriteUseCases.spec.ts`
+## 🛡️ Regras Críticas (Application/Domain)
+1. Uma denúncia ou avaliação não afeta automaticamente o status de favorito.
+2. Cada usuário pode favoritar um mesmo item no máximo uma vez.
+3. Requisições sem `productId` nem `partnerId` são rejeitadas pelo UseCase.

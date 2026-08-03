@@ -68,6 +68,12 @@ export function Header() {
           </Link>
         )}
 
+        {mounted && isAuthenticated && (
+          <Link href="/favorites" className="btn btn-ghost" onClick={() => setMenuOpen(false)}>
+            ❤️ Favoritos
+          </Link>
+        )}
+
         <Link href="/public-partners" className="btn btn-ghost" onClick={() => setMenuOpen(false)}>
           🏢 Estabelecimentos
         </Link>
