@@ -6,7 +6,7 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-35%20suites%20%7C%20172%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-39%20suites%20%7C%20213%20passing-brightgreen)](#-testes)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20%2B%20Oracle%20Cloud-orange)](#-segurança--governança)
 
 ---
@@ -132,7 +132,7 @@ cd backend
 npm test
 ```
 
-**38 suítes de teste | 182 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
+**39 suítes de teste | 213 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
