@@ -23,12 +23,19 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
   const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
+      let data: any = null;
       if (productId) {
-        const data = await reviewApi.getByProduct(productId);
-        setReviews(data);
+        data = await reviewApi.getByProduct(productId);
       } else if (partnerId) {
-        const data = await reviewApi.getByPartner(partnerId);
+        data = await reviewApi.getByPartner(partnerId);
+      }
+
+      if (Array.isArray(data)) {
         setReviews(data);
+      } else if (data && Array.isArray(data.reviews)) {
+        setReviews(data.reviews);
+      } else {
+        setReviews([]);
       }
     } catch (_) {
       setReviews([]);
@@ -41,9 +48,11 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
     fetchReviews();
   }, [fetchReviews]);
 
+  const safeReviews = Array.isArray(reviews) ? reviews : [];
+
   const averageRating =
-    reviews.length > 0
-      ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+    safeReviews.length > 0
+      ? (safeReviews.reduce((acc, r) => acc + r.rating, 0) / safeReviews.length).toFixed(1)
       : '0.0';
 
   return (
@@ -56,7 +65,7 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 'var(--text-body)', color: 'var(--color-text-muted)' }}>
             <span style={{ fontSize: '1.25rem', color: '#f59e0b' }}>⭐</span>
             <strong style={{ fontSize: '1.25rem', color: 'var(--color-text)' }}>{averageRating}</strong>
-            <span>({reviews.length} {reviews.length === 1 ? 'avaliação' : 'avaliações'})</span>
+            <span>({safeReviews.length} {safeReviews.length === 1 ? 'avaliação' : 'avaliações'})</span>
           </div>
         </div>
 
@@ -74,14 +83,14 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
         <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', padding: '2rem 0', fontSize: 'var(--text-body)' }}>
           Carregando avaliações...
         </p>
-      ) : reviews.length === 0 ? (
+      ) : safeReviews.length === 0 ? (
         <div className={styles.emptyState} style={{ padding: '2rem 1rem' }}>
           <span className={styles.emptyIcon}>⭐</span>
           <p style={{ fontSize: 'var(--text-body)' }}>Nenhuma avaliação enviada ainda. Seja o primeiro a avaliar!</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '320px', overflowY: 'auto' }}>
-          {reviews.map((rev) => (
+          {safeReviews.map((rev) => (
             <div
               key={rev.id}
               style={{

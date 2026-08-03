@@ -108,6 +108,15 @@ class ApiClient {
     );
   }
 
+  Future<FoodProfile> updateFoodProfile(String userId, FoodProfilePayload payload) {
+    return _request(
+      '/food-profile/$userId',
+      method: 'PUT',
+      body: payload.toJson(),
+      parse: (json) => FoodProfile.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
   // ─── Catalog ────────────────────────────────────────────────────────────
 
   Future<CatalogResponse> searchProducts(String query, {int page = 1, int limit = 20}) {
@@ -115,6 +124,13 @@ class ApiClient {
     return _request(
       '/catalog/products?q=$q&page=$page&limit=$limit',
       parse: (json) => CatalogResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<Product> getProductById(String id) {
+    return _request(
+      '/catalog/products/$id',
+      parse: (json) => Product.fromJson(json as Map<String, dynamic>),
     );
   }
 
