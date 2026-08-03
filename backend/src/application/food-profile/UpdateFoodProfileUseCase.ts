@@ -48,6 +48,8 @@ export class UpdateFoodProfileUseCase {
       const restrictionResult = Restriction.create({
         allergen: r.allergen as AllergenType,
         severity: r.severity as SeverityLevel,
+        type:     r.type as any,
+        notes:    r.notes,
       });
       if (restrictionResult.isFailure) {
         return Result.fail<FoodProfileResponseDTO>(restrictionResult.getError());
@@ -84,6 +86,8 @@ export class UpdateFoodProfileUseCase {
         id:       r.id,
         allergen: r.allergen,
         severity: r.severity,
+        type:     r.type,
+        notes:    r.notes,
       })),
     };
   }

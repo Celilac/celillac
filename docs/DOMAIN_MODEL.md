@@ -60,6 +60,7 @@
     - Deve suportar "Traços de Alérgenos" como um modificador de risco.
     - Respeita a **RN-CONSUMER-07 / Invariante 11.6**: se o consumidor possui perfil incompleto/sem restrições (`!profile.isActive()`), o sistema retorna `UNEVALUATED` e `isCompatible = false`, eliminando a falsa sensação de segurança.
     - Respeita a **Invariante 11.5 (Tolerância a Contaminação Cruzada)**: se `acceptsCrossContamination === false`, traços para severidades `HIGH` elevam o risco de `WARNING` para `DANGER`. Para `FATAL`, o resultado é sempre `BLOCKED` (invariante biológica imutável).
+    - Respeita a **RN-CONSUMER-05 (Issue #34 — aprovado 2026-08-01)**: uma restrição com `type === ALLERGY` exige severidade mínima `MEDIUM`. A regra é implementada em `Restriction.create()` (Abordagem A — Fail Fast). O `AllergenEngine` recebe apenas objetos de domínio válidos e não precisa corrigir dados de entrada. O campo `type` é propagado no `ConflictDetail` e no `reasoning` para transparência no frontend.
     - As 9 regras do motor (R1–R9) estão definidas em `docs/ALLERGEN_ENGINE.md` e são imutáveis sem aprovação humana.
     - ⚠️ **Contexto de máxima criticidade** — qualquer alteração exige aprovação humana.
 

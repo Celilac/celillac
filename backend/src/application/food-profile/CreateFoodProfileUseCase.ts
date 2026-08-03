@@ -10,6 +10,8 @@ import { Result } from '../../domain/Result';
 export interface RestrictionDTO {
   allergen: string;
   severity: string;
+  type?: string;
+  notes?: string;
 }
 
 export interface CreateFoodProfileDTO {
@@ -27,6 +29,8 @@ export interface FoodProfileResponseDTO {
     id:       string;
     allergen: string;
     severity: string;
+    type?:     string;
+    notes?:    string;
   }>;
 }
 
@@ -62,6 +66,8 @@ export class CreateFoodProfileUseCase {
       const restrictionResult = Restriction.create({
         allergen: r.allergen as AllergenType,
         severity: r.severity as SeverityLevel,
+        type:     r.type as any,
+        notes:    r.notes,
       });
       if (restrictionResult.isFailure) {
         return Result.fail<FoodProfileResponseDTO>(restrictionResult.getError());
@@ -106,6 +112,8 @@ export class CreateFoodProfileUseCase {
         id:       r.id,
         allergen: r.allergen,
         severity: r.severity,
+        type:     r.type,
+        notes:    r.notes,
       })),
     };
   }

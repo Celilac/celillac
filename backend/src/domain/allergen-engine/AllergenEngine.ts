@@ -8,6 +8,7 @@
 import { FoodProfile } from '../food-profile/FoodProfile';
 import { AllergenType, ALLERGEN_SEARCH_TERMS } from '../food-profile/value-objects/AllergenType';
 import { SeverityLevel, SEVERITY_ORDER } from '../food-profile/value-objects/SeverityLevel';
+import { RestrictionType } from '../food-profile/value-objects/RestrictionType';
 import { CompatibilityReport, ConflictDetail } from './CompatibilityReport';
 import { ProductSnapshot } from './ProductSnapshot';
 import { RiskLevel } from './RiskLevel';
@@ -57,7 +58,7 @@ export class AllergenEngine {
     let highestRisk = RiskLevel.SAFE;
 
     for (const restriction of profile.restrictions) {
-      const { allergen, severity } = restriction;
+      const { allergen, severity, type } = restriction;
       const searchTerms = ALLERGEN_SEARCH_TERMS[allergen];
 
       // Caso especial: GLUTEN pode ser checado pelo campo has_gluten
@@ -86,12 +87,13 @@ export class AllergenEngine {
       const reason = AllergenEngine.buildReason(
         allergen,
         severity,
+        type,
         foundInIngredients,
         foundInCrossContamination,
         profile.acceptsCrossContamination,
       );
 
-      conflicts.push({ allergen, severity, reason });
+      conflicts.push({ allergen, severity, type, reason });
 
       // R8: manter o risco mais alto
       if (AllergenEngine.riskOrder(conflictRisk) > AllergenEngine.riskOrder(highestRisk)) {
@@ -146,11 +148,13 @@ export class AllergenEngine {
   private static buildReason(
     allergen: AllergenType,
     severity: SeverityLevel,
+    type: RestrictionType,
     inIngredients: boolean,
     inCrossContamination: boolean,
     acceptsCrossContamination: boolean,
   ): string {
-    const parts: string[] = [`[${severity}] ${allergen}`];
+    // Inclui o tipo de restrição no prefixo para transparência no frontend (Issue #34 / RN-CONSUMER-05)
+    const parts: string[] = [`[${type}/${severity}] ${allergen}`];
     if (inIngredients) {
       parts.push('detectado nos ingredientes');
     }

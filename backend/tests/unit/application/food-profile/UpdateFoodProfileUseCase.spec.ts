@@ -35,7 +35,8 @@ describe('UpdateFoodProfileUseCase', () => {
     const existingProfile = FoodProfile.create({
       userId: 'user-123',
       restrictions: [
-        Restriction.create({ allergen: AllergenType.LACTOSE, severity: SeverityLevel.LOW }).getValue(),
+        // type: INTOLERANCE para LOW — ALLERGY+LOW é rejeitado pela RN-CONSUMER-05
+        Restriction.create({ allergen: AllergenType.LACTOSE, severity: SeverityLevel.LOW, type: 'INTOLERANCE' as any }).getValue(),
       ],
     }).getValue();
 
@@ -64,7 +65,7 @@ describe('UpdateFoodProfileUseCase', () => {
       userId: 'user-123',
       restrictions: [
         { allergen: 'GLUTEN', severity: 'FATAL' },
-        { allergen: 'GLUTEN', severity: 'LOW' },
+        { allergen: 'GLUTEN', severity: 'FATAL' }, // duplicado — deve falhar com "já existe neste perfil"
       ],
     });
 

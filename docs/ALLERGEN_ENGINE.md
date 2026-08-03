@@ -40,6 +40,8 @@ As 9 regras abaixo são a **única definição oficial** de como o motor funcion
 
 > **Nota sobre R9 (Invariante 11.5):** Quando o consumidor declara `acceptsCrossContamination = false` (padrão do sistema para máxima segurança), o alérgeno detectado nos traços para restrições de severidade `HIGH` eleva o risco para `DANGER`. Para severidade `FATAL`, o resultado é sempre `BLOCKED` independente da tolerância declarada.
 
+> **RN-CONSUMER-05 (Issue #34 — aprovado 2026-08-01):** Uma restrição com `type === ALLERGY` exige severidade mínima `MEDIUM`. A regra vive em `Restriction.create()` (não no motor). O motor é enxuto: recebe apenas objetos de domínio válidos. O campo `type` da restrição é agora propagado para `ConflictDetail.type` e incluído no `reasoning` para transparência no frontend (“Alergia” vs. “Intolerância”). A combinação `ALLERGY + LOW/LIFESTYLE` é rejeitada na fronteira do domínio com HTTP 422.
+
 ---
 
 ## 3. Tipos de Risco (`RiskLevel`)
@@ -150,7 +152,8 @@ interface CompatibilityReport {
 interface ConflictDetail {
   allergen:  AllergenType;   // Qual alérgeno causou o conflito
   severity:  SeverityLevel;  // Severidade do perfil para esse alérgeno
-  reason:    string;         // Texto: "[FATAL] GLUTEN — detectado nos ingredientes"
+  type:      RestrictionType; // Tipo da restrição (ALLERGY, INTOLERANCE, etc.) — adicionado Issue #34
+  reason:    string;         // Texto: "[ALLERGY/FATAL] GLUTEN — detectado nos ingredientes"
 }
 ```
 

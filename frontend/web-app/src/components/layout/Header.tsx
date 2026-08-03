@@ -52,15 +52,15 @@ export function Header() {
         id="topbar-nav"
         className={`topbar-actions${menuOpen ? ' topbar-actions--open' : ''}`}
       >
+        <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+
         {mounted && isAuthenticated && (
           <Link href="/" className="btn btn-ghost home-button" id="header-home-btn" onClick={() => setMenuOpen(false)}>
             🏠 Início
           </Link>
         )}
-
-        <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
-          {theme === 'dark' ? '☀️' : '🌙'}
-        </button>
 
         {mounted && isAuthenticated && (
           <Link href="/dashboard" className="btn btn-ghost" onClick={() => setMenuOpen(false)}>

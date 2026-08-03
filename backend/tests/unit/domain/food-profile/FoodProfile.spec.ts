@@ -3,9 +3,10 @@ import { FoodProfile } from '../../../../src/domain/food-profile/FoodProfile';
 import { Restriction } from '../../../../src/domain/food-profile/Restriction';
 import { AllergenType } from '../../../../src/domain/food-profile/value-objects/AllergenType';
 import { SeverityLevel } from '../../../../src/domain/food-profile/value-objects/SeverityLevel';
+import { RestrictionType } from '../../../../src/domain/food-profile/value-objects/RestrictionType';
 
 const makeRestriction = (allergen: AllergenType, severity: SeverityLevel) =>
-  Restriction.create({ allergen, severity }).getValue();
+  Restriction.create({ allergen, severity, type: RestrictionType.INTOLERANCE }).getValue();
 
 const USER_ID = 'user-uuid-123';
 

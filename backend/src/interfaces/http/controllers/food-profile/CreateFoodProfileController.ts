@@ -16,7 +16,8 @@ export class CreateFoodProfileController extends BaseController {
       this.badRequest(res, 'O campo userId é obrigatório.');
       return;
     }
-    if (req.user?.id !== userId && req.user?.role !== 'ADMIN') {
+    const requestUserId = (req.user as any)?.userId || req.user?.id;
+    if (requestUserId !== userId && req.user?.role !== 'ADMIN') {
       this.forbidden(res, 'Você não tem permissão para criar um perfil para outro usuário.');
       return;
     }
