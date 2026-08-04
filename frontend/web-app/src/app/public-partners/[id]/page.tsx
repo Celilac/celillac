@@ -10,6 +10,9 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
+import { FavoriteButton } from '@/components/common/FavoriteButton';
+import { ReviewsList } from '@/components/common/ReviewsList';
+import { ReportModal } from '@/components/common/ReportModal';
 import styles from '../../partner/partner.module.css';
 
 interface PageProps {
@@ -26,6 +29,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
   const [partner,  setPartner]  = useState<PartnerSummary | null>(null);
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [loading,  setLoading]  = useState(true);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -91,7 +95,32 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
           <section className={styles.mainPanel}>
             {/* Detalhes do parceiro com variáveis adaptativas de tema */}
             <div className={styles.card} style={{ gap: '1rem' }}>
-              <h2 className={styles.sectionTitle}>ℹ️ Sobre o Estabelecimento</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <h2 className={styles.sectionTitle}>ℹ️ Sobre o Estabelecimento</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <FavoriteButton partnerId={partner.id} />
+                  <button
+                    type="button"
+                    onClick={() => setIsReportModalOpen(true)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.25rem',
+                      padding: '0.4rem 0.75rem',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      borderRadius: '0.75rem',
+                      border: '1px solid var(--color-border)',
+                      backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                      color: '#ef4444',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    🚩 Denunciar Estabelecimento
+                  </button>
+                </div>
+              </div>
+
               <p className={styles.partnerDescription} style={{ fontSize: 'var(--text-body)', lineHeight: '1.6', WebkitLineClamp: 'none', lineClamp: 'none' }}>
                 {partner.description || 'Este parceiro ainda não forneceu uma descrição detalhada.'}
               </p>
@@ -106,6 +135,11 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                   <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🚗 Região Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
                 </div>
               </div>
+            </div>
+
+            {/* Avaliações do Parceiro */}
+            <div className={styles.card} style={{ marginTop: '1rem', padding: '1.5rem' }}>
+              <ReviewsList partnerId={partner.id} targetName={partner.name} />
             </div>
 
             {/* Listagem de produtos */}
@@ -160,6 +194,13 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
           </aside>
         </div>
       </main>
+
+      <ReportModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        partnerId={partner.id}
+        targetName={partner.name}
+      />
     </div>
   );
 }

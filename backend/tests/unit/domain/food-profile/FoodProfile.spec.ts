@@ -6,7 +6,7 @@ import { SeverityLevel } from '../../../../src/domain/food-profile/value-objects
 import { RestrictionType } from '../../../../src/domain/food-profile/value-objects/RestrictionType';
 
 const makeRestriction = (allergen: AllergenType, severity: SeverityLevel, type?: RestrictionType) =>
-  Restriction.create({ allergen, severity, type }).getValue();
+  Restriction.create({ allergen, severity, type: type || RestrictionType.INTOLERANCE }).getValue();
 
 const USER_ID = 'user-uuid-123';
 

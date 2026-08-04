@@ -134,6 +134,41 @@ export async function testDatabaseConnection(): Promise<void> {
       );
 
       ALTER TABLE products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+      CREATE TABLE IF NOT EXISTS product_reports (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        reporter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+        partner_id UUID REFERENCES partners(id) ON DELETE CASCADE,
+        reason VARCHAR(100) NOT NULL,
+        details TEXT,
+        is_food_safety_risk BOOLEAN DEFAULT false,
+        status VARCHAR(50) DEFAULT 'PENDING',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        CONSTRAINT check_product_or_partner_report CHECK (product_id IS NOT NULL OR partner_id IS NOT NULL)
+      );
+
+      ALTER TABLE product_reports ADD COLUMN IF NOT EXISTS partner_id UUID REFERENCES partners(id) ON DELETE CASCADE;
+      CREATE INDEX IF NOT EXISTS idx_product_reports_partner ON product_reports(partner_id);
+      CREATE INDEX IF NOT EXISTS idx_product_reports_product ON product_reports(product_id);
+      CREATE INDEX IF NOT EXISTS idx_product_reports_food_safety ON product_reports(is_food_safety_risk);
+
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        entity_type VARCHAR(50) NOT NULL,
+        entity_id UUID NOT NULL,
+        action VARCHAR(50) NOT NULL,
+        actor_id UUID,
+        actor_role VARCHAR(50),
+        changes JSONB NOT NULL DEFAULT '{}'::jsonb,
+        reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON audit_logs(actor_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
     `);
     console.log('[Database]: Conexão e sincronização de esquema com PostgreSQL estabelecida com sucesso.');
   } finally {

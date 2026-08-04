@@ -9,7 +9,7 @@ export class UpdateUserProfileController extends BaseController {
   }
 
   protected async executeImpl(req: Request, res: Response): Promise<void | any> {
-    const userId = (req as any).user?.id || (req as any).user?.userId;
+    const userId = (req as any).user?.userId || (req as any).user?.id;
     if (!userId) {
       return this.unauthorized(res, 'Usuário não autenticado.');
     }

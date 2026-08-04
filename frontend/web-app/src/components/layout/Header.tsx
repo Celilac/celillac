@@ -56,6 +56,10 @@ export function Header() {
         id="topbar-nav"
         className={`topbar-actions${menuOpen ? ' topbar-actions--open' : ''}`}
       >
+        <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
+
         {mounted && isAuthenticated && (
           <Link href="/" className={navLinkClass('/')} id="header-home-btn" onClick={() => setMenuOpen(false)}>
             <HomeIcon /> Início
@@ -65,6 +69,12 @@ export function Header() {
         {mounted && isAuthenticated && (
           <Link href="/dashboard" className={navLinkClass('/dashboard')} onClick={() => setMenuOpen(false)}>
             <DashboardIcon /> Dashboard
+          </Link>
+        )}
+
+        {mounted && isAuthenticated && (
+          <Link href="/favorites" className={navLinkClass('/favorites')} onClick={() => setMenuOpen(false)}>
+            ❤️ Favoritos
           </Link>
         )}
 
@@ -81,6 +91,12 @@ export function Header() {
         {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
           <Link href="/admin/partners" className={navLinkClass('/admin/partners')} onClick={() => setMenuOpen(false)}>
             <ShieldIcon /> Moderação
+          </Link>
+        )}
+
+        {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
+          <Link href="/admin/reports" className={navLinkClass('/admin/reports')} onClick={() => setMenuOpen(false)}>
+            🚨 Denúncias
           </Link>
         )}
 

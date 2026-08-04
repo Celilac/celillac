@@ -30,7 +30,7 @@ export interface FoodProfileResponseDTO {
     id:       string;
     allergen: string;
     severity: string;
-    type:     string;
+    type?:    string;
     notes?:   string;
   }>;
 }

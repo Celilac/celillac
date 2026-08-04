@@ -1,7 +1,7 @@
 # Perfil Alimentar
 
 **Status:** ✅ Implementado
-**Entregue em:** 2026-06-30, atualizado em 2026-07-28 (ver [CHANGELOG.md](../../CHANGELOG.md))
+**Entregue em:** 2026-06-30, atualizado em 2026-08-01 (FEAT-048 / Issue #34 - ver [CHANGELOG.md](../../CHANGELOG.md))
 **Contrato completo:** [`docs/API_CONTRACTS.md`](../API_CONTRACTS.md#3-perfil-alimentar)
 **Regras de domínio:** [`docs/DOMAIN_MODEL.md`](../DOMAIN_MODEL.md#1-perfil-alimentar)
 
@@ -26,6 +26,7 @@
 - Restrições `FATAL` sinalizam revalidação histórica
 - Anti-duplicidade de alérgenos
 - `acceptsCrossContamination` (falso por padrão p/ celíacos e alérgicos severos)
+- **RN-CONSUMER-05 (Issue #34):** Uma restrição do tipo `ALLERGY` exige severidade mínima `MEDIUM`. Combinações incoerentes (`ALLERGY` + `LOW`/`LIFESTYLE`) são bloqueadas com *Fail-Fast* em `Restriction.create()`.
 
 ## Testes
 
