@@ -479,13 +479,6 @@ async function seedProducts(): Promise<void> {
   }
 }
 
-async function cleanupLegacyUsers(): Promise<void> {
-  const result = await pool.query(`DELETE FROM users WHERE email NOT LIKE '%@seed.celilac.dev'`);
-  if (result.rowCount && result.rowCount > 0) {
-    console.log(`  🧹 Limpeza: ${result.rowCount} usuários legados de teste foram removidos da base.`);
-  }
-}
-
 // ─── Entry point ────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -502,9 +495,6 @@ async function main(): Promise<void> {
     console.log('📦 Verificando tabela products…');
     await createProductsTableIfNotExists();
     console.log('');
-
-    // Limpeza de usuários de teste legados fora do padrão @seed.celilac.dev
-    await cleanupLegacyUsers();
 
     // 2. Usuários
     console.log('👥 Inserindo usuários…');
