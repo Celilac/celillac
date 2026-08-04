@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { pool } from '../../../infrastructure/database/connection';
 import { PgPartnerRepository } from '../../../infrastructure/database/partner/PgPartnerRepository';
 import { PgUserRepository } from '../../../infrastructure/database/iam/PgUserRepository';
+import { PgAuditLogRepository } from '../../../infrastructure/database/audit/PgAuditLogRepository';
 
 // Casos de Uso
 import { RegisterPartnerUseCase } from '../../../application/partner/RegisterPartnerUseCase';
@@ -25,17 +26,18 @@ import { authMiddleware, adminOnlyMiddleware } from '../middlewares/AuthMiddlewa
 const router = Router();
 
 // --- Composition Root ---
-const partnerRepository = new PgPartnerRepository(pool);
-const userRepository = new PgUserRepository(pool);
+const partnerRepository  = new PgPartnerRepository(pool);
+const userRepository     = new PgUserRepository(pool);
+const auditLogRepository = new PgAuditLogRepository(pool);
 
 const registerPartnerUseCase = new RegisterPartnerUseCase(partnerRepository, userRepository);
 const getPartnerUseCase = new GetPartnerUseCase(partnerRepository);
-const approvePartnerUseCase = new ApprovePartnerUseCase(partnerRepository, userRepository);
+const approvePartnerUseCase = new ApprovePartnerUseCase(partnerRepository, userRepository, auditLogRepository);
 const submitPartnerForReviewUseCase = new SubmitPartnerForReviewUseCase(partnerRepository, userRepository);
 const updatePartnerUseCase = new UpdatePartnerUseCase(partnerRepository, userRepository);
-const rejectPartnerUseCase = new RejectPartnerUseCase(partnerRepository, userRepository);
-const suspendPartnerUseCase = new SuspendPartnerUseCase(partnerRepository, userRepository);
-const reactivatePartnerUseCase = new ReactivatePartnerUseCase(partnerRepository, userRepository);
+const rejectPartnerUseCase = new RejectPartnerUseCase(partnerRepository, userRepository, auditLogRepository);
+const suspendPartnerUseCase = new SuspendPartnerUseCase(partnerRepository, userRepository, auditLogRepository);
+const reactivatePartnerUseCase = new ReactivatePartnerUseCase(partnerRepository, userRepository, auditLogRepository);
 const updatePartnerOperationalStatusUseCase = new UpdatePartnerOperationalStatusUseCase(partnerRepository, userRepository);
 const listUserPartnersUseCase = new ListUserPartnersUseCase(partnerRepository);
 const listAdminPartnersUseCase = new ListAdminPartnersUseCase(partnerRepository, userRepository);
@@ -68,9 +70,8 @@ router.get('/partners/me/all', authMiddleware, (req, res) => partnerController.l
 // Obter o primeiro parceiro cadastrado do usuário logado (legado)
 router.get('/partners/me', authMiddleware, (req, res) => {
   req.params.id = ''; // força busca por req.user.id no GetPartnerUseCase
-  const userId = req.user?.id;
   const getPartnerUseCaseCompat = new GetPartnerUseCase(partnerRepository);
-  getPartnerUseCaseCompat.execute({ userId }).then(result => {
+  getPartnerUseCaseCompat.execute({ userId: req.user?.id }).then(result => {
     if (result.isFailure) return res.status(404).json({ success: false, error: result.getError() });
     return res.status(200).json({ success: true, data: result.getValue() });
   }).catch(err => res.status(500).json({ success: false, error: err.message }));

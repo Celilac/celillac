@@ -4,6 +4,8 @@ import { Router } from 'express';
 import { pool } from '../../../infrastructure/database/connection';
 import { PgReportRepository } from '../../../infrastructure/database/admin/PgReportRepository';
 import { PgUserRepository } from '../../../infrastructure/database/iam/PgUserRepository';
+import { PgConsumerRepository } from '../../../infrastructure/database/consumer/PgConsumerRepository';
+import { PgAuditLogRepository } from '../../../infrastructure/database/audit/PgAuditLogRepository';
 import { FakeEmailService } from '../../../infrastructure/services/FakeEmailService';
 
 import { CreateReportUseCase } from '../../../application/admin/CreateReportUseCase';
@@ -27,25 +29,27 @@ import { authMiddleware, adminOnlyMiddleware } from '../middlewares/AuthMiddlewa
 const router = Router();
 
 // Composition Root
-const reportRepository = new PgReportRepository(pool);
-const userRepository = new PgUserRepository(pool);
-const emailService = new FakeEmailService();
+const reportRepository   = new PgReportRepository(pool);
+const userRepository     = new PgUserRepository(pool);
+const consumerRepository = new PgConsumerRepository(pool);
+const auditLogRepository = new PgAuditLogRepository(pool);
+const emailService       = new FakeEmailService();
 
-const createReportUseCase = new CreateReportUseCase(reportRepository);
-const listReportsUseCase = new ListReportsUseCase(reportRepository);
-const reviewReportUseCase = new ReviewReportUseCase(reportRepository);
-const approveAdminUserUseCase = new ApproveAdminUserUseCase(userRepository, emailService);
-const listUsersUseCase = new ListUsersUseCase(userRepository);
-const evaluateUserProfileUseCase = new EvaluateUserProfileUseCase(userRepository);
-const promoteUserToAdminUseCase = new PromoteUserToAdminUseCase(userRepository);
+const createReportUseCase        = new CreateReportUseCase(reportRepository);
+const listReportsUseCase         = new ListReportsUseCase(reportRepository);
+const reviewReportUseCase        = new ReviewReportUseCase(reportRepository, auditLogRepository);
+const approveAdminUserUseCase   = new ApproveAdminUserUseCase(userRepository, emailService);
+const listUsersUseCase           = new ListUsersUseCase(userRepository);
+const evaluateUserProfileUseCase = new EvaluateUserProfileUseCase(userRepository, consumerRepository, auditLogRepository);
+const promoteUserToAdminUseCase  = new PromoteUserToAdminUseCase(userRepository);
 
-const createReportController = new CreateReportController(createReportUseCase);
-const listReportsController = new ListReportsController(listReportsUseCase);
-const reviewReportController = new ReviewReportController(reviewReportUseCase);
-const approveAdminUserController = new ApproveAdminUserController(approveAdminUserUseCase);
-const listUsersController = new ListUsersController(listUsersUseCase);
+const createReportController        = new CreateReportController(createReportUseCase);
+const listReportsController         = new ListReportsController(listReportsUseCase);
+const reviewReportController        = new ReviewReportController(reviewReportUseCase);
+const approveAdminUserController   = new ApproveAdminUserController(approveAdminUserUseCase);
+const listUsersController           = new ListUsersController(listUsersUseCase);
 const evaluateUserProfileController = new EvaluateUserProfileController(evaluateUserProfileUseCase);
-const promoteUserToAdminController = new PromoteUserToAdminController(promoteUserToAdminUseCase);
+const promoteUserToAdminController  = new PromoteUserToAdminController(promoteUserToAdminUseCase);
 
 // Rotas
 router.post('/reports', authMiddleware, (req, res) => createReportController.execute(req, res));
