@@ -12,6 +12,7 @@ class AppColors {
   static const textMuted = Color(0xFF64748B);
   static const textMutedLight = Color(0xFF94A3B8);
   static const error = Color(0xFFEF4444);
+  static const success = Color(0xFF22C55E);
 
   // Escala de severidade (onboarding + RestrictionChip)
   static const severityLifestyle = Color(0xFF6366F1);

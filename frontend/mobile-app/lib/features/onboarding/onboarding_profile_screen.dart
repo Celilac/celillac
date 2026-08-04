@@ -57,7 +57,11 @@ class _OnboardingProfileScreenState extends State<OnboardingProfileScreen> {
     try {
       final apiClient = context.read<ApiClient>();
       final profile = await apiClient.createFoodProfile(
-        FoodProfilePayload(userId: userId, restrictions: selectedList),
+        FoodProfilePayload(
+          userId: userId,
+          restrictions: selectedList,
+          acceptsCrossContamination: false,
+        ),
       );
       if (!mounted) return;
       if (profile.requiresHistoryRevalidation) {
