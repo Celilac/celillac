@@ -25,6 +25,21 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   const [isFavorite, setIsFavorite] = useState(initialIsFavorite);
   const [loading, setLoading] = useState(false);
 
+  React.useEffect(() => {
+    if (initialIsFavorite) {
+      setIsFavorite(true);
+      return;
+    }
+    if (!isAuthenticated || !token || (!productId && !partnerId)) return;
+
+    favoriteApi.list(token)
+      .then((favs) => {
+        const isFav = favs.some((f) => (productId && f.productId === productId) || (partnerId && f.partnerId === partnerId));
+        setIsFavorite(isFav);
+      })
+      .catch(() => {});
+  }, [token, isAuthenticated, productId, partnerId, initialIsFavorite]);
+
   const handleToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated || !token) {

@@ -20,7 +20,7 @@ import { ListPublicPartnersUseCase } from '../../../application/partner/ListPubl
 
 // Controladores e Middleware
 import { PartnerController } from '../controllers/partner/PartnerController';
-import { authMiddleware } from '../middlewares/AuthMiddleware';
+import { authMiddleware, adminOnlyMiddleware } from '../middlewares/AuthMiddleware';
 
 const router = Router();
 
@@ -97,18 +97,18 @@ router.get('/partners/:id', (req, res) => partnerController.getPartner(req, res)
 
 // --- Rotas Administrativas (Administração) ---
 // Listar todos os parceiros para moderação
-router.get('/admin/partners', authMiddleware, (req, res) => partnerController.listAdminPartners(req, res));
+router.get('/admin/partners', authMiddleware, adminOnlyMiddleware, (req, res) => partnerController.listAdminPartners(req, res));
 
 // Aprovar parceiro
-router.post('/partners/:id/approve', authMiddleware, (req, res) => partnerController.approve(req, res));
+router.post('/partners/:id/approve', authMiddleware, adminOnlyMiddleware, (req, res) => partnerController.approve(req, res));
 
 // Rejeitar parceiro (exige motivo no body)
-router.post('/partners/:id/reject', authMiddleware, (req, res) => partnerController.reject(req, res));
+router.post('/partners/:id/reject', authMiddleware, adminOnlyMiddleware, (req, res) => partnerController.reject(req, res));
 
 // Suspender parceiro (exige motivo no body)
-router.post('/partners/:id/suspend', authMiddleware, (req, res) => partnerController.suspend(req, res));
+router.post('/partners/:id/suspend', authMiddleware, adminOnlyMiddleware, (req, res) => partnerController.suspend(req, res));
 
 // Reativar parceiro
-router.post('/partners/:id/reactivate', authMiddleware, (req, res) => partnerController.reactivate(req, res));
+router.post('/partners/:id/reactivate', authMiddleware, adminOnlyMiddleware, (req, res) => partnerController.reactivate(req, res));
 
 export { router as partnerRouter };

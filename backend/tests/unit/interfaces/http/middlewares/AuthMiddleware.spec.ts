@@ -1,5 +1,5 @@
 // backend/tests/unit/interfaces/http/middlewares/AuthMiddleware.spec.ts
-import { authMiddleware } from '../../../../../src/interfaces/http/middlewares/AuthMiddleware';
+import { authMiddleware, adminOnlyMiddleware } from '../../../../../src/interfaces/http/middlewares/AuthMiddleware';
 import { PgBlacklistTokenRepository } from '../../../../../src/infrastructure/database/iam/PgBlacklistTokenRepository';
 import { pool } from '../../../../../src/infrastructure/database/connection';
 import { Request, Response, NextFunction } from 'express';
@@ -163,5 +163,28 @@ describe('AuthMiddleware', () => {
       error: 'Erro ao verificar permissão do usuário.',
     });
     expect(nextFunction).not.toHaveBeenCalled();
+  });
+
+  describe('adminOnlyMiddleware', () => {
+    it('deve retornar 403 Forbidden se o perfil do usuario NAO for ADMIN', () => {
+      mockRequest.user = { id: 'celiaco-1', role: 'CELIACO' };
+
+      adminOnlyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        error: 'Acesso negado. Apenas administradores possuem acesso a esta funcionalidade.',
+      });
+      expect(nextFunction).not.toHaveBeenCalled();
+    });
+
+    it('deve chamar next() se o perfil do usuario for ADMIN', () => {
+      mockRequest.user = { id: 'admin-1', role: 'ADMIN' };
+
+      adminOnlyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(nextFunction).toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalled();
+    });
   });
 });

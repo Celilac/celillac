@@ -147,9 +147,16 @@ export default function FavoritesPage() {
                 <section key={fav.id} className={styles.card}>
                   <div className={styles.cardContent}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <span className={`${styles.badge} ${isPartner ? styles.badgePending : styles.badgeApproved}`}>
-                        {isPartner ? '🏢 Parceiro' : '📦 Produto'}
-                      </span>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <span className={`${styles.badge} ${isPartner ? styles.badgePending : styles.badgeApproved}`}>
+                          {isPartner ? '🏢 Parceiro' : '📦 Produto'}
+                        </span>
+                        {!isPartner && fav.product?.category && (
+                          <span className={styles.badge} style={{ background: 'var(--color-elevated)', color: 'var(--color-text-muted)' }}>
+                            {fav.product.category}
+                          </span>
+                        )}
+                      </div>
                       <button
                         type="button"
                         onClick={() => handleRemove(targetId)}
@@ -181,8 +188,8 @@ export default function FavoritesPage() {
                     </div>
                   </div>
 
-                  {isPartner && (
-                    <div className={styles.cardActions} style={{ marginTop: '1rem' }}>
+                  <div className={styles.cardActions} style={{ marginTop: '1rem' }}>
+                    {isPartner ? (
                       <button
                         type="button"
                         className={`${styles.btn} ${styles.btnPrimary}`}
@@ -191,8 +198,17 @@ export default function FavoritesPage() {
                       >
                         🔍 Ver Perfil Completo
                       </button>
-                    </div>
-                  )}
+                    ) : (
+                      <button
+                        type="button"
+                        className={`${styles.btn} ${styles.btnPrimary}`}
+                        style={{ flex: 1 }}
+                        onClick={() => router.push(`/products/${fav.productId}`)}
+                      >
+                        📦 Ver Detalhes do Produto
+                      </button>
+                    )}
+                  </div>
                 </section>
               );
             })

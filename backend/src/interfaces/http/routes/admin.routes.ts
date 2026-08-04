@@ -22,7 +22,7 @@ import { ListUsersController } from '../controllers/admin/ListUsersController';
 import { EvaluateUserProfileController } from '../controllers/admin/EvaluateUserProfileController';
 import { PromoteUserToAdminController } from '../controllers/admin/PromoteUserToAdminController';
 
-import { authMiddleware } from '../middlewares/AuthMiddleware';
+import { authMiddleware, adminOnlyMiddleware } from '../middlewares/AuthMiddleware';
 
 const router = Router();
 
@@ -51,13 +51,13 @@ const promoteUserToAdminController = new PromoteUserToAdminController(promoteUse
 router.post('/reports', authMiddleware, (req, res) => createReportController.execute(req, res));
 
 // Rotas exclusivas de ADMIN
-router.get('/reports', authMiddleware, (req, res) => listReportsController.execute(req, res));
-router.patch('/reports/:id/status', authMiddleware, (req, res) => reviewReportController.execute(req, res));
+router.get('/reports', authMiddleware, adminOnlyMiddleware, (req, res) => listReportsController.execute(req, res));
+router.patch('/reports/:id/status', authMiddleware, adminOnlyMiddleware, (req, res) => reviewReportController.execute(req, res));
 
 // Gestão & Moderação de Usuários e Admins
-router.get('/users', authMiddleware, (req, res) => listUsersController.execute(req, res));
-router.patch('/users/:id/approve', authMiddleware, (req, res) => approveAdminUserController.execute(req, res));
-router.patch('/users/:id/evaluate', authMiddleware, (req, res) => evaluateUserProfileController.execute(req, res));
-router.patch('/users/:id/promote', authMiddleware, (req, res) => promoteUserToAdminController.execute(req, res));
+router.get('/users', authMiddleware, adminOnlyMiddleware, (req, res) => listUsersController.execute(req, res));
+router.patch('/users/:id/approve', authMiddleware, adminOnlyMiddleware, (req, res) => approveAdminUserController.execute(req, res));
+router.patch('/users/:id/evaluate', authMiddleware, adminOnlyMiddleware, (req, res) => evaluateUserProfileController.execute(req, res));
+router.patch('/users/:id/promote', authMiddleware, adminOnlyMiddleware, (req, res) => promoteUserToAdminController.execute(req, res));
 
 export { router as adminRouter };

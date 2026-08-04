@@ -91,6 +91,12 @@ export function Header() {
         )}
 
         {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
+          <Link href="/admin/reports" className="btn btn-ghost" onClick={() => setMenuOpen(false)}>
+            🚨 Denúncias
+          </Link>
+        )}
+
+        {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
           <Link href="/admin/users" className="btn btn-ghost" onClick={() => setMenuOpen(false)}>
             👥 Usuários
           </Link>

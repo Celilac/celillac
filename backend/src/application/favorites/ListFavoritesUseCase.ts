@@ -8,6 +8,21 @@ export interface FavoriteResponseDTO {
   productId?: string;
   partnerId?: string;
   createdAt:  Date;
+  product?: {
+    id: string;
+    name: string;
+    brand?: string;
+    category?: string;
+    imageUrl?: string;
+    price?: number;
+  };
+  partner?: {
+    id: string;
+    name: string;
+    type?: string;
+    city?: string;
+    state?: string;
+  };
 }
 
 export class ListFavoritesUseCase {
@@ -18,14 +33,16 @@ export class ListFavoritesUseCase {
       return Result.fail<FavoriteResponseDTO[]>('O ID do usuário é obrigatório.');
     }
 
-    const favorites = await this.favoriteRepository.findByUser(userId);
+    const items = await this.favoriteRepository.findByUser(userId);
 
-    const data = favorites.map(fav => ({
-      id:        fav.id,
-      userId:    fav.userId,
-      productId: fav.productId,
-      partnerId: fav.partnerId,
-      createdAt: fav.createdAt,
+    const data = items.map(item => ({
+      id:        item.favorite.id,
+      userId:    item.favorite.userId,
+      productId: item.favorite.productId,
+      partnerId: item.favorite.partnerId,
+      createdAt: item.favorite.createdAt,
+      product:   item.product,
+      partner:   item.partner,
     }));
 
     return Result.ok<FavoriteResponseDTO[]>(data);
