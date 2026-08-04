@@ -6,19 +6,24 @@ import { Result } from '../../domain/Result';
 
 export interface CreateReportDTO {
   reporterId: string;
-  productId: string;
+  productId?: string;
+  partnerId?: string;
   reason: string;
   details?: string;
+  isFoodSafetyRisk?: boolean;
 }
 
 export interface ReportResponseDTO {
   id: string;
   reporterId: string;
-  productId: string;
+  productId?: string;
+  partnerId?: string;
   reason: string;
+  isFoodSafetyRisk: boolean;
   status: string;
   details?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
 export class CreateReportUseCase {
@@ -28,8 +33,10 @@ export class CreateReportUseCase {
     const reportResult = Report.create({
       reporterId: dto.reporterId,
       productId: dto.productId,
+      partnerId: dto.partnerId,
       reason: dto.reason as ReportReason,
       details: dto.details,
+      isFoodSafetyRisk: dto.isFoodSafetyRisk,
     });
 
     if (reportResult.isFailure) {
@@ -43,10 +50,13 @@ export class CreateReportUseCase {
       id: report.id,
       reporterId: report.reporterId,
       productId: report.productId,
+      partnerId: report.partnerId,
       reason: report.reason,
+      isFoodSafetyRisk: report.isFoodSafetyRisk,
       status: report.status,
       details: report.details,
       createdAt: report.createdAt.toISOString(),
+      updatedAt: report.updatedAt.toISOString(),
     });
   }
 }

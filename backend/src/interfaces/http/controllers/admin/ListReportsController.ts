@@ -8,8 +8,14 @@ export class ListReportsController {
   async execute(req: Request, res: Response): Promise<Response> {
     try {
       const status = req.query.status as string;
+      const isFoodSafetyRiskQuery = req.query.isFoodSafetyRisk as string;
 
-      const result = await this.useCase.execute({ status });
+      let isFoodSafetyRisk: boolean | undefined = undefined;
+      if (isFoodSafetyRiskQuery !== undefined) {
+        isFoodSafetyRisk = isFoodSafetyRiskQuery === 'true' || isFoodSafetyRiskQuery === '1';
+      }
+
+      const result = await this.useCase.execute({ status, isFoodSafetyRisk });
 
       if (result.isFailure) {
         return res.status(400).json({ error: result.getError() });

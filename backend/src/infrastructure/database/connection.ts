@@ -76,6 +76,24 @@ export async function testDatabaseConnection(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_email_verifications_user_code ON email_verifications(user_id, code);
       CREATE INDEX IF NOT EXISTS idx_email_verifications_expires ON email_verifications(expires_at);
 
+      CREATE TABLE IF NOT EXISTS consumers (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+        general_preferences JSONB DEFAULT '{}'::jsonb,
+        is_food_profile_complete BOOLEAN DEFAULT false,
+        is_food_profile_critical BOOLEAN DEFAULT false,
+        status VARCHAR(50) NOT NULL DEFAULT 'CONTA_CRIADA',
+        status_changed_at TIMESTAMP,
+        status_changed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+        status_change_reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      ALTER TABLE consumers ADD COLUMN IF NOT EXISTS status_changed_at TIMESTAMP;
+      ALTER TABLE consumers ADD COLUMN IF NOT EXISTS status_changed_by UUID;
+      ALTER TABLE consumers ADD COLUMN IF NOT EXISTS status_change_reason TEXT;
+
       CREATE TABLE IF NOT EXISTS partners (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

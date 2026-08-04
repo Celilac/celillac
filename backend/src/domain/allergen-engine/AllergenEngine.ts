@@ -19,7 +19,7 @@ import { RiskLevel } from './RiskLevel';
  *
  * Regras implementadas (aprovadas em 2026-06-30):
  *  R1. Produto sem ingredientes declarados → BLOCKED (princípio da precaução).
- *  R2. Perfil sem restrições → SAFE (sem dados para bloquear).
+ *  R2. Perfil sem restrições → UNEVALUATED (sem dados suficientes para avaliar - RN-CONSUMER-07).
  *  R3. FATAL + alérgeno presente nos ingredientes → BLOCKED.
  *  R4. FATAL + alérgeno nos traços (cross_contamination) → BLOCKED.
  *  R5. HIGH + alérgeno presente → DANGER.
@@ -33,9 +33,13 @@ export class AllergenEngine {
    * Agnóstico a banco de dados — recebe apenas objetos de domínio.
    */
   static check(profile: FoodProfile, product: ProductSnapshot): CompatibilityReport {
-    // R2: Perfil sem restrições → SAFE
+    // R2: Perfil sem restrições → UNEVALUATED (RN-CONSUMER-07 / Invariante 11.6: não gerar falsa segurança)
     if (!profile.isActive()) {
-      return AllergenEngine.buildReport(RiskLevel.SAFE, [], 'Perfil sem restrições ativas.');
+      return AllergenEngine.buildReport(
+        RiskLevel.UNEVALUATED,
+        [],
+        'Perfil sem restrições ativas. Configure seu perfil para avaliar a compatibilidade do produto.',
+      );
     }
 
     // R1: Produto sem ingredientes → BLOCKED (princípio da precaução)
@@ -76,6 +80,7 @@ export class AllergenEngine {
         severity,
         foundInIngredients,
         foundInCrossContamination,
+        profile.acceptsCrossContamination,
       );
 
       const reason = AllergenEngine.buildReason(
@@ -83,11 +88,12 @@ export class AllergenEngine {
         severity,
         foundInIngredients,
         foundInCrossContamination,
+        profile.acceptsCrossContamination,
       );
 
       conflicts.push({ allergen, severity, reason });
 
-      // R7: manter o risco mais alto
+      // R8: manter o risco mais alto
       if (AllergenEngine.riskOrder(conflictRisk) > AllergenEngine.riskOrder(highestRisk)) {
         highestRisk = conflictRisk;
       }
@@ -107,23 +113,33 @@ export class AllergenEngine {
     severity: SeverityLevel,
     foundInIngredients: boolean,
     foundInCrossContamination: boolean,
+    acceptsCrossContamination: boolean,
   ): RiskLevel {
-    // R3 + R4: FATAL não aceita nem ingredientes nem traços
+    // R3 + R4: FATAL não aceita nem ingredientes nem traços (invariante biológica inviolável)
     if (severity === SeverityLevel.FATAL && (foundInIngredients || foundInCrossContamination)) {
       return RiskLevel.BLOCKED;
     }
-    // R5: HIGH → DANGER
+
+    // R5: HIGH em ingredientes → DANGER
     if (severity === SeverityLevel.HIGH && foundInIngredients) {
       return RiskLevel.DANGER;
     }
-    // R6: MEDIUM / LOW → WARNING
+
+    // R9 (Invariante 11.5): HIGH em traços + consumidor NÃO aceita contaminação cruzada → DANGER
+    if (severity === SeverityLevel.HIGH && foundInCrossContamination && !acceptsCrossContamination) {
+      return RiskLevel.DANGER;
+    }
+
+    // R6: MEDIUM / LOW em ingredientes → WARNING
     if (foundInIngredients) {
       return RiskLevel.WARNING;
     }
-    // Traços para severidades não-FATAL → WARNING
+
+    // R7: Traços para severidades não-FATAL → WARNING
     if (foundInCrossContamination) {
       return RiskLevel.WARNING;
     }
+
     return RiskLevel.SAFE;
   }
 
@@ -132,10 +148,19 @@ export class AllergenEngine {
     severity: SeverityLevel,
     inIngredients: boolean,
     inCrossContamination: boolean,
+    acceptsCrossContamination: boolean,
   ): string {
     const parts: string[] = [`[${severity}] ${allergen}`];
-    if (inIngredients)          parts.push('detectado nos ingredientes');
-    if (inCrossContamination)   parts.push('detectado em contaminação cruzada (traços)');
+    if (inIngredients) {
+      parts.push('detectado nos ingredientes');
+    }
+    if (inCrossContamination) {
+      parts.push(
+        !acceptsCrossContamination && severity === SeverityLevel.HIGH
+          ? 'detectado em contaminação cruzada (traços) — elevado para DANGER por não aceitar traços'
+          : 'detectado em contaminação cruzada (traços)',
+      );
+    }
     return parts.join(' — ');
   }
 
@@ -154,10 +179,11 @@ export class AllergenEngine {
 
   private static riskOrder(risk: RiskLevel): number {
     const order: Record<RiskLevel, number> = {
-      [RiskLevel.SAFE]:    0,
-      [RiskLevel.WARNING]: 1,
-      [RiskLevel.DANGER]:  2,
-      [RiskLevel.BLOCKED]: 3,
+      [RiskLevel.UNEVALUATED]: -1,
+      [RiskLevel.SAFE]:        0,
+      [RiskLevel.WARNING]:     1,
+      [RiskLevel.DANGER]:      2,
+      [RiskLevel.BLOCKED]:     3,
     };
     return order[risk];
   }

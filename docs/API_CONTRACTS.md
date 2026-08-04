@@ -37,6 +37,11 @@
 8. [Health Check](#8-health-check)
 9. [Enums de Domínio](#9-enums-de-domínio)
 10. [Regras para Agentes de IA](#10-regras-para-agentes-de-ia)
+11. [Consumidor (Consumer)](#11-consumidor-consumer)
+   - [GET /consumer/me](#get-consumerme)
+   - [PUT /consumer/preferences](#put-consumerpreferences)
+   - [POST /consumer/restrictions](#post-consumerrestrictions)
+   - [DELETE /consumer/restrictions/:allergen](#delete-consumerrestrictionsallergen)
 
 ---
 
@@ -385,6 +390,7 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
 | `WARNING` | 🟡 | Alérgeno de baixa/média severidade presente | Amarelo |
 | `DANGER` | ⚠️ | Alérgeno de alta severidade presente | Laranja |
 | `BLOCKED` | ⛔ | FATAL detectado ou produto sem ingredientes | **Vermelho — destaque máximo** |
+| `UNEVALUATED` | ⚪ | Perfil alimentar incompleto / sem restrições ativas | **Cinza/Neutro — orienta configuração de perfil (RN-CONSUMER-07)** |
 
 > ⚠️ `BLOCKED` deve ter **destaque visual obrigatório** (vermelho + ícone de perigo) conforme `FRONTEND_STRATEGY.md`: *"Alertas alimentares devem ter destaque visual (vermelho/ícones de perigo)."*
 
@@ -784,6 +790,18 @@ Valores aceitos nos campos `severity`:
 
 > ⚠️ `FATAL` é o nível para **Doença Celíaca diagnosticada**. Um produto com `cross_contamination` contendo qualquer menção a glúten resulta em `BLOCKED` — sem exceção. Esta é uma regra de segurança alimentar crítica validada nos casos de teste TC-02 e TC-04.
 
+### `RiskLevel`
+
+Valores possíveis de nível de risco de compatibilidade:
+
+| Valor | Português | Significado no Motor |
+|:------|:----------|:---------------------|
+| `SAFE` | Seguro | Nenhum alérgeno do perfil foi encontrado |
+| `WARNING` | Atenção | Conflito de severidade LOW/MEDIUM ou traços |
+| `DANGER` | Perigo | Conflito de severidade HIGH em ingredientes ou traços sem tolerância |
+| `BLOCKED` | Bloqueado | Conflito FATAL ou produto sem lista de ingredientes declarados |
+| `UNEVALUATED` | Não Avaliado / Perfil Incompleto | Perfil sem restrições ativas — não avaliado para evitar falsa segurança (RN-CONSUMER-07) |
+
 ### `UserRole`
 
 | Valor | Descrição |
@@ -838,3 +856,138 @@ Usuário abre o app
                                     Dashboard: POST /compatibility/check
                                     para cada produto verificado
 ```
+
+---
+
+## 11. Consumidor (Consumer)
+
+### `GET /consumer/me` 🔒
+
+Retorna os dados consolidados do Consumidor logado, seu perfil alimentar associado e se há alertas de perfil incompleto. **Caso o consumidor ainda não exista, ele é auto-criado de forma transparente.**
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Response Body (200 OK):**
+```json
+{
+  "consumer": {
+    "id": "consumer-uuid-123",
+    "userId": "user-uuid-456",
+    "generalPreferences": {
+      "theme": "dark"
+    },
+    "profileEvaluationStatus": "PENDING_EVALUATION",
+    "hasIncompleteProfileWarning": false
+  },
+  "foodProfile": {
+    "id": "profile-uuid-789",
+    "userId": "user-uuid-456",
+    "restrictions": [
+      {
+        "allergen": "GLUTEN",
+        "severity": "FATAL",
+        "type": "ALLERGY",
+        "notes": "Celíaco grave"
+      }
+    ],
+    "acceptsCrossContamination": false
+  },
+  "hasIncompleteProfileWarning": false
+}
+```
+
+---
+
+### `PUT /consumer/preferences` 🔒
+
+Atualiza as preferências gerais de interface do consumidor.
+
+**Request Body:**
+```json
+{
+  "generalPreferences": {
+    "theme": "light",
+    "notificationsEnabled": true
+  }
+}
+```
+
+**Response Body (200 OK):**
+```json
+{
+  "id": "consumer-uuid-123",
+  "userId": "user-uuid-456",
+  "generalPreferences": {
+    "theme": "light",
+    "notificationsEnabled": true
+  }
+}
+```
+
+---
+
+### `PATCH /consumer/status` 🔒
+
+Alterna o status de participação do perfil de consumidor entre `ATIVO` e `INATIVO` registrando rastreabilidade de auditoria.
+
+**Request Body:**
+```json
+{
+  "action": "DEACTIVATE",
+  "reason": "Pausa temporária solicitada pelo usuário"
+}
+```
+
+**Response Body (200 OK):**
+```json
+{
+  "id": "consumer-uuid-123",
+  "userId": "user-uuid-456",
+  "status": "INATIVO",
+  "statusChangedAt": "2026-08-01T17:50:00.000Z",
+  "statusChangedBy": "user-uuid-456",
+  "statusChangeReason": "Pausa temporária solicitada pelo usuário"
+}
+```
+
+---
+
+### `POST /consumer/restrictions` 🔒
+
+Adiciona uma nova restrição alimentar diretamente ao perfil do consumidor logado.
+
+**Request Body:**
+```json
+{
+  "allergen": "LACTOSE",
+  "severity": "MEDIUM",
+  "type": "INTOLERANCE",
+  "notes": "Intolerância leve"
+}
+```
+
+**Response Body (200 OK / 201 Created):**
+```json
+{
+  "success": true,
+  "message": "Restrição adicionada com sucesso."
+}
+```
+
+---
+
+### `DELETE /consumer/restrictions/:allergen` 🔒
+
+Remove uma restrição alimentar existente por tipo de alérgeno.
+
+**Response Body (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Restrição removida com sucesso."
+}
+```
+

@@ -13,6 +13,7 @@
 
 ## Índice
 
+- [Ambiente de Demonstração (VPS)](#-ambiente-de-demonstração--produção-vps-oracle-cloud)
 - [Estrutura do Monorepo](#-estrutura-do-monorepo)
 - [Como Começar](#-como-começar)
 - [Funcionalidades](#-funcionalidades)
@@ -20,6 +21,13 @@
 - [Arquitetura](#️-arquitetura)
 - [Documentação](#-documentação)
 - [Segurança & Governança](#-segurança--governança)
+
+---
+
+## 🌐 Ambiente de Demonstração / Produção (VPS Oracle Cloud)
+
+- 💻 **Web App (Next.js)**: [http://163.176.195.210:3003](http://163.176.195.210:3003)
+- ⚙️ **Backend API (Node.js)**: [http://163.176.195.210:3002](http://163.176.195.210:3002)
 
 ---
 
@@ -104,6 +112,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | Contexto | Status | Doc |
 |:---------|:-------|:----|
 | 🔐 IAM & Autenticação | ✅ Implementado | [`docs/features/iam.md`](docs/features/iam.md) |
+| 👤 Consumidor | ✅ Implementado | [`docs/features/consumer.md`](docs/features/consumer.md) |
 | 🥗 Perfil Alimentar | ✅ Implementado | [`docs/features/food-profile.md`](docs/features/food-profile.md) |
 | ⚠️ Motor de Alérgenos (Core Domain) | ✅ Implementado | [`docs/features/allergen-engine.md`](docs/features/allergen-engine.md) |
 | 🛒 Catálogo de Produtos | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
@@ -112,7 +121,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 🛡️ Administração & Moderação | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
 | ⭐ Avaliações e Confiança | ✅ Implementado | [`docs/features/reviews.md`](docs/features/reviews.md) |
 | ❤️ Favoritos | ✅ Implementado | [`docs/features/favorites.md`](docs/features/favorites.md) |
-| 📱 App Mobile (Flutter) | ✅ Implementado | [`frontend/mobile-app/`](frontend/mobile-app/) |
+| 📱 App Mobile (Flutter) | ✅ Implementado | [`docs/features/mobile-app.md`](docs/features/mobile-app.md) |
 
 ---
 
@@ -123,7 +132,7 @@ cd backend
 npm test
 ```
 
-**35 suítes de teste | 172 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
+**38 suítes de teste | 182 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|

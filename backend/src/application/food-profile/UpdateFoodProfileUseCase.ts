@@ -1,5 +1,6 @@
 // backend/src/application/food-profile/UpdateFoodProfileUseCase.ts
 import { IFoodProfileRepository } from '../../domain/food-profile/repositories/IFoodProfileRepository';
+import { IConsumerRepository } from '../../domain/consumer/repositories/IConsumerRepository';
 import { FoodProfile } from '../../domain/food-profile/FoodProfile';
 import { Restriction } from '../../domain/food-profile/Restriction';
 import { AllergenType } from '../../domain/food-profile/value-objects/AllergenType';
@@ -20,11 +21,15 @@ export interface UpdateFoodProfileDTO {
  * Fluxo:
  *  1. Valida que o usuário tem um perfil existente
  *  2. Constrói as novas Restriction entities
- *  3. Substitui as restrições no perfil (limpa e readiciona para passar pelas regras de negócio)
+ *  3. Substitui as restrições no perfil
  *  4. Persiste via IFoodProfileRepository.update
+ *  5. Sincroniza o estado no agregado Consumer (se IConsumerRepository estiver injetado)
  */
 export class UpdateFoodProfileUseCase {
-  constructor(private readonly profileRepository: IFoodProfileRepository) {}
+  constructor(
+    private readonly profileRepository: IFoodProfileRepository,
+    private readonly consumerRepository?: IConsumerRepository,
+  ) {}
 
   async execute(dto: UpdateFoodProfileDTO): Promise<Result<FoodProfileResponseDTO>> {
     // 1. Verificar perfil existente
@@ -57,8 +62,17 @@ export class UpdateFoodProfileUseCase {
       }
     }
 
-    // 4. Persistir a atualização
+    // 3. Persistir a atualização do perfil alimentar
     await this.profileRepository.update(profile);
+
+    // 4. Sincronizar estado no agregado Consumer
+    if (this.consumerRepository) {
+      const consumer = await this.consumerRepository.findByUserId(dto.userId);
+      if (consumer) {
+        consumer.markFoodProfileState(profile.isComplete(), profile.isCritical());
+        await this.consumerRepository.save(consumer);
+      }
+    }
 
     return Result.ok<FoodProfileResponseDTO>(this.toDTO(profile));
   }
