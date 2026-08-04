@@ -1,5 +1,7 @@
 // backend/src/application/consumer/ToggleConsumerStatusUseCase.ts
 import { IConsumerRepository } from '../../domain/consumer/repositories/IConsumerRepository';
+import { IAuditLogRepository } from '../../domain/audit/repositories/IAuditLogRepository';
+import { AuditLog } from '../../domain/audit/AuditLog';
 import { Consumer } from '../../domain/consumer/Consumer';
 import { Result } from '../../domain/Result';
 
@@ -11,7 +13,10 @@ export interface ToggleConsumerStatusInput {
 }
 
 export class ToggleConsumerStatusUseCase {
-  constructor(private readonly consumerRepository: IConsumerRepository) {}
+  constructor(
+    private readonly consumerRepository: IConsumerRepository,
+    private readonly auditLogRepository?: IAuditLogRepository,
+  ) {}
 
   async execute(input: ToggleConsumerStatusInput): Promise<Result<Consumer>> {
     if (!input.targetUserId || input.targetUserId.trim().length === 0) {
@@ -27,6 +32,8 @@ export class ToggleConsumerStatusUseCase {
       consumer = createRes.getValue();
     }
 
+    const previousStatus = consumer.status;
+
     if (input.action === 'DEACTIVATE') {
       consumer.deactivate(input.requestedByUserId, input.reason);
     } else {
@@ -34,6 +41,29 @@ export class ToggleConsumerStatusUseCase {
     }
 
     await this.consumerRepository.save(consumer);
+
+    // Auditoria (Issue #30 & Issue #39)
+    if (this.auditLogRepository) {
+      const logResult = AuditLog.create({
+        entityType: 'Consumer',
+        entityId:   consumer.id,
+        action:     input.action === 'DEACTIVATE' ? 'DEACTIVATE' : 'ACTIVATE',
+        actorId:    input.requestedByUserId,
+        actorRole:  'ADMIN',
+        changes:    {
+          previousStatus,
+          newStatus:       consumer.status,
+          statusChangedAt: consumer.statusChangedAt,
+          statusChangedBy: consumer.statusChangedBy,
+        },
+        reason: input.reason,
+      });
+
+      if (logResult.isSuccess) {
+        await this.auditLogRepository.save(logResult.getValue());
+      }
+    }
+
     return Result.ok<Consumer>(consumer);
   }
 }

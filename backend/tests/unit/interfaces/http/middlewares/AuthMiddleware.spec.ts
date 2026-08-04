@@ -1,5 +1,5 @@
 // backend/tests/unit/interfaces/http/middlewares/AuthMiddleware.spec.ts
-import { authMiddleware, adminOnlyMiddleware } from '../../../../../src/interfaces/http/middlewares/AuthMiddleware';
+import { authMiddleware, optionalAuthMiddleware, adminOnlyMiddleware } from '../../../../../src/interfaces/http/middlewares/AuthMiddleware';
 import { PgBlacklistTokenRepository } from '../../../../../src/infrastructure/database/iam/PgBlacklistTokenRepository';
 import { pool } from '../../../../../src/infrastructure/database/connection';
 import { Request, Response, NextFunction } from 'express';
@@ -40,8 +40,18 @@ describe('AuthMiddleware', () => {
     expect(nextFunction).not.toHaveBeenCalled();
   });
 
-  it('deve retornar 401 se o token estiver malformado (sem Bearer)', async () => {
+  it('deve retornar 401 se o token estiver malformado (sem espaço/Bearer)', async () => {
     mockRequest.headers = { authorization: 'token-qualquer-sem-bearer' };
+
+    await authMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(401);
+    expect(mockResponse.json).toHaveBeenCalledWith({ error: 'Token de autenticação malformado.' });
+    expect(nextFunction).not.toHaveBeenCalled();
+  });
+
+  it('deve retornar 401 se o esquema for diferente de Bearer (ex: Basic token)', async () => {
+    mockRequest.headers = { authorization: 'Basic token-qualquer' };
 
     await authMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
@@ -163,6 +173,54 @@ describe('AuthMiddleware', () => {
       error: 'Erro ao verificar permissão do usuário.',
     });
     expect(nextFunction).not.toHaveBeenCalled();
+  });
+
+  describe('optionalAuthMiddleware', () => {
+    it('deve chamar next() sem popular req.user quando header de autorização estiver ausente', async () => {
+      await optionalAuthMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+      expect(nextFunction).toHaveBeenCalled();
+      expect(mockRequest.user).toBeUndefined();
+    });
+
+    it('deve chamar next() sem popular req.user quando token for malformado (sem partes)', async () => {
+      mockRequest.headers = { authorization: 'token-sem-espaco' };
+      await optionalAuthMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+      expect(nextFunction).toHaveBeenCalled();
+      expect(mockRequest.user).toBeUndefined();
+    });
+
+    it('deve chamar next() sem popular req.user quando esquema nao for Bearer', async () => {
+      mockRequest.headers = { authorization: 'Basic token-abc' };
+      await optionalAuthMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+      expect(nextFunction).toHaveBeenCalled();
+      expect(mockRequest.user).toBeUndefined();
+    });
+
+    it('deve chamar next() sem popular req.user em token expirado ou invalido', async () => {
+      mockRequest.headers = { authorization: 'Bearer token-invalido' };
+      await optionalAuthMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+      expect(nextFunction).toHaveBeenCalled();
+      expect(mockRequest.user).toBeUndefined();
+    });
+
+    it('deve chamar next() e popular req.user em token valido e nao revogado', async () => {
+      const token = jwt.sign({ sub: 'user-guest-1', role: 'CELIACO' }, 'test-secret-value');
+      mockRequest.headers = { authorization: `Bearer ${token}` };
+
+      await optionalAuthMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+      expect(nextFunction).toHaveBeenCalled();
+      expect(mockRequest.user).toEqual({ id: 'user-guest-1', role: 'CELIACO' });
+    });
+
+    it('deve chamar next() sem popular req.user se o token for valido mas estiver revogado', async () => {
+      const token = jwt.sign({ sub: 'user-guest-1', role: 'CELIACO' }, 'test-secret-value');
+      mockRequest.headers = { authorization: `Bearer ${token}` };
+      (PgBlacklistTokenRepository.prototype.isBlacklisted as jest.Mock).mockResolvedValue(true);
+
+      await optionalAuthMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+      expect(nextFunction).toHaveBeenCalled();
+      expect(mockRequest.user).toBeUndefined();
+    });
   });
 
   describe('adminOnlyMiddleware', () => {
