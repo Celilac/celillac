@@ -82,14 +82,28 @@ describe('FoodProfile Aggregate Root', () => {
       expect(result.getError()).toBe('O userId do perfil não pode ser vazio.');
     });
 
-    it('deve falhar se houver alérgenos duplicados nas restrições iniciais', () => {
-      const restrictions = [
-        makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL),
-        makeRestriction(AllergenType.GLUTEN, SeverityLevel.HIGH), // duplicado
-      ];
-      const result = FoodProfile.create({ userId: USER_ID, restrictions });
-      expect(result.isFailure).toBe(true);
-      expect(result.getError()).toContain('duplicado');
+    it('deve permitir múltiplas restrições do tipo OTHER desde que possuam tipos de restrição diferentes (RN-CONSUMER-03)', () => {
+      const r1 = Restriction.create({ allergen: AllergenType.OTHER, severity: SeverityLevel.MEDIUM, type: RestrictionType.LIFESTYLE }).getValue();
+      const r2 = Restriction.create({ allergen: AllergenType.OTHER, severity: SeverityLevel.HIGH, type: RestrictionType.ALLERGY }).getValue();
+
+      const profileRes = FoodProfile.create({ userId: USER_ID, restrictions: [r1, r2] });
+      expect(profileRes.isSuccess).toBe(true);
+      expect(profileRes.getValue().restrictions).toHaveLength(2);
+
+      const addRes = profileRes.getValue().addRestriction(
+        Restriction.create({ allergen: AllergenType.OTHER, severity: SeverityLevel.LOW, type: RestrictionType.MEDICAL_RESTRICTION }).getValue(),
+      );
+      expect(addRes.isSuccess).toBe(true);
+      expect(profileRes.getValue().restrictions).toHaveLength(3);
+    });
+
+    it('deve impedir a adição de restrições OTHER com o mesmo tipo de restrição', () => {
+      const r1 = Restriction.create({ allergen: AllergenType.OTHER, severity: SeverityLevel.MEDIUM, type: RestrictionType.LIFESTYLE }).getValue();
+      const r2 = Restriction.create({ allergen: AllergenType.OTHER, severity: SeverityLevel.HIGH, type: RestrictionType.LIFESTYLE }).getValue();
+
+      const profileRes = FoodProfile.create({ userId: USER_ID, restrictions: [r1, r2] });
+      expect(profileRes.isFailure).toBe(true);
+      expect(profileRes.getError()).toContain('duplicado');
     });
   });
 });

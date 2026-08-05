@@ -55,6 +55,44 @@ interface Row {
   notes?: string;
 }
 
+function splitPhone(fullPhone: string): { ddi: string; local: string } {
+  if (!fullPhone) return { ddi: '+55', local: '' };
+  const trimmed = fullPhone.trim();
+  if (trimmed.startsWith('+55')) {
+    return { ddi: '+55', local: formatLocalPhone(trimmed.slice(3)) };
+  }
+  const match = trimmed.match(/^(\+\d{1,3})(\d+)$/);
+  if (match) {
+    return { ddi: match[1], local: formatLocalPhone(match[2]) };
+  }
+  return { ddi: '+55', local: formatLocalPhone(trimmed) };
+}
+
+function formatLocalPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 0) return '';
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+}
+
+function buildFullPhone(ddi: string, local: string): { phone?: string; error?: string } {
+  const ddiDigits = ddi.replace(/\D/g, '');
+  const localDigits = local.replace(/\D/g, '');
+
+  if (!localDigits) {
+    return { phone: undefined };
+  }
+
+  if (!ddiDigits) {
+    return { error: 'É obrigatório preencher o DDI se o número de WhatsApp for informado.' };
+  }
+
+  const cleanDdi = ddi.trim().startsWith('+') ? ddi.trim() : `+${ddi.trim()}`;
+  return { phone: `${cleanDdi}${localDigits}` };
+}
+
 export default function ProfilePage() {
   const { token, userId, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -68,6 +106,8 @@ export default function ProfilePage() {
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState('PREFIRO_NAO_INFORMAR');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [whatsappDdi, setWhatsappDdi] = useState('+55');
+  const [whatsappLocal, setWhatsappLocal] = useState('');
   const [profileEvaluationStatus, setProfileEvaluationStatus] = useState('PENDING_EVALUATION');
 
   // Restrições Alimentares
@@ -107,6 +147,11 @@ export default function ProfilePage() {
           }
           setGender(user.gender || 'PREFIRO_NAO_INFORMAR');
           setAvatarUrl(user.avatarUrl || '');
+          if (user.whatsappPhone) {
+            const parsed = splitPhone(user.whatsappPhone);
+            setWhatsappDdi(parsed.ddi);
+            setWhatsappLocal(parsed.local);
+          }
           setProfileEvaluationStatus(user.profileEvaluationStatus || 'PENDING_EVALUATION');
         }
       })
@@ -190,7 +235,7 @@ export default function ProfilePage() {
 
   function addRow() {
     const availableOption = ALLERGEN_OPTIONS.find(
-      (opt) => !rows.some((row) => row.allergen === opt.value)
+      (opt) => opt.value === 'OTHER' || !rows.some((row) => row.allergen === opt.value)
     );
     const nextAllergen = availableOption ? availableOption.value : 'OTHER';
     setRows((prev) => [...prev, { allergen: nextAllergen, severity: 'MEDIUM', type: 'ALLERGY' }]);
@@ -213,11 +258,19 @@ export default function ProfilePage() {
     setLoading(true);
     try {
       // 1. Atualiza Dados Pessoais do Usuário (IAM)
+      const phoneRes = buildFullPhone(whatsappDdi, whatsappLocal);
+      if (phoneRes.error) {
+        toast.error(phoneRes.error, 'Erro ao salvar perfil');
+        setLoading(false);
+        return;
+      }
+
       await apiClient.put('/iam/profile', {
         fullName,
         birthDate: birthDate ? birthDate : undefined,
         gender,
         avatarUrl,
+        whatsappPhone: phoneRes.phone,
       }, token);
 
       // 2. Atualiza ou Cria o Perfil Alimentar
@@ -406,7 +459,7 @@ export default function ProfilePage() {
                       />
                     </div>
 
-                    <div className="field" style={{ gridColumn: 'span 2' }}>
+                    <div className="field">
                       <label className="field-label">Gênero</label>
                       <select
                         className="field-input field-select"
@@ -417,6 +470,33 @@ export default function ProfilePage() {
                           <option key={g.value} value={g.value}>{g.label}</option>
                         ))}
                       </select>
+                    </div>
+
+                    <div className="field">
+                      <label className="field-label" htmlFor="whatsapp-phone-input">WhatsApp</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <input
+                          type="text"
+                          className="field-input"
+                          style={{ width: '80px', textAlign: 'center', flexShrink: 0, fontWeight: 600 }}
+                          placeholder="+55"
+                          value={whatsappDdi}
+                          onChange={(e) => {
+                            let val = e.target.value;
+                            if (val && !val.startsWith('+')) val = '+' + val;
+                            setWhatsappDdi(val);
+                          }}
+                        />
+                        <input
+                          id="whatsapp-phone-input"
+                          type="text"
+                          className="field-input"
+                          style={{ flex: 1 }}
+                          placeholder="(79) 99999-9999"
+                          value={whatsappLocal}
+                          onChange={(e) => setWhatsappLocal(formatLocalPhone(e.target.value))}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

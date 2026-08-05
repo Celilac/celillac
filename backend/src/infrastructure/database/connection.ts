@@ -44,6 +44,7 @@ export async function testDatabaseConnection(): Promise<void> {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status VARCHAR(50) DEFAULT 'ACTIVE';
       ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_evaluation_status VARCHAR(50) DEFAULT 'PENDING_EVALUATION';
       ALTER TABLE users ADD COLUMN IF NOT EXISTS is_email_verified BOOLEAN DEFAULT false;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp_phone VARCHAR(20);
 
       CREATE INDEX IF NOT EXISTS idx_users_account_status ON users(account_status);
       CREATE INDEX IF NOT EXISTS idx_users_profile_evaluation ON users(profile_evaluation_status);

@@ -5,6 +5,8 @@ import { Email } from './value-objects/Email';
 import { PasswordHash } from './value-objects/PasswordHash';
 import { UserRole } from './value-objects/UserRole';
 
+import { WhatsappPhone } from './value-objects/WhatsappPhone';
+
 /**
  * UserProps — shape das propriedades internas da entidade.
  * Mantidas privadas via Entity<T>.props.
@@ -21,6 +23,7 @@ export interface UserProps {
   birthDate?: Date;
   gender?: string;
   avatarUrl?: string;
+  whatsappPhone?: WhatsappPhone;
   accountStatus?: AccountStatus;
   profileEvaluationStatus?: ProfileEvaluationStatus;
   isEmailVerified?: boolean;
@@ -78,6 +81,10 @@ export class User extends Entity<UserProps> {
     return this.props.avatarUrl;
   }
 
+  get whatsappPhone(): WhatsappPhone | undefined {
+    return this.props.whatsappPhone;
+  }
+
   get accountStatus(): AccountStatus {
     return this.props.accountStatus || 'ACTIVE';
   }
@@ -123,6 +130,7 @@ export class User extends Entity<UserProps> {
     birthDate?: Date;
     gender?: string;
     avatarUrl?: string;
+    whatsappPhone?: WhatsappPhone;
   }): Result<void> {
     if (details.avatarUrl) {
       if (details.avatarUrl.startsWith('data:image/') && details.avatarUrl.length > 14 * 1024 * 1024) {
@@ -134,6 +142,7 @@ export class User extends Entity<UserProps> {
     if (details.birthDate !== undefined) this.props.birthDate = details.birthDate;
     if (details.gender !== undefined) this.props.gender = details.gender;
     if (details.avatarUrl !== undefined) this.props.avatarUrl = details.avatarUrl;
+    if (details.whatsappPhone !== undefined) this.props.whatsappPhone = details.whatsappPhone;
 
     return Result.ok<void>(undefined as any);
   }

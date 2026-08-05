@@ -85,9 +85,13 @@ export class FoodProfile extends Entity<FoodProfileProps> {
       this.props.restrictions = [];
     }
 
-    const duplicate = this.props.restrictions.find(
-      (r) => r.allergen === restriction.allergen,
-    );
+    const duplicate = this.props.restrictions.find((r) => {
+      if (r.allergen !== restriction.allergen) return false;
+      if (restriction.allergen === AllergenType.OTHER) {
+        return r.type === restriction.type;
+      }
+      return true;
+    });
     if (duplicate) {
       return Result.fail<void>(`Alérgeno ${restriction.allergen} já existe neste perfil.`);
     }
@@ -134,15 +138,19 @@ export class FoodProfile extends Entity<FoodProfileProps> {
 
     const initialRestrictions = props.restrictions ?? [];
 
-    // Validar duplicidade nas restrições iniciais
-    const allergensSeen = new Set<AllergenType>();
+    // Validar duplicidade nas restrições iniciais (RN-CONSUMER-03)
+    const seen = new Set<string>();
     for (const restriction of initialRestrictions) {
-      if (allergensSeen.has(restriction.allergen)) {
+      const key = restriction.allergen === AllergenType.OTHER
+        ? `OTHER:${restriction.type}`
+        : restriction.allergen;
+
+      if (seen.has(key)) {
         return Result.fail<FoodProfile>(
           `Alérgeno ${restriction.allergen} duplicado nas restrições iniciais.`,
         );
       }
-      allergensSeen.add(restriction.allergen);
+      seen.add(key);
     }
 
     return Result.ok<FoodProfile>(
