@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     birth_date DATE,
     gender VARCHAR(50),
     avatar_url TEXT,
+    whatsapp_phone VARCHAR(20),
     account_status VARCHAR(50) DEFAULT 'ACTIVE',
     profile_evaluation_status VARCHAR(50) DEFAULT 'PENDING_EVALUATION',
     is_email_verified BOOLEAN DEFAULT false,

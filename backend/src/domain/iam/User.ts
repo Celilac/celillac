@@ -4,7 +4,6 @@ import { Result } from '../Result';
 import { Email } from './value-objects/Email';
 import { PasswordHash } from './value-objects/PasswordHash';
 import { UserRole } from './value-objects/UserRole';
-
 import { WhatsappPhone } from './value-objects/WhatsappPhone';
 
 /**

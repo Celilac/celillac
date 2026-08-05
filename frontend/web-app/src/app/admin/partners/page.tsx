@@ -352,16 +352,16 @@ export default function AdminPartnersPage() {
                 </div>
 
                 {detailPartner.rejectionReason && (
-                  <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', padding: '0.85rem', borderRadius: '12px', color: '#f87171' }}>
-                    <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Motivo da Rejeição:</strong>
-                    <span>{detailPartner.rejectionReason}</span>
+                  <div className={styles.detailBox} style={{ borderColor: 'var(--color-status-rejected-border)', background: 'var(--color-status-rejected-bg)' }}>
+                    <span className={styles.detailLabel} style={{ color: 'var(--color-status-rejected)' }}>Motivo da Rejeição</span>
+                    <p className={styles.detailValue} style={{ marginTop: '0.25rem', color: 'var(--color-status-rejected)' }}>{detailPartner.rejectionReason}</p>
                   </div>
                 )}
 
                 {detailPartner.suspensionReason && (
-                  <div style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', padding: '0.85rem', borderRadius: '12px', color: '#a78bfa' }}>
-                    <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Motivo da Suspensão:</strong>
-                    <span>{detailPartner.suspensionReason}</span>
+                  <div className={styles.detailBox} style={{ borderColor: 'var(--color-status-suspended-border)', background: 'var(--color-status-suspended-bg)' }}>
+                    <span className={styles.detailLabel} style={{ color: 'var(--color-status-suspended)' }}>Motivo da Suspensão</span>
+                    <p className={styles.detailValue} style={{ marginTop: '0.25rem', color: 'var(--color-status-suspended)' }}>{detailPartner.suspensionReason}</p>
                   </div>
                 )}
               </div>

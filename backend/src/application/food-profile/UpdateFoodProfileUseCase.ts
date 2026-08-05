@@ -7,6 +7,7 @@ import { FoodProfile } from '../../domain/food-profile/FoodProfile';
 import { Restriction } from '../../domain/food-profile/Restriction';
 import { AllergenType } from '../../domain/food-profile/value-objects/AllergenType';
 import { SeverityLevel } from '../../domain/food-profile/value-objects/SeverityLevel';
+import { RestrictionType } from '../../domain/food-profile/value-objects/RestrictionType';
 import { Result } from '../../domain/Result';
 import { FoodProfileResponseDTO, RestrictionDTO } from './CreateFoodProfileUseCase';
 
@@ -62,13 +63,13 @@ export class UpdateFoodProfileUseCase {
       const restrictionResult = Restriction.create({
         allergen: r.allergen as AllergenType,
         severity: r.severity as SeverityLevel,
-        type:     r.type as any,
+        type:     r.type as RestrictionType | undefined,
         notes:    r.notes,
       });
       if (restrictionResult.isFailure) {
         return Result.fail<FoodProfileResponseDTO>(restrictionResult.getError());
       }
-      
+
       const addResult = profile.addRestriction(restrictionResult.getValue());
       if (addResult.isFailure) {
         return Result.fail<FoodProfileResponseDTO>(addResult.getError());

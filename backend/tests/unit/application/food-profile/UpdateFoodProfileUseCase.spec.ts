@@ -107,6 +107,6 @@ describe('UpdateFoodProfileUseCase', () => {
     });
 
     expect(result.isFailure).toBe(true);
-    expect(result.getError()).toContain('já existe neste perfil');
+    expect(result.getError()).toContain('Já existe uma restrição');
   });
 });

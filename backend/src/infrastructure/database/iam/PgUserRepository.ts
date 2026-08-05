@@ -6,15 +6,13 @@ import { User, AccountStatus, ProfileEvaluationStatus } from '../../../domain/ia
 import { Email } from '../../../domain/iam/value-objects/Email';
 import { PasswordHash } from '../../../domain/iam/value-objects/PasswordHash';
 import { UserRole } from '../../../domain/iam/value-objects/UserRole';
+import { WhatsappPhone } from '../../../domain/iam/value-objects/WhatsappPhone';
 
 /**
  * PgUserRepository — Implementação concreta de IUserRepository usando pg.
  * Mapeia linhas do banco para entidades do domínio e vice-versa.
  * A camada de domínio NUNCA importa esta classe diretamente.
  */
-
-import { WhatsappPhone } from '../../../domain/iam/value-objects/WhatsappPhone';
-
 export class PgUserRepository implements IUserRepository {
   constructor(private readonly pool: Pool) { }
 

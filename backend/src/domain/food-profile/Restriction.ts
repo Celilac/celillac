@@ -15,7 +15,9 @@ export interface RestrictionProps {
 /**
  * Restriction — Entidade que representa uma restrição alimentar.
  * Parte do agregado FoodProfile.
- * Regra: uma restrição FATAL representa risco de vida (Celíaco).
+ * Regra: uma restrição FATAL representa risco de vida (ex.: doença celíaca,
+ * alergia grave/anafilática). O tipo de condição é dado por `type`
+ * (RestrictionType), não por `severity`.
  */
 export class Restriction extends Entity<RestrictionProps> {
   private constructor(props: RestrictionProps, id?: string) {
