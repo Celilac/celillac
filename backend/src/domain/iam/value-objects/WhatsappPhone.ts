@@ -2,33 +2,26 @@
 import { Result } from '../../Result';
 
 /**
- * WhatsappPhone — Value Object imutável.
- * Número de contato exclusivo para WhatsApp, em formato E.164 com DDI do
- * Brasil obrigatório (+55). Zero dependências externas — pure domain.
+ * WhatsappPhone — Value Object do IAM.
+ * Suporta qualquer DDI internacional (padrão E.164: + seguido de 7 a 15 dígitos).
  */
 export class WhatsappPhone {
-  // +55 seguido de DDD (2 dígitos) + número (8 ou 9 dígitos) = 10 ou 11 dígitos após o DDI
-  private static readonly E164_BR_REGEX = /^\+55\d{10,11}$/;
+  private static readonly INT_PHONE_REGEX = /^\+\d{7,15}$/;
 
-  private constructor(private readonly _value: string) {}
+  private constructor(public readonly value: string) {}
 
-  get value(): string {
-    return this._value;
-  }
-
-  static create(phone: string): Result<WhatsappPhone> {
+  public static create(phone?: string | null): Result<WhatsappPhone | undefined> {
     if (!phone || phone.trim().length === 0) {
-      return Result.fail<WhatsappPhone>('Número de WhatsApp inválido.');
+      return Result.ok<WhatsappPhone | undefined>(undefined);
     }
 
-    const normalized = phone.trim().replace(/[\s()-]/g, '');
-
-    if (!WhatsappPhone.E164_BR_REGEX.test(normalized)) {
+    const trimmed = phone.trim();
+    if (!this.INT_PHONE_REGEX.test(trimmed)) {
       return Result.fail<WhatsappPhone>(
-        'Número de WhatsApp inválido. Use o formato +55DDDNNNNNNNNN (ex: +5511987654321).',
+        'Número de WhatsApp inválido (ex: +5511987654321).',
       );
     }
 
-    return Result.ok<WhatsappPhone>(new WhatsappPhone(normalized));
+    return Result.ok<WhatsappPhone>(new WhatsappPhone(trimmed));
   }
 }

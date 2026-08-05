@@ -7,9 +7,9 @@ export class CreateReportController {
 
   async execute(req: Request, res: Response): Promise<Response> {
     try {
-      const { productId, reason, details } = req.body;
+      const { productId, partnerId, reason, details, isFoodSafetyRisk } = req.body;
 
-      const reporterId = (req as any).user?.id;
+      const reporterId = (req as any).user?.id || (req as any).user?.userId;
       if (!reporterId) {
         return res.status(401).json({ error: 'User not authenticated' });
       }
@@ -17,8 +17,10 @@ export class CreateReportController {
       const result = await this.useCase.execute({
         reporterId,
         productId,
+        partnerId,
         reason,
         details,
+        isFoodSafetyRisk: isFoodSafetyRisk !== undefined ? Boolean(isFoodSafetyRisk) : undefined,
       });
 
       if (result.isFailure) {

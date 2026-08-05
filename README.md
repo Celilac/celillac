@@ -6,13 +6,14 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-35%20suites%20%7C%20172%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-41%20suites%20%7C%20230%20passing-brightgreen)](#-testes)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20%2B%20Oracle%20Cloud-orange)](#-segurança--governança)
 
 ---
 
 ## Índice
 
+- [Ambiente de Demonstração (VPS)](#-ambiente-de-demonstração--produção-vps-oracle-cloud)
 - [Estrutura do Monorepo](#-estrutura-do-monorepo)
 - [Como Começar](#-como-começar)
 - [Funcionalidades](#-funcionalidades)
@@ -20,6 +21,13 @@
 - [Arquitetura](#️-arquitetura)
 - [Documentação](#-documentação)
 - [Segurança & Governança](#-segurança--governança)
+
+---
+
+## 🌐 Ambiente de Demonstração / Produção (VPS Oracle Cloud)
+
+- 💻 **Web App (Next.js)**: [http://163.176.195.210:3003](http://163.176.195.210:3003)
+- ⚙️ **Backend API (Node.js)**: [http://163.176.195.210:3002](http://163.176.195.210:3002)
 
 ---
 
@@ -35,7 +43,7 @@ celillac/
 │   │   ├── application/     # Casos de uso
 │   │   ├── infrastructure/  # PostgreSQL (pg), repositórios
 │   │   └── interfaces/      # Controllers HTTP (Express)
-│   └── tests/unit/          # 35 suítes | 172 testes
+│   └── tests/unit/          # 41 suítes | 230 testes
 ├── frontend/
 │   ├── web-app/             # Aplicação principal (Next.js 14, porta 3001)
 │   ├── landing-page/        # Landing page estática (Next.js 14, porta 3002)
@@ -104,6 +112,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | Contexto | Status | Doc |
 |:---------|:-------|:----|
 | 🔐 IAM & Autenticação | ✅ Implementado | [`docs/features/iam.md`](docs/features/iam.md) |
+| 👤 Consumidor | ✅ Implementado | [`docs/features/consumer.md`](docs/features/consumer.md) |
 | 🥗 Perfil Alimentar | ✅ Implementado | [`docs/features/food-profile.md`](docs/features/food-profile.md) |
 | ⚠️ Motor de Alérgenos (Core Domain) | ✅ Implementado | [`docs/features/allergen-engine.md`](docs/features/allergen-engine.md) |
 | 🛒 Catálogo de Produtos | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
@@ -112,7 +121,8 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 🛡️ Administração & Moderação | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
 | ⭐ Avaliações e Confiança | ✅ Implementado | [`docs/features/reviews.md`](docs/features/reviews.md) |
 | ❤️ Favoritos | ✅ Implementado | [`docs/features/favorites.md`](docs/features/favorites.md) |
-| 📱 App Mobile (Flutter) | ✅ Implementado | [`frontend/mobile-app/`](frontend/mobile-app/) |
+| 📜 Auditoria & Rastreabilidade do Domínio | ✅ Implementado | [`docs/features/audit.md`](docs/features/audit.md) |
+| 📱 App Mobile (Flutter) | ✅ Implementado | [`docs/features/mobile-app.md`](docs/features/mobile-app.md) |
 
 ---
 
@@ -123,7 +133,7 @@ cd backend
 npm test
 ```
 
-**35 suítes de teste | 172 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
+**41 suítes de teste | 230 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
@@ -134,13 +144,15 @@ npm test
 | `domain/catalog/Product` | 100% |
 | `domain/partner/Partner` | ~97.7% |
 | `domain/reviews/Review` | 95% |
-| `application/food-profile/UpdateFoodProfileUseCase` | ~90.4% |
+| `domain/audit/AuditLog`, `PgAuditLogRepository` | 100% |
+| `application/food-profile/UpdateFoodProfileUseCase` | 100% |
+| `application/consumer/ToggleConsumerStatusUseCase` | ~95.8% |
 | `application/allergen-engine/CheckCompatibilityUseCase` | 100% |
 | `application/catalog/CreateProductUseCase`, `SearchProductsUseCase` | 100% |
 | `application/reviews/SubmitReviewUseCase`, `GetProductReviewsUseCase` | ~94% |
 | `application/admin/CreateReportUseCase`, `ListReportsUseCase`, `ReviewReportUseCase` | ~94% |
 | `application/iam/LogoutUserUseCase` | ~92.8% |
-| `interfaces/http/middlewares/AuthMiddleware` | ~73.7% |
+| `interfaces/http/middlewares/AuthMiddleware` | 100% |
 | `interfaces/http/middlewares/SecurityMiddleware` | 100% |
 
 Para relatório de cobertura: `npm test -- --coverage`.
@@ -182,6 +194,7 @@ Usuário: celilac_user
 | `user_favorites` | Favoritos — user_id (FK), product_id (FK), partner_id (FK) |
 | `email_verifications` | Verificação de e-mail OTP — user_id (FK), code, expires_at, is_used |
 | `blacklisted_tokens` | Tokens JWT revogados — token (PK), expires_at |
+| `audit_logs` | Auditoria & Rastreabilidade do Domínio — id (PK), entity_type, entity_id, action, actor_id, actor_role, changes (JSONB), reason, created_at |
 
 Detalhes de schema e estratégia de persistência em [`docs/DATABASE.md`](docs/DATABASE.md).
 

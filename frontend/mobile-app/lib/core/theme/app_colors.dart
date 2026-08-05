@@ -25,4 +25,5 @@ class AppColors {
   static const riskWarningBg = Color(0xFF92400E);
   static const riskDangerBg = Color(0xFF9A3412);
   static const riskBlockedBg = Color(0xFF7F1D1D);
+  static const riskUnevaluatedBg = Color(0xFF475569);
 }

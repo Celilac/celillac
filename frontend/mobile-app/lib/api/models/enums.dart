@@ -49,7 +49,8 @@ enum RiskLevel {
   safe('SAFE'),
   warning('WARNING'),
   danger('DANGER'),
-  blocked('BLOCKED');
+  blocked('BLOCKED'),
+  unevaluated('UNEVALUATED');
 
   const RiskLevel(this.wireValue);
 
@@ -58,7 +59,7 @@ enum RiskLevel {
   static RiskLevel fromWire(String value) {
     return RiskLevel.values.firstWhere(
       (e) => e.wireValue == value,
-      orElse: () => RiskLevel.blocked,
+      orElse: () => RiskLevel.unevaluated,
     );
   }
 }

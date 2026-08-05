@@ -12,8 +12,6 @@ import { WhatsappPhone } from '../../../domain/iam/value-objects/WhatsappPhone';
  * PgUserRepository — Implementação concreta de IUserRepository usando pg.
  * Mapeia linhas do banco para entidades do domínio e vice-versa.
  * A camada de domínio NUNCA importa esta classe diretamente.
- */
-
 export class PgUserRepository implements IUserRepository {
   constructor(private readonly pool: Pool) { }
 
@@ -104,10 +102,7 @@ export class PgUserRepository implements IUserRepository {
   }): User {
     const email = Email.create(row.email).getValue();
     const passwordHash = PasswordHash.fromHash(row.password_hash).getValue();
-    const role = row.role as UserRole;
-    const whatsappPhone = row.whatsapp_phone
-      ? WhatsappPhone.create(row.whatsapp_phone).getValue()
-      : undefined;
+    const whatsappPhone = WhatsappPhone.create(row.whatsapp_phone).getValue();
 
     return User.create(
       {

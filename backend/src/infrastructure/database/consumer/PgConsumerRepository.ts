@@ -9,7 +9,7 @@ export class PgConsumerRepository implements IConsumerRepository {
 
   async findByUserId(userId: string): Promise<Consumer | null> {
     const result = await this.pool.query(
-      `SELECT id, user_id, general_preferences, is_food_profile_complete, is_food_profile_critical, status, created_at, updated_at
+      `SELECT id, user_id, general_preferences, is_food_profile_complete, is_food_profile_critical, status, status_changed_at, status_changed_by, status_change_reason, created_at, updated_at
        FROM consumers WHERE user_id = $1 LIMIT 1`,
       [userId],
     );
@@ -20,7 +20,7 @@ export class PgConsumerRepository implements IConsumerRepository {
 
   async findById(id: string): Promise<Consumer | null> {
     const result = await this.pool.query(
-      `SELECT id, user_id, general_preferences, is_food_profile_complete, is_food_profile_critical, status, created_at, updated_at
+      `SELECT id, user_id, general_preferences, is_food_profile_complete, is_food_profile_critical, status, status_changed_at, status_changed_by, status_change_reason, created_at, updated_at
        FROM consumers WHERE id = $1 LIMIT 1`,
       [id],
     );
@@ -32,13 +32,16 @@ export class PgConsumerRepository implements IConsumerRepository {
   async save(consumer: Consumer): Promise<void> {
     await this.pool.query(
       `INSERT INTO consumers (
-        id, user_id, general_preferences, is_food_profile_complete, is_food_profile_critical, status, created_at, updated_at
-      ) VALUES ($1, $2, $3::jsonb, $4, $5, $6, $7, $8)
+        id, user_id, general_preferences, is_food_profile_complete, is_food_profile_critical, status, status_changed_at, status_changed_by, status_change_reason, created_at, updated_at
+      ) VALUES ($1, $2, $3::jsonb, $4, $5, $6, $7, $8, $9, $10, $11)
       ON CONFLICT (user_id) DO UPDATE SET
         general_preferences = EXCLUDED.general_preferences,
         is_food_profile_complete = EXCLUDED.is_food_profile_complete,
         is_food_profile_critical = EXCLUDED.is_food_profile_critical,
         status = EXCLUDED.status,
+        status_changed_at = EXCLUDED.status_changed_at,
+        status_changed_by = EXCLUDED.status_changed_by,
+        status_change_reason = EXCLUDED.status_change_reason,
         updated_at = EXCLUDED.updated_at`,
       [
         consumer.id,
@@ -47,6 +50,9 @@ export class PgConsumerRepository implements IConsumerRepository {
         consumer.isFoodProfileComplete,
         consumer.isFoodProfileCritical,
         consumer.status,
+        consumer.statusChangedAt || null,
+        consumer.statusChangedBy || null,
+        consumer.statusChangeReason || null,
         consumer.createdAt,
         consumer.updatedAt,
       ],
@@ -61,6 +67,9 @@ export class PgConsumerRepository implements IConsumerRepository {
         isFoodProfileComplete: row.is_food_profile_complete,
         isFoodProfileCritical: row.is_food_profile_critical,
         status: row.status as ConsumerStatus,
+        statusChangedAt: row.status_changed_at ? new Date(row.status_changed_at) : undefined,
+        statusChangedBy: row.status_changed_by || undefined,
+        statusChangeReason: row.status_change_reason || undefined,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at),
       },

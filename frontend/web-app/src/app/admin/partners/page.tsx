@@ -305,6 +305,7 @@ export default function AdminPartnersPage() {
                 </div>
                 <button
                   type="button"
+                  ref={detailCloseRef}
                   onClick={() => setDetailPartner(null)}
                   style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', opacity: 0.7 }}
                   aria-label="Fechar"

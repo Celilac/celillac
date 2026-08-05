@@ -31,14 +31,15 @@ describe('ListReportsUseCase', () => {
     const result = await useCase.execute({});
     expect(result.isSuccess).toBe(true);
     expect(result.getValue()).toHaveLength(1);
-    expect(repoMock.findAll).toHaveBeenCalledWith(undefined);
+    expect(result.getValue()[0].isFoodSafetyRisk).toBe(false);
+    expect(repoMock.findAll).toHaveBeenCalledWith({ status: undefined, isFoodSafetyRisk: undefined });
   });
 
-  it('should list reports with status filter', async () => {
+  it('should list reports with status and isFoodSafetyRisk filters', async () => {
     repoMock.findAll.mockResolvedValue([]);
-    const result = await useCase.execute({ status: ReportStatus.PENDING });
+    const result = await useCase.execute({ status: ReportStatus.PENDING, isFoodSafetyRisk: true });
     expect(result.isSuccess).toBe(true);
-    expect(repoMock.findAll).toHaveBeenCalledWith({ status: ReportStatus.PENDING });
+    expect(repoMock.findAll).toHaveBeenCalledWith({ status: ReportStatus.PENDING, isFoodSafetyRisk: true });
   });
 
   it('should fail with invalid status filter', async () => {

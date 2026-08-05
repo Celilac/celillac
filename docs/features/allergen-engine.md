@@ -1,49 +1,44 @@
-# Motor de Alérgenos (Core Domain)
+# Feature: Motor de Compatibilidade Alimentar (`AllergenEngine`)
 
-> **Arquivo de máxima criticidade.** Qualquer alteração exige aprovação humana conforme [`harness/guardrails.md`](../../harness/guardrails.md).
+> **Bounded Context:** Compatibilidade Alimentar (Core Engine)  
+> **Status:** Concluído e Homologado  
+> **Última Atualização:** 2026-08-01 (FEAT-048 / Issue #34)  
+> **Documento Conceitual Primário:** [`docs/ALLERGEN_ENGINE.md`](../ALLERGEN_ENGINE.md)
 
-**Status:** ✅ Implementado
-**Entregue em:** 2026-06-30, endpoint exposto em 2026-07-01 (ver [CHANGELOG.md](../../CHANGELOG.md))
-**Especificação completa:** [`docs/ALLERGEN_ENGINE.md`](../ALLERGEN_ENGINE.md)
-**Contrato completo:** [`docs/API_CONTRACTS.md`](../API_CONTRACTS.md#4-compatibilidade-alimentar)
+---
 
-## O que faz
+## 1. Visão Geral
 
-Calcula a compatibilidade entre um `FoodProfile` e um produto, retornando um relatório completo de riscos.
+O `AllergenEngine` é o serviço de domínio puro e agnóstico a banco de dados responsável por calcular a compatibilidade e o nível de risco entre o perfil de restrições alimentares de um consumidor (`FoodProfile`) e o instantâneo de dados de um produto (`ProductSnapshot`).
 
-## Endpoint
+---
 
-| Método | Rota | Descrição |
-|:-------|:-----|:----------|
-| `POST` | `/compatibility/check` | Calcula compatibilidade entre perfil e produto |
-
-## Regras implementadas (aprovadas em 2026-06-30)
+## 2. Invariantes e Regras Oficiais (R1–R9)
 
 | Regra | Condição | Resultado |
-|:------|:---------|:----------|
-| R1 | Produto sem ingredientes declarados | `BLOCKED` (precaução) |
-| R2 | Perfil sem restrições | `SAFE` |
-| R3 | Restrição `FATAL` (qualquer alérgeno) + alérgeno nos ingredientes | `BLOCKED` |
-| **R4** | **Restrição `FATAL` (qualquer alérgeno) + traços do alérgeno (`cross_contamination`)** | **`BLOCKED`** |
-| R5 | `HIGH` + alérgeno presente | `DANGER` |
-| R6 | `MEDIUM`/`LOW` + alérgeno presente | `WARNING` |
-| R7 | Múltiplos conflitos | Risco mais alto prevalece |
-| R8 | Múltiplos conflitos | Todos retornados (sem omissão) |
+|:---|:---|:---|
+| **R1** | Produto sem ingredientes declarados | `BLOCKED` *(princípio da precaução)* |
+| **R2** | Perfil sem restrições ativas | `UNEVALUATED` *(perfil incompleto - RN-CONSUMER-07)* |
+| **R3** | Restrição `FATAL` + alérgeno nos ingredientes | `BLOCKED` |
+| **R4** | Restrição `FATAL` + alérgeno nos traços (contaminação cruzada) | `BLOCKED` |
+| **R5** | Restrição `HIGH` + alérgeno nos ingredientes | `DANGER` |
+| **R6** | Restrição `MEDIUM` ou `LOW` + alérgeno nos ingredientes | `WARNING` |
+| **R7** | Traços para severidades não-FATAL (com tolerância declarada `acceptsCrossContamination = true`) | `WARNING` |
+| **R8** | O risco final da consulta é o risco mais grave entre todos os conflitos | `RiskLevel` máximo vence |
+| **R9** | **Invariante 11.5 (Contaminação Cruzada):** Traços + não-tolerância (`acceptsCrossContamination = false`) para severidade `HIGH` | `DANGER` *(eleva de WARNING para DANGER)* |
 
-> `FATAL` é um nível de severidade, não um diagnóstico — aplica-se a qualquer
-> alérgeno (ex.: doença celíaca em `GLUTEN`, mas também uma alergia anafilática a
-> `NUTS`). Ver [`ALLERGEN_ENGINE.md`](../ALLERGEN_ENGINE.md#4-níveis-de-severidade-do-perfil-severitylevel).
+> **RN-CONSUMER-05 (Issue #34):** Propagação do campo `type: RestrictionType` no `ConflictDetail` e prefixo textual no `reasoning` (`[ALLERGY/FATAL] GLUTEN...`), garantindo clareza e transparência no veredito entre Alergias, Intolerâncias e Preferências Alimentares.
 
-## Níveis de risco
+---
 
-```
-⛔ BLOCKED  — Restrição FATAL correspondente encontrada, ou produto sem ingredientes
-⚠️ DANGER   — Alérgeno de alta severidade
-🟡 WARNING  — Alérgeno de baixa/média severidade
-✅ SAFE     — Nenhum conflito encontrado
-```
+## 3. Cobertura de Testes de Segurança Alimentar
 
-## Testes
+Suíte de testes mantida em [`backend/tests/unit/domain/allergen-engine/AllergenEngine.spec.ts`](../../backend/tests/unit/domain/allergen-engine/AllergenEngine.spec.ts):
 
-`backend/tests/unit/domain/allergen-engine/AllergenEngine.spec.ts` ← 9 casos críticos de segurança alimentar
-`backend/tests/unit/application/allergen-engine/CheckCompatibilityUseCase.spec.ts`
+- **TC-01 a TC-08**: Casos críticos fundamentais (produto com glúten, traços, sem glúten, severidades `HIGH`/`MEDIUM`, ausência de ingredientes, múltiplas restrições).
+- **TC-09**: Perfil inativo (sem restrições) → `UNEVALUATED` e `isCompatible = false` *(RN-CONSUMER-07 / Issue #32)*.
+- **TC-10**: Severidade `HIGH` + traços + `acceptsCrossContamination = false` → retorne `DANGER`.
+- **TC-11**: Severidade `HIGH` + traços + `acceptsCrossContamination = true` → retorne `WARNING`.
+- **TC-12**: Severidade `FATAL` + traços + `acceptsCrossContamination = true` → retorne `BLOCKED` *(invariante biológica imutável)*.
+- **TC-13**: Retorno de `ConflictDetail.type = ALLERGY` e prefixo no `reason` para restrições do tipo alergia *(RN-CONSUMER-05 / Issue #34)*.
+- **TC-14**: Rejeição de `ALLERGY` + `LOW` no domínio e diferenciação de `DIETARY_PREFERENCE` + `LOW` *(RN-CONSUMER-05 / Issue #34)*.

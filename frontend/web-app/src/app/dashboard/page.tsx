@@ -10,17 +10,18 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { catalogApi } from '@/api/catalog';
+import { catalogApi, ProductSummary } from '@/api/catalog';
 import { compatibilityApi, CompatibilityResponse } from '@/api/compatibility';
 import { foodProfileApi } from '@/api/food-profile';
-import { apiClient } from '@/api/client';
+import { apiClient, HttpError } from '@/api/client';
 import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
-import { HttpError } from '@/api/client';
+import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import styles from './dashboard.module.css';
 
 interface ReportWithName extends CompatibilityResponse {
   productName: string;
+  productId: string;
 }
 
 interface RestrictionItem {
@@ -108,6 +109,8 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated, token, userId]);
 
+  const [searchResults, setSearchResults] = useState<ProductSummary[]>([]);
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -119,6 +122,7 @@ export default function DashboardPage() {
 
     setLoading(true);
     setReport(null);
+    setSearchResults([]);
 
     try {
       const result = await catalogApi.search(searchQuery, token);
@@ -129,34 +133,33 @@ export default function DashboardPage() {
         return;
       }
 
-      const product = products[0];
+      setSearchResults(products);
 
-      const compatibility = await compatibilityApi.check(
-        { userId, productId: product.id },
-        token,
-      );
-
-      setReport({ ...compatibility, productName: product.name });
+      if (products.length === 1) {
+        await checkProductCompatibility(products[0]);
+      }
     } catch (err) {
       const message = err instanceof HttpError ? err.message : (err as Error).message ?? 'Erro desconhecido.';
-      toast.error(message, 'Erro ao analisar produto');
+      toast.error(message, 'Erro ao buscar produtos');
     } finally {
       setLoading(false);
     }
   };
 
-  const getCompatibilityBadge = (riskLevel: string) => {
-    switch (riskLevel) {
-      case 'SAFE':
-        return { label: '🟢 COMPATÍVEL', text: 'Compatível com as informações disponíveis.', class: styles.statusSafe };
-      case 'WARNING':
-        return { label: '🟡 ATENÇÃO', text: 'Possível risco de contaminação cruzada ou restrição moderada.', class: styles.statusWarning };
-      case 'DANGER':
-        return { label: '🟠 RISCO ALTO', text: 'Risco relevante identificado para o seu perfil.', class: styles.statusDanger };
-      case 'BLOCKED':
-        return { label: '🔴 INCOMPATÍVEL', text: 'Contém ingrediente conflitante com seu perfil.', class: styles.statusBlocked };
-      default:
-        return { label: '⚪ INDETERMINADO', text: 'Informações insuficientes para garantir compatibilidade.', class: styles.statusWarning };
+  const checkProductCompatibility = async (product: ProductSummary) => {
+    if (!token || !userId) return;
+    setLoading(true);
+    try {
+      const compatibility = await compatibilityApi.check(
+        { userId, productId: product.id },
+        token,
+      );
+      setReport({ ...compatibility, productName: product.name, productId: product.id });
+    } catch (err) {
+      const message = err instanceof HttpError ? err.message : (err as Error).message ?? 'Erro desconhecido.';
+      toast.error(message, 'Erro ao analisar produto');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -327,7 +330,7 @@ export default function DashboardPage() {
                 disabled={loading}
                 id="dashboard-search-btn"
               >
-                {loading ? 'Verificando...' : 'Verificar Compatibilidade'}
+                {loading ? 'Buscando...' : 'Buscar Produtos'}
               </button>
             </form>
 
@@ -339,22 +342,92 @@ export default function DashboardPage() {
               </p>
             )}
 
-            {report && (() => {
-              const badge = getCompatibilityBadge(report.riskLevel);
-              return (
-                <div className={styles.reportArea}>
-                  <h3 style={{ marginBottom: 'var(--space-4)', color: 'var(--color-text)' }}>Produto: {report.productName}</h3>
-                  <div className={badge.class}>
-                    <strong>{badge.label}</strong>
-                    <p className={styles.reason}>{badge.text}</p>
-                    <p className={styles.reason} style={{ marginTop: '0.5rem' }}>{report.reasoning}</p>
-                    {report.conflicts?.map((c, index) => (
-                      <p key={index} className={styles.reason}>- {c.reason}</p>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
+            {/* Lista de Resultados Encontrados */}
+            {searchResults.length > 0 && (
+              <div style={{ marginTop: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                <h3 style={{ fontSize: 'var(--text-title)', color: 'var(--color-text)' }}>
+                  Resultados encontrados ({searchResults.length}):
+                </h3>
+                {searchResults.map((product) => {
+                  const productReport = report?.productId === product.id ? report : null;
+                  return (
+                    <div
+                      key={product.id}
+                      style={{
+                        padding: 'var(--space-4)',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--color-border)',
+                        background: 'var(--color-elevated)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 'var(--space-3)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-3)' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <strong style={{ fontSize: '1.1rem', color: 'var(--color-text)', display: 'block' }}>
+                            {product.name}
+                          </strong>
+                          <span style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>
+                            Marca: {product.brand}
+                          </span>
+                        </div>
+                        <Link
+                          href={`/products/${product.id}`}
+                          className="btn btn-ghost"
+                          style={{
+                            fontSize: 'var(--text-label)',
+                            padding: 'var(--space-2) var(--space-3)',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          📦 Ver Detalhes
+                        </Link>
+                      </div>
+
+                      {product.ingredients && (
+                        <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', margin: 0 }}>
+                          <strong>Ingredientes:</strong> {product.ingredients}
+                        </p>
+                      )}
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => checkProductCompatibility(product)}
+                          disabled={loading}
+                          className="btn btn-em"
+                          style={{ fontSize: 'var(--text-label)', padding: 'var(--space-2) var(--space-4)' }}
+                        >
+                          🧪 Checar Compatibilidade
+                        </button>
+
+                        {productReport && (
+                          <RiskBadge riskLevel={productReport.riskLevel} showDescription={true} />
+                        )}
+                      </div>
+
+                      {productReport && (
+                        <div style={{ padding: 'var(--space-3)', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
+                          <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--color-text)' }}>
+                            {productReport.reasoning}
+                          </p>
+                          {productReport.conflicts?.map((c, index) => (
+                            <p key={index} style={{ margin: '4px 0 0 0', fontSize: 'var(--text-label)', color: 'var(--color-danger)' }}>
+                              ⚠️ {c.reason}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         </div>
       </main>

@@ -7,6 +7,7 @@ import '../../core/auth/session_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/loading_overlay.dart';
 import '../../shared/widgets/restriction_chip.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -120,6 +121,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         'Nenhuma restrição cadastrada.',
                         style: TextStyle(color: Color(0xFF475569), fontSize: 14),
                       ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final updated = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditProfileScreen(initialProfile: _profile),
+                          ),
+                        );
+                        if (updated == true) {
+                          _loadProfile();
+                        }
+                      },
+                      icon: const Icon(Icons.edit, size: 18),
+                      label: const Text('Editar Perfil Alimentar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size.fromHeight(44),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
                   ],
                 ),
               ),

@@ -136,15 +136,26 @@ describe('Favorite Use Cases', () => {
   });
 
   describe('ListFavoritesUseCase', () => {
-    it('deve listar os favoritos de um usuário', async () => {
+    it('deve listar os favoritos de um usuário com detalhes de produto e parceiro', async () => {
       const fav = Favorite.create({ userId: 'user-1', productId: 'product-1' }).getValue();
-      mockFavoriteRepo.findByUser.mockResolvedValue([fav]);
+      mockFavoriteRepo.findByUser.mockResolvedValue([
+        {
+          favorite: fav,
+          product: {
+            id: 'product-1',
+            name: 'Pão de Queijo',
+            brand: 'Padaria',
+          },
+        },
+      ]);
 
       const result = await listUseCase.execute('user-1');
 
       expect(result.isSuccess).toBe(true);
       expect(result.getValue()).toHaveLength(1);
       expect(result.getValue()[0].productId).toBe('product-1');
+      expect(result.getValue()[0].product?.name).toBe('Pão de Queijo');
+      expect(result.getValue()[0].product?.brand).toBe('Padaria');
     });
   });
 });

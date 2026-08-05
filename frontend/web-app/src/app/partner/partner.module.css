@@ -426,7 +426,7 @@ input:checked + .slider:before {
   border-radius: var(--radius-lg);
   padding: var(--space-8);
   width: 100%;
-  max-width: 540px;
+  max-width: 640px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
