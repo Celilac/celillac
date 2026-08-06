@@ -54,6 +54,44 @@ interface Row {
   notes?: string;
 }
 
+function splitPhone(fullPhone: string): { ddi: string; local: string } {
+  if (!fullPhone) return { ddi: '+55', local: '' };
+  const trimmed = fullPhone.trim();
+  if (trimmed.startsWith('+55')) {
+    return { ddi: '+55', local: formatLocalPhone(trimmed.slice(3)) };
+  }
+  const match = trimmed.match(/^(\+\d{1,3})(\d+)$/);
+  if (match) {
+    return { ddi: match[1], local: formatLocalPhone(match[2]) };
+  }
+  return { ddi: '+55', local: formatLocalPhone(trimmed) };
+}
+
+function formatLocalPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 0) return '';
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+}
+
+function buildFullPhone(ddi: string, local: string): { phone?: string; error?: string } {
+  const ddiDigits = ddi.replace(/\D/g, '');
+  const localDigits = local.replace(/\D/g, '');
+
+  if (!localDigits) {
+    return { phone: undefined };
+  }
+
+  if (!ddiDigits) {
+    return { error: 'É obrigatório preencher o DDI se o número de WhatsApp for informado.' };
+  }
+
+  const cleanDdi = ddi.trim().startsWith('+') ? ddi.trim() : `+${ddi.trim()}`;
+  return { phone: `${cleanDdi}${localDigits}` };
+}
+
 export default function ProfilePage() {
   const { token, userId, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -67,7 +105,8 @@ export default function ProfilePage() {
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState('PREFIRO_NAO_INFORMAR');
   const [avatarUrl, setAvatarUrl] = useState('');
-  const [whatsappPhone, setWhatsappPhone] = useState('');
+  const [whatsappDdi, setWhatsappDdi] = useState('+55');
+  const [whatsappLocal, setWhatsappLocal] = useState('');
   const [profileEvaluationStatus, setProfileEvaluationStatus] = useState('PENDING_EVALUATION');
 
   // Restrições Alimentares
@@ -107,7 +146,11 @@ export default function ProfilePage() {
           }
           setGender(user.gender || 'PREFIRO_NAO_INFORMAR');
           setAvatarUrl(user.avatarUrl || '');
-          setWhatsappPhone(user.whatsappPhone || '');
+          if (user.whatsappPhone) {
+            const parsed = splitPhone(user.whatsappPhone);
+            setWhatsappDdi(parsed.ddi);
+            setWhatsappLocal(parsed.local);
+          }
           setProfileEvaluationStatus(user.profileEvaluationStatus || 'PENDING_EVALUATION');
         }
       })
@@ -151,75 +194,81 @@ export default function ProfilePage() {
   async function handleToggleConsumerStatus(action: 'ACTIVATE' | 'DEACTIVATE') {
     if (!token) return;
     setLoadingConsumerStatus(true);
+
     try {
-      const res = await apiClient.patch<any>('/consumer/status', {
-        action,
-        reason: action === 'DEACTIVATE' ? 'Desativado pelo próprio consumidor via painel' : 'Reativado pelo consumidor via painel',
-      }, token);
-      setConsumerStatus(res.status);
-      if (res.statusChangedAt) setStatusChangedAt(res.statusChangedAt);
-      if (res.statusChangeReason) setStatusChangeReason(res.statusChangeReason);
+      const res = await apiClient.post<any>(`/consumer/me/status`, { action }, token);
+      if (res?.consumer) {
+        setConsumerStatus(res.consumer.status);
+        setStatusChangedAt(res.consumer.statusChangedAt);
+        setStatusChangeReason(res.consumer.statusChangeReason);
+      }
       toast.success(
-        action === 'DEACTIVATE' ? 'Seu perfil de consumidor foi desativado.' : 'Seu perfil de consumidor foi reativado com sucesso!',
+        action === 'ACTIVATE' ? 'Perfil reativado com sucesso!' : 'Perfil desativado com sucesso.',
         'Status Atualizado'
       );
     } catch (err: any) {
-      toast.error('Erro ao alterar status do consumidor.', 'Erro');
+      const msg = err instanceof HttpError ? err.message : 'Erro ao alterar status do consumidor.';
+      toast.error(msg, 'Erro');
     } finally {
       setLoadingConsumerStatus(false);
     }
   }
 
-  function handleImageUpload(e: ChangeEvent<HTMLInputElement>) {
+  function addRow() {
+    setRows((prev) => [...prev, { allergen: 'LACTOSE', severity: 'MEDIUM', type: 'INTOLERANCE' }]);
+  }
+
+  function removeRow(index: number) {
+    setRows((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateRow(index: number, key: keyof Row, value: string) {
+    setRows((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, [key]: value } : r))
+    );
+  }
+
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Trava de 10MB conforme solicitação do usuário
-    const MAX_SIZE_BYTES = 10 * 1024 * 1024;
-    if (file.size > MAX_SIZE_BYTES) {
-      toast.error('O tamanho da foto de perfil não pode ultrapassar 10MB.', 'Arquivo muito grande');
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('A imagem excede o tamanho máximo de 10MB.', 'Arquivo Muito Grande');
       return;
     }
 
     const reader = new FileReader();
     reader.onloadend = () => {
       setAvatarUrl(reader.result as string);
-      toast.info('Foto selecionada com sucesso! Clique em salvar para confirmar.', 'Foto alterada');
+      toast.info('Foto selecionada com sucesso! Clique em "Salvar alterações" para aplicar.', 'Foto Carregada');
     };
     reader.readAsDataURL(file);
-  }
-
-  function addRow() {
-    const availableOption = ALLERGEN_OPTIONS.find(
-      (opt) => !rows.some((row) => row.allergen === opt.value)
-    );
-    const nextAllergen = availableOption ? availableOption.value : 'OTHER';
-    setRows((prev) => [...prev, { allergen: nextAllergen, severity: 'MEDIUM', type: 'ALLERGY' }]);
-  }
-
-  function removeRow(idx: number) {
-    setRows((prev) => prev.filter((_, i) => i !== idx));
-  }
-
-  function updateRow(idx: number, field: keyof Row, value: string) {
-    setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
-  }
+  };
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!isAuthenticated || !token || !userId) {
-      router.push('/auth/login');
-      return;
-    }
+    if (!token || !userId) return;
+
+    // Previne envio duplicado
+    if (loading) return;
+
     setLoading(true);
+
     try {
-      // 1. Atualiza Dados Pessoais do Usuário (IAM)
+      // 1. Atualiza Dados de IAM / Perfil do Usuário
+      const phoneRes = buildFullPhone(whatsappDdi, whatsappLocal);
+      if (phoneRes.error) {
+        toast.error(phoneRes.error, 'Erro ao salvar perfil');
+        setLoading(false);
+        return;
+      }
+
       await apiClient.put('/iam/profile', {
         fullName,
         birthDate: birthDate ? birthDate : undefined,
         gender,
         avatarUrl,
-        whatsappPhone: whatsappPhone ? whatsappPhone : undefined,
+        whatsappPhone: phoneRes.phone,
       }, token);
 
       // 2. Atualiza ou Cria o Perfil Alimentar
@@ -399,16 +448,31 @@ export default function ProfilePage() {
                   </select>
                 </div>
 
-                <div className="field">
-                  <label className="field-label">WhatsApp</label>
-                  <input
-                    type="tel"
-                    className="field-input"
-                    placeholder="+5511987654321"
-                    value={whatsappPhone}
-                    onChange={(e) => setWhatsappPhone(e.target.value)}
-                  />
-                  <span className="field-hint">Formato: +55DDDNNNNNNNNN</span>
+                <div className="field profile-field-full">
+                  <label className="field-label" htmlFor="whatsapp-phone-input">WhatsApp</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <input
+                      type="text"
+                      className="field-input"
+                      style={{ width: '80px', textAlign: 'center', flexShrink: 0, fontWeight: 600 }}
+                      placeholder="+55"
+                      value={whatsappDdi}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        if (val && !val.startsWith('+')) val = '+' + val;
+                        setWhatsappDdi(val);
+                      }}
+                    />
+                    <input
+                      id="whatsapp-phone-input"
+                      type="text"
+                      className="field-input"
+                      style={{ flex: 1 }}
+                      placeholder="(79) 99999-9999"
+                      value={whatsappLocal}
+                      onChange={(e) => setWhatsappLocal(formatLocalPhone(e.target.value))}
+                    />
+                  </div>
                 </div>
               </div>
             </section>

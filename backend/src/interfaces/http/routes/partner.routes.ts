@@ -70,10 +70,11 @@ router.get('/partners/me/all', authMiddleware, (req, res) => partnerController.l
 // Obter o primeiro parceiro cadastrado do usuário logado (legado)
 router.get('/partners/me', authMiddleware, (req, res) => {
   req.params.id = ''; // força busca por req.user.id no GetPartnerUseCase
-  const getPartnerUseCaseCompat = new GetPartnerUseCase(partnerRepository);
+  const userId = req.user?.id;
+  const getPartnerUseCaseCompat = new GetPartnerUseCase(partnerRepository, userRepository);
   // requesterId = o próprio dono, para que o GetPartnerUseCase não filtre seu próprio
   // cadastro ainda não público (rascunho/pendente/rejeitado/suspenso).
-  getPartnerUseCaseCompat.execute({ userId: req.user?.id, requesterId: req.user?.id }).then(result => {
+  getPartnerUseCaseCompat.execute({ userId, requesterId: userId }).then(result => {
     if (result.isFailure) return res.status(404).json({ success: false, error: result.getError() });
     return res.status(200).json({ success: true, data: result.getValue() });
   }).catch(err => res.status(500).json({ success: false, error: err.message }));

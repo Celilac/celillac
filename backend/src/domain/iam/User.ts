@@ -129,7 +129,7 @@ export class User extends Entity<UserProps> {
     birthDate?: Date;
     gender?: string;
     avatarUrl?: string;
-    whatsappPhone?: string;
+    whatsappPhone?: WhatsappPhone;
   }): Result<void> {
     if (details.avatarUrl) {
       if (details.avatarUrl.startsWith('data:image/') && details.avatarUrl.length > 14 * 1024 * 1024) {
@@ -137,20 +137,11 @@ export class User extends Entity<UserProps> {
       }
     }
 
-    let whatsappPhone: WhatsappPhone | undefined;
-    if (details.whatsappPhone !== undefined) {
-      const phoneResult = WhatsappPhone.create(details.whatsappPhone);
-      if (phoneResult.isFailure) {
-        return Result.fail<void>(phoneResult.getError());
-      }
-      whatsappPhone = phoneResult.getValue();
-    }
-
     if (details.fullName !== undefined) this.props.fullName = details.fullName;
     if (details.birthDate !== undefined) this.props.birthDate = details.birthDate;
     if (details.gender !== undefined) this.props.gender = details.gender;
     if (details.avatarUrl !== undefined) this.props.avatarUrl = details.avatarUrl;
-    if (whatsappPhone !== undefined) this.props.whatsappPhone = whatsappPhone;
+    if (details.whatsappPhone !== undefined) this.props.whatsappPhone = details.whatsappPhone;
 
     return Result.ok<void>(undefined as any);
   }
