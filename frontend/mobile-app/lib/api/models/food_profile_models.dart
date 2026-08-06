@@ -26,6 +26,7 @@ class FoodProfile {
     required this.isActive,
     required this.requiresHistoryRevalidation,
     required this.restrictions,
+    required this.acceptsCrossContamination,
   });
 
   factory FoodProfile.fromJson(Map<String, dynamic> json) => FoodProfile(
@@ -33,6 +34,7 @@ class FoodProfile {
         userId: json['userId'] as String,
         isActive: json['isActive'] as bool,
         requiresHistoryRevalidation: json['requiresHistoryRevalidation'] as bool,
+        acceptsCrossContamination: json['acceptsCrossContamination'] as bool? ?? false,
         restrictions: (json['restrictions'] as List<dynamic>)
             .map((e) => Restriction.fromJson(e as Map<String, dynamic>))
             .toList(),
@@ -42,17 +44,24 @@ class FoodProfile {
   final String userId;
   final bool isActive;
   final bool requiresHistoryRevalidation;
+  final bool acceptsCrossContamination;
   final List<Restriction> restrictions;
 }
 
 class FoodProfilePayload {
-  const FoodProfilePayload({required this.userId, required this.restrictions});
+  const FoodProfilePayload({
+    required this.userId,
+    required this.restrictions,
+    required this.acceptsCrossContamination,
+  });
 
   final String userId;
   final List<Restriction> restrictions;
+  final bool acceptsCrossContamination;
 
   Map<String, dynamic> toJson() => {
         'userId': userId,
         'restrictions': restrictions.map((r) => r.toJson()).toList(),
+        'acceptsCrossContamination': acceptsCrossContamination,
       };
 }
