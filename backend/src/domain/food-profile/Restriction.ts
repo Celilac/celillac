@@ -15,7 +15,9 @@ export interface RestrictionProps {
 /**
  * Restriction — Entidade que representa uma restrição alimentar.
  * Parte do agregado FoodProfile.
- * Regra: uma restrição FATAL representa risco de vida (Celíaco).
+ * Regra: uma restrição FATAL representa risco de vida (ex.: doença celíaca,
+ * alergia grave/anafilática). O tipo de condição é dado por `type`
+ * (RestrictionType), não por `severity`.
  */
 export class Restriction extends Entity<RestrictionProps> {
   private constructor(props: RestrictionProps, id?: string) {
@@ -62,6 +64,22 @@ export class Restriction extends Entity<RestrictionProps> {
     if (props.type && !Object.values(RestrictionType).includes(props.type)) {
       return Result.fail<Restriction>(`Tipo de restrição inválido: ${props.type}.`);
     }
+
+    // RN-CONSUMER-05 (Issue #34) — Aprovado em 2026-08-01
+    // Uma alergia representa condição médica com impacto real à saúde.
+    // A combinação type === ALLERGY com severity === LOW ou LIFESTYLE é clinicamente
+    // incoerente: alergias têm, no mínimo, impacto moderado.
+    // Severidade mínima para ALLERGY: MEDIUM.
+    const effectiveType = props.type ?? RestrictionType.ALLERGY;
+    const LOW_SEVERITY_LEVELS: SeverityLevel[] = [SeverityLevel.LOW, SeverityLevel.LIFESTYLE];
+    if (effectiveType === RestrictionType.ALLERGY && LOW_SEVERITY_LEVELS.includes(props.severity)) {
+      return Result.fail<Restriction>(
+        `Uma restrição do tipo Alergia (ALLERGY) não pode ter severidade ${props.severity}. ` +
+        `Severidade mínima para alergias: MEDIUM. ` +
+        `Se a condição for leve, utilize INTOLERANCE ou DIETARY_PREFERENCE.`,
+      );
+    }
+
     return Result.ok<Restriction>(new Restriction(props, id));
   }
 }

@@ -2,7 +2,7 @@
 
 > **Bounded Context:** Compatibilidade Alimentar (Core Engine)  
 > **Status:** Concluído e Homologado  
-> **Última Atualização:** 2026-08-01 (FEAT-046 / Issue #32)  
+> **Última Atualização:** 2026-08-01 (FEAT-048 / Issue #34)  
 > **Documento Conceitual Primário:** [`docs/ALLERGEN_ENGINE.md`](../ALLERGEN_ENGINE.md)
 
 ---
@@ -27,6 +27,8 @@ O `AllergenEngine` é o serviço de domínio puro e agnóstico a banco de dados 
 | **R8** | O risco final da consulta é o risco mais grave entre todos os conflitos | `RiskLevel` máximo vence |
 | **R9** | **Invariante 11.5 (Contaminação Cruzada):** Traços + não-tolerância (`acceptsCrossContamination = false`) para severidade `HIGH` | `DANGER` *(eleva de WARNING para DANGER)* |
 
+> **RN-CONSUMER-05 (Issue #34):** Propagação do campo `type: RestrictionType` no `ConflictDetail` e prefixo textual no `reasoning` (`[ALLERGY/FATAL] GLUTEN...`), garantindo clareza e transparência no veredito entre Alergias, Intolerâncias e Preferências Alimentares.
+
 ---
 
 ## 3. Cobertura de Testes de Segurança Alimentar
@@ -38,3 +40,5 @@ Suíte de testes mantida em [`backend/tests/unit/domain/allergen-engine/Allergen
 - **TC-10**: Severidade `HIGH` + traços + `acceptsCrossContamination = false` → retorne `DANGER`.
 - **TC-11**: Severidade `HIGH` + traços + `acceptsCrossContamination = true` → retorne `WARNING`.
 - **TC-12**: Severidade `FATAL` + traços + `acceptsCrossContamination = true` → retorne `BLOCKED` *(invariante biológica imutável)*.
+- **TC-13**: Retorno de `ConflictDetail.type = ALLERGY` e prefixo no `reason` para restrições do tipo alergia *(RN-CONSUMER-05 / Issue #34)*.
+- **TC-14**: Rejeição de `ALLERGY` + `LOW` no domínio e diferenciação de `DIETARY_PREFERENCE` + `LOW` *(RN-CONSUMER-05 / Issue #34)*.

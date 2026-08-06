@@ -42,6 +42,10 @@
    - [PUT /consumer/preferences](#put-consumerpreferences)
    - [POST /consumer/restrictions](#post-consumerrestrictions)
    - [DELETE /consumer/restrictions/:allergen](#delete-consumerrestrictionsallergen)
+12. [Moderação e Denúncias (Reports)](#12-moderação-e-denúncias-reports)
+   - [POST /admin/reports](#post-adminreports)
+   - [GET /admin/reports](#get-adminreports)
+   - [PATCH /admin/reports/:id/status](#patch-adminreportsidstatus)
 
 ---
 
@@ -990,4 +994,105 @@ Remove uma restrição alimentar existente por tipo de alérgeno.
   "message": "Restrição removida com sucesso."
 }
 ```
+
+---
+
+## 12. Moderação e Denúncias (Reports)
+
+### `POST /admin/reports` 🔒
+
+Cria uma nova denúncia contra um produto ou parceiro comercial. **Autenticação obrigatória — Bearer Token.**
+
+> 💡 **Nota:** Para denunciar um produto, envie `productId`. Para denunciar um parceiro comercial, envie `partnerId`. Ao menos um dos dois deve ser fornecido.
+
+**Request Body:**
+```json
+{
+  "productId": "prod-uuid-123",
+  "partnerId": "partner-uuid-456",
+  "reason": "MISSING_ALLERGEN",
+  "details": "Omitiu traços de glúten na rotulagem",
+  "isFoodSafetyRisk": true
+}
+```
+
+| Campo | Tipo | Obrigatório | Validação / Descrição |
+|:------|:-----|:-----------:|:----------------------|
+| `productId` | `string` | Opcional* | ID do produto denunciado (Obrigatório se `partnerId` não for informado). |
+| `partnerId` | `string` | Opcional* | ID do parceiro comercial denunciado (Obrigatório se `productId` não for informado). |
+| `reason` | `enum` | ✅ | `INCORRECT_INGREDIENTS` \| `MISSING_ALLERGEN` \| `WRONG_CROSS_CONTAMINATION` \| `OTHER` |
+| `details` | `string` | Opcional | Descrição detalhada da denúncia. |
+| `isFoodSafetyRisk` | `boolean` | Opcional | Calculado automaticamente para motivos graves (`MISSING_ALLERGEN`, `WRONG_CROSS_CONTAMINATION`) se omitido. |
+
+**Response Body (201 Created):**
+```json
+{
+  "id": "report-uuid-789",
+  "reporterId": "user-uuid-123",
+  "productId": "prod-uuid-123",
+  "partnerId": null,
+  "reason": "MISSING_ALLERGEN",
+  "isFoodSafetyRisk": true,
+  "status": "PENDING",
+  "details": "Omitiu traços de glúten na rotulagem",
+  "createdAt": "2026-08-03T19:00:00.000Z",
+  "updatedAt": "2026-08-03T19:00:00.000Z"
+}
+```
+
+---
+
+### `GET /admin/reports` 🔒 *(Restrito: ADMIN)*
+
+Lista as denúncias registradas na plataforma. Prioriza automaticamente denúncias de risco de segurança alimentar (`is_food_safety_risk DESC`).
+
+**Query Parameters:**
+- `status` (`string`, opcional): `PENDING` | `IN_REVIEW` | `RESOLVED` | `DISMISSED`
+- `isFoodSafetyRisk` (`boolean`, opcional): `true` | `false`
+
+**Response Body (200 OK):**
+```json
+[
+  {
+    "id": "report-uuid-789",
+    "reporterId": "user-uuid-123",
+    "partnerId": "partner-uuid-456",
+    "reason": "WRONG_CROSS_CONTAMINATION",
+    "isFoodSafetyRisk": true,
+    "status": "PENDING",
+    "details": "Contaminação cruzada sistemática no restaurante",
+    "createdAt": "2026-08-03T19:00:00.000Z",
+    "updatedAt": "2026-08-03T19:00:00.000Z"
+  }
+]
+```
+
+---
+
+### `PATCH /admin/reports/:id/status` 🔒 *(Restrito: ADMIN)*
+
+Atualiza o status de uma denúncia.
+
+**Request Body:**
+```json
+{
+  "newStatus": "RESOLVED"
+}
+```
+
+**Response Body (200 OK):**
+```json
+{
+  "id": "report-uuid-789",
+  "reporterId": "user-uuid-123",
+  "partnerId": "partner-uuid-456",
+  "reason": "WRONG_CROSS_CONTAMINATION",
+  "isFoodSafetyRisk": true,
+  "status": "RESOLVED",
+  "details": "Contaminação cruzada sistemática no restaurante",
+  "createdAt": "2026-08-03T19:00:00.000Z",
+  "updatedAt": "2026-08-03T19:05:00.000Z"
+}
+```
+
 

@@ -40,6 +40,8 @@ As 9 regras abaixo são a **única definição oficial** de como o motor funcion
 
 > **Nota sobre R9 (Invariante 11.5):** Quando o consumidor declara `acceptsCrossContamination = false` (padrão do sistema para máxima segurança), o alérgeno detectado nos traços para restrições de severidade `HIGH` eleva o risco para `DANGER`. Para severidade `FATAL`, o resultado é sempre `BLOCKED` independente da tolerância declarada.
 
+> **RN-CONSUMER-05 (Issue #34 — aprovado 2026-08-01):** Uma restrição com `type === ALLERGY` exige severidade mínima `MEDIUM`. A regra vive em `Restriction.create()` (não no motor). O motor é enxuto: recebe apenas objetos de domínio válidos. O campo `type` da restrição é agora propagado para `ConflictDetail.type` e incluído no `reasoning` para transparência no frontend (“Alergia” vs. “Intolerância”). A combinação `ALLERGY + LOW/LIFESTYLE` é rejeitada na fronteira do domínio com HTTP 422.
+
 ---
 
 ## 3. Tipos de Risco (`RiskLevel`)
@@ -61,12 +63,20 @@ UNEVALUATED = -1  <  SAFE = 0  <  WARNING = 1  <  DANGER = 2  <  BLOCKED = 3
 
 ## 4. Níveis de Severidade do Perfil (`SeverityLevel`)
 
-| Nível | Descrição | Tolera traços? | RiskLevel máximo que pode causar |
-|:------|:----------|:--------------:|:--------------------------------:|
-| `LOW` | Sensibilidade leve | ✅ Sim | `WARNING` |
-| `MEDIUM` | Intolerância moderada | ✅ Sim | `WARNING` |
-| `HIGH` | Alergia severa | ✅ Sim (WARNING) | `DANGER` (em ingredientes) |
-| `FATAL` | Celíaco / Alergia grave | ❌ **Não** — traços = BLOCKED | `BLOCKED` |
+`SeverityLevel` mede **apenas o grau de risco/tolerância** de uma restrição — não o
+diagnóstico. O diagnóstico (alergia, intolerância, restrição médica, preferência,
+estilo de vida) é modelado separadamente em `RestrictionType`
+([`RestrictionType.ts`](../backend/src/domain/food-profile/value-objects/RestrictionType.ts)).
+Os dois eixos são independentes: uma alergia a castanhas pode ser `FATAL`, assim como
+uma restrição médica a glúten (doença celíaca) pode ser `FATAL` — o nível não deve ser
+usado para "adivinhar" a condição.
+
+| Nível | Descrição (grau de risco) | Tolera traços? | RiskLevel máximo que pode causar |
+|:------|:--------------------------|:--------------:|:--------------------------------:|
+| `LOW` | Risco leve — reação leve, traços geralmente tolerados | ✅ Sim | `WARNING` |
+| `MEDIUM` | Risco moderado — reação perceptível, traços geralmente tolerados | ✅ Sim | `WARNING` |
+| `HIGH` | Risco alto — reação séria ao ingerir o alérgeno | ✅ Sim (WARNING) | `DANGER` (em ingredientes) |
+| `FATAL` | Risco crítico — zero tolerância, incluindo traços (ex.: doença celíaca, alergia grave/anafilática) | ❌ **Não** — traços = BLOCKED | `BLOCKED` |
 
 ---
 
@@ -150,7 +160,8 @@ interface CompatibilityReport {
 interface ConflictDetail {
   allergen:  AllergenType;   // Qual alérgeno causou o conflito
   severity:  SeverityLevel;  // Severidade do perfil para esse alérgeno
-  reason:    string;         // Texto: "[FATAL] GLUTEN — detectado nos ingredientes"
+  type:      RestrictionType; // Tipo da restrição (ALLERGY, INTOLERANCE, etc.) — adicionado Issue #34
+  reason:    string;         // Texto: "[ALLERGY/FATAL] GLUTEN — detectado nos ingredientes"
 }
 ```
 

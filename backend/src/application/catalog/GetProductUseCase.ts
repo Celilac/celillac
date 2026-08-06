@@ -3,6 +3,7 @@ import { IProductCatalogRepository } from '../../domain/catalog/repositories/IPr
 import { IFoodProfileRepository } from '../../domain/food-profile/repositories/IFoodProfileRepository';
 import { ProductSearchResponseDTO } from './SearchProductsUseCase';
 import { AllergenEngine } from '../../domain/allergen-engine/AllergenEngine';
+import { toProductSnapshot } from './mappers/toProductSnapshot';
 import { Result } from '../../domain/Result';
 
 export interface GetProductDTO {
@@ -44,15 +45,7 @@ export class GetProductUseCase {
     if (dto.userIdForCompatibility && this.foodProfileRepository) {
       const userProfile = await this.foodProfileRepository.findByUserId(dto.userIdForCompatibility);
       if (userProfile && userProfile.isActive()) {
-        const productSnapshot = {
-          id:                 product.id,
-          name:               product.name,
-          ingredients:        product.ingredients,
-          hasGluten:          product.hasGluten,
-          crossContamination: product.crossContamination,
-        };
-
-        const compatibilityReport = AllergenEngine.check(userProfile, productSnapshot);
+        const compatibilityReport = AllergenEngine.check(userProfile, toProductSnapshot(product));
         response.compatibilityReport = compatibilityReport;
       }
     }

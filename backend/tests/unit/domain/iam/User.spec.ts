@@ -3,6 +3,7 @@ import { User } from '../../../../src/domain/iam/User';
 import { Email } from '../../../../src/domain/iam/value-objects/Email';
 import { PasswordHash } from '../../../../src/domain/iam/value-objects/PasswordHash';
 import { UserRole } from '../../../../src/domain/iam/value-objects/UserRole';
+import { WhatsappPhone } from '../../../../src/domain/iam/value-objects/WhatsappPhone';
 
 describe('User Entity', () => {
   const makeValidEmail = () => Email.create('teste@celilac.com').getValue();
@@ -97,6 +98,32 @@ describe('User Entity', () => {
       });
       expect(result.isFailure).toBe(true);
       expect(result.getError()).toBe('Role de usuário inválida.');
+    });
+  });
+
+  describe('updateProfileDetails() — whatsappPhone', () => {
+    const makeUser = () =>
+      User.create({
+        email:        makeValidEmail(),
+        passwordHash: makeValidHash(),
+        role:         UserRole.CELIACO,
+      }).getValue();
+
+    it('deve atualizar o whatsappPhone quando válido', () => {
+      const user = makeUser();
+      const phoneVo = WhatsappPhone.create('+5511987654321').getValue();
+      const result = user.updateProfileDetails({ whatsappPhone: phoneVo });
+      expect(result.isSuccess).toBe(true);
+      expect(user.whatsappPhone?.value).toBe('+5511987654321');
+    });
+
+    it('não deve alterar o whatsappPhone quando o campo não é informado', () => {
+      const user = makeUser();
+      const phoneVo = WhatsappPhone.create('+5511987654321').getValue();
+      user.updateProfileDetails({ whatsappPhone: phoneVo });
+      const result = user.updateProfileDetails({ fullName: 'Novo Nome' });
+      expect(result.isSuccess).toBe(true);
+      expect(user.whatsappPhone?.value).toBe('+5511987654321');
     });
   });
 });

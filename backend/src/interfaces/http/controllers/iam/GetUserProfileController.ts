@@ -27,6 +27,7 @@ export class GetUserProfileController extends BaseController {
       birthDate: user.birthDate,
       gender: user.gender,
       avatarUrl: user.avatarUrl,
+      whatsappPhone: user.whatsappPhone?.value,
       accountStatus: user.accountStatus,
       profileEvaluationStatus: user.profileEvaluationStatus,
       isEmailVerified: user.isEmailVerified,

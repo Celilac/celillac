@@ -131,3 +131,11 @@ export async function optionalAuthMiddleware(req: Request, res: Response, next: 
 
   next();
 }
+
+export function adminOnlyMiddleware(req: Request, res: Response, next: NextFunction): void {
+  if (!req.user || req.user.role !== 'ADMIN') {
+    res.status(403).json({ error: 'Acesso negado. Apenas administradores possuem acesso a esta funcionalidade.' });
+    return;
+  }
+  next();
+}

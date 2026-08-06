@@ -1,6 +1,8 @@
 // backend/src/application/partner/ApprovePartnerUseCase.ts
 import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
 import { IUserRepository } from '../../domain/iam/repositories/IUserRepository';
+import { IAuditLogRepository } from '../../domain/audit/repositories/IAuditLogRepository';
+import { AuditLog } from '../../domain/audit/AuditLog';
 import { Result } from '../../domain/Result';
 import { UserRole } from '../../domain/iam/value-objects/UserRole';
 
@@ -12,7 +14,8 @@ export interface ApprovePartnerDTO {
 export class ApprovePartnerUseCase {
   constructor(
     private readonly partnerRepository: IPartnerRepository,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
+    private readonly auditLogRepository?: IAuditLogRepository,
   ) {}
 
   async execute(dto: ApprovePartnerDTO): Promise<Result<void>> {
@@ -32,6 +35,8 @@ export class ApprovePartnerUseCase {
       return Result.fail<void>('Parceiro comercial não encontrado.');
     }
 
+    const previousStatus = partner.approvalStatus;
+
     // 3. Chamar método do domínio
     const approveResult = partner.approve();
     if (approveResult.isFailure) {
@@ -39,6 +44,27 @@ export class ApprovePartnerUseCase {
     }
 
     await this.partnerRepository.update(partner);
+
+    // Auditoria (Issue #39)
+    if (this.auditLogRepository) {
+      const logResult = AuditLog.create({
+        entityType: 'Partner',
+        entityId:   partner.id,
+        action:     'APPROVE',
+        actorId:    dto.adminUserId,
+        actorRole:  'ADMIN',
+        changes:    {
+          previousApprovalStatus: previousStatus,
+          newApprovalStatus:      partner.approvalStatus,
+          name:                   partner.name,
+        },
+        reason: 'Aprovação de cadastro de parceiro comercial',
+      });
+
+      if (logResult.isSuccess) {
+        await this.auditLogRepository.save(logResult.getValue());
+      }
+    }
 
     return Result.ok<void>(undefined);
   }

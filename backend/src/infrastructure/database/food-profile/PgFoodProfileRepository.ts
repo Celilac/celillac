@@ -68,8 +68,10 @@ export class PgFoodProfileRepository implements IFoodProfileRepository {
     restrictions: RestrictionRow[];
     accepts_cross_contamination?: boolean;
   }): FoodProfile {
-    const restrictions = (row.restrictions ?? []).map((r) =>
-      Restriction.create(
+    const restrictions: Restriction[] = [];
+
+    for (const r of row.restrictions ?? []) {
+      let createRes = Restriction.create(
         {
           allergen: r.allergen as AllergenType,
           severity: r.severity as SeverityLevel,
@@ -77,8 +79,25 @@ export class PgFoodProfileRepository implements IFoodProfileRepository {
           notes: r.notes,
         },
         r.id,
-      ).getValue(),
-    );
+      );
+
+      // Grace Period / Reconstituição segura de dados legados do banco
+      if (createRes.isFailure) {
+        createRes = Restriction.create(
+          {
+            allergen: r.allergen as AllergenType,
+            severity: r.severity as SeverityLevel,
+            type: RestrictionType.INTOLERANCE,
+            notes: r.notes,
+          },
+          r.id,
+        );
+      }
+
+      if (createRes.isSuccess) {
+        restrictions.push(createRes.getValue());
+      }
+    }
 
     return FoodProfile.create(
       {

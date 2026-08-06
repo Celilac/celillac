@@ -1,9 +1,12 @@
 // backend/src/domain/food-profile/value-objects/SeverityLevel.ts
 
 /**
- * SeverityLevel — Nível de severidade de uma restrição alimentar.
+ * SeverityLevel — Nível de severidade (grau de risco/tolerância) de uma
+ * restrição alimentar. Independente de `RestrictionType`: não indica o
+ * diagnóstico (alergia, intolerância, restrição médica etc.), apenas o quão
+ * rígida deve ser a tolerância a exposição/traços.
  * Definido em DOMAIN_MODEL.md: LIFESTYLE | LOW | MEDIUM | HIGH | FATAL
- * FATAL = Celíaco. Zero tolerância, incluindo traços.
+ * FATAL = zero tolerância, incluindo traços (ex.: doença celíaca, alergia grave).
  * LIFESTYLE = preferência pessoal (ex.: vegano), sem risco médico associado.
  */
 export enum SeverityLevel {

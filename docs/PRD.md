@@ -139,8 +139,8 @@
 ### RF-06 — Administração e Moderação
 | ID | Requisito |
 |:---|:----------|
-| RF-06.1 | Usuários autenticados podem criar denúncias sobre produtos. |
-| RF-06.2 | Admins listam, filtram e atualizam status de denúncias. |
+| RF-06.1 | Usuários autenticados podem criar denúncias sobre produtos ou parceiros comerciais (13.16). |
+| RF-06.2 | Admins listam, filtram e atualizam status de denúncias (priorizando riscos de segurança alimentar). |
 | RF-06.3 | Denúncia em estado final (`RESOLVED`/`DISMISSED`) não pode ser alterada. |
 
 ---

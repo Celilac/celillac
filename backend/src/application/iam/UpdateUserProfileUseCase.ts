@@ -1,7 +1,7 @@
-// backend/src/application/iam/UpdateUserProfileUseCase.ts
 import { IUserRepository } from '../../domain/iam/repositories/IUserRepository';
 import { Result } from '../../domain/Result';
 import { User } from '../../domain/iam/User';
+import { WhatsappPhone } from '../../domain/iam/value-objects/WhatsappPhone';
 
 export interface UpdateUserProfileInput {
   userId: string;
@@ -9,6 +9,7 @@ export interface UpdateUserProfileInput {
   birthDate?: string | Date;
   gender?: string;
   avatarUrl?: string;
+  whatsappPhone?: string;
 }
 
 export class UpdateUserProfileUseCase {
@@ -28,11 +29,21 @@ export class UpdateUserProfileUseCase {
       }
     }
 
+    let phoneVo: WhatsappPhone | undefined = undefined;
+    if (input.whatsappPhone !== undefined) {
+      const phoneRes = WhatsappPhone.create(input.whatsappPhone);
+      if (phoneRes.isFailure) {
+        return Result.fail<User>(phoneRes.getError());
+      }
+      phoneVo = phoneRes.getValue();
+    }
+
     const updateRes = user.updateProfileDetails({
       fullName: input.fullName,
       birthDate: parsedBirthDate,
       gender: input.gender,
       avatarUrl: input.avatarUrl,
+      whatsappPhone: phoneVo,
     });
 
     if (updateRes.isFailure) {
