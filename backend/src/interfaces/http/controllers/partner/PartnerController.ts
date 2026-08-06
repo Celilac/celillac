@@ -231,8 +231,9 @@ export class PartnerController extends BaseController {
 
   async getPartner(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
+    const requesterId = req.user?.id;
 
-    const result = await this.getPartnerUseCase.execute({ partnerId: id });
+    const result = await this.getPartnerUseCase.execute({ partnerId: id, requesterId });
     if (result.isFailure) {
       this.notFound(res, result.getError());
       return;

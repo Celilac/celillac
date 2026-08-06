@@ -2,7 +2,7 @@
 import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
 import { Result } from '../../domain/Result';
 import { PartnerResponseDTO } from './RegisterPartnerUseCase';
-import { PartnerApprovalStatus } from '../../domain/partner/Partner';
+import { VerifyPartnerPublicationCapability } from '../../domain/partner/services/VerifyPartnerPublicationCapability';
 
 export class ListPublicPartnersUseCase {
   constructor(private readonly partnerRepository: IPartnerRepository) {}
@@ -11,9 +11,9 @@ export class ListPublicPartnersUseCase {
     // 1. Buscar todos os parceiros
     const allPartners = await this.partnerRepository.findAll();
 
-    // 2. Filtrar apenas parceiros com cadastro aprovado
-    const publicPartners = allPartners.filter(
-      (partner) => partner.approvalStatus === PartnerApprovalStatus.APPROVED,
+    // 2. Filtrar apenas parceiros aprovados e operacionalmente aptos (RN-PARTNER-06/09)
+    const publicPartners = allPartners.filter((partner) =>
+      VerifyPartnerPublicationCapability.check(partner),
     );
 
     const response: PartnerResponseDTO[] = publicPartners.map((partner) => ({

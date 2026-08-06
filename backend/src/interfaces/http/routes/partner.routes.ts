@@ -21,7 +21,7 @@ import { ListPublicPartnersUseCase } from '../../../application/partner/ListPubl
 
 // Controladores e Middleware
 import { PartnerController } from '../controllers/partner/PartnerController';
-import { authMiddleware, adminOnlyMiddleware } from '../middlewares/AuthMiddleware';
+import { authMiddleware, optionalAuthMiddleware, adminOnlyMiddleware } from '../middlewares/AuthMiddleware';
 
 const router = Router();
 
@@ -31,7 +31,7 @@ const userRepository     = new PgUserRepository(pool);
 const auditLogRepository = new PgAuditLogRepository(pool);
 
 const registerPartnerUseCase = new RegisterPartnerUseCase(partnerRepository, userRepository);
-const getPartnerUseCase = new GetPartnerUseCase(partnerRepository);
+const getPartnerUseCase = new GetPartnerUseCase(partnerRepository, userRepository);
 const approvePartnerUseCase = new ApprovePartnerUseCase(partnerRepository, userRepository, auditLogRepository);
 const submitPartnerForReviewUseCase = new SubmitPartnerForReviewUseCase(partnerRepository, userRepository);
 const updatePartnerUseCase = new UpdatePartnerUseCase(partnerRepository, userRepository);
@@ -70,8 +70,11 @@ router.get('/partners/me/all', authMiddleware, (req, res) => partnerController.l
 // Obter o primeiro parceiro cadastrado do usuário logado (legado)
 router.get('/partners/me', authMiddleware, (req, res) => {
   req.params.id = ''; // força busca por req.user.id no GetPartnerUseCase
-  const getPartnerUseCaseCompat = new GetPartnerUseCase(partnerRepository);
-  getPartnerUseCaseCompat.execute({ userId: req.user?.id }).then(result => {
+  const userId = req.user?.id;
+  const getPartnerUseCaseCompat = new GetPartnerUseCase(partnerRepository, userRepository);
+  // requesterId = o próprio dono, para que o GetPartnerUseCase não filtre seu próprio
+  // cadastro ainda não público (rascunho/pendente/rejeitado/suspenso).
+  getPartnerUseCaseCompat.execute({ userId, requesterId: userId }).then(result => {
     if (result.isFailure) return res.status(404).json({ success: false, error: result.getError() });
     return res.status(200).json({ success: true, data: result.getValue() });
   }).catch(err => res.status(500).json({ success: false, error: err.message }));
@@ -94,7 +97,9 @@ router.put('/partners/:id', authMiddleware, (req, res) => partnerController.upda
 router.get('/partners', (req, res) => partnerController.listPublicPartners(req, res));
 
 // Obter dados de um parceiro específico
-router.get('/partners/:id', (req, res) => partnerController.getPartner(req, res));
+// auth opcional: dono/admin autenticado vê o cadastro completo (qualquer estado);
+// visitante anônimo só vê parceiros publicamente aptos (RN-PARTNER-04/05/07/08/09)
+router.get('/partners/:id', optionalAuthMiddleware, (req, res) => partnerController.getPartner(req, res));
 
 // --- Rotas Administrativas (Administração) ---
 // Listar todos os parceiros para moderação
