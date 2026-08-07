@@ -8,9 +8,8 @@ export class CreateReportController {
   async execute(req: Request, res: Response): Promise<Response> {
     try {
       const { productId, partnerId, reason, details, isFoodSafetyRisk } = req.body;
-      
-      // Assumindo que o auth middleware injeta req.user.id
-      const reporterId = (req as any).user?.id || 'fake-user-id'; // Fallback for dev if auth is disabled
+
+      const reporterId = (req as any).user?.id || (req as any).user?.userId;
       if (!reporterId) {
         return res.status(401).json({ error: 'User not authenticated' });
       }

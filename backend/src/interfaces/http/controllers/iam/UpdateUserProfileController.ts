@@ -14,7 +14,7 @@ export class UpdateUserProfileController extends BaseController {
       return this.unauthorized(res, 'Usuário não autenticado.');
     }
 
-    const { fullName, birthDate, gender, avatarUrl } = req.body;
+    const { fullName, birthDate, gender, avatarUrl, whatsappPhone } = req.body;
 
     const result = await this.useCase.execute({
       userId,
@@ -22,6 +22,7 @@ export class UpdateUserProfileController extends BaseController {
       birthDate,
       gender,
       avatarUrl,
+      whatsappPhone,
     });
 
     if (result.isFailure) {
@@ -37,6 +38,7 @@ export class UpdateUserProfileController extends BaseController {
       birthDate: user.birthDate,
       gender: user.gender,
       avatarUrl: user.avatarUrl,
+      whatsappPhone: user.whatsappPhone?.value,
       accountStatus: user.accountStatus,
       profileEvaluationStatus: user.profileEvaluationStatus,
     });

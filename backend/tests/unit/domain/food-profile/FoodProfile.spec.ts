@@ -5,8 +5,8 @@ import { AllergenType } from '../../../../src/domain/food-profile/value-objects/
 import { SeverityLevel } from '../../../../src/domain/food-profile/value-objects/SeverityLevel';
 import { RestrictionType } from '../../../../src/domain/food-profile/value-objects/RestrictionType';
 
-const makeRestriction = (allergen: AllergenType, severity: SeverityLevel) =>
-  Restriction.create({ allergen, severity, type: RestrictionType.INTOLERANCE }).getValue();
+const makeRestriction = (allergen: AllergenType, severity: SeverityLevel, type?: RestrictionType) =>
+  Restriction.create({ allergen, severity, type: type || RestrictionType.INTOLERANCE }).getValue();
 
 const USER_ID = 'user-uuid-123';
 
@@ -63,15 +63,32 @@ describe('FoodProfile Aggregate Root', () => {
       expect(profile.requiresHistoryRevalidation).toBe(false);
     });
 
-    it('deve impedir duplicidade de alérgeno no mesmo perfil', () => {
+    it('deve impedir duplicidade de alérgeno + tipo no mesmo perfil', () => {
       const profile = FoodProfile.create({
         userId: USER_ID,
-        restrictions: [makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL)],
+        restrictions: [makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL, RestrictionType.ALLERGY)],
       }).getValue();
-      // Tentar adicionar GLUTEN novamente
-      const result = profile.addRestriction(makeRestriction(AllergenType.GLUTEN, SeverityLevel.HIGH));
+      // Tentar adicionar GLUTEN/ALLERGY novamente
+      const result = profile.addRestriction(
+        makeRestriction(AllergenType.GLUTEN, SeverityLevel.HIGH, RestrictionType.ALLERGY),
+      );
       expect(result.isFailure).toBe(true);
-      expect(result.getError()).toBe('Alérgeno GLUTEN já existe neste perfil.');
+      expect(result.getError()).toBe(
+        'Já existe uma restrição do tipo ALLERGY para o alérgeno GLUTEN neste perfil.',
+      );
+    });
+
+    it('RN-CONSUMER-03: deve permitir o mesmo alérgeno com tipos diferentes (ex.: OTHER/LIFESTYLE + OTHER/ALLERGY)', () => {
+      const profile = FoodProfile.create({
+        userId: USER_ID,
+        restrictions: [makeRestriction(AllergenType.OTHER, SeverityLevel.LIFESTYLE, RestrictionType.LIFESTYLE)],
+      }).getValue();
+      // Vegetariano (OTHER/LIFESTYLE) + alergia a um alérgeno não listado (OTHER/ALLERGY) simultaneamente
+      const result = profile.addRestriction(
+        makeRestriction(AllergenType.OTHER, SeverityLevel.HIGH, RestrictionType.ALLERGY),
+      );
+      expect(result.isSuccess).toBe(true);
+      expect(profile.restrictions).toHaveLength(2);
     });
   });
 
@@ -82,14 +99,27 @@ describe('FoodProfile Aggregate Root', () => {
       expect(result.getError()).toBe('O userId do perfil não pode ser vazio.');
     });
 
-    it('deve falhar se houver alérgenos duplicados nas restrições iniciais', () => {
-      const restrictions = [
-        makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL),
-        makeRestriction(AllergenType.GLUTEN, SeverityLevel.HIGH), // duplicado
-      ];
-      const result = FoodProfile.create({ userId: USER_ID, restrictions });
-      expect(result.isFailure).toBe(true);
-      expect(result.getError()).toContain('duplicado');
+    it('deve permitir múltiplas restrições do tipo OTHER desde que possuam tipos de restrição diferentes (RN-CONSUMER-03)', () => {
+      const r1 = Restriction.create({ allergen: AllergenType.OTHER, severity: SeverityLevel.MEDIUM, type: RestrictionType.LIFESTYLE }).getValue();
+      const r2 = Restriction.create({ allergen: AllergenType.OTHER, severity: SeverityLevel.HIGH, type: RestrictionType.ALLERGY }).getValue();
+
+      const profileRes = FoodProfile.create({ userId: USER_ID, restrictions: [r1, r2] });
+      expect(profileRes.isSuccess).toBe(true);
+      expect(profileRes.getValue().restrictions).toHaveLength(2);
+
+      const addRes = profileRes.getValue().addRestriction(
+        Restriction.create({ allergen: AllergenType.OTHER, severity: SeverityLevel.LOW, type: RestrictionType.MEDICAL_RESTRICTION }).getValue(),
+      );
+      expect(addRes.isSuccess).toBe(true);
+      expect(profileRes.getValue().restrictions).toHaveLength(3);
+    });
+
+    it('deve impedir a adição de restrições OTHER com o mesmo tipo de restrição', () => {
+      const r1 = Restriction.create({ allergen: AllergenType.OTHER, severity: SeverityLevel.MEDIUM, type: RestrictionType.LIFESTYLE }).getValue();
+      const r2 = Restriction.create({ allergen: AllergenType.OTHER, severity: SeverityLevel.HIGH, type: RestrictionType.LIFESTYLE }).getValue();
+
+      const profileRes = FoodProfile.create({ userId: USER_ID, restrictions: [r1, r2] });
+      expect(profileRes.isFailure).toBe(true);
     });
   });
 });
