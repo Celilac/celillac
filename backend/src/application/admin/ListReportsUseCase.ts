@@ -6,6 +6,7 @@ import { ReportResponseDTO } from './CreateReportUseCase';
 
 export interface ListReportsDTO {
   status?: string;
+  isFoodSafetyRisk?: boolean;
 }
 
 export class ListReportsUseCase {
@@ -20,16 +21,22 @@ export class ListReportsUseCase {
       statusFilter = dto.status as ReportStatus;
     }
 
-    const reports = await this.reportRepository.findAll(statusFilter ? { status: statusFilter } : undefined);
+    const reports = await this.reportRepository.findAll({
+      status: statusFilter,
+      isFoodSafetyRisk: dto.isFoodSafetyRisk,
+    });
 
-    const reportDTOs = reports.map(report => ({
+    const reportDTOs: ReportResponseDTO[] = reports.map(report => ({
       id: report.id,
       reporterId: report.reporterId,
       productId: report.productId,
+      partnerId: report.partnerId,
       reason: report.reason,
+      isFoodSafetyRisk: report.isFoodSafetyRisk,
       status: report.status,
       details: report.details,
       createdAt: report.createdAt.toISOString(),
+      updatedAt: report.updatedAt.toISOString(),
     }));
 
     return Result.ok<ReportResponseDTO[]>(reportDTOs);

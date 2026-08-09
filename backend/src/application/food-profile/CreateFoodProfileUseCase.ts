@@ -1,14 +1,18 @@
 // backend/src/application/food-profile/CreateFoodProfileUseCase.ts
 import { IFoodProfileRepository } from '../../domain/food-profile/repositories/IFoodProfileRepository';
+import { IConsumerRepository } from '../../domain/consumer/repositories/IConsumerRepository';
 import { FoodProfile } from '../../domain/food-profile/FoodProfile';
 import { Restriction } from '../../domain/food-profile/Restriction';
 import { AllergenType } from '../../domain/food-profile/value-objects/AllergenType';
 import { SeverityLevel } from '../../domain/food-profile/value-objects/SeverityLevel';
+import { RestrictionType } from '../../domain/food-profile/value-objects/RestrictionType';
 import { Result } from '../../domain/Result';
 
 export interface RestrictionDTO {
   allergen: string;
   severity: string;
+  type?: string;
+  notes?: string;
 }
 
 export interface CreateFoodProfileDTO {
@@ -26,6 +30,8 @@ export interface FoodProfileResponseDTO {
     id:       string;
     allergen: string;
     severity: string;
+    type?:    string;
+    notes?:   string;
   }>;
 }
 
@@ -37,10 +43,14 @@ export interface FoodProfileResponseDTO {
  *  2. Constrói as Restriction entities
  *  3. Constrói o FoodProfile aggregate
  *  4. Persiste via IFoodProfileRepository
- *  5. Sinaliza se há necessidade de revalidação histórica
+ *  5. Sincroniza o estado no agregado Consumer (se IConsumerRepository estiver injetado)
+ *  6. Sinaliza se há necessidade de revalidação histórica
  */
 export class CreateFoodProfileUseCase {
-  constructor(private readonly profileRepository: IFoodProfileRepository) {}
+  constructor(
+    private readonly profileRepository: IFoodProfileRepository,
+    private readonly consumerRepository?: IConsumerRepository,
+  ) {}
 
   async execute(dto: CreateFoodProfileDTO): Promise<Result<FoodProfileResponseDTO>> {
     // 1. Verificar perfil existente
@@ -57,6 +67,8 @@ export class CreateFoodProfileUseCase {
       const restrictionResult = Restriction.create({
         allergen: r.allergen as AllergenType,
         severity: r.severity as SeverityLevel,
+        type:     r.type as RestrictionType | undefined,
+        notes:    r.notes,
       });
       if (restrictionResult.isFailure) {
         return Result.fail<FoodProfileResponseDTO>(restrictionResult.getError());
@@ -76,8 +88,17 @@ export class CreateFoodProfileUseCase {
     }
     const profile = profileResult.getValue();
 
-    // 4. Persistir
+    // 4. Persistir perfil alimentar
     await this.profileRepository.save(profile);
+
+    // 5. Sincronizar estado no agregado Consumer
+    if (this.consumerRepository) {
+      const consumer = await this.consumerRepository.findByUserId(dto.userId);
+      if (consumer) {
+        consumer.markFoodProfileState(profile.isComplete(), profile.isCritical());
+        await this.consumerRepository.save(consumer);
+      }
+    }
 
     return Result.ok<FoodProfileResponseDTO>(this.toDTO(profile));
   }
@@ -92,6 +113,8 @@ export class CreateFoodProfileUseCase {
         id:       r.id,
         allergen: r.allergen,
         severity: r.severity,
+        type:     r.type,
+        notes:    r.notes,
       })),
     };
   }

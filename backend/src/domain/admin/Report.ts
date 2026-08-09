@@ -6,16 +6,18 @@ import { ReportReason } from './value-objects/ReportReason';
 
 export interface ReportProps {
   reporterId: string;
-  productId: string;
+  productId?: string;
+  partnerId?: string;
   reason: ReportReason;
   details?: string;
+  isFoodSafetyRisk: boolean;
   status: ReportStatus;
   createdAt: Date;
   updatedAt: Date;
 }
 
 /**
- * Report — Entidade que representa uma denúncia de um produto.
+ * Report — Entidade que representa uma denúncia de um produto ou parceiro comercial.
  * Raiz de agregado do contexto de Administração.
  */
 export class Report extends Entity<ReportProps> {
@@ -27,8 +29,12 @@ export class Report extends Entity<ReportProps> {
     return this.props.reporterId;
   }
 
-  get productId(): string {
+  get productId(): string | undefined {
     return this.props.productId;
+  }
+
+  get partnerId(): string | undefined {
+    return this.props.partnerId;
   }
 
   get reason(): ReportReason {
@@ -37,6 +43,10 @@ export class Report extends Entity<ReportProps> {
 
   get details(): string | undefined {
     return this.props.details;
+  }
+
+  get isFoodSafetyRisk(): boolean {
+    return this.props.isFoodSafetyRisk;
   }
 
   get status(): ReportStatus {
@@ -66,11 +76,20 @@ export class Report extends Entity<ReportProps> {
   }
 
   static create(
-    props: Omit<ReportProps, 'status' | 'createdAt' | 'updatedAt'> & Partial<Pick<ReportProps, 'status' | 'createdAt' | 'updatedAt'>>, 
+    props: Omit<ReportProps, 'status' | 'createdAt' | 'updatedAt' | 'isFoodSafetyRisk'> &
+      Partial<Pick<ReportProps, 'status' | 'createdAt' | 'updatedAt' | 'isFoodSafetyRisk'>>, 
     id?: string
   ): Result<Report> {
-    if (!props.reporterId) return Result.fail<Report>('Reporter ID is required.');
-    if (!props.productId) return Result.fail<Report>('Product ID is required.');
+    if (!props.reporterId || props.reporterId.trim() === '') {
+      return Result.fail<Report>('Reporter ID is required.');
+    }
+
+    const hasProduct = !!props.productId && props.productId.trim() !== '';
+    const hasPartner = !!props.partnerId && props.partnerId.trim() !== '';
+
+    if (!hasProduct && !hasPartner) {
+      return Result.fail<Report>('Product ID or Partner ID is required.');
+    }
     
     if (!Object.values(ReportReason).includes(props.reason)) {
       return Result.fail<Report>(`Invalid report reason: ${props.reason}`);
@@ -81,8 +100,19 @@ export class Report extends Entity<ReportProps> {
       return Result.fail<Report>(`Invalid report status: ${status}`);
     }
 
+    // Determina automaticamente o risco alimentar com base no motivo se não for explicitamente informado
+    const isFoodSafetyRisk =
+      props.isFoodSafetyRisk ??
+      (props.reason === ReportReason.MISSING_ALLERGEN ||
+        props.reason === ReportReason.WRONG_CROSS_CONTAMINATION);
+
     const report = new Report({
-      ...props,
+      reporterId: props.reporterId.trim(),
+      productId: hasProduct ? props.productId?.trim() : undefined,
+      partnerId: hasPartner ? props.partnerId?.trim() : undefined,
+      reason: props.reason,
+      details: props.details,
+      isFoodSafetyRisk,
       status,
       createdAt: props.createdAt ?? new Date(),
       updatedAt: props.updatedAt ?? new Date(),

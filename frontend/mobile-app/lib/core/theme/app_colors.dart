@@ -12,6 +12,7 @@ class AppColors {
   static const textMuted = Color(0xFF64748B);
   static const textMutedLight = Color(0xFF94A3B8);
   static const error = Color(0xFFEF4444);
+  static const success = Color(0xFF22C55E);
 
   // Escala de severidade (onboarding + RestrictionChip)
   static const severityLifestyle = Color(0xFF6366F1);
@@ -25,4 +26,5 @@ class AppColors {
   static const riskWarningBg = Color(0xFF92400E);
   static const riskDangerBg = Color(0xFF9A3412);
   static const riskBlockedBg = Color(0xFF7F1D1D);
+  static const riskUnevaluatedBg = Color(0xFF475569);
 }

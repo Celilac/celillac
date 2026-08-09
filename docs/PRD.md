@@ -25,7 +25,7 @@
 
 ## 2. Personas
 
-### 👤 Persona 1 — Ana, Consumidora Celíaca
+### 👤 Persona 1 — Shiderlene, Consumidora Celíaca
 - **Perfil:** 34 anos, celíaca diagnosticada há 5 anos, usa aplicativos de saúde no dia a dia.
 - **Dor:** Já foi hospitalizada por contaminação cruzada de um produto com rótulo "sem glúten". Não confia apenas no fabricante.
 - **Objetivo:** Escanear ou buscar produtos antes de comprar e receber um veredicto imediato e confiável.
@@ -48,20 +48,20 @@
 
 ## 3. Jornadas de Usuário
 
-### 🛒 Jornada 1 — Verificar Segurança de um Produto (Ana)
+### 🛒 Jornada 1 — Verificar Segurança de um Produto (Shiderlene)
 ```
-1. Ana abre o app mobile e está logada.
+1. Shiderlene abre o app mobile e está logada.
 2. Na Home, usa o scanner de código de barras ou busca por nome.
 3. O app busca o produto (GET /catalog/products?search=nome).
 4. O app chama POST /compatibility/check com userId e productId.
 5. O AllergenEngine retorna { riskLevel: "BLOCKED", reasoning: "..." }.
 6. A tela exibe banner vermelho ⛔ BLOQUEADO com o motivo detalhado.
-7. Ana não compra o produto.
+7. Shiderlene não compra o produto.
 ```
 
-### 📝 Jornada 2 — Configurar Perfil Alimentar (Ana — Onboarding)
+### 📝 Jornada 2 — Configurar Perfil Alimentar (Shiderlene — Onboarding)
 ```
-1. Ana cria uma conta (POST /iam/register).
+1. Shiderlene cria uma conta (POST /iam/register).
 2. É direcionada para o Onboarding de Perfil.
 3. Seleciona alérgenos e severidades (ex: GLUTEN/FATAL, LACTOSE/HIGH).
 4. Envia (POST /food-profile).
@@ -77,9 +77,9 @@
 5. Produto fica disponível para busca e verificação imediata.
 ```
 
-### 🚨 Jornada 4 — Denunciar Dado Incorreto (Ana)
+### 🚨 Jornada 4 — Denunciar Dado Incorreto (Shiderlene)
 ```
-1. Ana encontra produto com informação incorreta (cross_contamination vazio).
+1. Shiderlene encontra produto com informação incorreta (cross_contamination vazio).
 2. Clica em "Denunciar" na tela do produto.
 3. Seleciona o motivo (MISSING_ALLERGEN) e envia (POST /admin/reports).
 4. Denúncia fica com status PENDING para revisão.
@@ -139,8 +139,8 @@
 ### RF-06 — Administração e Moderação
 | ID | Requisito |
 |:---|:----------|
-| RF-06.1 | Usuários autenticados podem criar denúncias sobre produtos. |
-| RF-06.2 | Admins listam, filtram e atualizam status de denúncias. |
+| RF-06.1 | Usuários autenticados podem criar denúncias sobre produtos ou parceiros comerciais (13.16). |
+| RF-06.2 | Admins listam, filtram e atualizam status de denúncias (priorizando riscos de segurança alimentar). |
 | RF-06.3 | Denúncia em estado final (`RESOLVED`/`DISMISSED`) não pode ser alterada. |
 
 ---

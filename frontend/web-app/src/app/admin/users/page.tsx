@@ -135,10 +135,10 @@ export default function AdminUsersPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
                     <UserAvatar avatarUrl={user.avatarUrl} fullName={user.fullName} email={user.email} size={48} />
                     <div>
-                      <h2 className={styles.partnerName} style={{ fontSize: '1.1rem', margin: 0 }}>
+                      <h2 className={styles.partnerName} style={{ fontSize: 'var(--text-title)', margin: 0 }}>
                         {user.fullName || 'Sem nome cadastrado'}
                       </h2>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted, #9ca3af)', margin: 0 }}>{user.email}</p>
+                      <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', margin: 0 }}>{user.email}</p>
                     </div>
                   </div>
 

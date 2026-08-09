@@ -73,7 +73,7 @@ export default function PublicPartnersListPage() {
                 <div className={styles.cardContent}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <h2 className={styles.partnerName}>{partner.name}</h2>
-                    <span className={`${styles.badge} ${styles.badgeApproved}`} style={{ fontSize: '0.65rem' }}>Homologado</span>
+                    <span className={`${styles.badge} ${styles.badgeApproved}`}>Homologado</span>
                   </div>
                   <p className={styles.partnerDescription}>{partner.description || 'Sem descrição.'}</p>
                   

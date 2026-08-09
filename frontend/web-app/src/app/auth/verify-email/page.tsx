@@ -178,13 +178,13 @@ export default function VerifyEmailPage() {
                   style={{
                     width: '44px',
                     height: '52px',
-                    fontSize: '1.4rem',
+                    fontSize: 'var(--text-title)',
                     fontWeight: 'bold',
                     textAlign: 'center',
-                    borderRadius: '8px',
-                    border: '2px solid var(--color-border, #d1d5db)',
-                    background: 'var(--color-bg-card, #ffffff)',
-                    color: 'var(--color-text, #111827)',
+                    borderRadius: 'var(--radius-sm)',
+                    border: '2px solid var(--color-border)',
+                    background: 'var(--color-elevated)',
+                    color: 'var(--color-text)',
                   }}
                   required
                 />
@@ -202,7 +202,7 @@ export default function VerifyEmailPage() {
           </form>
 
           <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.9rem' }}>
-            <p style={{ color: 'var(--color-text-secondary, #6b7280)', marginBottom: '0.5rem' }}>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
               Não recebeu o código?
             </p>
             <button
@@ -210,7 +210,7 @@ export default function VerifyEmailPage() {
               onClick={handleResend}
               disabled={countdown > 0 || resendLoading}
               className="btn btn-ghost"
-              style={{ fontSize: '0.85rem', color: countdown > 0 ? '#9ca3af' : 'var(--color-emerald, #10b981)' }}
+              style={{ fontSize: 'var(--text-label)', color: countdown > 0 ? 'var(--color-text-muted)' : 'var(--color-emerald)' }}
             >
               {resendLoading
                 ? 'Enviando…'

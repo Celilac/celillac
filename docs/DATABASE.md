@@ -70,7 +70,12 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `email` | VARCHAR | UNIQUE, NOT NULL |
 | `password_hash` | VARCHAR | NOT NULL |
 | `role` | ENUM | `CELIACO`, `PARCEIRO`, `ADMIN` |
+| `whatsapp_phone` | VARCHAR(20) | Opcional. Formato E.164 com DDI do Brasil obrigatório (`+55DDDNNNNNNNNN`) |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
+
+> Nota: `full_name`, `birth_date`, `gender`, `avatar_url`, `account_status`, `profile_evaluation_status`
+> e `is_email_verified` também existem na tabela (migration 013) mas ainda não foram
+> documentados aqui — fora do escopo desta atualização.
 
 ### Tabela: `consumers` (Consumidores)
 | Coluna | Tipo | Restrições |
@@ -147,17 +152,21 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
 | *(constraint)* | UNIQUE | `(user_id, product_id)` — 1 avaliação por produto por usuário |
 
-### Tabela: `product_reports` (Denúncias)
+### Tabela: `product_reports` (Denúncias Polimórficas — Produto ou Parceiro)
 | Coluna | Tipo | Restrições |
 |:-------|:-----|:-----------|
 | `id` | UUID | PK |
 | `reporter_id` | UUID | FK → users.id |
-| `product_id` | UUID | FK → products.id |
-| `reason` | VARCHAR | `INCORRECT_INGREDIENTS`, `MISSING_ALLERGEN`, etc. |
-| `details` | TEXT | |
-| `is_food_safety_risk` | BOOLEAN | DEFAULT false (Priorizado no topo da fila de moderação) |
-| `status` | VARCHAR | DEFAULT `PENDING` |
+| `product_id` | UUID | FK → products.id (Opcional se `partner_id` preenchido) |
+| `partner_id` | UUID | FK → partners.id (Opcional se `product_id` preenchido) |
+| `reason` | VARCHAR | `INCORRECT_INGREDIENTS`, `MISSING_ALLERGEN`, `WRONG_CROSS_CONTAMINATION`, `OTHER` |
+| `details` | TEXT | Opcional |
+| `is_food_safety_risk` | BOOLEAN | DEFAULT false (Priorizado no topo da fila de moderação se true) |
+| `status` | VARCHAR | DEFAULT `PENDING` (`PENDING`, `IN_REVIEW`, `RESOLVED`, `DISMISSED`) |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
+| `updated_at` | TIMESTAMP | DEFAULT NOW() |
+| *(constraint)* | CHECK | `(product_id IS NOT NULL OR partner_id IS NOT NULL)` |
+
 
 ### Tabela: `blacklisted_tokens` (Tokens Revogados - Blacklist)
 | Coluna | Tipo | Restrições |

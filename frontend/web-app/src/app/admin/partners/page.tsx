@@ -1,6 +1,6 @@
 'use client';
 // frontend/web-app/src/app/admin/partners/page.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +23,30 @@ export default function AdminPartnersPage() {
   const [actionType,    setActionType]    = useState<'REJECT' | 'SUSPEND' | null>(null);
   const [reason,        setReason]        = useState('');
   const [updating,      setUpdating]      = useState(false);
+
+  const detailCloseRef = useRef<HTMLButtonElement>(null);
+  const reasonCancelRef = useRef<HTMLButtonElement>(null);
+
+  // Foco inicial e fechar com Escape — os dois diálogos de moderação
+  // precisam de semântica de modal (WCAG 2.4.3 / 4.1.2).
+  useEffect(() => {
+    if (detailPartner) detailCloseRef.current?.focus();
+  }, [detailPartner]);
+
+  useEffect(() => {
+    if (actionType) reasonCancelRef.current?.focus();
+  }, [actionType]);
+
+  useEffect(() => {
+    if (!detailPartner && !actionType) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Escape') return;
+      if (detailPartner) setDetailPartner(null);
+      if (actionType) closeModal();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [detailPartner, actionType]);
 
   useEffect(() => {
     if (isInitializing) return;
@@ -177,13 +201,13 @@ export default function AdminPartnersPage() {
                   </div>
 
                   {partner.approvalStatus === 'REJECTED' && partner.rejectionReason && (
-                    <p style={{ fontSize: '0.8rem', color: '#f87171', background: 'rgba(239,68,68,0.05)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.1)' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--color-status-rejected)', background: 'rgba(248,113,113,0.08)', padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(248,113,113,0.2)' }}>
                       <strong>Motivo Rejeição:</strong> {partner.rejectionReason}
                     </p>
                   )}
 
                   {partner.approvalStatus === 'SUSPENDED' && partner.suspensionReason && (
-                    <p style={{ fontSize: '0.8rem', color: '#a78bfa', background: 'rgba(139,92,246,0.05)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(139,92,246,0.1)' }}>
+                    <p style={{ fontSize: '0.8rem', color: 'var(--color-status-suspended)', background: 'rgba(167,139,250,0.08)', padding: 'var(--space-2)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(167,139,250,0.2)' }}>
                       <strong>Motivo Suspensão:</strong> {partner.suspensionReason}
                     </p>
                   )}
@@ -251,7 +275,7 @@ export default function AdminPartnersPage() {
                   )}
 
                   {partner.approvalStatus === 'DRAFT' && (
-                    <span style={{ fontSize: '0.8rem', color: '#9ca3af', fontStyle: 'italic' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
                       Rascunho: Aguardando envio pelo parceiro.
                     </span>
                   )}
@@ -264,10 +288,17 @@ export default function AdminPartnersPage() {
         {/* Modal de Visualização Completa de Detalhes com Design System Premium */}
         {detailPartner && (
           <div className={styles.dialogOverlay} onClick={() => setDetailPartner(null)}>
-            <div className={styles.dialogCard} style={{ maxWidth: '640px', width: '90%' }} onClick={(e) => e.stopPropagation()}>
+            <div
+              className={styles.dialogCard}
+              style={{ maxWidth: '640px', width: '90%' }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="detail-partner-heading"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className={styles.modalHeader}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <h2 className={styles.modalTitle}>
+                  <h2 id="detail-partner-heading" className={styles.modalTitle}>
                     🏬 {detailPartner.name}
                   </h2>
                   {getStatusLabel(detailPartner.approvalStatus)}
@@ -320,16 +351,16 @@ export default function AdminPartnersPage() {
                 </div>
 
                 {detailPartner.rejectionReason && (
-                  <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', padding: '0.85rem', borderRadius: '12px', color: '#f87171' }}>
-                    <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Motivo da Rejeição:</strong>
-                    <span>{detailPartner.rejectionReason}</span>
+                  <div className={styles.detailBox} style={{ borderColor: 'var(--color-status-rejected-border)', background: 'var(--color-status-rejected-bg)' }}>
+                    <span className={styles.detailLabel} style={{ color: 'var(--color-status-rejected)' }}>Motivo da Rejeição</span>
+                    <p className={styles.detailValue} style={{ marginTop: '0.25rem', color: 'var(--color-status-rejected)' }}>{detailPartner.rejectionReason}</p>
                   </div>
                 )}
 
                 {detailPartner.suspensionReason && (
-                  <div style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', padding: '0.85rem', borderRadius: '12px', color: '#a78bfa' }}>
-                    <strong style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.25rem' }}>Motivo da Suspensão:</strong>
-                    <span>{detailPartner.suspensionReason}</span>
+                  <div className={styles.detailBox} style={{ borderColor: 'var(--color-status-suspended-border)', background: 'var(--color-status-suspended-bg)' }}>
+                    <span className={styles.detailLabel} style={{ color: 'var(--color-status-suspended)' }}>Motivo da Suspensão</span>
+                    <p className={styles.detailValue} style={{ marginTop: '0.25rem', color: 'var(--color-status-suspended)' }}>{detailPartner.suspensionReason}</p>
                   </div>
                 )}
               </div>
@@ -357,6 +388,7 @@ export default function AdminPartnersPage() {
                 )}
 
                 <button
+                  ref={detailCloseRef}
                   type="button"
                   className={`${styles.btn} ${styles.btnSecondary}`}
                   onClick={() => setDetailPartner(null)}
@@ -371,11 +403,17 @@ export default function AdminPartnersPage() {
         {/* Modal de Justificativa */}
         {actionType && activePartner && (
           <div className={styles.dialogOverlay} onClick={closeModal}>
-            <div className={styles.dialogCard} onClick={(e) => e.stopPropagation()}>
-              <h2 className={styles.modalTitle} style={{ marginBottom: '0.75rem' }}>
+            <div
+              className={styles.dialogCard}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="reason-modal-heading"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 id="reason-modal-heading" className={styles.modalTitle} style={{ marginBottom: '0.75rem' }}>
                 {actionType === 'REJECT' ? 'Rejeitar Cadastro' : 'Suspender Estabelecimento'}
               </h2>
-              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted, #9ca3af)', marginBottom: '1.25rem' }}>
+              <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
                 {actionType === 'REJECT' 
                   ? `Forneça a justificativa para a rejeição do parceiro ${activePartner.name}. O responsável receberá essa orientação.` 
                   : `Forneça o motivo para a suspensão do parceiro ${activePartner.name}. A operação dele e exibição de produtos serão pausadas.`
@@ -397,9 +435,10 @@ export default function AdminPartnersPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
-                  <button 
-                    type="button" 
-                    className={`${styles.btn} ${styles.btnSecondary}`} 
+                  <button
+                    ref={reasonCancelRef}
+                    type="button"
+                    className={`${styles.btn} ${styles.btnSecondary}`}
                     style={{ flex: 1 }}
                     onClick={closeModal}
                     disabled={updating}

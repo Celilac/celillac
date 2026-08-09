@@ -54,11 +54,14 @@
 ## 5. Compatibilidade Alimentar (Core Engine)
 - **Responsabilidade:** Calcular o match entre Perfil Alimentar e Produto. É o coração do CeLiLac.
 - **Entidades:** `CompatibilityReport`.
-- **Value Objects:** `RiskLevel` (SAFE, WARNING, DANGER, BLOCKED), `ConflictDetail`.
+- **Value Objects:** `RiskLevel` (SAFE, WARNING, DANGER, BLOCKED, UNEVALUATED), `ConflictDetail`.
 - **Regras:**
     - O motor deve ser agnóstico a banco de dados (Pure Domain Service).
     - Deve suportar "Traços de Alérgenos" como um modificador de risco.
-    - As 8 regras do motor (R1–R8) estão definidas em `docs/ALLERGEN_ENGINE.md` e são imutáveis sem aprovação humana.
+    - Respeita a **RN-CONSUMER-07 / Invariante 11.6**: se o consumidor possui perfil incompleto/sem restrições (`!profile.isActive()`), o sistema retorna `UNEVALUATED` e `isCompatible = false`, eliminando a falsa sensação de segurança.
+    - Respeita a **Invariante 11.5 (Tolerância a Contaminação Cruzada)**: se `acceptsCrossContamination === false`, traços para severidades `HIGH` elevam o risco de `WARNING` para `DANGER`. Para `FATAL`, o resultado é sempre `BLOCKED` (invariante biológica imutável).
+    - Respeita a **RN-CONSUMER-05 (Issue #34 — aprovado 2026-08-01)**: uma restrição com `type === ALLERGY` exige severidade mínima `MEDIUM`. A regra é implementada em `Restriction.create()` (Abordagem A — Fail Fast). O `AllergenEngine` recebe apenas objetos de domínio válidos e não precisa corrigir dados de entrada. O campo `type` é propagado no `ConflictDetail` e no `reasoning` para transparência no frontend.
+    - As 9 regras do motor (R1–R9) estão definidas em `docs/ALLERGEN_ENGINE.md` e são imutáveis sem aprovação humana.
     - ⚠️ **Contexto de máxima criticidade** — qualquer alteração exige aprovação humana.
 
 ---
@@ -97,7 +100,19 @@
 
 ---
 
-## 9. Pedidos *(Planejado — Não Implementado)*
+## 10. Consumidor
+- **Responsabilidade:** Gerenciar a identidade de consumo da pessoa usuária, integrando preferências de experiência, perfil de alérgenos e status de participação.
+- **Entidades / Agregados:** Aggregate Root `Consumer` (`id`, `userId`, `generalPreferences`, `isFoodProfileComplete`, `isFoodProfileCritical`, `status`, `statusChangedAt`, `statusChangedBy`, `statusChangeReason`).
+- **Value Objects:** `ConsumerStatus` (CONTA_CRIADA, PERFIL_INCOMPLETO, PERFIL_CONFIGURADO, PERFIL_CRITICO, ATIVO, INATIVO).
+- **Regras:**
+    - Todo `Consumer` se vincula a um único `userId` do IAM.
+    - O status do Consumidor é mantido e sincronizado com o Perfil Alimentar (`FoodProfile`).
+    - O Consumidor pode transitar entre `ATIVO` e `INATIVO` com registro obrigatório de auditoria (`statusChangedAt`, `statusChangedBy`, `statusChangeReason`).
+    - A desativação (`INATIVO`) desativa a participação personalizada nas buscas do consumidor, mas **não bloqueia o acesso à conta** no IAM.
+
+---
+
+## 11. Pedidos *(Planejado — Não Implementado)*
 - **Responsabilidade:** Gerenciar pedidos de produtos em parceiros (restaurantes/lojas) pelo consumidor.
 - **Entidades previstas:** `Order`, `OrderItem`.
 - **Value Objects previstos:** `OrderStatus` (PENDING, CONFIRMED, DELIVERED, CANCELLED), `OrderTotal`.
@@ -108,7 +123,7 @@
 
 ---
 
-## 10. Pagamentos *(Planejado — Não Implementado)*
+## 12. Pagamentos *(Planejado — Não Implementado)*
 - **Responsabilidade:** Processar transações financeiras entre consumidores e parceiros.
 - **Entidades previstas:** `Payment`, `Refund`.
 - **Value Objects previstos:** `Money` (valor + moeda), `PaymentStatus` (PENDING, APPROVED, FAILED, REFUNDED).
@@ -116,4 +131,5 @@
     - Pagamento só é processado após confirmação do pedido.
     - Reembolso deve ser processado em caso de cancelamento após confirmação.
 - **⚠️ Exige aprovação humana** antes de qualquer implementação — contexto financeiro regulado.
+
 

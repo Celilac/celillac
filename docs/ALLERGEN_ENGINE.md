@@ -18,51 +18,65 @@ O `AllergenEngine` é o **Serviço de Domínio Central** do CeLiLac. Ele calcula
 
 ---
 
-## 2. Regras do Motor (Aprovadas em 2026-06-30)
+## 2. Regras do Motor (Aprovadas em 2026-06-30, atualizado R9 em 2026-08-01 - Issue #31)
 
-As 8 regras abaixo são a **única definição oficial** de como o motor funciona. Alterações exigem aprovação humana e atualização deste documento.
+As 9 regras abaixo são a **única definição oficial** de como o motor funciona. Alterações exigem aprovação humana e atualização deste documento.
 
 | ID | Regra | Condição | Resultado |
 |:---|:------|:---------|:----------|
 | **R1** | Produto sem ingredientes declarados | `product.ingredients` vazio ou ausente | `BLOCKED` (princípio da precaução) |
-| **R2** | Perfil sem restrições ativas | `profile.isActive() === false` | `SAFE` (sem dados para bloquear) |
+| **R2** | Perfil sem restrições ativas | `profile.isActive() === false` | `UNEVALUATED` (perfil incompleto - RN-CONSUMER-07) |
 | **R3** | Restrição FATAL + alérgeno nos **ingredientes** | severity = FATAL, found in ingredients | `BLOCKED` |
 | **R4** | Restrição FATAL + alérgeno nos **traços** (cross_contamination) | severity = FATAL, found in crossContamination | `BLOCKED` |
 | **R5** | Restrição HIGH + alérgeno nos **ingredientes** | severity = HIGH, found in ingredients | `DANGER` |
 | **R6** | Restrição MEDIUM ou LOW + alérgeno nos **ingredientes** | severity = MEDIUM\|LOW, found in ingredients | `WARNING` |
-| **R7** | Traços para severidades não-FATAL | found in crossContamination, severity ≠ FATAL | `WARNING` |
+| **R7** | Traços para severidades não-FATAL (com tolerância ativada) | found in crossContamination, severity ≠ FATAL, acceptsCrossContamination = true | `WARNING` |
 | **R8** | Risco final = maior entre todos os conflitos | múltiplos conflitos encontrados | RiskLevel mais alto vence |
+| **R9** | Invariante 11.5: Traços + Não-Tolerância a Contaminação Cruzada | found in crossContamination, severity = HIGH, acceptsCrossContamination = false | `DANGER` (eleva de WARNING para DANGER) |
 
 > **Nota sobre R1:** O princípio da precaução prioriza a segurança do celíaco. Um produto sem informação é tratado como produto perigoso — nunca como produto seguro.
 
-> **Nota sobre R8:** Todos os conflitos são retornados no `conflicts[]`, não apenas o mais grave. O usuário tem direito à informação completa.
+> **Nota sobre R2 (RN-CONSUMER-07 / Issue #32):** Se o consumidor não configurou perfil alimentar completo (`restrictions.length === 0`), o sistema retorna `UNEVALUATED` e `isCompatible = false`. Isso impede a falsa sensação de segurança de exibir produtos como seguros para perfis sem dados configurados.
+
+> **Nota sobre R9 (Invariante 11.5):** Quando o consumidor declara `acceptsCrossContamination = false` (padrão do sistema para máxima segurança), o alérgeno detectado nos traços para restrições de severidade `HIGH` eleva o risco para `DANGER`. Para severidade `FATAL`, o resultado é sempre `BLOCKED` independente da tolerância declarada.
+
+> **RN-CONSUMER-05 (Issue #34 — aprovado 2026-08-01):** Uma restrição com `type === ALLERGY` exige severidade mínima `MEDIUM`. A regra vive em `Restriction.create()` (não no motor). O motor é enxuto: recebe apenas objetos de domínio válidos. O campo `type` da restrição é agora propagado para `ConflictDetail.type` e incluído no `reasoning` para transparência no frontend (“Alergia” vs. “Intolerância”). A combinação `ALLERGY + LOW/LIFESTYLE` é rejeitada na fronteira do domínio com HTTP 422.
 
 ---
 
 ## 3. Tipos de Risco (`RiskLevel`)
 
 ```
-SAFE    → Nenhum alérgeno do perfil encontrado no produto.
-WARNING → Alérgeno de severidade LOW ou MEDIUM encontrado (ingredientes ou traços não-FATAL).
-DANGER  → Alérgeno de severidade HIGH encontrado nos ingredientes.
-BLOCKED → Alérgeno FATAL encontrado (ingredientes ou traços) OU produto sem ingredientes.
+SAFE        → Nenhum alérgeno do perfil encontrado no produto.
+WARNING     → Alérgeno de severidade LOW ou MEDIUM encontrado (ingredientes ou traços não-FATAL).
+DANGER      → Alérgeno de severidade HIGH encontrado nos ingredientes.
+BLOCKED     → Alérgeno FATAL encontrado (ingredientes ou traços) OU produto sem ingredientes.
+UNEVALUATED → Perfil alimentar incompleto / sem restrições ativas. Compatibilidade não avaliada (RN-CONSUMER-07).
 ```
 
 **Ordenação numérica (usada internamente):**
 ```
-SAFE = 0  <  WARNING = 1  <  DANGER = 2  <  BLOCKED = 3
+UNEVALUATED = -1  <  SAFE = 0  <  WARNING = 1  <  DANGER = 2  <  BLOCKED = 3
 ```
 
 ---
 
 ## 4. Níveis de Severidade do Perfil (`SeverityLevel`)
 
-| Nível | Descrição | Tolera traços? | RiskLevel máximo que pode causar |
-|:------|:----------|:--------------:|:--------------------------------:|
-| `LOW` | Sensibilidade leve | ✅ Sim | `WARNING` |
-| `MEDIUM` | Intolerância moderada | ✅ Sim | `WARNING` |
-| `HIGH` | Alergia severa | ✅ Sim (WARNING) | `DANGER` (em ingredientes) |
-| `FATAL` | Celíaco / Alergia grave | ❌ **Não** — traços = BLOCKED | `BLOCKED` |
+`SeverityLevel` mede **apenas o grau de risco/tolerância** de uma restrição — não o
+diagnóstico. O diagnóstico (alergia, intolerância, restrição médica, preferência,
+estilo de vida) é modelado separadamente em `RestrictionType`
+([`RestrictionType.ts`](../backend/src/domain/food-profile/value-objects/RestrictionType.ts)).
+Os dois eixos são independentes: uma alergia a castanhas pode ser `FATAL`, assim como
+uma restrição médica a glúten (doença celíaca) pode ser `FATAL` — o nível não deve ser
+usado para "adivinhar" a condição.
+
+| Nível | Descrição (grau de risco) | Tolera traços? | RiskLevel máximo que pode causar |
+|:------|:--------------------------|:--------------:|:--------------------------------:|
+| `LOW` | Risco leve — reação leve, traços geralmente tolerados | ✅ Sim | `WARNING` |
+| `MEDIUM` | Risco moderado — reação perceptível, traços geralmente tolerados | ✅ Sim | `WARNING` |
+| `HIGH` | Risco alto — reação séria ao ingerir o alérgeno | ✅ Sim (WARNING) | `DANGER` (em ingredientes) |
+| `FATAL` | Risco crítico — zero tolerância, incluindo traços (ex.: doença celíaca, alergia grave/anafilática) | ❌ **Não** — traços = BLOCKED | `BLOCKED` |
 
 ---
 
@@ -93,7 +107,7 @@ O motor detecta alérgenos por busca de texto em `ingredients` e `crossContamina
 AllergenEngine.check(profile, productSnapshot)
         │
         ├── perfil.isActive() === false?
-        │       └── retorna SAFE ("Perfil sem restrições ativas.")
+        │       └── retorna UNEVALUATED ("Perfil sem restrições ativas. Configure seu perfil...")
         │
         ├── product.ingredients vazio?
         │       └── retorna BLOCKED ("Produto sem ingredientes. Princípio da precaução.")
@@ -146,7 +160,8 @@ interface CompatibilityReport {
 interface ConflictDetail {
   allergen:  AllergenType;   // Qual alérgeno causou o conflito
   severity:  SeverityLevel;  // Severidade do perfil para esse alérgeno
-  reason:    string;         // Texto: "[FATAL] GLUTEN — detectado nos ingredientes"
+  type:      RestrictionType; // Tipo da restrição (ALLERGY, INTOLERANCE, etc.) — adicionado Issue #34
+  reason:    string;         // Texto: "[ALLERGY/FATAL] GLUTEN — detectado nos ingredientes"
 }
 ```
 

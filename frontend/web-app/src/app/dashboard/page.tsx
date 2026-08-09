@@ -10,17 +10,18 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { catalogApi } from '@/api/catalog';
+import { catalogApi, ProductSummary } from '@/api/catalog';
 import { compatibilityApi, CompatibilityResponse } from '@/api/compatibility';
 import { foodProfileApi } from '@/api/food-profile';
-import { apiClient } from '@/api/client';
+import { apiClient, HttpError } from '@/api/client';
 import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
-import { HttpError } from '@/api/client';
+import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import styles from './dashboard.module.css';
 
 interface ReportWithName extends CompatibilityResponse {
   productName: string;
+  productId: string;
 }
 
 interface RestrictionItem {
@@ -43,12 +44,16 @@ const ALLERGEN_LABELS: Record<string, string> = {
   OTHER: '⚠️ Outro',
 };
 
+// Cores acompanham a mesma escala de gravidade do veredito do AllergenEngine
+// (ver DESIGN.md) — reforça que vermelho/laranja/amarelo/verde significam a
+// mesma coisa em toda a aplicação, seja no veredito de um produto ou na
+// severidade da própria restrição do usuário.
 const SEVERITY_BADGES: Record<string, { label: string; bg: string; color: string }> = {
-  FATAL: { label: '🔴 Fatal (Celíaco)', bg: '#fef2f2', color: '#991b1b' },
-  HIGH: { label: '🟠 Severidade Alta', bg: '#fff7ed', color: '#c2410c' },
-  MEDIUM: { label: '🟡 Severidade Média', bg: '#fefce8', color: '#a16207' },
-  LOW: { label: '🟢 Severidade Baixa', bg: '#f0fdf4', color: '#15803d' },
-  LIFESTYLE: { label: '🟣 Estilo de Vida', bg: '#faf5ff', color: '#7e22ce' },
+  FATAL: { label: '🔴 Fatal (Celíaco)', bg: 'var(--color-blocked-bg)', color: 'var(--color-blocked)' },
+  HIGH: { label: '🟠 Severidade Alta', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)' },
+  MEDIUM: { label: '🟡 Severidade Média', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)' },
+  LOW: { label: '🟢 Severidade Baixa', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)' },
+  LIFESTYLE: { label: '🟣 Estilo de Vida', bg: 'var(--color-status-suspended-bg)', color: 'var(--color-status-suspended)' },
 };
 
 export default function DashboardPage() {
@@ -104,6 +109,8 @@ export default function DashboardPage() {
     }
   }, [isAuthenticated, token, userId]);
 
+  const [searchResults, setSearchResults] = useState<ProductSummary[]>([]);
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -115,6 +122,7 @@ export default function DashboardPage() {
 
     setLoading(true);
     setReport(null);
+    setSearchResults([]);
 
     try {
       const result = await catalogApi.search(searchQuery, token);
@@ -125,33 +133,33 @@ export default function DashboardPage() {
         return;
       }
 
-      const product = products[0];
+      setSearchResults(products);
 
-      const compatibility = await compatibilityApi.check(
-        { userId, productId: product.id },
-        token,
-      );
-
-      setReport({ ...compatibility, productName: product.name });
+      if (products.length === 1) {
+        await checkProductCompatibility(products[0]);
+      }
     } catch (err) {
       const message = err instanceof HttpError ? err.message : (err as Error).message ?? 'Erro desconhecido.';
-      toast.error(message, 'Erro ao analisar produto');
+      toast.error(message, 'Erro ao buscar produtos');
     } finally {
       setLoading(false);
     }
   };
 
-  const getCompatibilityBadge = (riskLevel: string) => {
-    switch (riskLevel) {
-      case 'SAFE':
-        return { label: '🟢 COMPATÍVEL', text: 'Compatível com as informações disponíveis.', class: styles.statusSafe };
-      case 'WARNING':
-        return { label: '🟡 ATENÇÃO', text: 'Possível risco de contaminação cruzada ou restrição moderada.', class: styles.statusWarning || styles.statusBlocked };
-      case 'DANGER':
-      case 'BLOCKED':
-        return { label: '🔴 INCOMPATÍVEL', text: 'Contém ingrediente conflitante com seu perfil.', class: styles.statusBlocked };
-      default:
-        return { label: '⚪ INDETERMINADO', text: 'Informações insuficientes para garantir compatibilidade.', class: styles.statusWarning || styles.statusBlocked };
+  const checkProductCompatibility = async (product: ProductSummary) => {
+    if (!token || !userId) return;
+    setLoading(true);
+    try {
+      const compatibility = await compatibilityApi.check(
+        { userId, productId: product.id },
+        token,
+      );
+      setReport({ ...compatibility, productName: product.name, productId: product.id });
+    } catch (err) {
+      const message = err instanceof HttpError ? err.message : (err as Error).message ?? 'Erro desconhecido.';
+      toast.error(message, 'Erro ao analisar produto');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -168,27 +176,26 @@ export default function DashboardPage() {
         {/* Banner de E-mail Não Verificado */}
         {mounted && !isEmailVerified && (
           <div style={{
-            background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
-            border: '1px solid #fca5a5',
-            color: '#991b1b',
-            padding: '1.25rem',
-            borderRadius: '12px',
-            marginBottom: '1.5rem',
+            background: 'var(--color-danger-bg)',
+            border: '1px solid var(--color-danger-border)',
+            color: 'var(--color-danger)',
+            padding: 'var(--space-6)',
+            borderRadius: 'var(--radius-md)',
+            marginBottom: 'var(--space-6)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '1rem',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+            gap: 'var(--space-4)',
           }}>
             <div>
-              <strong style={{ fontSize: '1.05rem', display: 'block', marginBottom: '0.25rem' }}>
+              <strong style={{ fontSize: 'var(--text-title)', display: 'block', marginBottom: 'var(--space-1)' }}>
                 📩 Verifique seu e-mail para desbloquear todas as funções
               </strong>
-              <span style={{ fontSize: '0.9rem' }}>
+              <span style={{ fontSize: 'var(--text-body)' }}>
                 Enviamos um código de verificação para o seu e-mail. Confirme seu e-mail para garantir a segurança da sua conta.
               </span>
             </div>
-            <Link href="/auth/verify-email" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: '0.6rem 1.2rem', textDecoration: 'none', background: '#dc2626' }}>
+            <Link href="/auth/verify-email" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: 'var(--space-3) var(--space-6)', textDecoration: 'none', background: 'var(--color-danger)' }}>
               Verificar E-mail Agora
             </Link>
           </div>
@@ -197,27 +204,26 @@ export default function DashboardPage() {
         {/* Banner de Perfil Incompleto */}
         {mounted && isProfileIncomplete && (
           <div style={{
-            background: 'linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%)',
-            border: '1px solid #ffe8a1',
-            color: '#856404',
-            padding: '1.25rem',
-            borderRadius: '12px',
-            marginBottom: '1.5rem',
+            background: 'var(--color-warning-bg)',
+            border: '1px solid var(--color-warning-border)',
+            color: 'var(--color-warning)',
+            padding: 'var(--space-6)',
+            borderRadius: 'var(--radius-md)',
+            marginBottom: 'var(--space-6)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            gap: '1rem',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+            gap: 'var(--space-4)',
           }}>
             <div>
-              <strong style={{ fontSize: '1.05rem', display: 'block', marginBottom: '0.25rem' }}>
+              <strong style={{ fontSize: 'var(--text-title)', display: 'block', marginBottom: 'var(--space-1)' }}>
                 ⚠️ Perfil Alimentar Incompleto
               </strong>
-              <span style={{ fontSize: '0.9rem' }}>
+              <span style={{ fontSize: 'var(--text-body)' }}>
                 Seu perfil alimentar ainda não possui restrições configuradas. A análise de compatibilidade alimentar será limitada até que você configure seu perfil.
               </span>
             </div>
-            <Link href="/profile" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: '0.6rem 1.2rem', textDecoration: 'none' }}>
+            <Link href="/profile" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: 'var(--space-3) var(--space-6)', textDecoration: 'none' }}>
               Configurar Agora
             </Link>
           </div>
@@ -229,7 +235,7 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h2 className={styles.cardTitle} style={{ margin: 0 }}>🥗 Meu Perfil Alimentar</h2>
               {mounted && isAuthenticated && (
-                <Link href="/profile" className="btn btn-ghost" style={{ fontSize: '0.85rem', padding: '0.3rem 0.7rem' }}>
+                <Link href="/profile" className="btn btn-ghost" style={{ fontSize: 'var(--text-label)', padding: 'var(--space-2) var(--space-3)' }}>
                   ⚙️ Editar Perfil
                 </Link>
               )}
@@ -238,30 +244,30 @@ export default function DashboardPage() {
             {mounted && isAuthenticated ? (
               userRestrictions.length > 0 ? (
                 <div>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>
+                  <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-3)' }}>
                     Alérgenos ativos configurados para sua proteção:
                   </p>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
                     {userRestrictions.map((res, index) => {
                       const allergenLabel = ALLERGEN_LABELS[res.allergen] || res.allergen;
-                      const badgeInfo = SEVERITY_BADGES[res.severity] || { label: res.severity, bg: '#f3f4f6', color: '#374151' };
+                      const badgeInfo = SEVERITY_BADGES[res.severity] || { label: res.severity, bg: 'var(--color-elevated)', color: 'var(--color-text-muted)' };
 
                       return (
                         <div key={index} style={{
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          padding: '0.6rem 0.85rem',
-                          borderRadius: '8px',
-                          background: 'var(--bg-secondary, rgba(255,255,255,0.05))',
-                          border: '1px solid var(--border-color, rgba(255,255,255,0.1))'
+                          padding: 'var(--space-3) var(--space-4)',
+                          borderRadius: 'var(--radius-md)',
+                          background: 'var(--color-elevated)',
+                          border: '1px solid var(--color-border)'
                         }}>
-                          <span style={{ fontWeight: '600', fontSize: '0.95rem' }}>{allergenLabel}</span>
+                          <span style={{ fontWeight: '600', fontSize: 'var(--text-body)' }}>{allergenLabel}</span>
                           <span style={{
-                            padding: '0.2rem 0.6rem',
-                            borderRadius: '12px',
-                            fontSize: '0.75rem',
+                            padding: 'var(--space-1) var(--space-3)',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: 'var(--text-label)',
                             fontWeight: 'bold',
                             background: badgeInfo.bg,
                             color: badgeInfo.color
@@ -274,12 +280,12 @@ export default function DashboardPage() {
                   </div>
 
                   <div style={{
-                    padding: '0.6rem 0.85rem',
-                    borderRadius: '8px',
-                    fontSize: '0.85rem',
-                    background: acceptsCrossContamination ? '#fffbeb' : '#f0fdf4',
-                    border: acceptsCrossContamination ? '1px solid #fde68a' : '1px solid #bbf7d0',
-                    color: acceptsCrossContamination ? '#b45309' : '#15803d'
+                    padding: 'var(--space-3) var(--space-4)',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-label)',
+                    background: acceptsCrossContamination ? 'var(--color-warning-bg)' : 'var(--color-safe-bg)',
+                    border: acceptsCrossContamination ? '1px solid var(--color-warning-border)' : '1px solid var(--color-safe-border)',
+                    color: acceptsCrossContamination ? 'var(--color-warning)' : 'var(--color-safe)'
                   }}>
                     {acceptsCrossContamination ? (
                       <span>⚠️ <strong>Contaminação Cruzada:</strong> Aceita risco de traços.</span>
@@ -324,34 +330,104 @@ export default function DashboardPage() {
                 disabled={loading}
                 id="dashboard-search-btn"
               >
-                {loading ? 'Verificando...' : 'Verificar Compatibilidade'}
+                {loading ? 'Buscando...' : 'Buscar Produtos'}
               </button>
             </form>
 
             {mounted && !isAuthenticated && (
-              <p style={{ marginTop: '0.75rem', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+              <p style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>
                 ⚠️ Faça{' '}
                 <Link href="/auth/login" style={{ color: 'var(--color-emerald)' }}>login</Link>{' '}
                 para verificar compatibilidade com seu perfil.
               </p>
             )}
 
-            {report && (() => {
-              const badge = getCompatibilityBadge(report.riskLevel);
-              return (
-                <div className={styles.reportArea}>
-                  <h3 style={{ marginBottom: '1rem', color: '#fff' }}>Produto: {report.productName}</h3>
-                  <div className={badge.class}>
-                    <strong>{badge.label}</strong>
-                    <p className={styles.reason}>{badge.text}</p>
-                    <p className={styles.reason} style={{ marginTop: '0.5rem' }}>{report.reasoning}</p>
-                    {report.conflicts?.map((c, index) => (
-                      <p key={index} className={styles.reason}>- {c.reason}</p>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
+            {/* Lista de Resultados Encontrados */}
+            {searchResults.length > 0 && (
+              <div style={{ marginTop: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                <h3 style={{ fontSize: 'var(--text-title)', color: 'var(--color-text)' }}>
+                  Resultados encontrados ({searchResults.length}):
+                </h3>
+                {searchResults.map((product) => {
+                  const productReport = report?.productId === product.id ? report : null;
+                  return (
+                    <div
+                      key={product.id}
+                      style={{
+                        padding: 'var(--space-4)',
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--color-border)',
+                        background: 'var(--color-elevated)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 'var(--space-3)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 'var(--space-3)' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <strong style={{ fontSize: '1.1rem', color: 'var(--color-text)', display: 'block' }}>
+                            {product.name}
+                          </strong>
+                          <span style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>
+                            Marca: {product.brand}
+                          </span>
+                        </div>
+                        <Link
+                          href={`/products/${product.id}`}
+                          className="btn btn-ghost"
+                          style={{
+                            fontSize: 'var(--text-label)',
+                            padding: 'var(--space-2) var(--space-3)',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          📦 Ver Detalhes
+                        </Link>
+                      </div>
+
+                      {product.ingredients && (
+                        <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', margin: 0 }}>
+                          <strong>Ingredientes:</strong> {product.ingredients}
+                        </p>
+                      )}
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => checkProductCompatibility(product)}
+                          disabled={loading}
+                          className="btn btn-em"
+                          style={{ fontSize: 'var(--text-label)', padding: 'var(--space-2) var(--space-4)' }}
+                        >
+                          🧪 Checar Compatibilidade
+                        </button>
+
+                        {productReport && (
+                          <RiskBadge riskLevel={productReport.riskLevel} showDescription={true} />
+                        )}
+                      </div>
+
+                      {productReport && (
+                        <div style={{ padding: 'var(--space-3)', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
+                          <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--color-text)' }}>
+                            {productReport.reasoning}
+                          </p>
+                          {productReport.conflicts?.map((c, index) => (
+                            <p key={index} style={{ margin: '4px 0 0 0', fontSize: 'var(--text-label)', color: 'var(--color-danger)' }}>
+                              ⚠️ {c.reason}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </section>
         </div>
       </main>

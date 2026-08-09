@@ -87,6 +87,7 @@ void main() {
       final payload = FoodProfilePayload(
         userId: 'user-1',
         restrictions: const [Restriction(allergen: AllergenType.gluten, severity: SeverityLevel.fatal)],
+        acceptsCrossContamination: false,
       );
 
       await expectLater(

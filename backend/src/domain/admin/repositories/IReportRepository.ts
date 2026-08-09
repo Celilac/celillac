@@ -6,5 +6,5 @@ export interface IReportRepository {
   save(report: Report): Promise<void>;
   update(report: Report): Promise<void>;
   findById(id: string): Promise<Report | null>;
-  findAll(filters?: { status?: ReportStatus }): Promise<Report[]>;
+  findAll(filters?: { status?: ReportStatus; isFoodSafetyRisk?: boolean }): Promise<Report[]>;
 }

@@ -41,14 +41,14 @@
 }
 
 .title {
-  font-size: 0.85rem;
+  font-size: var(--text-body);
   font-weight: 700;
   color: var(--color-text);
   margin-bottom: var(--space-1);
 }
 
 .message {
-  font-size: 0.85rem;
+  font-size: var(--text-body);
   color: var(--color-text);
   white-space: pre-wrap;
   word-break: break-word;
@@ -61,7 +61,7 @@
   border: 0;
   background: transparent;
   color: var(--color-emerald);
-  font-size: 0.85rem;
+  font-size: var(--text-body);
   font-weight: 700;
   cursor: pointer;
 }

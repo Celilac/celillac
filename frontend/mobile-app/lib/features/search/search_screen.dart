@@ -7,6 +7,7 @@ import '../../api/models/product_models.dart';
 import '../../core/auth/session_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/alert_banner.dart';
+import '../product/product_details_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -149,12 +150,35 @@ class _SearchScreenState extends State<SearchScreen> {
                       : 'Incompatível com seu perfil',
                   reasoning: _report!.compatibility.reasoning,
                 ),
-                TextButton(
-                  onPressed: () => setState(() => _report = null),
-                  child: const Text(
-                    '← Nova busca',
-                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                  ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailsScreen(
+                                product: _report!.product,
+                                initialCompatibility: _report!.compatibility,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.info_outline, size: 18),
+                        label: const Text('Ver Detalhes'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () => setState(() => _report = null),
+                      child: const Text(
+                        '← Voltar',
+                        style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 ),
               ],
               if (_report == null)

@@ -37,6 +37,15 @@
 8. [Health Check](#8-health-check)
 9. [Enums de Domínio](#9-enums-de-domínio)
 10. [Regras para Agentes de IA](#10-regras-para-agentes-de-ia)
+11. [Consumidor (Consumer)](#11-consumidor-consumer)
+   - [GET /consumer/me](#get-consumerme)
+   - [PUT /consumer/preferences](#put-consumerpreferences)
+   - [POST /consumer/restrictions](#post-consumerrestrictions)
+   - [DELETE /consumer/restrictions/:allergen](#delete-consumerrestrictionsallergen)
+12. [Moderação e Denúncias (Reports)](#12-moderação-e-denúncias-reports)
+   - [POST /admin/reports](#post-adminreports)
+   - [GET /admin/reports](#get-adminreports)
+   - [PATCH /admin/reports/:id/status](#patch-adminreportsidstatus)
 
 ---
 
@@ -385,6 +394,7 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
 | `WARNING` | 🟡 | Alérgeno de baixa/média severidade presente | Amarelo |
 | `DANGER` | ⚠️ | Alérgeno de alta severidade presente | Laranja |
 | `BLOCKED` | ⛔ | FATAL detectado ou produto sem ingredientes | **Vermelho — destaque máximo** |
+| `UNEVALUATED` | ⚪ | Perfil alimentar incompleto / sem restrições ativas | **Cinza/Neutro — orienta configuração de perfil (RN-CONSUMER-07)** |
 
 > ⚠️ `BLOCKED` deve ter **destaque visual obrigatório** (vermelho + ícone de perigo) conforme `FRONTEND_STRATEGY.md`: *"Alertas alimentares devem ter destaque visual (vermelho/ícones de perigo)."*
 
@@ -784,6 +794,18 @@ Valores aceitos nos campos `severity`:
 
 > ⚠️ `FATAL` é o nível para **Doença Celíaca diagnosticada**. Um produto com `cross_contamination` contendo qualquer menção a glúten resulta em `BLOCKED` — sem exceção. Esta é uma regra de segurança alimentar crítica validada nos casos de teste TC-02 e TC-04.
 
+### `RiskLevel`
+
+Valores possíveis de nível de risco de compatibilidade:
+
+| Valor | Português | Significado no Motor |
+|:------|:----------|:---------------------|
+| `SAFE` | Seguro | Nenhum alérgeno do perfil foi encontrado |
+| `WARNING` | Atenção | Conflito de severidade LOW/MEDIUM ou traços |
+| `DANGER` | Perigo | Conflito de severidade HIGH em ingredientes ou traços sem tolerância |
+| `BLOCKED` | Bloqueado | Conflito FATAL ou produto sem lista de ingredientes declarados |
+| `UNEVALUATED` | Não Avaliado / Perfil Incompleto | Perfil sem restrições ativas — não avaliado para evitar falsa segurança (RN-CONSUMER-07) |
+
 ### `UserRole`
 
 | Valor | Descrição |
@@ -838,3 +860,239 @@ Usuário abre o app
                                     Dashboard: POST /compatibility/check
                                     para cada produto verificado
 ```
+
+---
+
+## 11. Consumidor (Consumer)
+
+### `GET /consumer/me` 🔒
+
+Retorna os dados consolidados do Consumidor logado, seu perfil alimentar associado e se há alertas de perfil incompleto. **Caso o consumidor ainda não exista, ele é auto-criado de forma transparente.**
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Response Body (200 OK):**
+```json
+{
+  "consumer": {
+    "id": "consumer-uuid-123",
+    "userId": "user-uuid-456",
+    "generalPreferences": {
+      "theme": "dark"
+    },
+    "profileEvaluationStatus": "PENDING_EVALUATION",
+    "hasIncompleteProfileWarning": false
+  },
+  "foodProfile": {
+    "id": "profile-uuid-789",
+    "userId": "user-uuid-456",
+    "restrictions": [
+      {
+        "allergen": "GLUTEN",
+        "severity": "FATAL",
+        "type": "ALLERGY",
+        "notes": "Celíaco grave"
+      }
+    ],
+    "acceptsCrossContamination": false
+  },
+  "hasIncompleteProfileWarning": false
+}
+```
+
+---
+
+### `PUT /consumer/preferences` 🔒
+
+Atualiza as preferências gerais de interface do consumidor.
+
+**Request Body:**
+```json
+{
+  "generalPreferences": {
+    "theme": "light",
+    "notificationsEnabled": true
+  }
+}
+```
+
+**Response Body (200 OK):**
+```json
+{
+  "id": "consumer-uuid-123",
+  "userId": "user-uuid-456",
+  "generalPreferences": {
+    "theme": "light",
+    "notificationsEnabled": true
+  }
+}
+```
+
+---
+
+### `PATCH /consumer/status` 🔒
+
+Alterna o status de participação do perfil de consumidor entre `ATIVO` e `INATIVO` registrando rastreabilidade de auditoria.
+
+**Request Body:**
+```json
+{
+  "action": "DEACTIVATE",
+  "reason": "Pausa temporária solicitada pelo usuário"
+}
+```
+
+**Response Body (200 OK):**
+```json
+{
+  "id": "consumer-uuid-123",
+  "userId": "user-uuid-456",
+  "status": "INATIVO",
+  "statusChangedAt": "2026-08-01T17:50:00.000Z",
+  "statusChangedBy": "user-uuid-456",
+  "statusChangeReason": "Pausa temporária solicitada pelo usuário"
+}
+```
+
+---
+
+### `POST /consumer/restrictions` 🔒
+
+Adiciona uma nova restrição alimentar diretamente ao perfil do consumidor logado.
+
+**Request Body:**
+```json
+{
+  "allergen": "LACTOSE",
+  "severity": "MEDIUM",
+  "type": "INTOLERANCE",
+  "notes": "Intolerância leve"
+}
+```
+
+**Response Body (200 OK / 201 Created):**
+```json
+{
+  "success": true,
+  "message": "Restrição adicionada com sucesso."
+}
+```
+
+---
+
+### `DELETE /consumer/restrictions/:allergen` 🔒
+
+Remove uma restrição alimentar existente por tipo de alérgeno.
+
+**Response Body (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Restrição removida com sucesso."
+}
+```
+
+---
+
+## 12. Moderação e Denúncias (Reports)
+
+### `POST /admin/reports` 🔒
+
+Cria uma nova denúncia contra um produto ou parceiro comercial. **Autenticação obrigatória — Bearer Token.**
+
+> 💡 **Nota:** Para denunciar um produto, envie `productId`. Para denunciar um parceiro comercial, envie `partnerId`. Ao menos um dos dois deve ser fornecido.
+
+**Request Body:**
+```json
+{
+  "productId": "prod-uuid-123",
+  "partnerId": "partner-uuid-456",
+  "reason": "MISSING_ALLERGEN",
+  "details": "Omitiu traços de glúten na rotulagem",
+  "isFoodSafetyRisk": true
+}
+```
+
+| Campo | Tipo | Obrigatório | Validação / Descrição |
+|:------|:-----|:-----------:|:----------------------|
+| `productId` | `string` | Opcional* | ID do produto denunciado (Obrigatório se `partnerId` não for informado). |
+| `partnerId` | `string` | Opcional* | ID do parceiro comercial denunciado (Obrigatório se `productId` não for informado). |
+| `reason` | `enum` | ✅ | `INCORRECT_INGREDIENTS` \| `MISSING_ALLERGEN` \| `WRONG_CROSS_CONTAMINATION` \| `OTHER` |
+| `details` | `string` | Opcional | Descrição detalhada da denúncia. |
+| `isFoodSafetyRisk` | `boolean` | Opcional | Calculado automaticamente para motivos graves (`MISSING_ALLERGEN`, `WRONG_CROSS_CONTAMINATION`) se omitido. |
+
+**Response Body (201 Created):**
+```json
+{
+  "id": "report-uuid-789",
+  "reporterId": "user-uuid-123",
+  "productId": "prod-uuid-123",
+  "partnerId": null,
+  "reason": "MISSING_ALLERGEN",
+  "isFoodSafetyRisk": true,
+  "status": "PENDING",
+  "details": "Omitiu traços de glúten na rotulagem",
+  "createdAt": "2026-08-03T19:00:00.000Z",
+  "updatedAt": "2026-08-03T19:00:00.000Z"
+}
+```
+
+---
+
+### `GET /admin/reports` 🔒 *(Restrito: ADMIN)*
+
+Lista as denúncias registradas na plataforma. Prioriza automaticamente denúncias de risco de segurança alimentar (`is_food_safety_risk DESC`).
+
+**Query Parameters:**
+- `status` (`string`, opcional): `PENDING` | `IN_REVIEW` | `RESOLVED` | `DISMISSED`
+- `isFoodSafetyRisk` (`boolean`, opcional): `true` | `false`
+
+**Response Body (200 OK):**
+```json
+[
+  {
+    "id": "report-uuid-789",
+    "reporterId": "user-uuid-123",
+    "partnerId": "partner-uuid-456",
+    "reason": "WRONG_CROSS_CONTAMINATION",
+    "isFoodSafetyRisk": true,
+    "status": "PENDING",
+    "details": "Contaminação cruzada sistemática no restaurante",
+    "createdAt": "2026-08-03T19:00:00.000Z",
+    "updatedAt": "2026-08-03T19:00:00.000Z"
+  }
+]
+```
+
+---
+
+### `PATCH /admin/reports/:id/status` 🔒 *(Restrito: ADMIN)*
+
+Atualiza o status de uma denúncia.
+
+**Request Body:**
+```json
+{
+  "newStatus": "RESOLVED"
+}
+```
+
+**Response Body (200 OK):**
+```json
+{
+  "id": "report-uuid-789",
+  "reporterId": "user-uuid-123",
+  "partnerId": "partner-uuid-456",
+  "reason": "WRONG_CROSS_CONTAMINATION",
+  "isFoodSafetyRisk": true,
+  "status": "RESOLVED",
+  "details": "Contaminação cruzada sistemática no restaurante",
+  "createdAt": "2026-08-03T19:00:00.000Z",
+  "updatedAt": "2026-08-03T19:05:00.000Z"
+}
+```
+
+
