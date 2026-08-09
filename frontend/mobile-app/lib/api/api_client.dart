@@ -152,8 +152,8 @@ class ApiClient {
       '/favorites',
       method: 'POST',
       body: {
-        if (productId != null) 'productId': productId,
-        if (partnerId != null) 'partnerId': partnerId,
+        'productId': ?productId,
+        'partnerId': ?partnerId,
       },
       parse: (json) => FavoriteItem.fromJson(json as Map<String, dynamic>),
     );
@@ -188,8 +188,8 @@ class ApiClient {
       '/reviews',
       method: 'POST',
       body: {
-        if (productId != null) 'productId': productId,
-        if (partnerId != null) 'partnerId': partnerId,
+        'productId': ?productId,
+        'partnerId': ?partnerId,
         'rating': rating,
         if (comment != null && comment.isNotEmpty) 'comment': comment,
       },
@@ -228,8 +228,8 @@ class ApiClient {
       '/admin/reports',
       method: 'POST',
       body: {
-        if (productId != null) 'productId': productId,
-        if (partnerId != null) 'partnerId': partnerId,
+        'productId': ?productId,
+        'partnerId': ?partnerId,
         'reason': reason,
         if (details != null && details.isNotEmpty) 'details': details,
         'isFoodSafetyRisk': isFoodSafetyRisk,
