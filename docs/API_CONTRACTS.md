@@ -1095,4 +1095,57 @@ Atualiza o status de uma denúncia.
 }
 ```
 
+---
+
+### `PATCH /admin/users/:id/demote` 🔒 *(Restrito: ADMIN)*
+
+Remove o privilégio de Administrador de um usuário, retornando-o para a role `CELIACO`. O `profileEvaluationStatus` é resetado para `PENDING_EVALUATION`.
+
+**Restrições:**
+- Apenas ADMINs ativos podem executar esta ação.
+- O administrador não pode se auto-rebaixar.
+- Só pode ser aplicado a usuários que **já possuem role ADMIN**.
+
+**Path Parameter:**
+| Parâmetro | Tipo | Descrição |
+|:----------|:-----|:----------|
+| `id` | `string (UUID)` | ID do usuário ADMIN a ser rebaixado |
+
+**Response `200 OK`:**
+*(Corpo vazio)*
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `400` | `"Somente administradores ativos podem rebaixar usuários."` | Solicitante não é ADMIN ativo |
+| `400` | `"Um administrador não pode rebaixar a si mesmo."` | Auto-rebaixamento |
+| `400` | `"Usuário não encontrado."` | ID não existe |
+| `400` | `"Somente usuários com role ADMIN podem ser rebaixados."` | Alvo não é ADMIN |
+| `401` | `"Usuário não autenticado."` | Token ausente |
+
+---
+
+### `DELETE /admin/users/:id` 🔒 *(Restrito: ADMIN)*
+
+Remove permanentemente a conta de um usuário do sistema. Todos os dados vinculados (perfil alimentar, favoritos, avaliações, denúncias) são removidos em cascata pelo banco de dados. O e-mail ficará disponível para novo cadastro.
+
+**Restrições:**
+- Apenas ADMINs ativos podem executar esta ação.
+- O administrador não pode excluir a si mesmo.
+
+**Path Parameter:**
+| Parâmetro | Tipo | Descrição |
+|:----------|:-----|:----------|
+| `id` | `string (UUID)` | ID do usuário a ser excluído |
+
+**Response `200 OK`:**
+*(Corpo vazio)*
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `400` | `"Somente administradores ativos podem excluir contas de usuários."` | Solicitante não é ADMIN ativo |
+| `400` | `"Um administrador não pode excluir a si mesmo."` | Auto-exclusão |
+| `400` | `"Usuário não encontrado."` | ID não existe |
+| `401` | `"Usuário não autenticado."` | Token ausente |
 
