@@ -116,6 +116,20 @@ export class User extends Entity<UserProps> {
     this.props.profileEvaluationStatus = 'APPROVED';
   }
 
+  /**
+   * Rebaixa um ADMIN de volta para a role CELIACO.
+   * Não pode ser chamado se o usuário já não for ADMIN.
+   * Regra: após o rebaixamento o perfil volta a PENDING_EVALUATION.
+   */
+  public demoteToUser(): Result<void> {
+    if (this.props.role !== UserRole.ADMIN) {
+      return Result.fail<void>('Somente usuários com role ADMIN podem ser rebaixados.');
+    }
+    this.props.role = UserRole.CELIACO;
+    this.props.profileEvaluationStatus = 'PENDING_EVALUATION';
+    return Result.ok<void>(undefined as any);
+  }
+
   public evaluateProfile(status: ProfileEvaluationStatus): void {
     this.props.profileEvaluationStatus = status;
   }

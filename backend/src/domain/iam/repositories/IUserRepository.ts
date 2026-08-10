@@ -28,4 +28,10 @@ export interface IUserRepository {
    * Retorna todos os usuários cadastrados na plataforma.
    */
   findAll(): Promise<User[]>;
+
+  /**
+   * Remove permanentemente um usuário do sistema pelo ID.
+   * Dados vinculados (perfil alimentar, favoritos, etc.) são deletados via CASCADE.
+   */
+  delete(id: string): Promise<void>;
 }

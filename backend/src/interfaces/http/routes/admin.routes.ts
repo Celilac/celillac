@@ -15,6 +15,8 @@ import { ApproveAdminUserUseCase } from '../../../application/admin/ApproveAdmin
 import { ListUsersUseCase } from '../../../application/admin/ListUsersUseCase';
 import { EvaluateUserProfileUseCase } from '../../../application/admin/EvaluateUserProfileUseCase';
 import { PromoteUserToAdminUseCase } from '../../../application/admin/PromoteUserToAdminUseCase';
+import { DemoteAdminUseCase } from '../../../application/admin/DemoteAdminUseCase';
+import { DeleteUserUseCase } from '../../../application/admin/DeleteUserUseCase';
 
 import { CreateReportController } from '../controllers/admin/CreateReportController';
 import { ListReportsController } from '../controllers/admin/ListReportsController';
@@ -23,6 +25,8 @@ import { ApproveAdminUserController } from '../controllers/admin/ApproveAdminUse
 import { ListUsersController } from '../controllers/admin/ListUsersController';
 import { EvaluateUserProfileController } from '../controllers/admin/EvaluateUserProfileController';
 import { PromoteUserToAdminController } from '../controllers/admin/PromoteUserToAdminController';
+import { DemoteAdminController } from '../controllers/admin/DemoteAdminController';
+import { DeleteUserController } from '../controllers/admin/DeleteUserController';
 
 import { authMiddleware, adminOnlyMiddleware } from '../middlewares/AuthMiddleware';
 
@@ -42,6 +46,8 @@ const approveAdminUserUseCase   = new ApproveAdminUserUseCase(userRepository, em
 const listUsersUseCase           = new ListUsersUseCase(userRepository);
 const evaluateUserProfileUseCase = new EvaluateUserProfileUseCase(userRepository, consumerRepository, auditLogRepository);
 const promoteUserToAdminUseCase  = new PromoteUserToAdminUseCase(userRepository);
+const demoteAdminUseCase         = new DemoteAdminUseCase(userRepository);
+const deleteUserUseCase          = new DeleteUserUseCase(userRepository);
 
 const createReportController        = new CreateReportController(createReportUseCase);
 const listReportsController         = new ListReportsController(listReportsUseCase);
@@ -50,6 +56,8 @@ const approveAdminUserController   = new ApproveAdminUserController(approveAdmin
 const listUsersController           = new ListUsersController(listUsersUseCase);
 const evaluateUserProfileController = new EvaluateUserProfileController(evaluateUserProfileUseCase);
 const promoteUserToAdminController  = new PromoteUserToAdminController(promoteUserToAdminUseCase);
+const demoteAdminController         = new DemoteAdminController(demoteAdminUseCase);
+const deleteUserController          = new DeleteUserController(deleteUserUseCase);
 
 // Rotas
 router.post('/reports', authMiddleware, (req, res) => createReportController.execute(req, res));
@@ -63,5 +71,7 @@ router.get('/users', authMiddleware, adminOnlyMiddleware, (req, res) => listUser
 router.patch('/users/:id/approve', authMiddleware, adminOnlyMiddleware, (req, res) => approveAdminUserController.execute(req, res));
 router.patch('/users/:id/evaluate', authMiddleware, adminOnlyMiddleware, (req, res) => evaluateUserProfileController.execute(req, res));
 router.patch('/users/:id/promote', authMiddleware, adminOnlyMiddleware, (req, res) => promoteUserToAdminController.execute(req, res));
+router.patch('/users/:id/demote', authMiddleware, adminOnlyMiddleware, (req, res) => demoteAdminController.execute(req, res));
+router.delete('/users/:id', authMiddleware, adminOnlyMiddleware, (req, res) => deleteUserController.execute(req, res));
 
 export { router as adminRouter };
