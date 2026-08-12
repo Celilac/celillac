@@ -8,11 +8,18 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction):
 
   const origin = req.headers.origin;
 
-  if (origin && allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else if (!origin) {
-    // Fallback seguro para requisições sem origin (ex: mobile ou requests programáticas)
-    res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
+  if (origin) {
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    } else if (!process.env.ALLOWED_ORIGINS) {
+      // Quando ALLOWED_ORIGINS não é definido explicitamente (ex: VPS / IP público),
+      // reflete a origem para evitar bloqueios do navegador ("Failed to fetch").
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
+    }
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigins.includes('*') ? '*' : allowedOrigins[0]);
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');

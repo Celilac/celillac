@@ -130,6 +130,8 @@
   align-items: center;
   gap: var(--space-1);
   width: fit-content;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .badgeDraft {

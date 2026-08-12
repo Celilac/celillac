@@ -48,7 +48,7 @@ export class LoginUserUseCase {
     }
 
     // 4. Gerar JWT
-    const secret = process.env.JWT_SECRET as string;
+    const secret = process.env.JWT_SECRET || 'celilac_jwt_secret_key_2026_dev';
     const expiresIn = process.env.JWT_EXPIRES_IN ?? '7d';
 
     const token = jwt.sign(
