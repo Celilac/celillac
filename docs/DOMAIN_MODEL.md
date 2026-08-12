@@ -32,11 +32,13 @@
 ## 3. Catálogo de Parceiros
 - **Responsabilidade:** Gerenciar estabelecimentos (restaurantes, lojas) que cadastram produtos.
 - **Entidades:** `Partner`.
-- **Value Objects:** `PartnerStatus` (ACTIVE, SUSPENDED, PENDING_APPROVAL).
+- **Value Objects:**
+    - `PartnerApprovalStatus` (DRAFT, PENDING_REVIEW, APPROVED, REJECTED, SUSPENDED).
+    - `PartnerOperationalStatus` (ACTIVE, INACTIVE, TEMPORARILY_CLOSED).
 - **Regras:**
-    - Um parceiro deve ser aprovado por um ADMIN antes de poder cadastrar produtos.
-    - Parceiro suspenso perde acesso ao cadastro de produtos.
-    - Produtos de um parceiro suspenso devem ser sinalizados no catálogo.
+    - Um parceiro deve ter `approvalStatus = APPROVED` e `operationalStatus = ACTIVE` antes de poder publicar produtos.
+    - Parceiro com cadastro em `DRAFT` ou `PENDING_REVIEW` aguarda revisão administrativa antes de operar.
+    - Parceiro suspenso ou inativo perde acesso ao cadastro de novos produtos e tem seus itens sinalizados/ocultados.
 
 ---
 

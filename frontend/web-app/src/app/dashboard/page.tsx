@@ -69,6 +69,8 @@ export default function DashboardPage() {
   const [isEmailVerified, setIsEmailVerified] = useState(true);
   const [userRestrictions, setUserRestrictions] = useState<RestrictionItem[]>([]);
   const [acceptsCrossContamination, setAcceptsCrossContamination] = useState(false);
+  const [publishedProducts, setPublishedProducts] = useState<ProductSummary[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -106,6 +108,17 @@ export default function DashboardPage() {
             });
         })
         .catch(() => {});
+
+      // Carrega produtos publicados do catálogo
+      setLoadingProducts(true);
+      catalogApi.search('', token)
+        .then((result) => {
+          if (result?.data) {
+            setPublishedProducts(result.data);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setLoadingProducts(false));
     }
   }, [isAuthenticated, token, userId]);
 
@@ -430,6 +443,208 @@ export default function DashboardPage() {
             )}
           </section>
         </div>
+
+        {/* Seção de Produtos Publicados */}
+        {mounted && isAuthenticated && (
+          <section style={{
+            width: '100%',
+            maxWidth: '1000px',
+            marginTop: 'var(--space-8)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+              <h2 style={{ fontSize: 'var(--text-title)', fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>
+                📦 Produtos Publicados
+              </h2>
+              <span style={{
+                fontSize: 'var(--text-label)',
+                color: 'var(--color-text-muted)',
+                background: 'var(--color-elevated)',
+                padding: 'var(--space-1) var(--space-3)',
+                borderRadius: 'var(--radius-full)',
+                border: '1px solid var(--color-border)',
+              }}>
+                {publishedProducts.length} {publishedProducts.length === 1 ? 'produto' : 'produtos'}
+              </span>
+            </div>
+
+            {loadingProducts ? (
+              <div style={{
+                padding: 'var(--space-8)',
+                textAlign: 'center',
+                color: 'var(--color-text-muted)',
+                fontSize: 'var(--text-body)',
+                background: 'var(--color-surface)',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--color-border)',
+              }}>
+                Carregando produtos…
+              </div>
+            ) : publishedProducts.length === 0 ? (
+              <div style={{
+                padding: 'var(--space-8)',
+                textAlign: 'center',
+                color: 'var(--color-text-muted)',
+                fontSize: 'var(--text-body)',
+                background: 'var(--color-surface)',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--color-border)',
+              }}>
+                Nenhum produto publicado no catálogo ainda.
+              </div>
+            ) : (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
+                gap: 'var(--space-6)',
+              }}>
+                {publishedProducts.map((product) => {
+                  const statusInfo: Record<string, { label: string; bg: string; color: string; border: string }> = {
+                    APPROVED: { label: '✅ Aprovado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+                    PENDING_ANALYSIS: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
+                    FLAGGED: { label: '⚠️ Sinalizado', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
+                  };
+                  const status = statusInfo[product.analysisStatus] || statusInfo['PENDING_ANALYSIS'];
+
+                  return (
+                    <Link
+                      key={product.id}
+                      href={`/products/${product.id}`}
+                      style={{
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        display: 'block',
+                      }}
+                    >
+                      <div
+                        style={{
+                          padding: 'var(--space-6)',
+                          borderRadius: 'var(--radius-xl, 16px)',
+                          border: '1px solid var(--color-border)',
+                          background: 'var(--color-surface)',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                          transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+                          cursor: 'pointer',
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: 'var(--space-3)',
+                        }}
+                        onMouseEnter={(e) => {
+                          (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-emerald)';
+                          (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
+                          (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(16, 185, 129, 0.12)';
+                        }}
+                        onMouseLeave={(e) => {
+                          (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-border)';
+                          (e.currentTarget as HTMLElement).style.transform = 'none';
+                          (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)';
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <h3 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--color-text)', margin: '0 0 4px 0', lineHeight: 1.3 }}>
+                                {product.name}
+                              </h3>
+                              <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--color-text-muted)' }}>
+                                {product.brand}
+                              </span>
+                            </div>
+                            <span style={{
+                              padding: '4px 10px',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: status.bg,
+                              color: status.color,
+                              border: `1px solid ${status.border}`,
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                            }}>
+                              {status.label}
+                            </span>
+                          </div>
+
+                          {product.ingredients && (
+                            <div style={{
+                              margin: 'var(--space-3) 0 0 0',
+                              padding: 'var(--space-3) var(--space-4)',
+                              borderRadius: 'var(--radius-md)',
+                              background: 'var(--color-elevated)',
+                              border: '1px solid var(--color-border)',
+                              fontSize: '0.85rem',
+                              lineHeight: 1.4,
+                              color: 'var(--color-text-muted)',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                            }}>
+                              <strong style={{ color: 'var(--color-text)' }}>Ingredientes:</strong> {product.ingredients}
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: 'auto', paddingTop: 'var(--space-2)' }}>
+                          {product.hasGluten ? (
+                            <span style={{
+                              padding: '4px 10px',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: 'var(--color-blocked-bg)',
+                              color: 'var(--color-blocked)',
+                              border: '1px solid var(--color-blocked-border, rgba(239, 68, 68, 0.3))',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}>
+                              🌾 Contém Glúten
+                            </span>
+                          ) : (
+                            <span style={{
+                              padding: '4px 10px',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: 'var(--color-safe-bg)',
+                              color: 'var(--color-safe)',
+                              border: '1px solid var(--color-safe-border)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}>
+                              ✨ Sem Glúten
+                            </span>
+                          )}
+
+                          {product.crossContamination && product.crossContamination !== 'NONE' && (
+                            <span style={{
+                              padding: '4px 10px',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: 'var(--color-warning-bg)',
+                              color: 'var(--color-warning)',
+                              border: '1px solid var(--color-warning-border)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}>
+                              ⚠️ Contaminação Cruzada
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
       </main>
     </div>
   );
