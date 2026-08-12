@@ -7,7 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { UserAvatar } from '@/components/common/UserAvatar';
-import { apiClient } from '@/api/client';
+import { apiClient, HttpError } from '@/api/client';
 import { HomeIcon, DashboardIcon, BuildingIcon, BriefcaseIcon, ShieldIcon, UsersIcon, LogoutIcon, SunIcon, MoonIcon, MenuIcon, CloseIcon } from './icons';
 
 export function Header() {
@@ -30,9 +30,14 @@ export function Header() {
     if (isAuthenticated && token && userId) {
       apiClient.get<{ avatarUrl?: string; fullName?: string; email?: string; role?: string }>('/iam/me', token)
         .then((res) => setUserInfo(res))
-        .catch(() => setUserInfo(null));
+        .catch((err) => {
+          setUserInfo(null);
+          if (err instanceof HttpError && err.status === 401) {
+            logout();
+          }
+        });
     }
-  }, [isAuthenticated, token, userId]);
+  }, [isAuthenticated, token, userId, logout]);
 
   return (
     <header className="topbar">

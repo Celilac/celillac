@@ -26,15 +26,44 @@ interface AuthContextValue extends AuthState {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function extractUserIdFromToken(token: string): string | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const parsed = JSON.parse(jsonPayload);
+    return typeof parsed.sub === 'string' && parsed.sub.trim().length > 0 ? parsed.sub : null;
+  } catch {
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Restaura sessão do localStorage de forma síncrona no cliente se disponível
   const [auth, setAuth] = useState<AuthState>(() => {
     if (typeof window !== 'undefined') {
       try {
         const token  = localStorage.getItem(STORAGE_KEY_TOKEN);
-        const userId = localStorage.getItem(STORAGE_KEY_USERID);
-        if (token && userId) {
-          return { token, userId };
+        let userId = localStorage.getItem(STORAGE_KEY_USERID);
+        if (token) {
+          if (!userId || userId.trim() === '') {
+            userId = extractUserIdFromToken(token);
+            if (userId) {
+              localStorage.setItem(STORAGE_KEY_USERID, userId);
+            }
+          }
+          if (userId) {
+            return { token, userId };
+          }
         }
       } catch {
         // Fallback silencioso
@@ -48,9 +77,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const token  = localStorage.getItem(STORAGE_KEY_TOKEN);
-      const userId = localStorage.getItem(STORAGE_KEY_USERID);
-      if (token && userId && (!auth.token || !auth.userId)) {
-        setAuth({ token, userId });
+      let userId = localStorage.getItem(STORAGE_KEY_USERID);
+      if (token) {
+        if (!userId || userId.trim() === '') {
+          userId = extractUserIdFromToken(token);
+          if (userId) {
+            localStorage.setItem(STORAGE_KEY_USERID, userId);
+          }
+        }
+        if (userId && (!auth.token || auth.userId !== userId)) {
+          setAuth({ token, userId });
+        }
       }
     } catch {
       // localStorage indisponível
@@ -59,14 +96,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [auth.token, auth.userId]);
 
-  const login = useCallback((token: string, userId: string) => {
+  const login = useCallback((token: string, userIdProvided?: string) => {
+    const finalUserId = (userIdProvided && userIdProvided.trim().length > 0)
+      ? userIdProvided
+      : extractUserIdFromToken(token);
+
+    if (!finalUserId) {
+      console.error('[AuthContext] Não foi possível obter um userId válido a partir do token ou argumento.');
+      return;
+    }
+
     try {
       localStorage.setItem(STORAGE_KEY_TOKEN,  token);
-      localStorage.setItem(STORAGE_KEY_USERID, userId);
+      localStorage.setItem(STORAGE_KEY_USERID, finalUserId);
     } catch {
       // Falha silenciosa
     }
-    setAuth({ token, userId });
+    setAuth({ token, userId: finalUserId });
   }, []);
 
   const logout = useCallback(async () => {

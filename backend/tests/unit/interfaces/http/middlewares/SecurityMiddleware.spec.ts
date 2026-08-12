@@ -58,6 +58,25 @@ describe('SecurityMiddleware', () => {
       expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'https://celilac.dev');
       expect(nextFunction).toHaveBeenCalled();
     });
+
+    it('deve refletir a origem remota/VPS quando ALLOWED_ORIGINS nao estiver definido', () => {
+      mockRequest.headers = { origin: 'http://163.176.195.210:3001' };
+
+      corsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'http://163.176.195.210:3001');
+      expect(nextFunction).toHaveBeenCalled();
+    });
+
+    it('deve aceitar qualquer origem quando ALLOWED_ORIGINS for igual a *', () => {
+      process.env.ALLOWED_ORIGINS = '*';
+      mockRequest.headers = { origin: 'http://qualquer-dominio.com' };
+
+      corsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'http://qualquer-dominio.com');
+      expect(nextFunction).toHaveBeenCalled();
+    });
   });
 
   describe('securityHeadersMiddleware', () => {

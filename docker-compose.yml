@@ -25,7 +25,13 @@ services:
       - ./harness/scripts/migrations/011_add_type_to_partners.sql:/docker-entrypoint-initdb.d/011_add_type_to_partners.sql:ro
       - ./harness/scripts/migrations/012_create_consumers_and_partner_interactions.sql:/docker-entrypoint-initdb.d/012_create_consumers_and_partner_interactions.sql:ro
       - ./harness/scripts/migrations/013_add_user_profile_fields_and_admin_approval.sql:/docker-entrypoint-initdb.d/013_add_user_profile_fields_and_admin_approval.sql:ro
+      - ./harness/scripts/migrations/014_cleanup_and_unify_reports.sql:/docker-entrypoint-initdb.d/014_cleanup_and_unify_reports.sql:ro
       - ./harness/scripts/migrations/014_create_email_verifications_table.sql:/docker-entrypoint-initdb.d/014_create_email_verifications_table.sql:ro
+      - ./harness/scripts/migrations/015_add_consumer_audit_fields.sql:/docker-entrypoint-initdb.d/015_add_consumer_audit_fields.sql:ro
+      - ./harness/scripts/migrations/015_add_whatsapp_phone_to_users.sql:/docker-entrypoint-initdb.d/015_add_whatsapp_phone_to_users.sql:ro
+      - ./harness/scripts/migrations/016_fix_allergy_severity_floor.sql:/docker-entrypoint-initdb.d/016_fix_allergy_severity_floor.sql:ro
+      - ./harness/scripts/migrations/017_create_audit_logs.sql:/docker-entrypoint-initdb.d/017_create_audit_logs.sql:ro
+      - ./harness/scripts/migrations/018_add_whatsapp_phone_to_users.sql:/docker-entrypoint-initdb.d/018_add_whatsapp_phone_to_users.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U celilac_user -d celilac_db"]
       interval: 5s
