@@ -104,8 +104,8 @@ export default function VerifyEmailPage() {
     setLoading(true);
     try {
       await iamApi.verifyEmailCode(fullCode, currentToken);
-      toast.success('Seu endereço de e-mail foi verificado com sucesso!', 'E-mail Verificado');
-      router.push('/dashboard');
+      toast.success('Seu endereço de e-mail foi verificado com sucesso! Complete seu perfil para continuar.', 'E-mail Verificado');
+      router.push('/profile');
     } catch (err) {
       toast.error(
         err instanceof HttpError ? err.message : 'Erro ao verificar código de e-mail.',

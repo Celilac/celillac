@@ -117,8 +117,8 @@ export default function RegisterPage() {
       
       const session = await iamApi.login({ email: normalizedEmail, password });
       login(session.token, user.id);
-      toast.success('Conta criada com sucesso!');
-      router.push('/profile');
+      toast.success('Conta criada com sucesso! Por favor, valide o código enviado para o seu e-mail.', 'Bem-vindo');
+      router.push('/auth/verify-email');
     } catch (err) {
       toast.error(err instanceof HttpError ? err.message : 'Erro ao criar conta.', 'Erro ao criar conta');
     } finally {
