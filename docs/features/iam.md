@@ -1,7 +1,7 @@
 # IAM — Identity & Access Management
 
 **Status:** ✅ Implementado
-**Entregue em:** 2026-06-29 (Cadastro/Login), 2026-07-24 (Logout) e 2026-07-28 (Perfil Estendido, OTP e Moderação)
+**Entregue em:** 2026-06-29 (Cadastro/Login), 2026-07-24 (Logout), 2026-07-28 (Perfil Estendido, OTP e Moderação) e 2026-08-13 (Onboarding Flow & Dev OTP Logging)
 **Contrato completo:** [`docs/API_CONTRACTS.md`](../API_CONTRACTS.md#2-iam--autenticação)
 
 ## Endpoints
@@ -28,7 +28,8 @@
 ## Verificação de E-mail por OTP (Zoho Email / FakeEmailService)
 
 - Código numérico de 6 dígitos persistido na tabela `email_verifications` com validade de 15 minutos.
-- Envio transacional via Zoho Mail ou driver de testes FakeEmailService.
+- Envio transacional via Zoho Mail ou driver de desenvolvimento/testes FakeEmailService (`EMAIL_DRIVER=fake` ou `USE_FAKE_EMAIL=true`).
+- Em ambiente de desenvolvimento local, o código OTP gerado é impresso no console do servidor backend para facilitar testes.
 
 ## Revogação de Tokens (Logout)
 
