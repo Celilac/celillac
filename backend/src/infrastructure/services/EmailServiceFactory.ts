@@ -12,9 +12,10 @@ export class EmailServiceFactory {
     }
 
     const isTest = process.env.NODE_ENV === 'test';
+    const isFakeDriver = process.env.EMAIL_DRIVER === 'fake' || process.env.USE_FAKE_EMAIL === 'true';
     const hasZohoConfig = !!(process.env.ZOHO_API_TOKEN || process.env.ZOHO_SMTP_USER);
 
-    if (hasZohoConfig && !isTest) {
+    if (hasZohoConfig && !isTest && !isFakeDriver) {
       console.log('[EmailServiceFactory]: Utilizando driver ZohoEmailService.');
       EmailServiceFactory.instance = new ZohoEmailService();
     } else {
