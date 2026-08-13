@@ -20,6 +20,25 @@
 | `/admin/partners` | Painel de moderação e governança de parceiros (Aprovar/Rejeitar/Suspender) |
 | `/admin/users` | Painel de moderação e avaliação de perfis de usuários pelo administrador |
 
+### Jornada de Onboarding do Usuário (Novo Fluxo)
+
+```
+1. Cadastro (/auth/register)
+      │
+      ▼
+2. Validação OTP (/auth/verify-email)
+      │
+      ▼
+3. Preenchimento de Perfil (/profile)
+      │
+      ▼
+4. Dashboard (/dashboard)
+```
+
+- **Passo 1 (Cadastro):** Usuário preenche e-mail, senha e nome. Ao registrar com sucesso, a sessão é autenticada e o usuário é redirecionado imediatamente para `/auth/verify-email`.
+- **Passo 2 (Validação OTP):** O usuário informa o código de 6 dígitos. Após validação bem-sucedida, é redirecionado para `/profile`.
+- **Passo 3 (Perfil):** O usuário completa data de nascimento, WhatsApp e suas restrições alimentares. Ao clicar em *Salvar alterações*, é redirecionado para `/dashboard`.
+
 ### Camada de API
 
 ```
