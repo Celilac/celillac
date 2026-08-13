@@ -372,6 +372,7 @@ export default function ProfilePage() {
       }
 
       toast.success('Seu perfil foi atualizado com sucesso!', 'Salvo');
+      router.push('/dashboard');
     } catch (err: any) {
       const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao salvar perfil.';
       toast.error(msg, 'Erro ao salvar perfil');

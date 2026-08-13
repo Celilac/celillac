@@ -71,3 +71,26 @@ Atualizar a tela web de criação de conta para exigir senha forte no frontend, 
 ## Plano de Verificação
 - Validar TypeScript/diagnósticos dos arquivos alterados.
 - Executar uma checagem focada do frontend web para garantir que a tela compila sem erro.
+
+---
+
+# Plano de Implementação: Reordenação do Fluxo de Cadastro, Validação de E-mail (OTP) e Perfil
+
+## Objetivo
+Reordenar o fluxo pós-criação de conta para que o usuário seja obrigatoriamente direcionado para a tela de verificação de e-mail OTP (`/auth/verify-email`) logo após criar a conta. Após informar e validar o código OTP de 6 dígitos, o usuário é direcionado para a página de perfil (`/profile`) para completar o cadastro com suas informações pessoais (data de nascimento, telefone, etc.). Após preencher e salvar o perfil, ele pode seguir para o dashboard (`/dashboard`).
+
+## Alterações Realizadas
+
+### 1. Cadastro (`/auth/register`)
+- Alterar redirecionamento pós-registro de `/profile` para `/auth/verify-email`.
+
+### 2. Validação de E-mail por OTP (`/auth/verify-email`)
+- Alterar redirecionamento pós-validação de `/dashboard` para `/profile`.
+
+### 3. Perfil (`/profile`)
+- Ao salvar as alterações de perfil com sucesso (`handleSave`), redirecionar o usuário para `/dashboard`.
+
+## Plano de Verificação
+- Verificar a compilação do TypeScript e ausência de erros de sintaxe.
+- Executar o build do frontend web com `npm run build`.
+
