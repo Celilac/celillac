@@ -22,7 +22,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
   targetName = 'Item',
   onSuccess,
 }) => {
-  const { token, isAuthenticated } = useAuth();
+  const { token, userId, isAuthenticated } = useAuth();
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -43,6 +43,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
     try {
       await reviewApi.submit(
         {
+          userId: userId || undefined,
           productId,
           partnerId,
           rating,
@@ -92,7 +93,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             <label className={styles.label} style={{ marginBottom: '0.5rem', display: 'block' }}>
               Sua Nota (1 a 5 estrelas)
             </label>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div
+              style={{ display: 'inline-flex', gap: '0.25rem', alignItems: 'center' }}
+              onMouseLeave={() => setHoverRating(0)}
+            >
               {[1, 2, 3, 4, 5].map((star) => {
                 const active = (hoverRating || rating) >= star;
                 return (
@@ -101,17 +105,25 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                     type="button"
                     onClick={() => setRating(star)}
                     onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
+                    aria-label={`${star} estrelas`}
                     style={{
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      fontSize: '1.75rem',
-                      transition: 'transform 0.15s ease',
-                      transform: active ? 'scale(1.15)' : 'scale(1)',
+                      fontSize: '2rem',
+                      width: '42px',
+                      height: '42px',
+                      padding: 0,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 1,
+                      filter: active ? 'none' : 'grayscale(100%) opacity(30%)',
+                      transition: 'filter 0.15s ease',
+                      userSelect: 'none',
                     }}
                   >
-                    {active ? '⭐' : '☆'}
+                    ⭐
                   </button>
                 );
               })}
