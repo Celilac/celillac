@@ -36,3 +36,15 @@
 - **Mecanismo:** Blacklist server-side persistida na tabela `blacklisted_tokens` no PostgreSQL.
 - **Caso de Uso:** `LogoutUserUseCase` decodifica o token, descobre a expiração e o insere na blacklist.
 - **Middleware:** `AuthMiddleware` rejeita requisições com tokens revogados (`401 Unauthorized`).
+
+## Proteção de Ações para E-mails Verificados (`verifiedEmailOnlyMiddleware`)
+
+- **Objetivo:** Impedir fraudes, spam, avaliações maliciosas ou denúncias falsas a partir de contas não verificadas.
+- **Funcionamento:** O middleware `verifiedEmailOnlyMiddleware` intercepta rotas de mutação/interação e checa `users.is_email_verified`. Se `false`, bloqueia a operação retornando `403 Forbidden` (`code: 'EMAIL_NOT_VERIFIED'`).
+- **Rotas Protegidas:**
+  - `POST /reviews` (Envio de avaliação de produtos/parceiros)
+  - `POST /favorites` e `DELETE /favorites/:targetId` (Adição e remoção de favoritos)
+  - `POST /reports` (Envio de denúncias de segurança alimentar)
+  - `POST /partners` (Cadastro de estabelecimentos/parceiros)
+  - `POST /products` (Cadastro de produtos no catálogo)
+

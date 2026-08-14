@@ -17,10 +17,9 @@ export default function VerifyEmailPage() {
   const [digits, setDigits] = useState<string[]>(Array(6).fill(''));
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const [countdown, setCountdown] = useState(60);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const hasAutoSent = useRef(false);
 
   useEffect(() => {
     const localToken = typeof window !== 'undefined' ? localStorage.getItem('celilac:token') : null;
@@ -29,21 +28,7 @@ export default function VerifyEmailPage() {
     }
   }, [isAuthenticated, router]);
 
-  // Dispara o envio automático de código OTP ao entrar na página
-  useEffect(() => {
-    const currentToken = token || (typeof window !== 'undefined' ? localStorage.getItem('celilac:token') : null);
-    if (currentToken && !hasAutoSent.current) {
-      hasAutoSent.current = true;
-      iamApi.resendEmailVerificationCode(currentToken)
-        .then(() => {
-          toast.info('Um código de verificação foi enviado para seu e-mail.', 'E-mail Enviado');
-          setCountdown(60);
-        })
-        .catch(() => {});
-    }
-  }, [token]);
-
-  // Contador de 60 segundos para reenvio de código
+  // Contador regressivo para reenvio manual de código
   useEffect(() => {
     if (countdown <= 0) return;
     const timer = setInterval(() => {

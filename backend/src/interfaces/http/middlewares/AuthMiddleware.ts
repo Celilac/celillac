@@ -139,3 +139,41 @@ export function adminOnlyMiddleware(req: Request, res: Response, next: NextFunct
   }
   next();
 }
+
+export async function verifiedEmailOnlyMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
+  if (!req.user) {
+    res.status(401).json({ error: 'Token de autenticação não fornecido ou inválido.' });
+    return;
+  }
+
+  // Administradores são isentos
+  if (req.user.role === 'ADMIN') {
+    next();
+    return;
+  }
+
+  try {
+    const userQuery = await pool.query(
+      'SELECT is_email_verified FROM users WHERE id = $1 LIMIT 1',
+      [req.user.id]
+    );
+
+    if (userQuery && userQuery.rows && userQuery.rows.length > 0) {
+      if (!userQuery.rows[0].is_email_verified) {
+        res.status(403).json({
+          error: 'É necessário validar seu e-mail com o código OTP antes de realizar esta ação.',
+          code: 'EMAIL_NOT_VERIFIED',
+        });
+        return;
+      }
+    }
+  } catch (err: any) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('[verifiedEmailOnlyMiddleware] Erro ao verificar validação de e-mail:', err);
+      res.status(500).json({ error: 'Erro ao verificar permissão do usuário.' });
+      return;
+    }
+  }
+
+  next();
+}

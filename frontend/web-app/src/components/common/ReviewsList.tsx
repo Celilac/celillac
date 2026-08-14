@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { reviewApi, ReviewDTO } from '@/api/reviews';
+import { apiClient } from '@/api/client';
 import { ReviewModal } from './ReviewModal';
 import styles from '../../app/partner/partner.module.css';
 
@@ -16,6 +18,7 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
   partnerId,
   targetName,
 }) => {
+  const { token, isAuthenticated } = useAuth();
   const [reviews, setReviews] = useState<ReviewDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,6 +51,25 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
     fetchReviews();
   }, [fetchReviews]);
 
+  const handleOpenReview = async () => {
+    if (!isAuthenticated || !token) {
+      alert('Você precisa estar autenticado para enviar uma avaliação.');
+      return;
+    }
+
+    try {
+      const me = await apiClient.get<any>('/iam/me', token);
+      if (me && me.isEmailVerified === false) {
+        alert('É obrigatório validar seu endereço de e-mail com o código OTP antes de avaliar qualquer produto.');
+        return;
+      }
+    } catch {
+      // prossegue em caso de falha de rede temporária
+    }
+
+    setIsModalOpen(true);
+  };
+
   const safeReviews = Array.isArray(reviews) ? reviews : [];
 
   const averageRating =
@@ -71,7 +93,7 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
 
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleOpenReview}
           className={`${styles.btn} ${styles.btnPrimary}`}
           style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
         >

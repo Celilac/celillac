@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { reviewApi } from '@/api/reviews';
+import { apiClient } from '@/api/client';
 import styles from '../../app/partner/partner.module.css';
 
 interface ReviewModalProps {
@@ -28,6 +30,21 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEmailVerified, setIsEmailVerified] = useState<boolean>(true);
+
+  React.useEffect(() => {
+    if (!isOpen || !token || !isAuthenticated) return;
+
+    apiClient.get<any>('/iam/me', token)
+      .then((user) => {
+        if (user && user.isEmailVerified === false) {
+          setIsEmailVerified(false);
+        } else {
+          setIsEmailVerified(true);
+        }
+      })
+      .catch(() => {});
+  }, [isOpen, token, isAuthenticated]);
 
   if (!isOpen) return null;
 
@@ -35,6 +52,11 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
     e.preventDefault();
     if (!isAuthenticated || !token) {
       setError('Você precisa estar autenticado para enviar uma avaliação.');
+      return;
+    }
+
+    if (!isEmailVerified) {
+      setError('É obrigatório validar seu endereço de e-mail com o código OTP antes de enviar avaliações.');
       return;
     }
 
@@ -80,6 +102,32 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
           Compartilhe sua experiência de segurança alimentar com a comunidade CeLiLac.
         </p>
+
+        {!isEmailVerified && (
+          <div className={`${styles.alertBanner} ${styles.alertBannerWarning}`} style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>📩</span>
+              <div>
+                <strong>E-mail não verificado:</strong> Valide sua conta para habilitar avaliações.
+              </div>
+            </div>
+            <Link
+              href="/auth/verify-email"
+              style={{
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: '#ffffff',
+                background: 'var(--color-warning, #f59e0b)',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Validar Agora
+            </Link>
+          </div>
+        )}
 
         {error && (
           <div className={`${styles.alertBanner} ${styles.alertBannerDanger}`} style={{ marginBottom: '1rem' }}>
@@ -151,10 +199,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isEmailVerified}
               className={`${styles.btn} ${styles.btnPrimary}`}
             >
-              {loading ? 'Enviando...' : 'Enviar Avaliação'}
+              {loading ? 'Enviando...' : !isEmailVerified ? 'Validação necessária' : 'Enviar Avaliação'}
             </button>
           </div>
         </form>
