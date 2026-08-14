@@ -34,6 +34,7 @@ export class ZohoEmailService implements IEmailService {
   }
 
   async sendVerificationCode(recipientEmail: string, code: string, recipientName?: string): Promise<void> {
+    console.log(`[EmailService]: 🔑 Código OTP gerado para ${recipientEmail}: [ ${code} ]`);
     const subject = 'CeLiLac — Seu código de verificação';
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
