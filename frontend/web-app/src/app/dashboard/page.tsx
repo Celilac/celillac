@@ -188,19 +188,8 @@ export default function DashboardPage() {
 
         {/* Banner de E-mail Não Verificado */}
         {mounted && !isEmailVerified && (
-          <div style={{
-            background: 'var(--color-danger-bg)',
-            border: '1px solid var(--color-danger-border)',
-            color: 'var(--color-danger)',
-            padding: 'var(--space-6)',
-            borderRadius: 'var(--radius-md)',
-            marginBottom: 'var(--space-6)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 'var(--space-4)',
-          }}>
-            <div>
+          <div className={`${styles.banner} ${styles.bannerDanger}`}>
+            <div style={{ flex: 1, minWidth: '240px' }}>
               <strong style={{ fontSize: 'var(--text-title)', display: 'block', marginBottom: 'var(--space-1)' }}>
                 📩 Verifique seu e-mail para desbloquear todas as funções
               </strong>
@@ -216,19 +205,8 @@ export default function DashboardPage() {
 
         {/* Banner de Perfil Incompleto */}
         {mounted && isProfileIncomplete && (
-          <div style={{
-            background: 'var(--color-warning-bg)',
-            border: '1px solid var(--color-warning-border)',
-            color: 'var(--color-warning)',
-            padding: 'var(--space-6)',
-            borderRadius: 'var(--radius-md)',
-            marginBottom: 'var(--space-6)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 'var(--space-4)',
-          }}>
-            <div>
+          <div className={`${styles.banner} ${styles.bannerWarning}`}>
+            <div style={{ flex: 1, minWidth: '240px' }}>
               <strong style={{ fontSize: 'var(--text-title)', display: 'block', marginBottom: 'var(--space-1)' }}>
                 ⚠️ Perfil Alimentar Incompleto
               </strong>
