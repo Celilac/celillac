@@ -60,7 +60,12 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         onToggle?.(true);
       }
     } catch (err: any) {
-      alert(err.message || 'Erro ao atualizar favorito.');
+      const msg = err.message || '';
+      if (msg.includes('validar seu e-mail') || msg.includes('EMAIL_NOT_VERIFIED') || err.status === 403) {
+        alert('É obrigatório validar seu endereço de e-mail com o código OTP antes de favoritar produtos e parceiros.');
+      } else {
+        alert(msg || 'Erro ao atualizar favorito.');
+      }
     } finally {
       setLoading(false);
     }

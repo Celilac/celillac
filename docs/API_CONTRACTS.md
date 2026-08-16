@@ -481,12 +481,11 @@ O módulo de avaliações permite que usuários deem uma nota (1-5) para a acur�
 
 ### `POST /reviews`
 
-Cria ou atualiza a avaliação de um usuário para um produto (Upsert - limite de 1 por usuário). 🔒 *(autenticação necessária para produção)*
+Cria ou atualiza a avaliação de um usuário para um produto ou parceiro comercial (Upsert - limite de 1 por usuário por alvo). 🔒 *(Requer autenticação JWT e e-mail validado por código OTP)*
 
 **Request Body:**
 ```json
 {
-  "userId": "uuid-do-usuario",
   "productId": "uuid-do-produto",
   "rating": 5,
   "comment": "Rótulo parece seguro e completo."
@@ -495,8 +494,9 @@ Cria ou atualiza a avaliação de um usuário para um produto (Upsert - limite d
 
 | Campo | Tipo | Obrigatório | Validação |
 |:------|:-----|:-----------:|:----------|
-| `userId` | `string (UUID)` | ✅ | ID do usuário avaliador |
-| `productId` | `string (UUID)`| ✅ | ID do produto avaliado |
+| `userId` | `string (UUID)` | ❌ (opcional se autenticado via JWT) | ID do usuário avaliador |
+| `productId` | `string (UUID)`| ⚠️ (ou partnerId) | ID do produto avaliado |
+| `partnerId` | `string (UUID)`| ⚠️ (ou productId) | ID do parceiro avaliado |
 | `rating` | `integer`       | ✅ | Entre 1 e 5 |
 | `comment` | `string`       | ❌ | Comentário opcional |
 
@@ -515,7 +515,9 @@ Cria ou atualiza a avaliação de um usuário para um produto (Upsert - limite d
 **Erros possíveis:**
 | Status | `error` | Causa |
 |:-------|:--------|:------|
-| `400` | `"userId, productId e rating (1-5) são obrigatórios."` | Input inválido |
+| `400` | `"Os campos userId, rating (1-5) e pelo menos um de productId ou partnerId são obrigatórios."` | Input inválido |
+| `401` | `"Token de autenticação não fornecido."` | Ausência de token JWT |
+| `403` | `"É necessário validar seu e-mail com o código OTP antes de realizar esta ação."` | Usuário com `is_email_verified = false` |
 | `404` | `"Produto não encontrado no catálogo."` | O produto não existe |
 
 ---

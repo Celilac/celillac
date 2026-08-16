@@ -8,7 +8,7 @@ import { PgProductRepository } from '../../../infrastructure/database/product/Pg
 import { PgPartnerRepository } from '../../../infrastructure/database/partner/PgPartnerRepository';
 import { pool } from '../../../infrastructure/database/connection';
 
-import { authMiddleware } from '../middlewares/AuthMiddleware';
+import { authMiddleware, verifiedEmailOnlyMiddleware } from '../middlewares/AuthMiddleware';
 
 export const reviewsRoutes = Router();
 
@@ -28,6 +28,6 @@ const reviewController = new ReviewController(
 );
 
 // Rotas
-reviewsRoutes.post('/', authMiddleware, (req, res) => reviewController.submit(req, res));
+reviewsRoutes.post('/', authMiddleware, verifiedEmailOnlyMiddleware, (req, res) => reviewController.submit(req, res));
 reviewsRoutes.get('/product/:productId', (req, res) => reviewController.getProductReviews(req, res));
 reviewsRoutes.get('/partner/:partnerId', (req, res) => reviewController.getPartnerReviews(req, res));

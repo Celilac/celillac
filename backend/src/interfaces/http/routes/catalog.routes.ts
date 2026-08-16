@@ -18,7 +18,7 @@ import { GetProductController } from '../controllers/catalog/GetProductControlle
 import { UpdateProductController } from '../controllers/catalog/UpdateProductController';
 import { InactivateProductController } from '../controllers/catalog/InactivateProductController';
 
-import { authMiddleware, optionalAuthMiddleware } from '../middlewares/AuthMiddleware';
+import { authMiddleware, optionalAuthMiddleware, verifiedEmailOnlyMiddleware } from '../middlewares/AuthMiddleware';
 
 const router = Router();
 
@@ -40,7 +40,7 @@ const updateProductController = new UpdateProductController(updateProductUseCase
 const inactivateProductController = new InactivateProductController(inactivateProductUseCase);
 
 // --- Rotas ---
-router.post('/products', authMiddleware, (req, res) => createProductController.execute(req, res));
+router.post('/products', authMiddleware, verifiedEmailOnlyMiddleware, (req, res) => createProductController.execute(req, res));
 router.get('/products', optionalAuthMiddleware, (req, res) => searchProductsController.execute(req, res));
 router.get('/products/:id', optionalAuthMiddleware, (req, res) => getProductController.execute(req, res));
 router.put('/products/:id', authMiddleware, (req, res) => updateProductController.execute(req, res));

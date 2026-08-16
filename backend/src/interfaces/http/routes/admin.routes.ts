@@ -28,7 +28,7 @@ import { PromoteUserToAdminController } from '../controllers/admin/PromoteUserTo
 import { DemoteAdminController } from '../controllers/admin/DemoteAdminController';
 import { DeleteUserController } from '../controllers/admin/DeleteUserController';
 
-import { authMiddleware, adminOnlyMiddleware } from '../middlewares/AuthMiddleware';
+import { authMiddleware, adminOnlyMiddleware, verifiedEmailOnlyMiddleware } from '../middlewares/AuthMiddleware';
 
 const router = Router();
 
@@ -60,7 +60,7 @@ const demoteAdminController         = new DemoteAdminController(demoteAdminUseCa
 const deleteUserController          = new DeleteUserController(deleteUserUseCase);
 
 // Rotas
-router.post('/reports', authMiddleware, (req, res) => createReportController.execute(req, res));
+router.post('/reports', authMiddleware, verifiedEmailOnlyMiddleware, (req, res) => createReportController.execute(req, res));
 
 // Rotas exclusivas de ADMIN
 router.get('/reports', authMiddleware, adminOnlyMiddleware, (req, res) => listReportsController.execute(req, res));

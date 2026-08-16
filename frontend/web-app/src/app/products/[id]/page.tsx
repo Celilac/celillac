@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { catalogApi, ProductDetails } from '@/api/catalog';
 import { compatibilityApi, CompatibilityResponse } from '@/api/compatibility';
+import { apiClient } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { FavoriteButton } from '@/components/common/FavoriteButton';
@@ -80,6 +81,25 @@ export default function ProductDetailsPage({ params }: PageProps) {
     );
   }
 
+  const handleOpenReport = async () => {
+    if (!isAuthenticated || !token) {
+      alert('Você precisa estar autenticado para denunciar um produto.');
+      return;
+    }
+
+    try {
+      const me = await apiClient.get<any>('/iam/me', token);
+      if (me && me.isEmailVerified === false) {
+        alert('É obrigatório validar seu endereço de e-mail com o código OTP antes de denunciar qualquer produto.');
+        return;
+      }
+    } catch {
+      // prossegue em caso de falha de rede temporária
+    }
+
+    setIsReportModalOpen(true);
+  };
+
   const activeRiskLevel = compatibility?.riskLevel || product.compatibilityReport?.riskLevel || 'UNEVALUATED';
 
   return (
@@ -112,7 +132,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
               <FavoriteButton productId={product.id} />
               <button
                 type="button"
-                onClick={() => setIsReportModalOpen(true)}
+                onClick={handleOpenReport}
                 className="btn btn-ghost"
                 style={{
                   display: 'inline-flex',

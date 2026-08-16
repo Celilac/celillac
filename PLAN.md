@@ -94,3 +94,31 @@ Reordenar o fluxo pós-criação de conta para que o usuário seja obrigatoriame
 - Verificar a compilação do TypeScript e ausência de erros de sintaxe.
 - Executar o build do frontend web com `npm run build`.
 
+---
+
+# Plano de Implementação: Bloqueio de Ações de Interação (Avaliar, Favoritar e Denunciar) para E-mails Não Verificados
+
+## Objetivo
+Garantir a segurança alimentar e a integridade dos dados da comunidade bloqueando qualquer ação de escrita (avaliar produtos/parceiros, salvar favoritos, enviar denúncias e cadastrar parceiros/produtos) para usuários cujo e-mail ainda não tenha sido confirmado via código OTP.
+
+## Alterações Realizadas
+
+### 1. Backend (`backend`)
+- `AuthMiddleware.ts`: Criado o middleware `verifiedEmailOnlyMiddleware`, que consulta `users.is_email_verified` e retorna `403 Forbidden` (`EMAIL_NOT_VERIFIED`) para contas não verificadas.
+- Aplicado nas rotas:
+  - `POST /reviews` (avaliações)
+  - `POST /favorites` e `DELETE /favorites/:targetId` (favoritos)
+  - `POST /reports` (denúncias)
+  - `POST /partners` (parceiros)
+  - `POST /products` (catálogo)
+- Criados testes unitários para `verifiedEmailOnlyMiddleware` em `AuthMiddleware.spec.ts`.
+
+### 2. Frontend (`frontend/web-app`)
+- `ReviewModal.tsx`: Checagem preventiva de `isEmailVerified`, banner explicativo com link para `/auth/verify-email` e bloqueio do botão de envio.
+- `ReportModal.tsx`: Checagem preventiva de `isEmailVerified`, banner explicativo com link para `/auth/verify-email` e bloqueio do botão de envio.
+- `FavoriteButton.tsx`: Tratamento e alerta orientativo caso o usuário tente favoritar sem ter validado o e-mail.
+
+## Plano de Verificação
+- Execução de 304 testes unitários no backend com `npm test` (100% de aprovação).
+- Verificação de tipos TypeScript no frontend com `npx tsc --noEmit`.
+

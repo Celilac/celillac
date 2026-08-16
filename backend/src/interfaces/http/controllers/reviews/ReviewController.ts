@@ -12,7 +12,8 @@ export class ReviewController {
 
   public async submit(req: Request, res: Response): Promise<Response> {
     try {
-      const { userId, productId, partnerId, rating, comment } = req.body;
+      const { productId, partnerId, rating, comment } = req.body;
+      const userId = req.body.userId || req.user?.id;
 
       if (!userId || (!productId && !partnerId) || rating === undefined) {
         return res.status(400).json({ error: 'Os campos userId, rating (1-5) e pelo menos um de productId ou partnerId são obrigatórios.' });

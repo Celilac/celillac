@@ -8,7 +8,7 @@ import { catalogApi, ProductSummary } from '@/api/catalog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
-import { HttpError } from '@/api/client';
+import { HttpError, apiClient } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { FavoriteButton } from '@/components/common/FavoriteButton';
 import { ReviewsList } from '@/components/common/ReviewsList';
@@ -49,6 +49,25 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
       })
       .finally(() => setLoading(false));
   }, [id, token, router, toast]);
+
+  const handleOpenReport = async () => {
+    if (!token) {
+      alert('Você precisa estar autenticado para denunciar um estabelecimento.');
+      return;
+    }
+
+    try {
+      const me = await apiClient.get<any>('/iam/me', token);
+      if (me && me.isEmailVerified === false) {
+        alert('É obrigatório validar seu endereço de e-mail com o código OTP antes de denunciar qualquer produto.');
+        return;
+      }
+    } catch {
+      // prossegue em caso de falha temporária
+    }
+
+    setIsReportModalOpen(true);
+  };
 
   if (loading) {
     return (
@@ -101,7 +120,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                   <FavoriteButton partnerId={partner.id} />
                   <button
                     type="button"
-                    onClick={() => setIsReportModalOpen(true)}
+                    onClick={handleOpenReport}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',

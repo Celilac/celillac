@@ -1,5 +1,5 @@
 // backend/tests/unit/interfaces/http/middlewares/AuthMiddleware.spec.ts
-import { authMiddleware, optionalAuthMiddleware, adminOnlyMiddleware } from '../../../../../src/interfaces/http/middlewares/AuthMiddleware';
+import { authMiddleware, optionalAuthMiddleware, adminOnlyMiddleware, verifiedEmailOnlyMiddleware } from '../../../../../src/interfaces/http/middlewares/AuthMiddleware';
 import { PgBlacklistTokenRepository } from '../../../../../src/infrastructure/database/iam/PgBlacklistTokenRepository';
 import { pool } from '../../../../../src/infrastructure/database/connection';
 import { Request, Response, NextFunction } from 'express';
@@ -240,6 +240,59 @@ describe('AuthMiddleware', () => {
       mockRequest.user = { id: 'admin-1', role: 'ADMIN' };
 
       adminOnlyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(nextFunction).toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('verifiedEmailOnlyMiddleware', () => {
+    it('deve retornar 401 se req.user estiver ausente', async () => {
+      mockRequest.user = undefined;
+
+      await verifiedEmailOnlyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(401);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        error: 'Token de autenticação não fornecido ou inválido.',
+      });
+      expect(nextFunction).not.toHaveBeenCalled();
+    });
+
+    it('deve permitir acesso direto se o usuario for ADMIN', async () => {
+      mockRequest.user = { id: 'admin-1', role: 'ADMIN' };
+
+      await verifiedEmailOnlyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(nextFunction).toHaveBeenCalled();
+      expect(mockResponse.status).not.toHaveBeenCalled();
+    });
+
+    it('deve retornar 403 com EMAIL_NOT_VERIFIED se o usuario nao tiver email verificado', async () => {
+      mockRequest.user = { id: 'user-unverified', role: 'CELIACO' };
+
+      jest.spyOn(pool, 'query').mockImplementation(async () => ({
+        rows: [{ is_email_verified: false }],
+      } as any));
+
+      await verifiedEmailOnlyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        error: 'É necessário validar seu e-mail com o código OTP antes de realizar esta ação.',
+        code: 'EMAIL_NOT_VERIFIED',
+      });
+      expect(nextFunction).not.toHaveBeenCalled();
+    });
+
+    it('deve permitir acesso (next) se o usuario tiver email verificado', async () => {
+      mockRequest.user = { id: 'user-verified', role: 'CELIACO' };
+
+      jest.spyOn(pool, 'query').mockImplementation(async () => ({
+        rows: [{ is_email_verified: true }],
+      } as any));
+
+      await verifiedEmailOnlyMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
       expect(nextFunction).toHaveBeenCalled();
       expect(mockResponse.status).not.toHaveBeenCalled();

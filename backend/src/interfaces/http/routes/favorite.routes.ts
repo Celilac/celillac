@@ -8,7 +8,7 @@ import { AddFavoriteUseCase } from '../../../application/favorites/AddFavoriteUs
 import { RemoveFavoriteUseCase } from '../../../application/favorites/RemoveFavoriteUseCase';
 import { ListFavoritesUseCase } from '../../../application/favorites/ListFavoritesUseCase';
 import { FavoriteController } from '../controllers/favorites/FavoriteController';
-import { authMiddleware } from '../middlewares/AuthMiddleware';
+import { authMiddleware, verifiedEmailOnlyMiddleware } from '../middlewares/AuthMiddleware';
 
 const router = Router();
 
@@ -32,8 +32,8 @@ const favoriteController = new FavoriteController(
 );
 
 // --- Rotas ---
-router.post('/favorites', authMiddleware, (req, res) => favoriteController.add(req, res));
-router.delete('/favorites/:targetId', authMiddleware, (req, res) => favoriteController.remove(req, res));
+router.post('/favorites', authMiddleware, verifiedEmailOnlyMiddleware, (req, res) => favoriteController.add(req, res));
+router.delete('/favorites/:targetId', authMiddleware, verifiedEmailOnlyMiddleware, (req, res) => favoriteController.remove(req, res));
 router.get('/favorites', authMiddleware, (req, res) => favoriteController.list(req, res));
 
 export { router as favoriteRouter };
