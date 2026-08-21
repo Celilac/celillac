@@ -2,18 +2,26 @@
 import { Request, Response, NextFunction } from 'express';
 
 export function corsMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
-    : ['http://localhost:3001', 'http://localhost:3003'];
+  const defaultOrigins = [
+    'http://localhost:3001',
+    'http://localhost:3000',
+    'http://localhost:3002',
+    'http://localhost:3003',
+    'https://celilac.com.br',
+    'https://www.celilac.com.br',
+    'https://api.celilac.com.br',
+  ];
 
+  const customOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
+    : [];
+
+  const allowedOrigins = [...new Set([...defaultOrigins, ...customOrigins])];
   const origin = req.headers.origin;
 
   if (origin) {
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    } else if (!process.env.ALLOWED_ORIGINS) {
-      // Quando ALLOWED_ORIGINS não é definido explicitamente (ex: VPS / IP público),
-      // reflete a origem para evitar bloqueios do navegador ("Failed to fetch").
+    const isDomainMatch = origin === 'https://celilac.com.br' || origin.endsWith('.celilac.com.br');
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || isDomainMatch || !process.env.ALLOWED_ORIGINS) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     } else {
       res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
