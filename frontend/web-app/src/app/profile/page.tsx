@@ -142,6 +142,12 @@ function buildFullPhone(ddi: string, local: string): { phone?: string; error?: s
   return { phone: `${cleanDdi}${localDigits}` };
 }
 
+function getMaxBirthDate(): string {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() - 13);
+  return d.toISOString().split('T')[0];
+}
+
 export default function ProfilePage() {
   const { token, userId, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -331,6 +337,52 @@ export default function ProfilePage() {
         toast.error(phoneRes.error, 'Erro ao salvar perfil');
         setLoading(false);
         return;
+      }
+
+      if (birthDate) {
+        const [yearStr, monthStr, dayStr] = birthDate.split('-');
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10) - 1;
+        const day = parseInt(dayStr, 10);
+        const selectedDate = new Date(year, month, day);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (isNaN(selectedDate.getTime()) || selectedDate.getFullYear() !== year || selectedDate.getMonth() !== month || selectedDate.getDate() !== day) {
+          toast.error('Data de nascimento inválida.', 'Erro');
+          setLoading(false);
+          return;
+        }
+
+        if (selectedDate.getTime() === today.getTime()) {
+          toast.error('A data de nascimento não pode ser o dia de hoje.', 'Erro');
+          setLoading(false);
+          return;
+        }
+
+        if (selectedDate.getTime() > today.getTime()) {
+          toast.error('A data de nascimento não pode ser no futuro.', 'Erro');
+          setLoading(false);
+          return;
+        }
+
+        let age = today.getFullYear() - selectedDate.getFullYear();
+        const monthDiff = today.getMonth() - selectedDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < selectedDate.getDate())) {
+          age--;
+        }
+
+        if (age < 13) {
+          toast.error('O usuário deve ter pelo menos 13 anos de idade (LGPD).', 'Idade Mínima');
+          setLoading(false);
+          return;
+        }
+
+        if (age > 120 || selectedDate.getFullYear() < 1900) {
+          toast.error('Data de nascimento fora do limite permitido.', 'Erro');
+          setLoading(false);
+          return;
+        }
       }
 
       await apiClient.put('/iam/profile', {
@@ -682,9 +734,14 @@ export default function ProfilePage() {
                   <input
                     type="date"
                     className="field-input"
+                    max={getMaxBirthDate()}
+                    min="1900-01-01"
                     value={birthDate}
                     onChange={(e) => setBirthDate(e.target.value)}
                   />
+                  <small style={{ fontSize: '0.75rem', color: theme === 'dark' ? '#94a3b8' : '#64748b', marginTop: '4px', display: 'block' }}>
+                    Idade mínima: 13 anos (LGPD)
+                  </small>
                 </div>
 
                 <div className="field">
