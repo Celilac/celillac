@@ -458,6 +458,113 @@ button { cursor: pointer; font-family: inherit; }
 .auth-footer-link { text-align: center; font-size: var(--text-label); color: var(--color-text-muted); margin-top: var(--space-3); }
 .auth-footer-link a { color: var(--color-emerald); font-weight: 600; }
 
+.role-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.role-option-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 1rem;
+  background: var(--color-surface-2, rgba(255, 255, 255, 0.04));
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  color: inherit;
+  width: 100%;
+}
+
+.role-option-card:hover {
+  border-color: var(--color-emerald);
+  background: rgba(16, 185, 129, 0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.role-option-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.role-option-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.role-option-title {
+  font-size: var(--text-body);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.role-option-arrow {
+  color: var(--color-emerald);
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+
+.role-option-card:hover .role-option-arrow {
+  transform: translateX(4px);
+}
+
+.role-option-desc {
+  font-size: var(--text-label);
+  color: var(--color-text-muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.role-header-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: var(--space-4);
+  font-size: var(--text-label);
+}
+
+.role-header-banner-role {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.role-header-banner-change {
+  background: none;
+  border: none;
+  color: var(--color-emerald);
+  font-size: var(--text-label);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.role-header-banner-change:hover {
+  text-decoration: underline;
+}
+
+
 /* ═══════════════════════════════════════
    FOOD PROFILE
 ═══════════════════════════════════════ */

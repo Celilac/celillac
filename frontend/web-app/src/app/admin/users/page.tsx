@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 // frontend/web-app/src/app/admin/users/page.tsx
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -81,15 +81,15 @@ function DeleteConfirmModal({ user, onConfirm, onCancel, isDeleting }: DeleteCon
             marginBottom: '1rem',
           }}
         >
-          <p style={{ margin: 0, fontWeight: 600, color: '#fff', wordBreak: 'break-all' }}>
-            {user.fullName ? `${user.fullName} ` : ''}<span style={{ color: '#94a3b8', fontWeight: 400 }}>({user.email})</span>
+          <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-text, #f1f5f9)', wordBreak: 'break-all' }}>
+            {user.fullName ? `${user.fullName} ` : ''}<span style={{ color: 'var(--color-text-muted, #94a3b8)', fontWeight: 400 }}>({user.email})</span>
           </p>
-          <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>
+          <p style={{ margin: '0.25rem 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted, #94a3b8)' }}>
             Role: {user.role} · Status: {user.accountStatus}
           </p>
         </div>
 
-        <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+        <p style={{ color: 'var(--color-text-muted, #94a3b8)', fontSize: '0.85rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
           ⚠️ Esta ação <strong>não pode ser desfeita</strong>. Todos os dados vinculados (perfil alimentar, favoritos, avaliações) serão removidos. O e-mail ficará livre para novo cadastro.
         </p>
 
