@@ -537,26 +537,46 @@ export default function ProfilePage() {
                 </p>
               </div>
             </div>
-            <Link
-              href="/partner"
-              style={{
-                padding: '10px 20px',
-                borderRadius: '10px',
-                background: '#6366f1',
-                color: '#ffffff',
-                fontWeight: 600,
-                fontSize: '0.85rem',
-                textDecoration: 'none',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                whiteSpace: 'nowrap' as const,
-                transition: 'all 0.2s ease',
-                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
-              }}
-            >
-              💼 Painel do Parceiro
-            </Link>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <Link
+                href="/dashboard"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '10px',
+                  background: 'var(--color-emerald, #10b981)',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap' as const,
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                }}
+              >
+                📊 Dashboard & Catálogo
+              </Link>
+              <Link
+                href="/partner"
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '10px',
+                  background: '#6366f1',
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap' as const,
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
+                }}
+              >
+                💼 Estabelecimentos
+              </Link>
+            </div>
           </div>
         )}
 

@@ -43,7 +43,11 @@ const verifyEmailCodeUseCase = new VerifyEmailCodeUseCase(
   emailVerificationRepository,
 );
 
-const registerUserUseCase = new RegisterUserUseCase(userRepository, sendEmailVerificationCodeUseCase);
+const registerUserUseCase = new RegisterUserUseCase(
+  userRepository,
+  sendEmailVerificationCodeUseCase,
+  emailService,
+);
 const loginUserUseCase = new LoginUserUseCase(userRepository);
 const logoutUserUseCase = new LogoutUserUseCase(blacklistRepository);
 const updateUserProfileUseCase = new UpdateUserProfileUseCase(userRepository);

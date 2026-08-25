@@ -75,7 +75,8 @@ describe('UpdateUserProfileUseCase', () => {
   it('deve rejeitar data de nascimento se for hoje', async () => {
     userRepository.findById.mockResolvedValue(sampleUser);
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const result = await useCase.execute({
       userId: 'user-123',
       birthDate: todayStr,

@@ -6,6 +6,7 @@ import { PasswordHash } from '../../domain/iam/value-objects/PasswordHash';
 import { UserRole } from '../../domain/iam/value-objects/UserRole';
 import { User, AccountStatus } from '../../domain/iam/User';
 import { IUserRepository } from '../../domain/iam/repositories/IUserRepository';
+import { IEmailService } from '../../domain/services/IEmailService';
 import { SendEmailVerificationCodeUseCase } from './SendEmailVerificationCodeUseCase';
 import { Result } from '../../domain/Result';
 
@@ -36,6 +37,7 @@ export interface RegisterUserResponseDTO {
  *  5. Cria a entidade User
  *  6. Persiste via IUserRepository
  *  7. Se não for Admin pendente, dispara a geração do código OTP de verificação de e-mail
+ *  8. Dispara notificação por e-mail aos administradores (Zoho Mail / Central)
  */
 export class RegisterUserUseCase {
   private static readonly SALT_ROUNDS = 10;
@@ -43,7 +45,8 @@ export class RegisterUserUseCase {
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly sendVerificationUseCase?: SendEmailVerificationCodeUseCase,
-  ) {}
+    private readonly emailService?: IEmailService,
+  ) { }
 
   async execute(dto: RegisterUserDTO): Promise<Result<RegisterUserResponseDTO>> {
     // 1. Validar e-mail
@@ -110,6 +113,13 @@ export class RegisterUserUseCase {
       }
     }
 
+    // 8. Disparar notificação por e-mail aos administradores (Zoho Mail / Central) de forma assíncrona
+    if (this.emailService) {
+      this.notifyAdminsOfNewUser(user).catch((err) => {
+        console.error('[RegisterUserUseCase]: Erro ao disparar notificações para administradores:', err);
+      });
+    }
+
     return Result.ok<RegisterUserResponseDTO>({
       id: user.id,
       email: user.email.value,
@@ -120,5 +130,34 @@ export class RegisterUserUseCase {
         ? 'Conta de Administrador cadastrada com sucesso! Ela aguarda aprovação de um administrador existente para que você possa fazer login.'
         : undefined,
     });
+  }
+
+  private async notifyAdminsOfNewUser(user: User): Promise<void> {
+    if (!this.emailService) return;
+
+    try {
+      const recipientEmails = new Set<string>();
+
+      // E-mail central de notificação para administradores (padrão: celilac@zohomail.com)
+      const targetEmail = (process.env.ADMIN_NOTIFICATION_EMAIL || 'celilac@zohomail.com').trim().toLowerCase();
+      if (targetEmail && targetEmail.includes('@')) {
+        recipientEmails.add(targetEmail);
+      }
+
+      // Disparo assíncrono para o e-mail central
+      const notificationPromises = Array.from(recipientEmails).map((adminEmail) =>
+        this.emailService!.sendNewUserRegisteredAdminNotification(adminEmail, {
+          fullName: user.fullName,
+          email: user.email.value,
+          role: user.role,
+          registeredAt: new Date(),
+        }),
+      );
+
+      await Promise.all(notificationPromises);
+      console.log(`[RegisterUserUseCase]: 🔔 Notificação de novo usuário enviada para administradores: [ ${Array.from(recipientEmails).join(', ')} ]`);
+    } catch (err) {
+      console.error('[RegisterUserUseCase]: Falha ao processar envio de notificações para administradores:', err);
+    }
   }
 }

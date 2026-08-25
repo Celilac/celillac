@@ -1,30 +1,50 @@
 'use client';
 // frontend/web-app/src/app/partner/[id]/page.tsx
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { partnerApi, PartnerSummary } from '@/api/partner';
+import { catalogApi, ProductSummary } from '@/api/catalog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
+import { Header } from '@/components/layout/Header';
+import { CreateProductModal } from '@/components/common/CreateProductModal';
 import styles from '../partner.module.css';
 
 interface PageProps {
-  params: { id: string };
+  params?: { id?: string };
 }
 
-export default function PartnerDashboardPage({ params }: PageProps) {
-  const { id } = params;
+export default function PartnerDetailPage({ params }: PageProps) {
+  const routeParams = useParams();
+  const id = (typeof routeParams?.id === 'string' ? routeParams.id : params?.id) || '';
   const { token, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const toast = useToast();
 
   const [partner, setPartner] = useState<PartnerSummary | null>(null);
+  const [products, setProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingProducts, setLoadingProducts] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const loadProducts = useCallback(() => {
+    if (!id || !token) return;
+    setLoadingProducts(true);
+    catalogApi.listByPartner(id, token)
+      .then((res) => {
+        if (res?.data) {
+          setProducts(res.data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingProducts(false));
+  }, [id, token]);
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -33,7 +53,10 @@ export default function PartnerDashboardPage({ params }: PageProps) {
     }
 
     partnerApi.get(id)
-      .then((data) => setPartner(data))
+      .then((data) => {
+        setPartner(data);
+        loadProducts();
+      })
       .catch((err) => {
         toast.error(
           err instanceof HttpError ? err.message : 'Erro ao carregar dados do estabelecimento.',
@@ -42,7 +65,7 @@ export default function PartnerDashboardPage({ params }: PageProps) {
         router.push('/partner');
       })
       .finally(() => setLoading(false));
-  }, [id, isAuthenticated, token, router, toast]);
+  }, [id, isAuthenticated, token, router, toast, loadProducts]);
 
   async function handleToggleOperationalStatus() {
     if (!partner || !token) return;
@@ -178,41 +201,38 @@ export default function PartnerDashboardPage({ params }: PageProps) {
 
   return (
     <div className="profile-page">
-      <header className="topbar">
-        <Link href="/partner" className="topbar-title brand-lockup">
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">Celi<span>Lac</span></span>
-          <span className="brand-tagline">Painel de Controle</span>
-        </Link>
-        <nav className="topbar-actions">
-          <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-        </nav>
-      </header>
+      <Header />
 
       <main className={styles.container}>
-        <div className={styles.header}>
-          <div className={styles.titleArea}>
-            <h1 className={styles.title}>{partner.name}</h1>
-            <p className={styles.subtitle}>Gestão operacional do perfil `{partner.type}`</p>
+        <div className={styles.header} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+          <div className={styles.titleArea} style={{ flex: '1 1 300px' }}>
+            <h1 className={styles.title} style={{ margin: 0, fontSize: 'clamp(1.5rem, 2.5vw, 2.25rem)' }}>{partner.name}</h1>
+            <p className={styles.subtitle} style={{ margin: '4px 0 0 0' }}>Gestão operacional do perfil `{partner.type}`</p>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
-            <button 
-              type="button" 
-              className={`${styles.btn} ${styles.btnSecondary}`}
-              onClick={() => router.push('/partner')}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Link 
+              href="/partner" 
+              className="btn btn-secondary"
+              style={{ textDecoration: 'none', whiteSpace: 'nowrap', fontSize: '0.875rem', padding: '0.5rem 1rem' }}
             >
-              ⬅️ Meus Negócios
+              ⬅️ Meus Estabelecimentos
+            </Link>
+            <button
+              type="button"
+              className="btn btn-em"
+              onClick={() => setIsCreateModalOpen(true)}
+              style={{ whiteSpace: 'nowrap', fontSize: '0.875rem', padding: '0.5rem 1.1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+            >
+              ➕ Publicar Produto
             </button>
-            <button 
-              type="button" 
-              className={`${styles.btn} ${styles.btnPrimary}`}
-              onClick={() => router.push(`/partner/${partner.id}/edit`)}
+            <Link 
+              href={`/partner/${partner.id}/edit`}
+              className="btn btn-secondary"
+              style={{ textDecoration: 'none', whiteSpace: 'nowrap', fontSize: '0.875rem', padding: '0.5rem 1rem' }}
               id="edit-partner-btn"
             >
               ✏️ Editar Cadastro
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -240,6 +260,131 @@ export default function PartnerDashboardPage({ params }: PageProps) {
                   {partner.description || 'Nenhuma descrição adicionada.'}
                 </p>
               </div>
+            </div>
+
+            {/* SEÇÃO DE PRODUTOS DO ESTABELECIMENTO */}
+            <div className={styles.card} style={{ gap: '1.25rem', marginTop: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h2 className={styles.sectionTitle} style={{ margin: 0 }}>📦 Produtos do Estabelecimento</h2>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                    Itens fabricados ou fornecidos por {partner.name}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="btn btn-em"
+                  style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  ➕ Novo Produto
+                </button>
+              </div>
+
+              {loadingProducts ? (
+                <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem 0' }}>Carregando produtos…</p>
+              ) : products.length === 0 ? (
+                <div style={{
+                  padding: '2rem',
+                  textAlign: 'center',
+                  background: 'var(--color-elevated, rgba(255,255,255,0.02))',
+                  borderRadius: '12px',
+                  border: '1px solid var(--color-border)',
+                }}>
+                  <p style={{ color: 'var(--color-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                    Nenhum produto cadastrado para este estabelecimento ainda.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="btn btn-em"
+                    style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
+                  >
+                    ➕ Cadastrar Primeiro Produto
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {products.map((p) => {
+                    const statusInfo: Record<string, { label: string; bg: string; color: string; border: string }> = {
+                      APPROVED: { label: '✅ Aprovado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+                      PENDING_ANALYSIS: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
+                      FLAGGED: { label: '⚠️ Sinalizado', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
+                    };
+                    const st = statusInfo[p.analysisStatus] || statusInfo['PENDING_ANALYSIS'];
+
+                    return (
+                      <div
+                        key={p.id}
+                        style={{
+                          padding: '1rem',
+                          borderRadius: '10px',
+                          background: 'var(--color-elevated)',
+                          border: '1px solid var(--color-border)',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          gap: '12px',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        <div style={{ flex: 1, minWidth: '240px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <strong style={{ fontSize: '1rem', color: 'var(--color-text)' }}>{p.name}</strong>
+                            <span style={{
+                              padding: '2px 8px',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              background: st.bg,
+                              color: st.color,
+                              border: `1px solid ${st.border}`,
+                            }}>
+                              {st.label}
+                            </span>
+                          </div>
+
+                          <p style={{ margin: '0 0 6px 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                            <strong>Marca:</strong> {p.brand || 'Própria'}
+                          </p>
+
+                          {p.ingredients && (
+                            <p style={{ margin: '0 0 8px 0', fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                              <strong>Ingredientes:</strong> {p.ingredients}
+                            </p>
+                          )}
+
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            {p.hasGluten ? (
+                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-blocked-bg)', color: 'var(--color-blocked)', border: '1px solid var(--color-blocked-border, rgba(239,68,68,0.3))' }}>
+                                🌾 Contém Glúten
+                              </span>
+                            ) : (
+                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)' }}>
+                                ✨ Sem Glúten
+                              </span>
+                            )}
+
+                            {p.crossContamination && p.crossContamination !== 'NONE' && (
+                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: '1px solid var(--color-warning-border)' }}>
+                                ⚠️ Contaminação Cruzada
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <Link
+                          href={`/products/${p.id}`}
+                          className="btn btn-ghost"
+                          style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', whiteSpace: 'nowrap' }}
+                        >
+                          📦 Ver no Catálogo
+                        </Link>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </section>
 
@@ -277,6 +422,15 @@ export default function PartnerDashboardPage({ params }: PageProps) {
           </aside>
         </div>
       </main>
+
+      {/* Modal de Publicação de Produto no Estabelecimento */}
+      <CreateProductModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        partnerId={partner.id}
+        partnerName={partner.name}
+        onSuccess={loadProducts}
+      />
     </div>
   );
 }

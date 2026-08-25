@@ -81,12 +81,12 @@ export function Header() {
         )}
 
         <Link href="/public-partners" className={navLinkClass('/public-partners')} onClick={() => setMenuOpen(false)}>
-          <BuildingIcon /> Estabelecimentos
+          <BuildingIcon /> Descobrir Locais
         </Link>
 
         {mounted && isAuthenticated && (userInfo?.role === 'PARCEIRO' || userInfo?.role === 'ADMIN') && (
           <Link href="/partner" className={navLinkClass('/partner')} onClick={() => setMenuOpen(false)}>
-            <BriefcaseIcon /> Parceiro
+            <BriefcaseIcon /> Meus Estabelecimentos
           </Link>
         )}
 
@@ -136,9 +136,15 @@ export function Header() {
         )}
 
         {mounted && !isAuthenticated && (
-          <Link href="/auth/login" className="btn btn-em" onClick={() => setMenuOpen(false)}>
-            Entrar
-          </Link>
+          pathname === '/auth/login' ? (
+            <Link href="/auth/register" className="btn btn-em" onClick={() => setMenuOpen(false)}>
+              Criar Conta
+            </Link>
+          ) : (
+            <Link href="/auth/login" className="btn btn-em" onClick={() => setMenuOpen(false)}>
+              Entrar
+            </Link>
+          )
         )}
       </nav>
     </header>

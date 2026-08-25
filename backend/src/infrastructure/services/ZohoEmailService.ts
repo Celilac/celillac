@@ -87,6 +87,80 @@ export class ZohoEmailService implements IEmailService {
     await this.dispatchEmail(recipientEmail, subject, htmlContent);
   }
 
+  async sendNewUserRegisteredAdminNotification(
+    recipientEmail: string,
+    userDetails: {
+      fullName?: string;
+      email: string;
+      role: string;
+      registeredAt: Date;
+    },
+  ): Promise<void> {
+    const roleLabels: Record<string, { label: string; badgeBg: string; badgeColor: string }> = {
+      CELIACO: { label: '🥗 Consumidor (Segurança Alimentar)', badgeBg: '#ecfdf5', badgeColor: '#059669' },
+      PARCEIRO: { label: '🏭 Parceiro Comercial (Estabelecimento/Catálogo)', badgeBg: '#eff6ff', badgeColor: '#2563eb' },
+      ADMIN: { label: '🛡️ Administrador', badgeBg: '#fef3c7', badgeColor: '#d97706' },
+    };
+
+    const roleInfo = roleLabels[userDetails.role] || { label: userDetails.role, badgeBg: '#f3f4f6', badgeColor: '#374151' };
+    const dateFormatted = userDetails.registeredAt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+    const subject = `CeLiLac — 🔔 Novo Usuário Cadastrado: ${userDetails.fullName || userDetails.email} (${userDetails.role})`;
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #244151; margin: 0; font-size: 26px; font-weight: 800;">Celi<span style="color: #e1a118;">Lac</span></h2>
+          <p style="color: #6b7280; font-size: 13px; margin-top: 4px;">Plataforma de Segurança Alimentar</p>
+        </div>
+
+        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+          <div style="border-bottom: 1px solid #e5e7eb; padding-bottom: 12px; margin-bottom: 16px;">
+            <h3 style="color: #111827; margin: 0; font-size: 18px;">🔔 Novo Usuário Registrado</h3>
+            <p style="color: #6b7280; font-size: 13px; margin: 4px 0 0 0;">Uma nova conta acabou de ser criada no ecossistema CeLiLac.</p>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+            <tbody>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; width: 130px; font-weight: 600;">Nome Completo:</td>
+                <td style="padding: 8px 0; color: #111827; font-weight: bold;">${userDetails.fullName || 'Não informado'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">E-mail:</td>
+                <td style="padding: 8px 0; color: #111827;">${userDetails.email}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Perfil / Tipo:</td>
+                <td style="padding: 8px 0;">
+                  <span style="background-color: ${roleInfo.badgeBg}; color: ${roleInfo.badgeColor}; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold;">
+                    ${roleInfo.label}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Data do Registro:</td>
+                <td style="padding: 8px 0; color: #374151;">${dateFormatted}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="text-align: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid #f3f4f6;">
+            <a href="https://celilac.com.br/admin/users" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">
+              Gerenciar Usuários no Painel Admin →
+            </a>
+          </div>
+        </div>
+
+        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 16px;">
+          Esta é uma notificação automática enviada para administradores do CeLiLac.
+        </p>
+      </div>
+    `;
+
+    console.log(`[ZohoEmailService]: 🔔 Enviando notificação de novo usuário para admin: ${recipientEmail}`);
+    await this.dispatchEmail(recipientEmail, subject, htmlContent);
+  }
+
   private async dispatchEmail(toEmail: string, subject: string, htmlContent: string): Promise<void> {
     if (this.apiToken) {
       await this.postEmailViaZeptoMail(toEmail, subject, htmlContent);

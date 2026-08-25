@@ -12,7 +12,7 @@ import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import styles from './partner.module.css';
 
-export default function PartnerDashboardPage() {
+export default function PartnerListPage() {
   const { token, isAuthenticated, isInitializing } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();

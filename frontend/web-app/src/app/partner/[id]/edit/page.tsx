@@ -1,18 +1,31 @@
 'use client';
 // frontend/web-app/src/app/partner/[id]/edit/page.tsx
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import { partnerApi } from '@/api/partner';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
+import { Header } from '@/components/layout/Header';
 import styles from '../../partner.module.css';
 
 interface PageProps {
-  params: { id: string };
+  params?: { id?: string };
+}
+
+interface PartnerSummary {
+  name: string;
+  type: string;
+  cnpj?: string;
+  address: string;
+  city?: string;
+  state?: string;
+  deliveryRegion?: string;
+  phone: string;
+  description: string;
+  approvalStatus: string;
 }
 
 const TYPE_OPTIONS = [
@@ -22,9 +35,9 @@ const TYPE_OPTIONS = [
 ];
 
 export default function EditPartnerPage({ params }: PageProps) {
-  const { id } = params;
+  const routeParams = useParams();
+  const id = (typeof routeParams?.id === 'string' ? routeParams.id : params?.id) || '';
   const { token, isAuthenticated } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const toast = useToast();
 
@@ -48,21 +61,21 @@ export default function EditPartnerPage({ params }: PageProps) {
     }
 
     partnerApi.get(id)
-      .then((partner) => {
-        setName(partner.name);
-        setCnpj(partner.cnpj || '');
-        setDescription(partner.description);
-        setAddress(partner.address);
-        setPhone(partner.phone);
-        setType(partner.type);
-        setCity(partner.city || '');
-        setState(partner.state || '');
-        setDeliveryRegion(partner.deliveryRegion || '');
-        setOriginalStatus(partner.approvalStatus);
+      .then((data) => {
+        setName(data.name);
+        setCnpj(data.cnpj || '');
+        setDescription(data.description || '');
+        setAddress(data.address);
+        setPhone(data.phone);
+        setType(data.type);
+        setCity(data.city || '');
+        setState(data.state || '');
+        setDeliveryRegion(data.deliveryRegion || '');
+        setOriginalStatus(data.approvalStatus);
       })
       .catch((err) => {
         toast.error(
-          err instanceof HttpError ? err.message : 'Erro ao carregar dados do estabelecimento.',
+          err instanceof HttpError ? err.message : 'Erro ao carregar dados do parceiro.',
           'Erro'
         );
         router.push('/partner');
@@ -93,7 +106,7 @@ export default function EditPartnerPage({ params }: PageProps) {
         deliveryRegion: deliveryRegion || undefined,
       }, token);
 
-      toast.success('Perfil comercial atualizado com sucesso!');
+      toast.success('Estabelecimento atualizado com sucesso!', 'Sucesso');
       router.push(`/partner/${id}`);
     } catch (err) {
       toast.error(
@@ -115,18 +128,7 @@ export default function EditPartnerPage({ params }: PageProps) {
 
   return (
     <div className="profile-page">
-      <header className="topbar">
-        <Link href={`/partner/${id}`} className="topbar-title brand-lockup">
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">Celi<span>Lac</span></span>
-          <span className="brand-tagline">Editar Cadastro</span>
-        </Link>
-        <nav className="topbar-actions">
-          <button type="button" onClick={toggleTheme} className="btn btn-ghost theme-button" aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}>
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-        </nav>
-      </header>
+      <Header />
 
       <main className={styles.container}>
         <div className={styles.formShell}>
