@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
+import { Header } from '@/components/layout/Header';
 
 // Decodifica o payload do JWT (sem verificar assinatura — só para extrair userId)
 function decodeJwtPayload(token: string): { sub?: string } {
@@ -59,29 +60,7 @@ export default function LoginPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)' }}>
-      <header className="topbar">
-        <span className="topbar-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">
-            Celi<span>Lac</span>
-          </span>
-          <span className="brand-tagline">Vivendo bem a vida</span>
-        </span>
-        <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="btn btn-ghost"
-            aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
-            style={{ padding: '0.4rem 0.75rem' }}
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-          <Link href="/" className="btn btn-ghost" aria-label="Ir para a página inicial" style={{ padding: '0.4rem 0.75rem' }}>
-            🏠
-          </Link>
-        </nav>
-      </header>
+      <Header />
 
       <div className="auth-shell" style={{ flex: 1, minHeight: 0 }}>
         <div className="auth-split-card">

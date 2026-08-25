@@ -21,7 +21,7 @@
 
 - `User` entity (UUID v4) com suporte a perfil estendido (`fullName`, `birthDate`, `gender`, `avatarUrl`)
 - Status de conta (`accountStatus`) e avaliação de perfil (`profileEvaluationStatus`: `APPROVED`, `PENDING_EVALUATION`, `REJECTED`)
-- Value Objects: `Email` (validação RFC 5322), `PasswordHash` (bcrypt), `UserRole`
+- Value Objects: `Email` (validação RFC 5322), `PasswordHash` (bcrypt), `UserRole`, `WhatsappPhone` (E.164) e `BirthDate` (idade mínima de 13 anos completos / LGPD, bloqueio de datas futuras/hoje, limite histórico até 120 anos)
 - Padrão `Result<T>` — erros de domínio sem exceções
 - JWT com expiração de 7 dias (configurável via `JWT_EXPIRES_IN`)
 

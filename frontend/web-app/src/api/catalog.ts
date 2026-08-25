@@ -36,9 +36,21 @@ export interface CatalogPage {
   limit: number;
 }
 
+export interface CreateProductInput {
+  name:               string;
+  brand:              string;
+  ingredients:        string;
+  hasGluten:          boolean;
+  crossContamination: string;
+  partnerId:          string;
+  price?:             number;
+  category?:          string;
+  imageUrl?:          string;
+}
+
 export const catalogApi = {
   // Rota real do backend: GET /catalog/products?query=...
-  search: (query: string, token: string) =>
+  search: (query: string, token?: string) =>
     apiClient.get<CatalogPage>(`/catalog/products?query=${encodeURIComponent(query)}`, token),
 
   // Buscar detalhes de um produto por ID
@@ -48,4 +60,8 @@ export const catalogApi = {
   // Buscar produtos pertencentes a um parceiro específico
   listByPartner: (partnerId: string, token?: string) =>
     apiClient.get<CatalogPage>(`/catalog/products?partnerId=${partnerId}`, token),
+
+  // Criar / publicar novo produto no catálogo
+  create: (data: CreateProductInput, token: string) =>
+    apiClient.post<ProductSummary>('/catalog/products', data, token),
 };

@@ -2,6 +2,7 @@ import { IUserRepository } from '../../domain/iam/repositories/IUserRepository';
 import { Result } from '../../domain/Result';
 import { User } from '../../domain/iam/User';
 import { WhatsappPhone } from '../../domain/iam/value-objects/WhatsappPhone';
+import { BirthDate } from '../../domain/iam/value-objects/BirthDate';
 
 export interface UpdateUserProfileInput {
   userId: string;
@@ -22,11 +23,12 @@ export class UpdateUserProfileUseCase {
     }
 
     let parsedBirthDate: Date | undefined = undefined;
-    if (input.birthDate) {
-      parsedBirthDate = typeof input.birthDate === 'string' ? new Date(input.birthDate) : input.birthDate;
-      if (isNaN(parsedBirthDate.getTime())) {
-        return Result.fail<User>('Data de nascimento inválida.');
+    if (input.birthDate !== undefined) {
+      const birthDateRes = BirthDate.create(input.birthDate);
+      if (birthDateRes.isFailure) {
+        return Result.fail<User>(birthDateRes.getError());
       }
+      parsedBirthDate = birthDateRes.getValue()?.value;
     }
 
     let phoneVo: WhatsappPhone | undefined = undefined;

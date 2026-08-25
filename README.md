@@ -6,14 +6,14 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-41%20suites%20%7C%20230%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-57%20suites%20%7C%20324%20passing-brightgreen)](#-testes)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20%2B%20Oracle%20Cloud-orange)](#-segurança--governança)
 
 ---
 
 ## Índice
 
-- [Ambiente de Demonstração (VPS)](#-ambiente-de-demonstração--produção-vps-oracle-cloud)
+- [Ambiente de Produção (VPS)](#-ambiente-de-produção-vps-oracle-cloud)
 - [Estrutura do Monorepo](#-estrutura-do-monorepo)
 - [Como Começar](#-como-começar)
 - [Funcionalidades](#-funcionalidades)
@@ -24,10 +24,11 @@
 
 ---
 
-## 🌐 Ambiente de Demonstração / Produção (VPS Oracle Cloud)
+## 🌐 Ambiente de Produção (VPS Oracle Cloud)
 
-- 💻 **Web App (Next.js)**: [http://163.176.195.210:3003](http://163.176.195.210:3003)
-- ⚙️ **Backend API (Node.js)**: [http://163.176.195.210:3002](http://163.176.195.210:3002)
+- 💻 **Web App**: [https://www.celilac.com.br/](https://www.celilac.com.br/) (ou [https://celilac.com.br/](https://celilac.com.br/))
+- ⚙️ **Backend API**: [https://api.celilac.com.br/](https://api.celilac.com.br/)
+- 🔒 **Reverse Proxy & SSL**: Traefik com renovação automática Let's Encrypt
 
 ---
 
@@ -133,7 +134,7 @@ cd backend
 npm test
 ```
 
-**41 suítes de teste | 230 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
+**57 suítes de teste | 324 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|

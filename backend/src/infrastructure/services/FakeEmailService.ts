@@ -19,4 +19,20 @@ export class FakeEmailService implements IEmailService {
     console.log(`[FakeEmailService]: Enviando e-mail para ${recipientEmail} | Assunto: ${subject}`);
     this.sentEmails.push({ to: recipientEmail, subject, body });
   }
+
+  async sendNewUserRegisteredAdminNotification(
+    recipientEmail: string,
+    userDetails: {
+      fullName?: string;
+      email: string;
+      role: string;
+      registeredAt: Date;
+    },
+  ): Promise<void> {
+    const subject = `CeLiLac — Novo Usuário Registrado (${userDetails.role})`;
+    const body = `Olá Administrador,\n\nUm novo usuário acaba de se cadastrar no CeLiLac!\n\nNome: ${userDetails.fullName || 'Não informado'}\nE-mail: ${userDetails.email}\nTipo de Conta: ${userDetails.role}\nData/Hora: ${userDetails.registeredAt.toISOString()}\n\nAcesse o painel para moderar e visualizar usuários: https://celilac.com.br/admin/users\n\nAtenciosamente,\nEquipe CeLiLac`;
+
+    console.log(`[FakeEmailService]: 🔔 Notificação de novo usuário enviada para ${recipientEmail} | Novo usuário: ${userDetails.email} (${userDetails.role})`);
+    this.sentEmails.push({ to: recipientEmail, subject, body });
+  }
 }
