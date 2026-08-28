@@ -69,9 +69,17 @@ describe('RegisterUserUseCase', () => {
     // Aguarda microtasks assíncronas do envio de notificação
     await new Promise((resolve) => setImmediate(resolve));
 
-    expect(emailService.sendNewUserRegisteredAdminNotification).toHaveBeenCalledTimes(1);
+    expect(emailService.sendNewUserRegisteredAdminNotification).toHaveBeenCalledTimes(2);
     expect(emailService.sendNewUserRegisteredAdminNotification).toHaveBeenCalledWith(
       'celilac@zohomail.com',
+      expect.objectContaining({
+        fullName: 'Novo Consumidor',
+        email: 'novo.consumidor@exemplo.com',
+        role: UserRole.CELIACO,
+      }),
+    );
+    expect(emailService.sendNewUserRegisteredAdminNotification).toHaveBeenCalledWith(
+      'evertoncoimbra@gmail.com',
       expect.objectContaining({
         fullName: 'Novo Consumidor',
         email: 'novo.consumidor@exemplo.com',
@@ -95,6 +103,14 @@ describe('RegisterUserUseCase', () => {
 
     expect(emailService.sendNewUserRegisteredAdminNotification).toHaveBeenCalledWith(
       'celilac@zohomail.com',
+      expect.objectContaining({
+        fullName: 'Padaria Artesanal',
+        email: 'padaria.artesanal@parceiro.com',
+        role: UserRole.PARCEIRO,
+      }),
+    );
+    expect(emailService.sendNewUserRegisteredAdminNotification).toHaveBeenCalledWith(
+      'evertoncoimbra@gmail.com',
       expect.objectContaining({
         fullName: 'Padaria Artesanal',
         email: 'padaria.artesanal@parceiro.com',

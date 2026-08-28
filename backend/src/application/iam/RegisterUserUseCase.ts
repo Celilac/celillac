@@ -138,13 +138,23 @@ export class RegisterUserUseCase {
     try {
       const recipientEmails = new Set<string>();
 
-      // E-mail central de notificação para administradores (padrão: celilac@zohomail.com)
-      const targetEmail = (process.env.ADMIN_NOTIFICATION_EMAIL || 'celilac@zohomail.com').trim().toLowerCase();
-      if (targetEmail && targetEmail.includes('@')) {
-        recipientEmails.add(targetEmail);
+      // E-mails padrão centrais de monitoramento para administradores
+      const defaultEmails = ['celilac@zohomail.com', 'evertoncoimbra@gmail.com'];
+      for (const email of defaultEmails) {
+        recipientEmails.add(email.trim().toLowerCase());
       }
 
-      // Disparo assíncrono para o e-mail central
+      // E-mails adicionais configurados via variável de ambiente (separados por vírgula)
+      if (process.env.ADMIN_NOTIFICATION_EMAIL) {
+        const envEmails = process.env.ADMIN_NOTIFICATION_EMAIL.split(',').map((e) => e.trim().toLowerCase());
+        for (const envEmail of envEmails) {
+          if (envEmail && envEmail.includes('@')) {
+            recipientEmails.add(envEmail);
+          }
+        }
+      }
+
+      // Disparo assíncrono para os e-mails centrais
       const notificationPromises = Array.from(recipientEmails).map((adminEmail) =>
         this.emailService!.sendNewUserRegisteredAdminNotification(adminEmail, {
           fullName: user.fullName,
