@@ -182,3 +182,44 @@
   color: var(--color-warning);
 }
 
+/* Botão Gerenciar Estabelecimento no Dashboard */
+.btnManagePartner {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.4rem 0.85rem;
+  white-space: nowrap;
+  text-decoration: none;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btnManagePartner:hover {
+  background: var(--color-surface);
+  border-color: var(--color-emerald);
+  color: var(--color-emerald);
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.2);
+  transform: translateY(-1px);
+}
+
+:global(html[data-theme='light']) .btnManagePartner {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+:global(html[data-theme='light']) .btnManagePartner:hover {
+  background: #ffffff;
+  border-color: #059669;
+  color: #059669;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.18);
+}
+

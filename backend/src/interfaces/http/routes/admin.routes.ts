@@ -8,6 +8,8 @@ import { PgConsumerRepository } from '../../../infrastructure/database/consumer/
 import { PgAuditLogRepository } from '../../../infrastructure/database/audit/PgAuditLogRepository';
 import { FakeEmailService } from '../../../infrastructure/services/FakeEmailService';
 
+import { PgCategoryRepository } from '../../../infrastructure/database/catalog/PgCategoryRepository';
+
 import { CreateReportUseCase } from '../../../application/admin/CreateReportUseCase';
 import { ListReportsUseCase } from '../../../application/admin/ListReportsUseCase';
 import { ReviewReportUseCase } from '../../../application/admin/ReviewReportUseCase';
@@ -17,6 +19,8 @@ import { EvaluateUserProfileUseCase } from '../../../application/admin/EvaluateU
 import { PromoteUserToAdminUseCase } from '../../../application/admin/PromoteUserToAdminUseCase';
 import { DemoteAdminUseCase } from '../../../application/admin/DemoteAdminUseCase';
 import { DeleteUserUseCase } from '../../../application/admin/DeleteUserUseCase';
+import { ListAdminCategoriesUseCase } from '../../../application/admin/ListAdminCategoriesUseCase';
+import { ReviewCategoryUseCase } from '../../../application/admin/ReviewCategoryUseCase';
 
 import { CreateReportController } from '../controllers/admin/CreateReportController';
 import { ListReportsController } from '../controllers/admin/ListReportsController';
@@ -27,6 +31,7 @@ import { EvaluateUserProfileController } from '../controllers/admin/EvaluateUser
 import { PromoteUserToAdminController } from '../controllers/admin/PromoteUserToAdminController';
 import { DemoteAdminController } from '../controllers/admin/DemoteAdminController';
 import { DeleteUserController } from '../controllers/admin/DeleteUserController';
+import { AdminCategoryController } from '../controllers/admin/AdminCategoryController';
 
 import { authMiddleware, adminOnlyMiddleware, verifiedEmailOnlyMiddleware } from '../middlewares/AuthMiddleware';
 
@@ -37,6 +42,7 @@ const reportRepository   = new PgReportRepository(pool);
 const userRepository     = new PgUserRepository(pool);
 const consumerRepository = new PgConsumerRepository(pool);
 const auditLogRepository = new PgAuditLogRepository(pool);
+const categoryRepository = new PgCategoryRepository(pool);
 const emailService       = new FakeEmailService();
 
 const createReportUseCase        = new CreateReportUseCase(reportRepository);
@@ -48,6 +54,8 @@ const evaluateUserProfileUseCase = new EvaluateUserProfileUseCase(userRepository
 const promoteUserToAdminUseCase  = new PromoteUserToAdminUseCase(userRepository);
 const demoteAdminUseCase         = new DemoteAdminUseCase(userRepository);
 const deleteUserUseCase          = new DeleteUserUseCase(userRepository);
+const listAdminCategoriesUseCase = new ListAdminCategoriesUseCase(categoryRepository);
+const reviewCategoryUseCase      = new ReviewCategoryUseCase(categoryRepository, auditLogRepository);
 
 const createReportController        = new CreateReportController(createReportUseCase);
 const listReportsController         = new ListReportsController(listReportsUseCase);
@@ -58,6 +66,7 @@ const evaluateUserProfileController = new EvaluateUserProfileController(evaluate
 const promoteUserToAdminController  = new PromoteUserToAdminController(promoteUserToAdminUseCase);
 const demoteAdminController         = new DemoteAdminController(demoteAdminUseCase);
 const deleteUserController          = new DeleteUserController(deleteUserUseCase);
+const adminCategoryController       = new AdminCategoryController(listAdminCategoriesUseCase, reviewCategoryUseCase);
 
 // Rotas
 router.post('/reports', authMiddleware, verifiedEmailOnlyMiddleware, (req, res) => createReportController.execute(req, res));
@@ -73,5 +82,9 @@ router.patch('/users/:id/evaluate', authMiddleware, adminOnlyMiddleware, (req, r
 router.patch('/users/:id/promote', authMiddleware, adminOnlyMiddleware, (req, res) => promoteUserToAdminController.execute(req, res));
 router.patch('/users/:id/demote', authMiddleware, adminOnlyMiddleware, (req, res) => demoteAdminController.execute(req, res));
 router.delete('/users/:id', authMiddleware, adminOnlyMiddleware, (req, res) => deleteUserController.execute(req, res));
+
+// Moderação de Categorias de Produtos
+router.get('/categories', authMiddleware, adminOnlyMiddleware, (req, res) => adminCategoryController.list(req, res));
+router.patch('/categories/:id/review', authMiddleware, adminOnlyMiddleware, (req, res) => adminCategoryController.review(req, res));
 
 export { router as adminRouter };

@@ -37,6 +37,7 @@ export interface PartnerProps {
   city?: string;
   state?: string;
   deliveryRegion?: string;
+  logoUrl?: string;
 }
 
 /**
@@ -62,6 +63,7 @@ export class Partner extends Entity<PartnerProps> {
   get city(): string | undefined { return this.props.city; }
   get state(): string | undefined { return this.props.state; }
   get deliveryRegion(): string | undefined { return this.props.deliveryRegion; }
+  get logoUrl(): string | undefined { return this.props.logoUrl; }
 
   // Compatibilidade retroativa para código legado
   get isActive(): boolean {
@@ -209,6 +211,9 @@ export class Partner extends Entity<PartnerProps> {
     if (details.deliveryRegion !== undefined) {
       this.props.deliveryRegion = details.deliveryRegion.trim();
     }
+    if (details.logoUrl !== undefined) {
+      this.props.logoUrl = details.logoUrl && details.logoUrl.trim().length > 0 ? details.logoUrl.trim() : undefined;
+    }
 
     if (changedCritical && this.approvalStatus === PartnerApprovalStatus.APPROVED) {
       this.props.approvalStatus = PartnerApprovalStatus.PENDING_REVIEW;
@@ -254,6 +259,7 @@ export class Partner extends Entity<PartnerProps> {
           city: props.city ? props.city.trim() : undefined,
           state: props.state ? props.state.trim() : undefined,
           deliveryRegion: props.deliveryRegion ? props.deliveryRegion.trim() : undefined,
+          logoUrl: props.logoUrl ? props.logoUrl.trim() : undefined,
         },
         id
       )

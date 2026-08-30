@@ -1,11 +1,12 @@
 'use client';
 // frontend/web-app/src/components/common/CreateProductModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { catalogApi, CreateProductInput } from '@/api/catalog';
 import { partnerApi, PartnerSummary } from '@/api/partner';
+import { categoryApi, CategorySummary } from '@/api/category';
 import { HttpError } from '@/api/client';
 import styles from '../../app/partner/partner.module.css';
 
@@ -17,7 +18,7 @@ interface CreateProductModalProps {
   onSuccess?: () => void;
 }
 
-const CATEGORY_OPTIONS = [
+const DEFAULT_CATEGORIES = [
   'Padaria & Confeitaria',
   'Pães & Torradas',
   'Massas & Farinhas',
@@ -54,29 +55,135 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [loadingPartners, setLoadingPartners] = useState(false);
 
+  // Estados de categorias dinâmicas e criação inline
+  const [categories, setCategories] = useState<CategorySummary[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [isAddingCustomCategory, setIsAddingCustomCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [creatingCategory, setCreatingCategory] = useState(false);
+
+  const fetchCategories = useCallback(async (targetPartnerId?: string) => {
+    setLoadingCategories(true);
+    try {
+      const data = await categoryApi.list(targetPartnerId);
+      if (data && data.length > 0) {
+        setCategories(data);
+      } else {
+        // Fallback para categorias padrão
+        setCategories(
+          DEFAULT_CATEGORIES.map((c, idx) => ({
+            id: `default-${idx}`,
+            name: c,
+            normalizedName: c.toUpperCase(),
+            status: 'APPROVED',
+            visibility: 'GLOBAL',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }))
+        );
+      }
+    } catch {
+      // Fallback gracioso
+      setCategories(
+        DEFAULT_CATEGORIES.map((c, idx) => ({
+          id: `default-${idx}`,
+          name: c,
+          normalizedName: c.toUpperCase(),
+          status: 'APPROVED',
+          visibility: 'GLOBAL',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }))
+      );
+    } finally {
+      setLoadingCategories(false);
+    }
+  }, []);
+
   useEffect(() => {
-    if (!isOpen || !token) return;
+    if (!isOpen) return;
 
     if (initialPartnerId) {
       setSelectedPartnerId(initialPartnerId);
-    } else {
+      fetchCategories(initialPartnerId);
+    } else if (token) {
       setLoadingPartners(true);
       partnerApi.listUserPartners(token)
         .then((data) => {
           setPartners(data || []);
           if (data && data.length > 0) {
-            setSelectedPartnerId(data[0].id);
+            const firstId = data[0].id;
+            setSelectedPartnerId(firstId);
             if (!brand) {
               setBrand(data[0].name);
             }
+            fetchCategories(firstId);
+          } else {
+            fetchCategories();
           }
         })
-        .catch(() => {})
+        .catch(() => {
+          fetchCategories();
+        })
         .finally(() => setLoadingPartners(false));
+    } else {
+      fetchCategories();
     }
-  }, [isOpen, token, initialPartnerId]);
+  }, [isOpen, token, initialPartnerId, fetchCategories, brand]);
 
   if (!isOpen) return null;
+
+  const partnerTargetId = initialPartnerId || selectedPartnerId;
+
+  const handleCreateCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) {
+      toast.error('Você precisa estar autenticado para registrar uma categoria.', 'Erro');
+      return;
+    }
+
+    if (!newCategoryName.trim()) {
+      toast.warning('Digite o nome da nova categoria.', 'Nome Obrigatório');
+      return;
+    }
+
+    if (!partnerTargetId) {
+      toast.warning('Selecione um estabelecimento antes de registrar a categoria.', 'Estabelecimento Necessário');
+      return;
+    }
+
+    setCreatingCategory(true);
+    try {
+      const created = await categoryApi.create(
+        {
+          name: newCategoryName.trim(),
+          partnerId: partnerTargetId,
+        },
+        token
+      );
+
+      // Adiciona à lista local se não existir
+      setCategories((prev) => {
+        const exists = prev.some((c) => c.normalizedName === created.normalizedName);
+        if (exists) return prev;
+        return [created, ...prev];
+      });
+
+      setCategory(created.name);
+      setNewCategoryName('');
+      setIsAddingCustomCategory(false);
+
+      toast.info(
+        'Nova categoria registrada! Você já pode utilizá-la neste produto. Ela será moderada pela administração para exibição pública.',
+        'Categoria Registrada'
+      );
+    } catch (err: any) {
+      const msg = err instanceof HttpError ? err.message : err?.message || 'Erro ao registrar nova categoria.';
+      toast.error(msg, 'Erro');
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +193,6 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
       return;
     }
 
-    const partnerTargetId = initialPartnerId || selectedPartnerId;
     if (!partnerTargetId) {
       toast.error('Selecione ou cadastre um estabelecimento comercial antes de publicar produtos.', 'Estabelecimento Necessário');
       return;
@@ -127,6 +233,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
       setImageUrl('');
       setHasGluten(false);
       setCrossContamination('NONE');
+      setIsAddingCustomCategory(false);
 
       if (onSuccess) {
         onSuccess();
@@ -153,7 +260,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9999,
+        zIndex: 1100,
         padding: '1rem',
       }}
       onClick={onClose}
@@ -163,7 +270,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
           background: 'var(--color-surface, #182234)',
           borderRadius: '16px',
           padding: '1.75rem',
-          maxWidth: '560px',
+          maxWidth: '620px',
           width: '100%',
           maxHeight: '90vh',
           overflowY: 'auto',
@@ -215,9 +322,11 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                 <select
                   value={selectedPartnerId}
                   onChange={(e) => {
-                    setSelectedPartnerId(e.target.value);
-                    const p = partners.find((x) => x.id === e.target.value);
+                    const newId = e.target.value;
+                    setSelectedPartnerId(newId);
+                    const p = partners.find((x) => x.id === newId);
                     if (p && !brand) setBrand(p.name);
+                    fetchCategories(newId);
                   }}
                   style={{
                     width: '100%',
@@ -286,27 +395,158 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
           {/* Categoria & Preço */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>
-                Categoria
-              </label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '0.65rem',
-                  borderRadius: '8px',
-                  border: '1px solid var(--color-border, #334155)',
-                  background: 'var(--color-bg, #0f172a)',
-                  color: 'var(--color-text, #f8fafc)',
-                }}
-              >
-                {CATEGORY_OPTIONS.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                  Categoria *
+                </label>
+                {!isAddingCustomCategory && (
+                  <button
+                    type="button"
+                    onClick={() => setIsAddingCustomCategory(true)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--color-primary, #059669)',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: 0,
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    + Nova Categoria
+                  </button>
+                )}
+              </div>
+
+              {!isAddingCustomCategory ? (
+                <select
+                  value={category}
+                  onChange={(e) => {
+                    if (e.target.value === '__NEW_CATEGORY__') {
+                      setIsAddingCustomCategory(true);
+                    } else {
+                      setCategory(e.target.value);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem',
+                    borderRadius: '8px',
+                    border: '1px solid var(--color-border, #334155)',
+                    background: 'var(--color-bg, #0f172a)',
+                    color: 'var(--color-text, #f8fafc)',
+                  }}
+                  disabled={loadingCategories}
+                >
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.name}>
+                      {cat.name} {cat.status === 'PENDING_APPROVAL' ? '⏳ (Sob Moderação)' : ''}
+                    </option>
+                  ))}
+                  <option value="__NEW_CATEGORY__">➕ + Registrar Nova Categoria...</option>
+                </select>
+              ) : (
+                <div
+                  style={{
+                    padding: '0.65rem 0.75rem',
+                    borderRadius: '10px',
+                    border: '1px solid var(--color-emerald, #10b981)',
+                    background: 'rgba(16, 185, 129, 0.06)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem',
+                    boxSizing: 'border-box',
+                    width: '100%',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-emerald, #10b981)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      🏷️ Nova Categoria
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingCustomCategory(false);
+                        setNewCategoryName('');
+                      }}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--color-text-muted, #94a3b8)',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        padding: '0 4px',
+                        lineHeight: 1,
+                      }}
+                      title="Fechar"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <input
+                    type="text"
+                    placeholder="Ex: Doces Artesanais Low Carb"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.45rem 0.6rem',
+                      fontSize: '0.8rem',
+                      borderRadius: '6px',
+                      border: '1px solid var(--color-border, #334155)',
+                      background: 'var(--color-bg, #0f172a)',
+                      color: 'var(--color-text, #f8fafc)',
+                      boxSizing: 'border-box',
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleCreateCategorySubmit(e);
+                      }
+                    }}
+                    autoFocus
+                  />
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingCustomCategory(false);
+                        setNewCategoryName('');
+                      }}
+                      className="btn btn-ghost"
+                      style={{
+                        padding: '0.35rem 0.65rem',
+                        fontSize: '0.75rem',
+                        borderRadius: '6px',
+                      }}
+                      disabled={creatingCategory}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreateCategorySubmit}
+                      className="btn btn-em"
+                      style={{
+                        padding: '0.35rem 0.85rem',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        borderRadius: '6px',
+                      }}
+                      disabled={creatingCategory || !newCategoryName.trim()}
+                    >
+                      {creatingCategory ? 'Salvando…' : '✓ Salvar'}
+                    </button>
+                  </div>
+
+                  <small style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)', lineHeight: 1.3 }}>
+                    Disponível de imediato para este produto (sob moderação pública).
+                  </small>
+                </div>
+              )}
             </div>
 
             <div>

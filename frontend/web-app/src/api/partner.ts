@@ -17,6 +17,7 @@ export interface PartnerSummary {
   city?:              string;
   state?:             string;
   deliveryRegion?:    string;
+  logoUrl?:           string;
 }
 
 export const partnerApi = {

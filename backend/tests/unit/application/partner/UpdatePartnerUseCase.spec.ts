@@ -46,22 +46,24 @@ describe('UpdatePartnerUseCase', () => {
     useCase = new UpdatePartnerUseCase(partnerRepository, userRepository);
   });
 
-  it('deve permitir que o dono atualize um campo não crítico, mantendo aprovação', async () => {
+  it('deve permitir que o dono atualize um campo não crítico como descrição e logoUrl, mantendo aprovação', async () => {
     partnerRepository.findById.mockResolvedValue(mockPartner);
 
     const result = await useCase.execute({
       partnerId: 'partner-1',
       userId: 'user-owner',
       description: 'Nova descrição do local',
+      logoUrl: 'data:image/webp;base64,newlogo',
     });
 
     expect(result.isSuccess).toBe(true);
     expect(mockPartner.description).toBe('Nova descrição do local');
+    expect(mockPartner.logoUrl).toBe('data:image/webp;base64,newlogo');
     expect(mockPartner.approvalStatus).toBe(PartnerApprovalStatus.APPROVED);
     expect(partnerRepository.update).toHaveBeenCalledWith(mockPartner);
   });
 
-  it('deve regredir para PENDING_REVIEW ao alterar campo crítico de parceiro aprovado (9.8/15.4)', async () => {
+  it('deve regredir para PENDING_REVIEW ao alterar campo crítico de parceiro aprovado', async () => {
     partnerRepository.findById.mockResolvedValue(mockPartner);
 
     const result = await useCase.execute({

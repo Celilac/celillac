@@ -475,6 +475,63 @@ Busca produtos pelo nome ou marca, com suporte a paginação.
 
 ---
 
+### `POST /catalog/categories` 🔒
+Registra uma nova categoria de produtos. Utilizável imediatamente pelo parceiro criador (`PENDING_APPROVAL`, `RESTRICTED`).
+
+**Request Body:**
+```json
+{
+  "name": "Doces Artesanais Low Carb",
+  "partnerId": "uuid-do-parceiro"
+}
+```
+
+**Response `201 Created`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-da-categoria",
+    "name": "Doces Artesanais Low Carb",
+    "normalizedName": "DOCES ARTESANAIS LOW CARB",
+    "partnerId": "uuid-do-parceiro",
+    "status": "PENDING_APPROVAL",
+    "visibility": "RESTRICTED",
+    "createdAt": "2026-08-28T22:00:00.000Z",
+    "updatedAt": "2026-08-28T22:00:00.000Z"
+  }
+}
+```
+
+---
+
+### `GET /catalog/categories`
+Lista categorias disponíveis. Se informado `?partnerId=...`, retorna categorias globais aprovadas + categorias do parceiro. Sem query param ou com `?public=true`, retorna apenas categorias globais aprovadas.
+
+**Query Parameters:**
+| Parâmetro | Tipo | Descrição |
+|:----------|:-----|:----------|
+| `partnerId` | `string (UUID)` | Opcional. ID do estabelecimento do parceiro |
+| `public` | `boolean` | Opcional. Se `true`, força retorno exclusivo de categorias públicas aprovadas |
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-cat-1",
+      "name": "Padaria & Confeitaria",
+      "normalizedName": "PADARIA & CONFEITARIA",
+      "status": "APPROVED",
+      "visibility": "GLOBAL"
+    }
+  ]
+}
+```
+
+---
+
 ## 6. Avaliações (Social Proof)
 
 O módulo de avaliações permite que usuários deem uma nota (1-5) para a acurácia do rótulo do produto, validando de forma comunitária a segurança do mesmo.
@@ -567,7 +624,8 @@ Cadastra um novo perfil comercial de parceiro. Apenas para usuários com papel `
   "type": "RESTAURANT",
   "city": "São Paulo",
   "state": "SP",
-  "deliveryRegion": "Grande SP"
+  "deliveryRegion": "Grande SP",
+  "logoUrl": "data:image/webp;base64,..."
 }
 ```
 
@@ -586,7 +644,8 @@ Cadastra um novo perfil comercial de parceiro. Apenas para usuários com papel `
   "operationalStatus": "INACTIVE",
   "city": "São Paulo",
   "state": "SP",
-  "deliveryRegion": "Grande SP"
+  "deliveryRegion": "Grande SP",
+  "logoUrl": "data:image/webp;base64,..."
 }
 ```
 
@@ -603,7 +662,8 @@ Lista todos os parceiros comerciais vinculados ao usuário responsável logado.
     "userId": "uuid-do-dono",
     "name": "Cantina Vegana Sem Glúten",
     "approvalStatus": "DRAFT",
-    "operationalStatus": "INACTIVE"
+    "operationalStatus": "INACTIVE",
+    "logoUrl": "data:image/webp;base64,..."
   }
 ]
 ```
@@ -611,14 +671,15 @@ Lista todos os parceiros comerciais vinculados ao usuário responsável logado.
 ---
 
 ### `PUT /partners/:id` 🔒
-Atualiza os dados cadastrais do parceiro. Alterações críticas regridem o status de aprovação para `PENDING_REVIEW` automaticamente.
+Atualiza os dados cadastrais do parceiro. Alterações críticas regridem o status de aprovação para `PENDING_REVIEW` automaticamente. Alterações em `description` e `logoUrl` não regridem o status.
 
 **Request Body:**
 ```json
 {
   "name": "Novo Nome Cantina",
   "address": "Novo Endereço, 123",
-  "phone": "11988887777"
+  "phone": "11988887777",
+  "logoUrl": "data:image/webp;base64,..."
 }
 ```
 
@@ -1150,4 +1211,68 @@ Remove permanentemente a conta de um usuário do sistema. Todos os dados vincula
 | `400` | `"Um administrador não pode excluir a si mesmo."` | Auto-exclusão |
 | `400` | `"Usuário não encontrado."` | ID não existe |
 | `401` | `"Usuário não autenticado."` | Token ausente |
+
+---
+
+### `GET /admin/categories` 🔒 *(Restrito: ADMIN)*
+Lista categorias cadastradas para moderação administrativa.
+
+**Query Parameters:**
+| Parâmetro | Tipo | Descrição |
+|:----------|:-----|:----------|
+| `status` | `string` | Opcional (`PENDING_APPROVAL`, `APPROVED`, `REJECTED`) |
+| `visibility` | `string` | Opcional (`GLOBAL`, `RESTRICTED`) |
+| `partnerId` | `string (UUID)` | Opcional. Filtrar por parceiro criador |
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-da-categoria",
+      "name": "Doces Artesanais Low Carb",
+      "normalizedName": "DOCES ARTESANAIS LOW CARB",
+      "partnerId": "uuid-do-parceiro",
+      "status": "PENDING_APPROVAL",
+      "visibility": "RESTRICTED",
+      "rejectionReason": null,
+      "createdAt": "2026-08-28T22:00:00.000Z",
+      "updatedAt": "2026-08-28T22:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### `PATCH /admin/categories/:id/review` 🔒 *(Restrito: ADMIN)*
+Revisa e modera o status e visibilidade de uma categoria.
+
+**Request Body:**
+```json
+{
+  "action": "APPROVE_GLOBAL",
+  "rejectionReason": "Opcional se REJECT"
+}
+```
+*Ações suportadas:*
+- `APPROVE_GLOBAL`: Aprova a categoria tornando-a visível globalmente para todos os estabelecimentos e clientes.
+- `APPROVE_RESTRICTED`: Aprova a categoria mantendo-a restrita apenas ao parceiro criador.
+- `REJECT`: Rejeita a categoria com justificativa textual.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-da-categoria",
+    "name": "Doces Artesanais Low Carb",
+    "status": "APPROVED",
+    "visibility": "GLOBAL",
+    "updatedAt": "2026-08-28T22:05:00.000Z"
+  }
+}
+```
+
 

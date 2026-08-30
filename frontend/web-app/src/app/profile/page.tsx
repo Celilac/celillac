@@ -1,9 +1,10 @@
 'use client';
 // frontend/web-app/src/app/profile/page.tsx
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect, useRef, ChangeEvent, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { foodProfileApi } from '@/api/food-profile';
+import { partnerApi, PartnerSummary } from '@/api/partner';
 import { apiClient } from '@/api/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -11,6 +12,8 @@ import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
 import { UserAvatar } from '@/components/common/UserAvatar';
 import { HttpError } from '@/api/client';
+import { validateImageFile, compressImage as compressBrandImage } from '@/utils/image';
+import partnerStyles from '../partner/partner.module.css';
 
 const ALLERGEN_OPTIONS = [
   { value: 'GLUTEN',    label: '🌾 Glúten (Celíaco)' },
@@ -180,6 +183,14 @@ export default function ProfilePage() {
   const [statusChangeReason, setStatusChangeReason] = useState<string>('');
   const [loadingConsumerStatus, setLoadingConsumerStatus] = useState<boolean>(false);
 
+  // Estabelecimentos do Parceiro & Marca
+  const [partners, setPartners] = useState<PartnerSummary[]>([]);
+  const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
+  const [partnerLogos, setPartnerLogos] = useState<Record<string, string>>({});
+  const [originalPartnerLogos, setOriginalPartnerLogos] = useState<Record<string, string>>({});
+  const [isBrandDragging, setIsBrandDragging] = useState(false);
+  const brandFileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -218,10 +229,29 @@ export default function ProfilePage() {
         }
         setProfileEvaluationStatus(user.profileEvaluationStatus || 'PENDING_EVALUATION');
 
-        // Contas corporativas e operacionais (ADMIN e PARCEIRO) não possuem
-        // perfil alimentar de consumidor — mesma regra aplicada no Dashboard
-        // (ver dashboard/page.tsx linhas 84-89, FEAT-040)
-        if (role === 'ADMIN' || role === 'PARCEIRO') {
+        // Para PARCEIRO, busca a lista de estabelecimentos comerciais gerenciados pelo usuário
+        if (role === 'PARCEIRO') {
+          partnerApi.listUserPartners(token)
+            .then((data) => {
+              const list = data || [];
+              setPartners(list);
+              if (list.length > 0) {
+                setSelectedPartnerId(list[0].id);
+                const logos: Record<string, string> = {};
+                list.forEach((p) => {
+                  logos[p.id] = p.logoUrl || '';
+                });
+                setPartnerLogos(logos);
+                setOriginalPartnerLogos(logos);
+              }
+            })
+            .catch(() => {})
+            .finally(() => setLoadingInit(false));
+          return;
+        }
+
+        // Para ADMIN, apenas finaliza o loading inicial (sem perfil de consumidor)
+        if (role === 'ADMIN') {
           setLoadingInit(false);
           return;
         }
@@ -264,6 +294,74 @@ export default function ProfilePage() {
         setLoadingInit(false);
       });
   }, [isAuthenticated, token, userId, router]);
+
+  async function processBrandImageFile(file: File) {
+    const activeId = selectedPartnerId || partners[0]?.id;
+    if (!activeId) {
+      toast.error('Nenhum estabelecimento encontrado para associar a marca.', 'Aviso');
+      return;
+    }
+
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      toast.error(validation.error || 'Arquivo de imagem inválido.', 'Formato Não Suportado');
+      return;
+    }
+
+    try {
+      const compressedDataUrl = await compressBrandImage(file, 1024, 1024, 0.85);
+      setPartnerLogos((prev) => ({
+        ...prev,
+        [activeId]: compressedDataUrl,
+      }));
+      toast.info('Marca selecionada! Clique em "Salvar alterações" para aplicar.', 'Identidade Visual');
+    } catch {
+      toast.error('Não foi possível processar a imagem da marca. Tente outro arquivo.', 'Erro no Envio');
+    }
+  }
+
+  function handleBrandFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      processBrandImageFile(file);
+    }
+    if (e.target) {
+      e.target.value = '';
+    }
+  }
+
+  function handleBrandDragOver(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsBrandDragging(true);
+  }
+
+  function handleBrandDragLeave(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsBrandDragging(false);
+  }
+
+  function handleBrandDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsBrandDragging(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      processBrandImageFile(file);
+    }
+  }
+
+  function handleRemoveBrandLogo() {
+    const activeId = selectedPartnerId || partners[0]?.id;
+    if (!activeId) return;
+    setPartnerLogos((prev) => ({
+      ...prev,
+      [activeId]: '',
+    }));
+    toast.info('Marca removida. Clique em "Salvar alterações" para confirmar.', 'Marca Removida');
+  }
 
   async function handleToggleConsumerStatus(action: 'ACTIVATE' | 'DEACTIVATE') {
     if (!token) return;
@@ -393,7 +491,25 @@ export default function ProfilePage() {
         whatsappPhone: phoneRes.phone,
       }, token);
 
-      // 2. Atualiza ou Cria o Perfil Alimentar (apenas CELIACO)
+      // 2. Se for PARCEIRO, salva as alterações de Marca/Logo dos estabelecimentos modificados
+      if (userRole === 'PARCEIRO') {
+        const updatePromises: Promise<any>[] = [];
+        for (const p of partners) {
+          const currentLogo = partnerLogos[p.id] !== undefined ? partnerLogos[p.id] : (p.logoUrl || '');
+          const originalLogo = originalPartnerLogos[p.id] !== undefined ? originalPartnerLogos[p.id] : (p.logoUrl || '');
+          if (currentLogo !== originalLogo) {
+            updatePromises.push(
+              partnerApi.update(p.id, { logoUrl: currentLogo || undefined }, token)
+            );
+          }
+        }
+        if (updatePromises.length > 0) {
+          await Promise.all(updatePromises);
+          setOriginalPartnerLogos({ ...partnerLogos });
+        }
+      }
+
+      // 3. Atualiza ou Cria o Perfil Alimentar (apenas CELIACO)
       if (userRole === 'CELIACO') {
         const payload = {
           restrictions: rows,
@@ -445,6 +561,8 @@ export default function ProfilePage() {
   }
 
   const isApproved = profileEvaluationStatus === 'APPROVED';
+  const currentPartner = partners.find((p) => p.id === selectedPartnerId) || partners[0];
+  const currentPartnerLogo = currentPartner ? (partnerLogos[currentPartner.id] !== undefined ? partnerLogos[currentPartner.id] : (currentPartner.logoUrl || '')) : '';
 
   return (
     <div className="profile-page">
@@ -871,6 +989,196 @@ export default function ProfilePage() {
                 + Adicionar restrição
               </button>
             </section>
+            )}
+
+            {/* Marca do Estabelecimento — visível apenas para parceiros comerciais */}
+            {userRole === 'PARCEIRO' && (
+              <section className="card profile-panel">
+                <div className="section-heading" style={{ marginBottom: '16px' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0, color: 'var(--color-text)' }}>
+                      Marca do Estabelecimento
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', margin: '4px 0 0' }}>
+                      Identidade visual do seu negócio no catálogo e na vitrine de produtos.
+                    </p>
+                  </div>
+                  {partners.length > 0 && (
+                    <span style={{
+                      background: 'rgba(99, 102, 241, 0.12)',
+                      color: '#818cf8',
+                      border: '1px solid rgba(99, 102, 241, 0.25)',
+                      borderRadius: '9999px',
+                      padding: '2px 10px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {partners.length} {partners.length === 1 ? 'estabelecimento' : 'estabelecimentos'}
+                    </span>
+                  )}
+                </div>
+
+                {/* Seletor quando possui múltiplos estabelecimentos */}
+                {partners.length > 1 && (
+                  <div style={{ marginBottom: '16px' }}>
+                    <label className="field-label" style={{ marginBottom: '6px', display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                      Selecione o Estabelecimento
+                    </label>
+                    <select
+                      className="field-input field-select"
+                      value={selectedPartnerId || currentPartner?.id}
+                      onChange={(e) => setSelectedPartnerId(e.target.value)}
+                      style={{ width: '100%' }}
+                    >
+                      {partners.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} ({p.city ? `${p.city} - ${p.state}` : p.type})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Card e Uploader do Estabelecimento Ativo */}
+                {currentPartner ? (
+                  <div>
+                    <div style={{
+                      background: 'var(--color-elevated)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '12px',
+                      padding: '12px 16px',
+                      marginBottom: '16px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      gap: '12px',
+                    }}>
+                      <div style={{ minWidth: 0 }}>
+                        <strong style={{ fontSize: '0.95rem', color: 'var(--color-text)', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          {currentPartner.name}
+                        </strong>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                          📍 {currentPartner.address ? `${currentPartner.address} • ` : ''}{currentPartner.city ? `${currentPartner.city}/${currentPartner.state}` : currentPartner.type}
+                        </span>
+                      </div>
+                      <Link
+                        href={`/partner/${currentPartner.id}/edit`}
+                        style={{
+                          fontSize: '0.75rem',
+                          color: '#818cf8',
+                          textDecoration: 'none',
+                          fontWeight: 600,
+                          padding: '6px 10px',
+                          borderRadius: '8px',
+                          background: 'rgba(99, 102, 241, 0.12)',
+                          whiteSpace: 'nowrap',
+                          border: '1px solid rgba(99, 102, 241, 0.25)',
+                        }}
+                      >
+                        ✏️ Editar dados
+                      </Link>
+                    </div>
+
+                    <input
+                      ref={brandFileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/webp"
+                      style={{ display: 'none' }}
+                      onChange={handleBrandFileChange}
+                      id="profile-brand-file-input"
+                    />
+
+                    {!currentPartnerLogo ? (
+                      <div
+                        className={`${partnerStyles.brandDropzone} ${isBrandDragging ? partnerStyles.brandDropzoneActive : ''}`}
+                        onDragOver={handleBrandDragOver}
+                        onDragLeave={handleBrandDragLeave}
+                        onDrop={handleBrandDrop}
+                        onClick={() => brandFileInputRef.current?.click()}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Selecionar imagem da marca do estabelecimento"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            brandFileInputRef.current?.click();
+                          }
+                        }}
+                        style={{ minHeight: '170px' }}
+                      >
+                        <span className={partnerStyles.brandDropzoneIcon}>🖼️</span>
+                        <span className={partnerStyles.brandDropzoneTitle}>Adicione a marca do negócio</span>
+                        <span className={partnerStyles.brandDropzoneSubtitle}>Arraste uma imagem ou clique para selecionar</span>
+                        <span className={partnerStyles.brandDropzoneMeta}>PNG, JPG ou WebP • Máx. 5 MB</span>
+                      </div>
+                    ) : (
+                      <div className={partnerStyles.brandPreviewWrapper} style={{ minHeight: '170px' }}>
+                        <div className={partnerStyles.brandPreviewBox} style={{ height: '130px' }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={currentPartnerLogo}
+                            alt={`Marca do estabelecimento ${currentPartner.name}`}
+                            className={partnerStyles.brandPreviewImg}
+                          />
+                        </div>
+                        <div className={partnerStyles.brandActions}>
+                          <button
+                            type="button"
+                            className={partnerStyles.brandBtnAction}
+                            onClick={() => brandFileInputRef.current?.click()}
+                          >
+                            🔄 Alterar imagem
+                          </button>
+                          <button
+                            type="button"
+                            className={`${partnerStyles.brandBtnAction} ${partnerStyles.brandBtnRemove}`}
+                            onClick={handleRemoveBrandLogo}
+                          >
+                            🗑️ Remover
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <p className={partnerStyles.brandHelpText} style={{ marginTop: '10px' }}>
+                      💡 A alteração da marca não afeta o status de aprovação comercial. Clique em <strong>&quot;Salvar alterações&quot;</strong> para aplicar.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{
+                    textAlign: 'center',
+                    padding: '32px 16px',
+                    background: 'var(--color-elevated)',
+                    border: '1px dashed var(--color-border)',
+                    borderRadius: '12px',
+                  }}>
+                    <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>🏢</span>
+                    <strong style={{ fontSize: '1rem', color: 'var(--color-text)', display: 'block', marginBottom: '4px' }}>
+                      Nenhum estabelecimento cadastrado
+                    </strong>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '16px' }}>
+                      Cadastre seu primeiro estabelecimento para começar a gerenciar sua marca e publicar produtos no catálogo.
+                    </p>
+                    <Link
+                      href="/partner/register"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        background: 'var(--color-emerald, #10b981)',
+                        color: '#ffffff',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      ➕ Cadastrar Estabelecimento
+                    </Link>
+                  </div>
+                )}
+              </section>
             )}
           </div>
 

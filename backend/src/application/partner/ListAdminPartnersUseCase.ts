@@ -41,6 +41,7 @@ export class ListAdminPartnersUseCase {
       city:               partner.city,
       state:              partner.state,
       deliveryRegion:     partner.deliveryRegion,
+      logoUrl:            partner.logoUrl,
     }));
 
     return Result.ok<PartnerResponseDTO[]>(response);

@@ -828,3 +828,20 @@ button { cursor: pointer; font-family: inherit; }
     transform: none;
   }
 }
+
+/* ═══════════════════════════════════════
+   TOASTS / NOTIFICAÇÕES (SOBREPOSIÇÃO GLOBAL)
+   Garante que notificações fiquem sempre no topo
+   de qualquer modal, backdrop ou overlay da aplicação.
+═══════════════════════════════════════ */
+.SnackbarContainer-root,
+.SnackbarContainer-topRight,
+.SnackbarContainer-topLeft,
+.SnackbarContainer-bottomRight,
+.SnackbarContainer-bottomLeft,
+.SnackbarContainer-topCenter,
+.SnackbarContainer-bottomCenter,
+#notistack-snackbar,
+[class*="SnackbarContainer"] {
+  z-index: 999999 !important;
+}

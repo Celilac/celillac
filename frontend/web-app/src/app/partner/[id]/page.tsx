@@ -205,9 +205,33 @@ export default function PartnerDetailPage({ params }: PageProps) {
 
       <main className={styles.container}>
         <div className={styles.header} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
-          <div className={styles.titleArea} style={{ flex: '1 1 300px' }}>
-            <h1 className={styles.title} style={{ margin: 0, fontSize: 'clamp(1.5rem, 2.5vw, 2.25rem)' }}>{partner.name}</h1>
-            <p className={styles.subtitle} style={{ margin: '4px 0 0 0' }}>Gestão operacional do perfil `{partner.type}`</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 300px' }}>
+            {partner.logoUrl && (
+              <div style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '12px',
+                background: 'var(--color-elevated)',
+                border: '1px solid var(--color-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                flexShrink: 0,
+                padding: '4px',
+              }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={partner.logoUrl}
+                  alt={`Marca de ${partner.name}`}
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
+              </div>
+            )}
+            <div className={styles.titleArea}>
+              <h1 className={styles.title} style={{ margin: 0, fontSize: 'clamp(1.5rem, 2.5vw, 2.25rem)' }}>{partner.name}</h1>
+              <p className={styles.subtitle} style={{ margin: '4px 0 0 0' }}>Gestão operacional do perfil `{partner.type}`</p>
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <Link 

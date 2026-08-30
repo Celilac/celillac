@@ -377,6 +377,32 @@ describe('Partner Domain Entity', () => {
     expect(partner.deliveryRegion).toBe('Zona Sul');
   });
 
+  it('should support creating and updating logoUrl without regressing approved status', () => {
+    const partner = Partner.create({
+      userId:      'user-uuid',
+      name:        'Sabor Celíaco',
+      address:     'Rua das Flores, 123',
+      description: '',
+      phone:       '11999999999',
+      type:        PartnerType.RESTAURANT,
+      logoUrl:     'data:image/webp;base64,sample123',
+      approvalStatus: PartnerApprovalStatus.APPROVED,
+    }).getValue();
+
+    expect(partner.logoUrl).toBe('data:image/webp;base64,sample123');
+
+    // Atualizar logoUrl em parceiro aprovado não deve regredir status
+    const updateLogo = partner.updateDetails({ logoUrl: 'data:image/webp;base64,sample456' });
+    expect(updateLogo.isSuccess).toBe(true);
+    expect(partner.logoUrl).toBe('data:image/webp;base64,sample456');
+    expect(partner.approvalStatus).toBe(PartnerApprovalStatus.APPROVED);
+
+    // Limpar logoUrl
+    const clearLogo = partner.updateDetails({ logoUrl: '' });
+    expect(clearLogo.isSuccess).toBe(true);
+    expect(partner.logoUrl).toBeUndefined();
+  });
+
   it('should support legacy activate and inactivate methods', () => {
     const partner = Partner.create({
       userId:      'user-uuid',

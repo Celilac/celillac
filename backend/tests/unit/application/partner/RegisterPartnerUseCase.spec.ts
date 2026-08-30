@@ -52,21 +52,23 @@ describe('RegisterPartnerUseCase', () => {
       address: 'Rua Principal, 100',
       phone: '1234-5678',
       type: PartnerType.RESTAURANT,
+      logoUrl: 'data:image/webp;base64,sample-logo',
     });
 
     expect(result.isSuccess).toBe(true);
     expect(partnerRepository.create).toHaveBeenCalled();
     const data = result.getValue();
     expect(data.name).toBe('Padaria CeliLac');
-    expect(data.approvalStatus).toBe('DRAFT'); // Inicia em rascunho
-    expect(data.operationalStatus).toBe('INACTIVE'); // Inicia inativo operacionalmente
+    expect(data.logoUrl).toBe('data:image/webp;base64,sample-logo');
+    expect(data.approvalStatus).toBe('DRAFT');
+    expect(data.operationalStatus).toBe('INACTIVE');
   });
 
   it('deve falhar se o usuário não tiver papel de PARCEIRO', async () => {
     const user = User.create({
       email: makeValidEmail('ana@teste.com'),
       passwordHash: makeValidHash(),
-      role: UserRole.CELIACO, // Papel incorreto
+      role: UserRole.CELIACO,
     }, 'user-1').getValue();
 
     userRepository.findById.mockResolvedValue(user);
@@ -83,5 +85,21 @@ describe('RegisterPartnerUseCase', () => {
     expect(result.isFailure).toBe(true);
     expect(result.getError()).toContain('papel de PARCEIRO');
     expect(partnerRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('deve falhar se o usuário não for encontrado', async () => {
+    userRepository.findById.mockResolvedValue(null);
+
+    const result = await useCase.execute({
+      userId: 'user-inexistente',
+      name: 'Padaria CeliLac',
+      description: 'Livre de glúten',
+      address: 'Rua Principal, 100',
+      phone: '1234-5678',
+      type: PartnerType.RESTAURANT,
+    });
+
+    expect(result.isFailure).toBe(true);
+    expect(result.getError()).toContain('Usuário não encontrado');
   });
 });
