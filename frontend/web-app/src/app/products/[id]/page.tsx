@@ -192,7 +192,23 @@ export default function ProductDetailsPage({ params }: PageProps) {
                   🌾 <strong>Contém Glúten:</strong> {product.hasGluten ? 'Sim' : 'Não'}
                 </li>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  🧪 <strong>Contaminação Cruzada:</strong> {product.crossContamination || 'Não informada'}
+                  🥛 <strong>Declaração de Leite:</strong> {(() => {
+                    const ing = (product.ingredients || '').toLowerCase();
+                    const cross = (product.crossContamination || '').toLowerCase();
+                    const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme', 'whey', 'soro'];
+                    if (milkTerms.some((t) => ing.includes(t))) return 'Contém Leite / Derivados';
+                    if (milkTerms.some((t) => cross.includes(t))) return 'Pode conter traços de leite';
+                    return 'Não contém leite nem traços (Livre)';
+                  })()}
+                </li>
+                <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
+                  🧪 <strong>Contaminação Cruzada:</strong> {(() => {
+                    const cc = product.crossContamination || '';
+                    if (!cc || cc === 'NONE' || cc === 'NENHUM') return 'Nenhum (Ambiente 100% livre)';
+                    if (cc === 'TRACES' || cc === 'TRACOS') return 'Pode conter traços (Alerta preventivo no rótulo)';
+                    if (cc === 'SHARED_EQUIPMENT' || cc === 'MAQUINARIO_COMPARTILHADO') return 'Compartilha maquinário / linhas de produção';
+                    return cc;
+                  })()}
                 </li>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
                   📋 <strong>Status da Análise:</strong> {product.analysisStatus || 'VERIFICADO'}
