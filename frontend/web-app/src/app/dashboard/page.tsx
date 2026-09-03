@@ -278,12 +278,10 @@ export default function DashboardPage() {
                   </h2>
                   <Link
                     href="/partner"
-                    className="btn btn-ghost"
+                    className={styles.btnManagePartner}
                     style={{
                       fontSize: 'var(--text-label)',
                       padding: '0.35rem 0.75rem',
-                      whiteSpace: 'nowrap',
-                      borderRadius: 'var(--radius-full)',
                     }}
                   >
                     💼 Meus Negócios
@@ -376,13 +374,7 @@ export default function DashboardPage() {
 
                         <Link
                           href={`/partner/${pt.id}`}
-                          className="btn btn-ghost"
-                          style={{
-                            fontSize: '0.75rem',
-                            padding: '0.35rem 0.7rem',
-                            whiteSpace: 'nowrap',
-                            textDecoration: 'none',
-                          }}
+                          className={styles.btnManagePartner}
                         >
                           ⚙️ Gerenciar
                         </Link>

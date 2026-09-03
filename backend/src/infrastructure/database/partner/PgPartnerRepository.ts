@@ -8,8 +8,8 @@ export class PgPartnerRepository implements IPartnerRepository {
 
   async create(partner: Partner): Promise<void> {
     await this.pool.query(
-      `INSERT INTO partners (id, user_id, name, cnpj, description, address, phone, type, approval_status, operational_status, rejection_reason, suspension_reason, city, state, delivery_region)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+      `INSERT INTO partners (id, user_id, name, cnpj, description, address, phone, type, approval_status, operational_status, rejection_reason, suspension_reason, city, state, delivery_region, logo_url)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
       [
         partner.id,
         partner.userId,
@@ -26,13 +26,14 @@ export class PgPartnerRepository implements IPartnerRepository {
         partner.city || null,
         partner.state || null,
         partner.deliveryRegion || null,
+        partner.logoUrl || null,
       ]
     );
   }
 
   async findById(id: string): Promise<Partner | null> {
     const result = await this.pool.query(
-      `SELECT id, user_id, name, cnpj, description, address, phone, type, approval_status, operational_status, rejection_reason, suspension_reason, city, state, delivery_region
+      `SELECT id, user_id, name, cnpj, description, address, phone, type, approval_status, operational_status, rejection_reason, suspension_reason, city, state, delivery_region, logo_url
        FROM partners WHERE id = $1 LIMIT 1`,
       [id]
     );
@@ -46,7 +47,7 @@ export class PgPartnerRepository implements IPartnerRepository {
 
   async findAllByUserId(userId: string): Promise<Partner[]> {
     const result = await this.pool.query(
-      `SELECT id, user_id, name, cnpj, description, address, phone, type, approval_status, operational_status, rejection_reason, suspension_reason, city, state, delivery_region
+      `SELECT id, user_id, name, cnpj, description, address, phone, type, approval_status, operational_status, rejection_reason, suspension_reason, city, state, delivery_region, logo_url
        FROM partners WHERE user_id = $1 ORDER BY name ASC`,
       [userId]
     );
@@ -56,7 +57,7 @@ export class PgPartnerRepository implements IPartnerRepository {
 
   async findAll(): Promise<Partner[]> {
     const result = await this.pool.query(
-      `SELECT id, user_id, name, cnpj, description, address, phone, type, approval_status, operational_status, rejection_reason, suspension_reason, city, state, delivery_region
+      `SELECT id, user_id, name, cnpj, description, address, phone, type, approval_status, operational_status, rejection_reason, suspension_reason, city, state, delivery_region, logo_url
        FROM partners ORDER BY name ASC`
     );
 
@@ -66,8 +67,8 @@ export class PgPartnerRepository implements IPartnerRepository {
   async update(partner: Partner): Promise<void> {
     await this.pool.query(
       `UPDATE partners 
-       SET name = $1, cnpj = $2, description = $3, address = $4, phone = $5, type = $6, approval_status = $7, operational_status = $8, rejection_reason = $9, suspension_reason = $10, city = $11, state = $12, delivery_region = $13, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $14`,
+       SET name = $1, cnpj = $2, description = $3, address = $4, phone = $5, type = $6, approval_status = $7, operational_status = $8, rejection_reason = $9, suspension_reason = $10, city = $11, state = $12, delivery_region = $13, logo_url = $14, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $15`,
       [
         partner.name,
         partner.cnpj || null,
@@ -82,6 +83,7 @@ export class PgPartnerRepository implements IPartnerRepository {
         partner.city || null,
         partner.state || null,
         partner.deliveryRegion || null,
+        partner.logoUrl || null,
         partner.id,
       ]
     );
@@ -104,6 +106,7 @@ export class PgPartnerRepository implements IPartnerRepository {
         city:              row.city || undefined,
         state:             row.state || undefined,
         deliveryRegion:    row.delivery_region || undefined,
+        logoUrl:           row.logo_url || undefined,
       },
       row.id
     ).getValue();

@@ -52,8 +52,8 @@ export const reportApi = {
     return apiClient.get<ReportDTO[]>(url, token);
   },
 
-  reviewReport: (id: string, newStatus: string, token: string): Promise<ReportDTO> => {
-    return apiClient.patch<ReportDTO>(`/admin/reports/${id}/status`, { newStatus }, token);
+  reviewReport: (id: string, newStatus: string, token: string, reason?: string): Promise<ReportDTO> => {
+    return apiClient.patch<ReportDTO>(`/admin/reports/${id}/status`, { newStatus, reason }, token);
   },
 };
 

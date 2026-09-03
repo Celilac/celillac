@@ -39,7 +39,7 @@ export class PartnerController extends BaseController {
 
   async register(req: Request, res: Response): Promise<void> {
     const userId = req.user?.id;
-    const { name, cnpj, description, address, phone, type, city, state, deliveryRegion } = req.body;
+    const { name, cnpj, description, address, phone, type, city, state, deliveryRegion, logoUrl } = req.body;
 
     if (!userId) {
       this.unauthorized(res, 'Usuário não autenticado.');
@@ -57,6 +57,7 @@ export class PartnerController extends BaseController {
       city,
       state,
       deliveryRegion,
+      logoUrl,
     });
 
     if (result.isFailure) {
@@ -69,7 +70,7 @@ export class PartnerController extends BaseController {
   async update(req: Request, res: Response): Promise<void> {
     const userId = req.user?.id;
     const { id } = req.params;
-    const { name, cnpj, description, address, phone, type, city, state, deliveryRegion } = req.body;
+    const { name, cnpj, description, address, phone, type, city, state, deliveryRegion, logoUrl } = req.body;
 
     if (!userId) {
       this.unauthorized(res, 'Usuário não autenticado.');
@@ -88,6 +89,7 @@ export class PartnerController extends BaseController {
       city,
       state,
       deliveryRegion,
+      logoUrl,
     });
 
     if (result.isFailure) {

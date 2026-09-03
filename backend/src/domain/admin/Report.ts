@@ -63,14 +63,36 @@ export class Report extends Entity<ReportProps> {
 
   /**
    * Altera o status da denúncia.
-   * Regra de negócio: Não é possível reabrir uma denúncia já fechada (RESOLVED/DISMISSED).
+   * Permite transições de status válidas, incluindo reabertura de denúncias encerradas.
    */
   changeStatus(newStatus: ReportStatus): Result<void> {
-    if (this.props.status === ReportStatus.RESOLVED || this.props.status === ReportStatus.DISMISSED) {
-      return Result.fail('Cannot change status of a closed report.');
+    if (!Object.values(ReportStatus).includes(newStatus)) {
+      return Result.fail(`Invalid report status: ${newStatus}`);
+    }
+
+    if (this.props.status === newStatus) {
+      return Result.ok<void>(undefined as void);
     }
     
     this.props.status = newStatus;
+    this.props.updatedAt = new Date();
+    return Result.ok<void>(undefined as void);
+  }
+
+  /**
+   * Reabre uma denúncia que estava encerrada (RESOLVED ou DISMISSED),
+   * retornando-a para PENDING ou IN_REVIEW.
+   */
+  reopen(targetStatus: ReportStatus = ReportStatus.PENDING): Result<void> {
+    if (this.props.status !== ReportStatus.RESOLVED && this.props.status !== ReportStatus.DISMISSED) {
+      return Result.fail('Only closed reports can be reopened.');
+    }
+
+    if (targetStatus !== ReportStatus.PENDING && targetStatus !== ReportStatus.IN_REVIEW) {
+      return Result.fail('Reopened report must transition to PENDING or IN_REVIEW.');
+    }
+
+    this.props.status = targetStatus;
     this.props.updatedAt = new Date();
     return Result.ok<void>(undefined as void);
   }

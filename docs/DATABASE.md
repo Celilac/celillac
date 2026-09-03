@@ -89,6 +89,28 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
 | `updated_at` | TIMESTAMP | DEFAULT NOW() |
 
+### Tabela: `partners` (Catálogo de Parceiros)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `user_id` | UUID | FK → users.id, NOT NULL |
+| `name` | VARCHAR(255) | Nome comercial / Razão social, NOT NULL |
+| `cnpj` | VARCHAR(20) | Opcional (14 dígitos) |
+| `description` | TEXT | Descrição do negócio |
+| `address` | TEXT | Endereço completo, NOT NULL |
+| `phone` | VARCHAR(50) | Telefone / WhatsApp de contato |
+| `type` | VARCHAR(50) | `RESTAURANT`, `MARKET`, `INDEPENDENT_PRODUCER` |
+| `approval_status` | VARCHAR(50) | `DRAFT`, `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `SUSPENDED` |
+| `operational_status` | VARCHAR(50) | `ACTIVE`, `INACTIVE`, `TEMPORARILY_CLOSED` |
+| `rejection_reason` | TEXT | Motivo em caso de rejeição |
+| `suspension_reason` | TEXT | Motivo em caso de suspensão |
+| `city` | VARCHAR(100) | Cidade do estabelecimento |
+| `state` | VARCHAR(50) | UF / Estado |
+| `delivery_region` | TEXT | Região de atendimento / entrega |
+| `logo_url` | TEXT | DataURL / URL da marca do estabelecimento (logotipo) |
+| `created_at` | TIMESTAMP | DEFAULT NOW() |
+| `updated_at` | TIMESTAMP | DEFAULT NOW() |
+
 ### Tabela: `food_profiles` (Perfil Alimentar)
 | Coluna | Tipo | Restrições |
 |:-------|:-----|:-----------|
@@ -137,9 +159,28 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `ingredients` | TEXT | |
 | `has_gluten` | BOOLEAN | DEFAULT false |
 | `cross_contamination` | TEXT | NOT NULL (campo obrigatório) |
+| `category` | VARCHAR(100) | Nome textual da categoria |
+| `category_id` | UUID | FK → product_categories.id (Opcional) |
 | `status` | VARCHAR | DEFAULT `PENDING_ANALYSIS` |
-| `created_by` | UUID | FK → users.id |
+| `partner_id` | UUID | FK → partners.id |
+| `price` | NUMERIC(10,2) | Preço unitário |
+| `image_url` | TEXT | Imagem do produto |
+| `is_active` | BOOLEAN | DEFAULT true |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
+
+### Tabela: `product_categories` (Categorias e Moderação)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `name` | VARCHAR(100) | Nome da categoria, NOT NULL |
+| `normalized_name` | VARCHAR(100) | Identificador normalizado para controle de duplicidade |
+| `partner_id` | UUID | FK → partners.id (Opcional, preenchido se criada por parceiro) |
+| `created_by_user_id` | UUID | FK → users.id |
+| `status` | VARCHAR(50) | `PENDING_APPROVAL`, `APPROVED`, `REJECTED` |
+| `visibility` | VARCHAR(50) | `GLOBAL` (pública para todos), `RESTRICTED` (restrita ao parceiro) |
+| `rejection_reason` | TEXT | Motivo em caso de rejeição |
+| `created_at` | TIMESTAMP | DEFAULT NOW() |
+| `updated_at` | TIMESTAMP | DEFAULT NOW() |
 
 ### Tabela: `product_reviews` (Avaliações)
 | Coluna | Tipo | Restrições |

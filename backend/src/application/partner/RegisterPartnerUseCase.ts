@@ -16,6 +16,7 @@ export interface RegisterPartnerDTO {
   city?:           string;
   state?:          string;
   deliveryRegion?: string;
+  logoUrl?:        string;
 }
 
 export interface PartnerResponseDTO {
@@ -34,6 +35,7 @@ export interface PartnerResponseDTO {
   city?:              string;
   state?:             string;
   deliveryRegion?:    string;
+  logoUrl?:           string;
 }
 
 export class RegisterPartnerUseCase {
@@ -66,6 +68,7 @@ export class RegisterPartnerUseCase {
       city:              dto.city,
       state:             dto.state,
       deliveryRegion:    dto.deliveryRegion,
+      logoUrl:           dto.logoUrl,
       approvalStatus:    PartnerApprovalStatus.DRAFT,
       operationalStatus: PartnerOperationalStatus.INACTIVE,
     });
@@ -93,6 +96,7 @@ export class RegisterPartnerUseCase {
       city:               partner.city,
       state:              partner.state,
       deliveryRegion:     partner.deliveryRegion,
+      logoUrl:            partner.logoUrl,
     });
   }
 }

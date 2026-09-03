@@ -17,6 +17,7 @@ export interface UpdatePartnerDTO {
   city?:           string;
   state?:          string;
   deliveryRegion?: string;
+  logoUrl?:        string;
 }
 
 export class UpdatePartnerUseCase {
@@ -55,6 +56,7 @@ export class UpdatePartnerUseCase {
       city:           dto.city,
       state:          dto.state,
       deliveryRegion: dto.deliveryRegion,
+      logoUrl:        dto.logoUrl,
     });
 
     if (updateResult.isFailure) {

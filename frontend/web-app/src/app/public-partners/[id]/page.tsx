@@ -85,9 +85,33 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
 
       <main className={styles.container}>
         <div className={styles.header}>
-          <div className={styles.titleArea}>
-            <h1 className={styles.title}>{partner.name}</h1>
-            <p className={styles.subtitle}>Perfil comercial homologado pelo CeLiLac</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            {partner.logoUrl && (
+              <div style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '12px',
+                background: 'var(--color-elevated)',
+                border: '1px solid var(--color-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                flexShrink: 0,
+                padding: '4px',
+              }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={partner.logoUrl}
+                  alt={`Marca de ${partner.name}`}
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
+              </div>
+            )}
+            <div className={styles.titleArea}>
+              <h1 className={styles.title}>{partner.name}</h1>
+              <p className={styles.subtitle}>Perfil comercial homologado pelo CeLiLac</p>
+            </div>
           </div>
           <button 
             type="button" 

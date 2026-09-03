@@ -71,8 +71,32 @@ export default function PublicPartnersListPage() {
             filteredPartners.map((partner) => (
               <section key={partner.id} className={styles.card}>
                 <div className={styles.cardContent}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <h2 className={styles.partnerName}>{partner.name}</h2>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
+                      {partner.logoUrl && (
+                        <div style={{
+                          width: '42px',
+                          height: '42px',
+                          borderRadius: '8px',
+                          background: 'var(--color-elevated)',
+                          border: '1px solid var(--color-border)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                          padding: '2px',
+                        }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={partner.logoUrl}
+                            alt={`Marca de ${partner.name}`}
+                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                          />
+                        </div>
+                      )}
+                      <h2 className={styles.partnerName} style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{partner.name}</h2>
+                    </div>
                     <span className={`${styles.badge} ${styles.badgeApproved}`}>Homologado</span>
                   </div>
                   <p className={styles.partnerDescription}>{partner.description || 'Sem descrição.'}</p>

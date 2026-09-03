@@ -10,6 +10,16 @@ import { reportApi, ReportDTO, ReportReason } from '@/api/reports';
 import { Header } from '@/components/layout/Header';
 import styles from '../../partner/partner.module.css';
 
+interface ConfirmModalState {
+  reportId: string;
+  protocol: string;
+  action: 'RESOLVE' | 'DISMISS' | 'IN_REVIEW' | 'REOPEN';
+  targetStatus: string;
+  title: string;
+  description: string;
+  isFoodSafetyRisk?: boolean;
+}
+
 export default function AdminReportsPage() {
   const { token, isAuthenticated, isInitializing } = useAuth();
   const router = useRouter();
@@ -28,6 +38,10 @@ export default function AdminReportsPage() {
   // Modal de Detalhes / Revisão
   const [detailReport, setDetailReport] = useState<ReportDTO | null>(null);
   const detailCloseRef = useRef<HTMLButtonElement>(null);
+
+  // Modal de Confirmação de Ações Administrativas
+  const [confirmModal, setConfirmModal] = useState<ConfirmModalState | null>(null);
+  const [adminJustification, setAdminJustification] = useState<string>('');
 
   useEffect(() => {
     setMounted(true);
@@ -97,32 +111,92 @@ export default function AdminReportsPage() {
   }, [detailReport]);
 
   useEffect(() => {
-    if (!detailReport) return;
+    if (!detailReport && !confirmModal) return;
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        setDetailReport(null);
+        if (confirmModal) {
+          setConfirmModal(null);
+        } else {
+          setDetailReport(null);
+        }
       }
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [detailReport]);
+  }, [detailReport, confirmModal]);
 
-  async function handleStatusChange(reportId: string, newStatus: string) {
-    if (!token) return;
+  function requestActionConfirmation(report: ReportDTO, action: 'RESOLVE' | 'DISMISS' | 'IN_REVIEW' | 'REOPEN') {
+    setAdminJustification('');
+    const protocol = `#${report.id.substring(0, 8)}`;
+
+    if (action === 'RESOLVE') {
+      setConfirmModal({
+        reportId: report.id,
+        protocol,
+        action: 'RESOLVE',
+        targetStatus: 'RESOLVED',
+        title: `Resolver Denúncia ${protocol}`,
+        description: 'Confirma que a denúncia foi devidamente analisada e as providências cabíveis foram tomadas?',
+        isFoodSafetyRisk: report.isFoodSafetyRisk,
+      });
+    } else if (action === 'DISMISS') {
+      setConfirmModal({
+        reportId: report.id,
+        protocol,
+        action: 'DISMISS',
+        targetStatus: 'DISMISSED',
+        title: `Descartar Denúncia ${protocol}`,
+        description: 'Tem certeza que deseja descartar esta denúncia? O relato será arquivado como improcedente.',
+        isFoodSafetyRisk: report.isFoodSafetyRisk,
+      });
+    } else if (action === 'IN_REVIEW') {
+      setConfirmModal({
+        reportId: report.id,
+        protocol,
+        action: 'IN_REVIEW',
+        targetStatus: 'IN_REVIEW',
+        title: `Iniciar Análise da Denúncia ${protocol}`,
+        description: 'Deseja colocar esta denúncia em status de análise ativa pela moderação?',
+        isFoodSafetyRisk: report.isFoodSafetyRisk,
+      });
+    } else if (action === 'REOPEN') {
+      setConfirmModal({
+        reportId: report.id,
+        protocol,
+        action: 'REOPEN',
+        targetStatus: 'PENDING',
+        title: `Reabrir Denúncia ${protocol}`,
+        description: 'Deseja reabrir esta denúncia previamente encerrada? O status retornará para Pendente para novas averiguações.',
+        isFoodSafetyRisk: report.isFoodSafetyRisk,
+      });
+    }
+  }
+
+  async function handleConfirmAction() {
+    if (!confirmModal || !token) return;
     setUpdating(true);
     try {
-      const updated = await reportApi.reviewReport(reportId, newStatus, token);
-      setReports((prev) => prev.map((r) => (r.id === reportId ? updated : r)));
-      if (detailReport?.id === reportId) {
+      const updated = await reportApi.reviewReport(
+        confirmModal.reportId,
+        confirmModal.targetStatus,
+        token,
+        adminJustification.trim() || undefined
+      );
+
+      setReports((prev) => prev.map((r) => (r.id === confirmModal.reportId ? updated : r)));
+      if (detailReport?.id === confirmModal.reportId) {
         setDetailReport(updated);
       }
 
       let actionLabel = 'atualizada';
-      if (newStatus === 'IN_REVIEW') actionLabel = 'colocada em análise';
-      if (newStatus === 'RESOLVED') actionLabel = 'resolvida com sucesso';
-      if (newStatus === 'DISMISSED') actionLabel = 'descartada';
+      if (confirmModal.action === 'IN_REVIEW') actionLabel = 'colocada em análise';
+      if (confirmModal.action === 'RESOLVE') actionLabel = 'resolvida com sucesso';
+      if (confirmModal.action === 'DISMISS') actionLabel = 'descartada';
+      if (confirmModal.action === 'REOPEN') actionLabel = 'reaberta com sucesso';
 
-      toast.success(`Denúncia ${actionLabel}!`);
+      toast.success(`Denúncia ${actionLabel}!`, 'Status Atualizado');
+      setConfirmModal(null);
+      setAdminJustification('');
     } catch (err: any) {
       const msg = (err instanceof HttpError || err?.message) ? err.message : 'Erro ao atualizar status da denúncia.';
       toast.error(msg, 'Erro');
@@ -450,7 +524,7 @@ export default function AdminReportsPage() {
                             type="button"
                             className={`${styles.btn}`}
                             style={{ flex: 1, background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)' }}
-                            onClick={() => handleStatusChange(report.id, 'IN_REVIEW')}
+                            onClick={() => requestActionConfirmation(report, 'IN_REVIEW')}
                             disabled={updating}
                             id={`review-${report.id}`}
                           >
@@ -460,7 +534,7 @@ export default function AdminReportsPage() {
                             type="button"
                             className={`${styles.btn} ${styles.btnPrimary}`}
                             style={{ flex: 1 }}
-                            onClick={() => handleStatusChange(report.id, 'RESOLVED')}
+                            onClick={() => requestActionConfirmation(report, 'RESOLVE')}
                             disabled={updating}
                             id={`resolve-${report.id}`}
                           >
@@ -470,7 +544,7 @@ export default function AdminReportsPage() {
                             type="button"
                             className={`${styles.btn} ${styles.btnDanger}`}
                             style={{ flex: 1 }}
-                            onClick={() => handleStatusChange(report.id, 'DISMISSED')}
+                            onClick={() => requestActionConfirmation(report, 'DISMISS')}
                             disabled={updating}
                             id={`dismiss-${report.id}`}
                           >
@@ -485,7 +559,7 @@ export default function AdminReportsPage() {
                             type="button"
                             className={`${styles.btn} ${styles.btnPrimary}`}
                             style={{ flex: 1 }}
-                            onClick={() => handleStatusChange(report.id, 'RESOLVED')}
+                            onClick={() => requestActionConfirmation(report, 'RESOLVE')}
                             disabled={updating}
                             id={`resolve-${report.id}`}
                           >
@@ -495,7 +569,7 @@ export default function AdminReportsPage() {
                             type="button"
                             className={`${styles.btn} ${styles.btnDanger}`}
                             style={{ flex: 1 }}
-                            onClick={() => handleStatusChange(report.id, 'DISMISSED')}
+                            onClick={() => requestActionConfirmation(report, 'DISMISS')}
                             disabled={updating}
                             id={`dismiss-${report.id}`}
                           >
@@ -505,9 +579,29 @@ export default function AdminReportsPage() {
                       )}
 
                       {(report.status === 'RESOLVED' || report.status === 'DISMISSED') && (
-                        <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', fontStyle: 'italic', padding: '0.4rem 0' }}>
-                          🔒 Denúncia encerrada. O status é definitivo.
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.5rem', flexWrap: 'wrap', padding: '0.25rem 0' }}>
+                          <span style={{ fontSize: '0.825rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                            🔒 Encerrada ({report.status === 'RESOLVED' ? 'Resolvida' : 'Descartada'})
+                          </span>
+                          <button
+                            type="button"
+                            className={styles.btn}
+                            style={{
+                              background: 'rgba(202, 138, 4, 0.12)',
+                              color: '#ca8a04',
+                              border: '1px solid rgba(202, 138, 4, 0.35)',
+                              fontSize: '0.78rem',
+                              fontWeight: 700,
+                              padding: '0.35rem 0.75rem',
+                              borderRadius: 'var(--radius-full)',
+                            }}
+                            onClick={() => requestActionConfirmation(report, 'REOPEN')}
+                            disabled={updating}
+                            id={`reopen-${report.id}`}
+                          >
+                            🔄 Reabrir Denúncia
+                          </button>
+                        </div>
                       )}
                     </div>
                   </section>
@@ -597,7 +691,7 @@ export default function AdminReportsPage() {
                       type="button"
                       className={`${styles.btn}`}
                       style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)' }}
-                      onClick={() => handleStatusChange(detailReport.id, 'IN_REVIEW')}
+                      onClick={() => requestActionConfirmation(detailReport, 'IN_REVIEW')}
                       disabled={updating}
                     >
                       🔍 Em Análise
@@ -605,7 +699,7 @@ export default function AdminReportsPage() {
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnPrimary}`}
-                      onClick={() => handleStatusChange(detailReport.id, 'RESOLVED')}
+                      onClick={() => requestActionConfirmation(detailReport, 'RESOLVE')}
                       disabled={updating}
                     >
                       ✔️ Aprovar & Resolver
@@ -613,7 +707,7 @@ export default function AdminReportsPage() {
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnDanger}`}
-                      onClick={() => handleStatusChange(detailReport.id, 'DISMISSED')}
+                      onClick={() => requestActionConfirmation(detailReport, 'DISMISS')}
                       disabled={updating}
                     >
                       ❌ Descartar
@@ -626,7 +720,7 @@ export default function AdminReportsPage() {
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnPrimary}`}
-                      onClick={() => handleStatusChange(detailReport.id, 'RESOLVED')}
+                      onClick={() => requestActionConfirmation(detailReport, 'RESOLVE')}
                       disabled={updating}
                     >
                       ✔️ Concluir & Resolver
@@ -634,12 +728,29 @@ export default function AdminReportsPage() {
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnDanger}`}
-                      onClick={() => handleStatusChange(detailReport.id, 'DISMISSED')}
+                      onClick={() => requestActionConfirmation(detailReport, 'DISMISS')}
                       disabled={updating}
                     >
                       ❌ Descartar Denúncia
                     </button>
                   </>
+                )}
+
+                {(detailReport.status === 'RESOLVED' || detailReport.status === 'DISMISSED') && (
+                  <button
+                    type="button"
+                    className={styles.btn}
+                    style={{
+                      background: 'rgba(202, 138, 4, 0.15)',
+                      color: '#ca8a04',
+                      border: '1px solid rgba(202, 138, 4, 0.4)',
+                      fontWeight: 700,
+                    }}
+                    onClick={() => requestActionConfirmation(detailReport, 'REOPEN')}
+                    disabled={updating}
+                  >
+                    🔄 Reabrir Denúncia
+                  </button>
                 )}
 
                 <button
@@ -649,6 +760,116 @@ export default function AdminReportsPage() {
                 >
                   Fechar
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Confirmação de Ação Administrativa */}
+        {confirmModal && (
+          <div className={styles.dialogOverlay} onClick={() => !updating && setConfirmModal(null)} style={{ zIndex: 1200 }}>
+            <div
+              className={styles.dialogCard}
+              style={{ maxWidth: '540px', width: '90%' }}
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="confirm-modal-title"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.modalHeader}>
+                <h3 id="confirm-modal-title" className={styles.modalTitle} style={{ fontSize: '1.2rem' }}>
+                  {confirmModal.action === 'RESOLVE' && '✔️'}
+                  {confirmModal.action === 'DISMISS' && '❌'}
+                  {confirmModal.action === 'IN_REVIEW' && '🔍'}
+                  {confirmModal.action === 'REOPEN' && '🔄'}{' '}
+                  {confirmModal.title}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => !updating && setConfirmModal(null)}
+                  style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', opacity: 0.7, color: 'var(--color-text)' }}
+                  aria-label="Cancelar"
+                  disabled={updating}
+                >
+                  ✖️
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {confirmModal.isFoodSafetyRisk && (
+                  <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.65rem 0.85rem', borderRadius: '8px', color: '#f87171', fontSize: '0.85rem', fontWeight: 600 }}>
+                    🚨 Atenção: Esta denúncia envolve risco direto à segurança alimentar de celíacos.
+                  </div>
+                )}
+
+                <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text)', lineHeight: '1.5' }}>
+                  {confirmModal.description}
+                </p>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '0.35rem' }}>
+                    Justificativa / Parecer Administrativo (Opcional)
+                  </label>
+                  <textarea
+                    className={styles.textarea}
+                    placeholder={
+                      confirmModal.action === 'RESOLVE'
+                        ? 'Ex: Estabelecimento notificado e rotulagem corrigida no catálogo.'
+                        : confirmModal.action === 'DISMISS'
+                        ? 'Ex: Denúncia improcedente após verificação do laudo alimentar.'
+                        : confirmModal.action === 'REOPEN'
+                        ? 'Ex: Novas evidências de contaminação cruzada enviadas pelo consumidor.'
+                        : 'Insira observações relevantes para o log de auditoria...'
+                    }
+                    value={adminJustification}
+                    onChange={(e) => setAdminJustification(e.target.value)}
+                    disabled={updating}
+                    rows={3}
+                    style={{ width: '100%', boxSizing: 'border-box' }}
+                  />
+                  <small style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '0.25rem' }}>
+                    🔒 Este parecer ficará registrado no histórico permanente de auditoria da plataforma.
+                  </small>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '0.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${styles.btnSecondary}`}
+                    onClick={() => setConfirmModal(null)}
+                    disabled={updating}
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`${styles.btn} ${
+                      confirmModal.action === 'DISMISS'
+                        ? styles.btnDanger
+                        : confirmModal.action === 'REOPEN'
+                        ? styles.btnPrimary
+                        : styles.btnPrimary
+                    }`}
+                    style={
+                      confirmModal.action === 'REOPEN'
+                        ? { background: '#ca8a04', borderColor: '#a16207', color: '#ffffff' }
+                        : confirmModal.action === 'IN_REVIEW'
+                        ? { background: '#2563eb', borderColor: '#1d4ed8', color: '#ffffff' }
+                        : undefined
+                    }
+                    onClick={handleConfirmAction}
+                    disabled={updating}
+                    id="confirm-action-btn"
+                  >
+                    {updating ? 'Processando…' : (
+                      confirmModal.action === 'RESOLVE' ? '✔️ Confirmar Resolução' :
+                      confirmModal.action === 'DISMISS' ? '❌ Confirmar Descarte' :
+                      confirmModal.action === 'IN_REVIEW' ? '🔍 Iniciar Análise' :
+                      '🔄 Confirmar Reabertura'
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -117,7 +117,8 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 🥗 Perfil Alimentar | ✅ Implementado | [`docs/features/food-profile.md`](docs/features/food-profile.md) |
 | ⚠️ Motor de Alérgenos (Core Domain) | ✅ Implementado | [`docs/features/allergen-engine.md`](docs/features/allergen-engine.md) |
 | 🛒 Catálogo de Produtos | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
-| 🏪 Gestão de Parceiros Comerciais | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
+| 🏷️ Categorias de Produtos & Moderação | ✅ Implementado | [`docs/features/categories.md`](docs/features/categories.md) |
+| 🏪 Gestão de Parceiros Comerciais | ✅ Implementado | [`docs/features/partner.md`](docs/features/partner.md) |
 | 🌐 Frontend (Web App + Landing Page) | ✅ Implementado | [`docs/features/frontend.md`](docs/features/frontend.md) |
 | 🛡️ Administração & Moderação | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
 | ⭐ Avaliações e Confiança | ✅ Implementado | [`docs/features/reviews.md`](docs/features/reviews.md) |
@@ -134,7 +135,7 @@ cd backend
 npm test
 ```
 
-**57 suítes de teste | 324 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
+**60 suítes de teste | 342 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
@@ -142,16 +143,16 @@ npm test
 | `domain/iam/Email`, `PasswordHash`, `User` | 100% |
 | `domain/food-profile/SeverityLevel`, `Restriction`, `FoodProfile` | 100% |
 | `domain/allergen-engine/AllergenEngine` ← 9 casos críticos | ~98% |
-| `domain/catalog/Product` | 100% |
-| `domain/partner/Partner` | ~97.7% |
+| `domain/catalog/Product`, `Category` | ~98.5% |
+| `domain/partner/Partner` | ~97.8% |
 | `domain/reviews/Review` | 95% |
 | `domain/audit/AuditLog`, `PgAuditLogRepository` | 100% |
 | `application/food-profile/UpdateFoodProfileUseCase` | 100% |
 | `application/consumer/ToggleConsumerStatusUseCase` | ~95.8% |
 | `application/allergen-engine/CheckCompatibilityUseCase` | 100% |
-| `application/catalog/CreateProductUseCase`, `SearchProductsUseCase` | 100% |
+| `application/catalog/CreateProductUseCase`, `CreateCategoryUseCase`, `SearchProductsUseCase` | 100% |
 | `application/reviews/SubmitReviewUseCase`, `GetProductReviewsUseCase` | ~94% |
-| `application/admin/CreateReportUseCase`, `ListReportsUseCase`, `ReviewReportUseCase` | ~94% |
+| `application/admin/CreateReportUseCase`, `ListReportsUseCase`, `ReviewReportUseCase`, `ReviewCategoryUseCase` | ~94% |
 | `application/iam/LogoutUserUseCase` | ~92.8% |
 | `interfaces/http/middlewares/AuthMiddleware` | 100% |
 | `interfaces/http/middlewares/SecurityMiddleware` | 100% |
@@ -188,8 +189,9 @@ Usuário: celilac_user
 |:-------|:----------|
 | `users` | IAM — id, email, password_hash, role, full_name, avatar_url, account_status |
 | `food_profiles` | Perfil — user_id (FK), restrictions (JSONB), accepts_cross_contamination |
-| `partners` | Parceiros — name, cnpj, address, phone, type, approval_status, operational_status, updated_at |
-| `products` | Catálogo — nome, marca, ingredientes, status de análise, partner_id (FK) |
+| `partners` | Parceiros — name, cnpj, address, phone, type, approval_status, operational_status, logo_url, updated_at |
+| `product_categories` | Categorias — name, normalized_name, partner_id (FK), status, visibility, rejection_reason |
+| `products` | Catálogo — nome, marca, ingredientes, categoria, category_id (FK), status de análise, partner_id (FK) |
 | `product_reviews` | Avaliações — user_id (FK), product_id (FK), rating, comment |
 | `product_reports` | Denúncias — reporter_id (FK), product_id (FK), reason, details, status |
 | `user_favorites` | Favoritos — user_id (FK), product_id (FK), partner_id (FK) |

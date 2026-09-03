@@ -97,6 +97,12 @@ export function Header() {
         )}
 
         {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
+          <Link href="/admin/categories" className={navLinkClass('/admin/categories')} onClick={() => setMenuOpen(false)}>
+            🏷️ Categorias
+          </Link>
+        )}
+
+        {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
           <Link href="/admin/reports" className={navLinkClass('/admin/reports')} onClick={() => setMenuOpen(false)}>
             🚨 Denúncias
           </Link>
