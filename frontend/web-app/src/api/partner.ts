@@ -38,8 +38,8 @@ export const partnerApi = {
     apiClient.patch<void>(`/partners/${id}/operational-status`, { status }, token),
 
   // Obter detalhes de um parceiro específico
-  get: (id: string) =>
-    apiClient.get<PartnerSummary>(`/partners/${id}`),
+  get: (id: string, token?: string) =>
+    apiClient.get<PartnerSummary>(`/partners/${id}`, token),
 
   // Listar todos os parceiros do usuário logado
   listUserPartners: (token: string) =>

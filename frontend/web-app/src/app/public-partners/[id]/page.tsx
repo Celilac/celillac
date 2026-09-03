@@ -33,7 +33,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
 
   useEffect(() => {
     Promise.all([
-      partnerApi.get(id),
+      partnerApi.get(id, token || undefined),
       catalogApi.listByPartner(id, token || undefined)
     ])
       .then(([partnerData, catalogData]) => {
