@@ -49,7 +49,7 @@ export default function EditPartnerPage({ params }: PageProps) {
       return;
     }
 
-    partnerApi.get(id)
+    partnerApi.get(id, token)
       .then((data) => {
         setName(data.name);
         setCnpj(data.cnpj || '');

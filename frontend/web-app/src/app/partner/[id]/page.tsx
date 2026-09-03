@@ -52,7 +52,7 @@ export default function PartnerDetailPage({ params }: PageProps) {
       return;
     }
 
-    partnerApi.get(id)
+    partnerApi.get(id, token)
       .then((data) => {
         setPartner(data);
         loadProducts();
