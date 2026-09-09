@@ -9,6 +9,12 @@ import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import styles from '../../partner/partner.module.css';
 
+const PARTNER_TYPE_LABELS: Record<string, string> = {
+  RESTAURANT: 'Restaurante / Lanchonete',
+  MARKET: 'Mercado / Empório',
+  INDEPENDENT_PRODUCER: 'Produtor Independente',
+};
+
 export default function AdminPartnersPage() {
   const { token, isAuthenticated, isInitializing } = useAuth();
   const router = useRouter();
@@ -197,7 +203,7 @@ export default function AdminPartnersPage() {
                   <div className={styles.partnerMeta}>
                     <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
                     <span className={styles.metaItem}>📞 {partner.phone}</span>
-                    <span className={styles.metaItem}>💼 {partner.type}</span>
+                    <span className={styles.metaItem}>💼 {PARTNER_TYPE_LABELS[partner.type] || partner.type}</span>
                   </div>
 
                   {partner.approvalStatus === 'REJECTED' && partner.rejectionReason && (
@@ -328,7 +334,7 @@ export default function AdminPartnersPage() {
                   </div>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>Tipo de Fornecedor</span>
-                    <p className={styles.detailValue}>{detailPartner.type}</p>
+                    <p className={styles.detailValue}>{PARTNER_TYPE_LABELS[detailPartner.type] || detailPartner.type}</p>
                   </div>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>Telefone de Contato</span>

@@ -67,10 +67,21 @@ export default function PartnerDetailPage({ params }: PageProps) {
       .finally(() => setLoading(false));
   }, [id, isAuthenticated, token, router, toast, loadProducts]);
 
-  async function handleToggleOperationalStatus() {
-    if (!partner || !token) return;
+  const [isConfirmStatusModalOpen, setIsConfirmStatusModalOpen] = useState(false);
+  const [pendingOperationalStatus, setPendingOperationalStatus] = useState<'ACTIVE' | 'TEMPORARILY_CLOSED' | null>(null);
 
+  function handleRequestToggleOperationalStatus() {
+    if (!partner || !token || updating) return;
     const nextStatus = partner.operationalStatus === 'ACTIVE' ? 'TEMPORARILY_CLOSED' : 'ACTIVE';
+    setPendingOperationalStatus(nextStatus);
+    setIsConfirmStatusModalOpen(true);
+  }
+
+  async function handleConfirmToggleOperationalStatus() {
+    if (!partner || !token || !pendingOperationalStatus) return;
+
+    const nextStatus = pendingOperationalStatus;
+    setIsConfirmStatusModalOpen(false);
     setUpdating(true);
     try {
       await partnerApi.updateOperationalStatus(partner.id, nextStatus, token);
@@ -83,6 +94,7 @@ export default function PartnerDetailPage({ params }: PageProps) {
       );
     } finally {
       setUpdating(false);
+      setPendingOperationalStatus(null);
     }
   }
 
@@ -389,11 +401,43 @@ export default function PartnerDetailPage({ params }: PageProps) {
                               </span>
                             )}
 
-                            {p.crossContamination && p.crossContamination !== 'NONE' && (
-                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: '1px solid var(--color-warning-border)' }}>
-                                ⚠️ Contaminação Cruzada
-                              </span>
-                            )}
+                            {/* Badge de Leite e Derivados */}
+                            {(() => {
+                              const ing = (p.ingredients || '').toLowerCase();
+                              const cross = (p.crossContamination || '').toLowerCase();
+                              const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme de leite', 'soro de leite', 'whey'];
+                              const hasMilkInIng = milkTerms.some((t) => ing.includes(t));
+                              const hasMilkInTraces = milkTerms.some((t) => cross.includes(t));
+
+                              if (hasMilkInIng) {
+                                return (
+                                  <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                                    🥛 Contém Leite
+                                  </span>
+                                );
+                              }
+                              if (hasMilkInTraces) {
+                                return (
+                                  <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                                    ⚠️ Traços de Leite
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)' }}>
+                                  🥛 Sem Leite
+                                </span>
+                              );
+                            })()}
+
+                            {p.crossContamination &&
+                              p.crossContamination !== 'NONE' &&
+                              p.crossContamination !== 'NENHUM' &&
+                              !p.crossContamination.toLowerCase().startsWith('nenhum') && (
+                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: '1px solid var(--color-warning-border)' }}>
+                                  ⚠️ Contaminação Cruzada
+                                </span>
+                              )}
                           </div>
                         </div>
 
@@ -426,14 +470,14 @@ export default function PartnerDetailPage({ params }: PageProps) {
                     {partner.operationalStatus === 'ACTIVE' ? 'Visível na busca e apto a operar.' : 'Exibe aviso de fechamento aos clientes.'}
                   </p>
                 </div>
-                <label className={styles.switch}>
+                <label className={styles.switch} title="Alterar status operacional">
                   <input 
                     type="checkbox" 
                     checked={partner.operationalStatus === 'ACTIVE'}
-                    onChange={handleToggleOperationalStatus}
+                    onChange={handleRequestToggleOperationalStatus}
                     disabled={updating}
                   />
-                  <span className={styles.slider}></span>
+                  <span className={styles.sliderOperational}></span>
                 </label>
               </div>
 
@@ -446,6 +490,103 @@ export default function PartnerDetailPage({ params }: PageProps) {
           </aside>
         </div>
       </main>
+
+      {/* Modal de Confirmação de Alteração do Status Operacional */}
+      {isConfirmStatusModalOpen && (
+        <div
+          className={styles.dialogOverlay}
+          style={{ backdropFilter: 'blur(4px)', zIndex: 1200 }}
+          onClick={() => {
+            if (!updating) {
+              setIsConfirmStatusModalOpen(false);
+              setPendingOperationalStatus(null);
+            }
+          }}
+        >
+          <div
+            className={styles.dialogCard}
+            style={{ maxWidth: '500px', width: '90%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>
+                {pendingOperationalStatus === 'TEMPORARILY_CLOSED'
+                  ? '⚠️ Pausar Operação do Estabelecimento?'
+                  : '🟢 Abrir Estabelecimento?'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!updating) {
+                    setIsConfirmStatusModalOpen(false);
+                    setPendingOperationalStatus(null);
+                  }
+                }}
+                style={{ background: 'transparent', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ marginTop: '0.5rem', marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: '1.6', color: 'var(--color-text)' }}>
+              {pendingOperationalStatus === 'TEMPORARILY_CLOSED' ? (
+                <p>
+                  Você tem certeza que deseja <strong>fechar o estabelecimento "{partner.name}"</strong>?
+                  <br />
+                  <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', display: 'block', marginTop: '0.5rem' }}>
+                    Ao desativar, seu estabelecimento e produtos associados ficarão sinalizados como temporariamente fechados e não receberão novas consultas na busca pública.
+                  </span>
+                </p>
+              ) : (
+                <p>
+                  Você tem certeza que deseja <strong>abrir o estabelecimento "{partner.name}"</strong>?
+                  <br />
+                  <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', display: 'block', marginTop: '0.5rem' }}>
+                    Ao abrir, seu estabelecimento e seu catálogo de produtos ficarão imediatamente disponíveis e visíveis para busca e pedidos de clientes.
+                  </span>
+                </p>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setIsConfirmStatusModalOpen(false);
+                  setPendingOperationalStatus(null);
+                }}
+                disabled={updating}
+                style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={handleConfirmToggleOperationalStatus}
+                disabled={updating}
+                style={{
+                  padding: '0.55rem 1.25rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  backgroundColor: pendingOperationalStatus === 'TEMPORARILY_CLOSED' ? '#dc2626' : '#10b981',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                }}
+              >
+                {updating
+                  ? 'Atualizando…'
+                  : pendingOperationalStatus === 'TEMPORARILY_CLOSED'
+                  ? 'Sim, Fechar Estabelecimento'
+                  : 'Sim, Abrir Estabelecimento'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Publicação de Produto no Estabelecimento */}
       <CreateProductModal

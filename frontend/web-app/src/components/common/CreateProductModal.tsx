@@ -48,7 +48,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
   const [brand, setBrand] = useState('');
   const [ingredients, setIngredients] = useState('');
   const [hasGluten, setHasGluten] = useState<boolean>(false);
-  const [crossContamination, setCrossContamination] = useState<string>('NONE');
+  const [crossContaminationType, setCrossContaminationType] = useState<string>('NENHUM');
+  const [milkDeclaration, setMilkDeclaration] = useState<'FREE' | 'CONTAINS' | 'TRACES' | null>(null);
   const [category, setCategory] = useState('Padaria & Confeitaria');
   const [price, setPrice] = useState<string>('');
   const [imageUrl, setImageUrl] = useState('');
@@ -208,15 +209,47 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
       return;
     }
 
+    if (!milkDeclaration) {
+      toast.error('Informe obrigatoriamente a declaração de Leite (Livre, Contém Leite ou Traços de Leite).', 'Declaração Obrigatória');
+      return;
+    }
+
     setLoading(true);
 
     try {
+      let finalIngredients = ingredients.trim();
+      let finalCrossContamination = 'Nenhum (Ambiente 100% livre)';
+
+      if (crossContaminationType === 'MAQUINARIO_COMPARTILHADO') {
+        finalCrossContamination = 'Compartilha maquinário / linhas de produção';
+      } else if (crossContaminationType === 'TRACOS') {
+        finalCrossContamination = 'Pode conter traços (Alerta preventivo no rótulo)';
+      }
+
+      if (milkDeclaration === 'CONTAINS') {
+        const lower = finalIngredients.toLowerCase();
+        const hasMilkTerm = ['leite', 'lactose', 'queijo', 'manteiga', 'creme', 'whey', 'soro'].some((t) => lower.includes(t));
+        if (!hasMilkTerm) {
+          finalIngredients = `${finalIngredients} (Contém leite e derivados)`;
+        }
+      } else if (milkDeclaration === 'TRACES') {
+        if (crossContaminationType === 'MAQUINARIO_COMPARTILHADO') {
+          finalCrossContamination = 'Pode conter traços de leite (Compartilha maquinário / linhas de produção)';
+        } else {
+          finalCrossContamination = 'Pode conter traços de leite (Alerta preventivo no rótulo)';
+        }
+      } else if (milkDeclaration === 'FREE') {
+        if (crossContaminationType === 'NENHUM') {
+          finalCrossContamination = 'Nenhum (Ambiente 100% livre de contaminação cruzada)';
+        }
+      }
+
       const payload: CreateProductInput = {
         name: name.trim(),
         brand: brand.trim() || initialPartnerName || 'Própria',
-        ingredients: ingredients.trim(),
+        ingredients: finalIngredients,
         hasGluten,
-        crossContamination,
+        crossContamination: finalCrossContamination,
         partnerId: partnerTargetId,
         category: category.trim(),
         price: price ? parseFloat(price) : undefined,
@@ -232,7 +265,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
       setPrice('');
       setImageUrl('');
       setHasGluten(false);
-      setCrossContamination('NONE');
+      setCrossContaminationType('NENHUM');
+      setMilkDeclaration(null);
       setIsAddingCustomCategory(false);
 
       if (onSuccess) {
@@ -599,8 +633,9 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
             </small>
           </div>
 
-          {/* Glúten & Contaminação Cruzada */}
-          <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'var(--color-elevated, rgba(255,255,255,0.03))', border: '1px solid var(--color-border, #334155)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {/* Segurança Alimentar: Glúten, Leite e Contaminação Cruzada */}
+          <div style={{ padding: '0.85rem', borderRadius: '10px', background: 'var(--color-elevated, rgba(255,255,255,0.03))', border: '1px solid var(--color-border, #334155)', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* 1. Glúten */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <strong style={{ fontSize: '0.85rem', color: 'var(--color-text)' }}>Contém Glúten?</strong>
@@ -618,13 +653,106 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
               </label>
             </div>
 
-            <div>
+            {/* 2. Declaração Obrigatória de Leite e Derivados */}
+            <div style={{ borderTop: '1px solid var(--color-border, #334155)', paddingTop: '0.75rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                  🥛 Declaração de Leite e Derivados (Lactose / APLV) *
+                </label>
+                {!milkDeclaration && (
+                  <span style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 600 }}>* Obrigatório</span>
+                )}
+              </div>
+              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                Selecione obrigatoriamente se o produto possui leite ou derivados na formulação ou risco de traços:
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.5rem' }}>
+                {/* Opção 1: Sem Leite */}
+                <button
+                  type="button"
+                  onClick={() => setMilkDeclaration('FREE')}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    border: milkDeclaration === 'FREE' ? '2px solid #10b981' : '1px solid var(--color-border, #334155)',
+                    background: milkDeclaration === 'FREE' ? 'rgba(16, 185, 129, 0.12)' : 'var(--color-bg, #0f172a)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: milkDeclaration === 'FREE' ? '#10b981' : 'var(--color-text)' }}>
+                    🟢 Sem Leite nem Traços
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                    100% Livre (Apto p/ APLV e intolerantes)
+                  </span>
+                </button>
+
+                {/* Opção 2: Contém Leite */}
+                <button
+                  type="button"
+                  onClick={() => setMilkDeclaration('CONTAINS')}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    border: milkDeclaration === 'CONTAINS' ? '2px solid #ef4444' : '1px solid var(--color-border, #334155)',
+                    background: milkDeclaration === 'CONTAINS' ? 'rgba(239, 68, 68, 0.12)' : 'var(--color-bg, #0f172a)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: milkDeclaration === 'CONTAINS' ? '#ef4444' : 'var(--color-text)' }}>
+                    🥛 Contém Leite
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                    Possui leite/derivados na composição
+                  </span>
+                </button>
+
+                {/* Opção 3: Traços de Leite */}
+                <button
+                  type="button"
+                  onClick={() => setMilkDeclaration('TRACES')}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-start',
+                    padding: '0.55rem 0.65rem',
+                    borderRadius: '8px',
+                    border: milkDeclaration === 'TRACES' ? '2px solid #f59e0b' : '1px solid var(--color-border, #334155)',
+                    background: milkDeclaration === 'TRACES' ? 'rgba(245, 158, 11, 0.12)' : 'var(--color-bg, #0f172a)',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <span style={{ fontSize: '0.8rem', fontWeight: 700, color: milkDeclaration === 'TRACES' ? '#f59e0b' : 'var(--color-text)' }}>
+                    ⚠️ Traços de Leite
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                    Alerta de contaminação cruzada
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* 3. Declaração de Risco de Contaminação Cruzada (100% em português) */}
+            <div style={{ borderTop: '1px solid var(--color-border, #334155)', paddingTop: '0.75rem' }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                 Declaração de Risco de Contaminação Cruzada
               </label>
               <select
-                value={crossContamination}
-                onChange={(e) => setCrossContamination(e.target.value)}
+                value={crossContaminationType}
+                onChange={(e) => setCrossContaminationType(e.target.value)}
                 style={{
                   width: '100%',
                   padding: '0.5rem',
@@ -635,9 +763,9 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   fontSize: '0.85rem',
                 }}
               >
-                <option value="NONE">🛡️ NONE — Ambiente 100% livre (Sem risco de contaminação cruzada)</option>
-                <option value="TRACES">⚠️ TRACES — Pode conter traços / Alerta preventivo no rótulo</option>
-                <option value="SHARED_EQUIPMENT">🏭 SHARED_EQUIPMENT — Compartilha maquinário/linhas de produção</option>
+                <option value="NENHUM">🛡️ NENHUM — Ambiente 100% livre (Sem risco de contaminação cruzada)</option>
+                <option value="TRACOS">⚠️ TRAÇOS — Pode conter traços / Alerta preventivo no rótulo</option>
+                <option value="MAQUINARIO_COMPARTILHADO">🏭 MAQUINÁRIO COMPARTILHADO — Compartilha maquinário/linhas de produção</option>
               </select>
             </div>
           </div>
