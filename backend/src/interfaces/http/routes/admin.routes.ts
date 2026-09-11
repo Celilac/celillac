@@ -9,6 +9,7 @@ import { PgAuditLogRepository } from '../../../infrastructure/database/audit/PgA
 import { FakeEmailService } from '../../../infrastructure/services/FakeEmailService';
 
 import { PgCategoryRepository } from '../../../infrastructure/database/catalog/PgCategoryRepository';
+import { PgProductCertificationRepository } from '../../../infrastructure/database/catalog/PgProductCertificationRepository';
 
 import { CreateReportUseCase } from '../../../application/admin/CreateReportUseCase';
 import { ListReportsUseCase } from '../../../application/admin/ListReportsUseCase';
@@ -21,6 +22,8 @@ import { DemoteAdminUseCase } from '../../../application/admin/DemoteAdminUseCas
 import { DeleteUserUseCase } from '../../../application/admin/DeleteUserUseCase';
 import { ListAdminCategoriesUseCase } from '../../../application/admin/ListAdminCategoriesUseCase';
 import { ReviewCategoryUseCase } from '../../../application/admin/ReviewCategoryUseCase';
+import { ListAdminCertificationsUseCase } from '../../../application/admin/certifications/ListAdminCertificationsUseCase';
+import { ReviewProductCertificationUseCase } from '../../../application/admin/certifications/ReviewProductCertificationUseCase';
 
 import { CreateReportController } from '../controllers/admin/CreateReportController';
 import { ListReportsController } from '../controllers/admin/ListReportsController';
@@ -32,18 +35,20 @@ import { PromoteUserToAdminController } from '../controllers/admin/PromoteUserTo
 import { DemoteAdminController } from '../controllers/admin/DemoteAdminController';
 import { DeleteUserController } from '../controllers/admin/DeleteUserController';
 import { AdminCategoryController } from '../controllers/admin/AdminCategoryController';
+import { AdminCertificationController } from '../controllers/admin/AdminCertificationController';
 
 import { authMiddleware, adminOnlyMiddleware, verifiedEmailOnlyMiddleware } from '../middlewares/AuthMiddleware';
 
 const router = Router();
 
 // Composition Root
-const reportRepository   = new PgReportRepository(pool);
-const userRepository     = new PgUserRepository(pool);
-const consumerRepository = new PgConsumerRepository(pool);
-const auditLogRepository = new PgAuditLogRepository(pool);
-const categoryRepository = new PgCategoryRepository(pool);
-const emailService       = new FakeEmailService();
+const reportRepository        = new PgReportRepository(pool);
+const userRepository          = new PgUserRepository(pool);
+const consumerRepository      = new PgConsumerRepository(pool);
+const auditLogRepository      = new PgAuditLogRepository(pool);
+const categoryRepository      = new PgCategoryRepository(pool);
+const certificationRepository = new PgProductCertificationRepository(pool);
+const emailService            = new FakeEmailService();
 
 const createReportUseCase        = new CreateReportUseCase(reportRepository);
 const listReportsUseCase         = new ListReportsUseCase(reportRepository);
@@ -56,6 +61,8 @@ const demoteAdminUseCase         = new DemoteAdminUseCase(userRepository);
 const deleteUserUseCase          = new DeleteUserUseCase(userRepository);
 const listAdminCategoriesUseCase = new ListAdminCategoriesUseCase(categoryRepository);
 const reviewCategoryUseCase      = new ReviewCategoryUseCase(categoryRepository, auditLogRepository);
+const listCertificationsUseCase  = new ListAdminCertificationsUseCase(certificationRepository);
+const reviewCertificationUseCase = new ReviewProductCertificationUseCase(certificationRepository, auditLogRepository);
 
 const createReportController        = new CreateReportController(createReportUseCase);
 const listReportsController         = new ListReportsController(listReportsUseCase);
@@ -67,6 +74,7 @@ const promoteUserToAdminController  = new PromoteUserToAdminController(promoteUs
 const demoteAdminController         = new DemoteAdminController(demoteAdminUseCase);
 const deleteUserController          = new DeleteUserController(deleteUserUseCase);
 const adminCategoryController       = new AdminCategoryController(listAdminCategoriesUseCase, reviewCategoryUseCase);
+const adminCertificationController  = new AdminCertificationController(listCertificationsUseCase, reviewCertificationUseCase);
 
 // Rotas
 router.post('/reports', authMiddleware, verifiedEmailOnlyMiddleware, (req, res) => createReportController.execute(req, res));
@@ -87,4 +95,9 @@ router.delete('/users/:id', authMiddleware, adminOnlyMiddleware, (req, res) => d
 router.get('/categories', authMiddleware, adminOnlyMiddleware, (req, res) => adminCategoryController.list(req, res));
 router.patch('/categories/:id/review', authMiddleware, adminOnlyMiddleware, (req, res) => adminCategoryController.review(req, res));
 
+// Moderação de Certificações e Laudos Técnicos de Produtos
+router.get('/certifications', authMiddleware, adminOnlyMiddleware, (req, res) => adminCertificationController.list(req, res));
+router.patch('/certifications/:id/review', authMiddleware, adminOnlyMiddleware, (req, res) => adminCertificationController.review(req, res));
+
 export { router as adminRouter };
+

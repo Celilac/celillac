@@ -415,17 +415,106 @@ Cadastra um novo produto no catálogo.
   "brand": "CeliFood",
   "ingredients": "Arroz integral, sal marinho.",
   "hasGluten": false,
-  "crossContamination": "Pode conter traços de soja."
+  "crossContamination": "Pode conter traços de soja.",
+  "partnerId": "uuid-do-parceiro",
+  "price": 12.50,
+  "category": "Biscoitos & Snacks",
+  "shortDescription": "Biscoito crocante sem glúten.",
+  "netContent": 150,
+  "unitOfMeasure": "g",
+  "sku": "BIS-ARR-150",
+  "ean": "7891234567890",
+  "commercialOrigin": "OWN_MANUFACTURE",
+  "mayContainTraces": "Pode conter soja e gergelim.",
+  "compositionNotes": "Assado em forno dedicado.",
+  "publicationStatus": "PUBLISHED",
+  "declaredAllergens": {
+    "GLUTEN": "FREE",
+    "CRUSTACEANS": "FREE",
+    "EGGS": "FREE",
+    "FISH": "FREE",
+    "PEANUTS": "FREE",
+    "SOY": "TRACES",
+    "MILK": "FREE",
+    "NUTS": "FREE",
+    "SESAME": "TRACES",
+    "SULFITES": "FREE"
+  },
+  "crossContaminationDetails": {
+    "riskLevel": "SHARED_FACILITY",
+    "isolationProtocols": "Linhas de envase separadas por sala limpa",
+    "sanitizationProtocol": "Higienização química com swab de alérgenos"
+  },
+  "dietaryFeatures": ["VEGAN", "ORGANIC", "NO_ADDED_SUGAR"],
+  "informationOrigin": "PARTNER_DECLARED",
+  "nutritionalInfo": {
+    "servingSize": "30g (3 biscoitos)",
+    "caloriesKcal": 110,
+    "carbohydratesG": 24,
+    "sugarsG": 0,
+    "addedSugarsG": 0,
+    "proteinsG": 2.1,
+    "totalFatG": 0.5,
+    "saturatedFatG": 0.1,
+    "transFatG": 0,
+    "dietaryFiberG": 1.2,
+    "sodiumMg": 45
+  },
+  "certifications": [
+    {
+      "certificationType": "ACELBRA",
+      "certificateNumber": "AC-2026-9981",
+      "issuingEntity": "ACELBRA Nacional",
+      "issuedAt": "2026-01-10T00:00:00.000Z",
+      "expiresAt": "2027-01-10T00:00:00.000Z"
+    }
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/pao-capa.webp",
+      "imageType": "PRODUCT",
+      "caption": "Foto do produto assado",
+      "displayOrder": 0,
+      "isCover": true
+    },
+    {
+      "url": "https://cdn.example.com/pao-rotulo.webp",
+      "imageType": "LABEL",
+      "caption": "Rótulo frontal legível",
+      "displayOrder": 1,
+      "isCover": false
+    }
+  ]
 }
 ```
 
 | Campo | Tipo | Obrigatório | Validação |
 |:------|:-----|:-----------:|:----------|
 | `name` | `string` | ✅ | Nome do produto |
+| `partnerId` | `string` | ✅ | ID do parceiro comercial proprietário |
 | `brand` | `string` | ❌ | Marca do produto |
-| `ingredients` | `string` | ❌ | Lista de ingredientes. Se vazio, status vira `PENDENTE_DE_ANALISE` |
-| `hasGluten` | `boolean` | ✅ | Declaração do fabricante se contém glúten |
-| `crossContamination` | `string` | ✅ | Traços declarados. Pode ser vazio. |
+| `ingredients` | `string` | ⚠️ | Obrigatório se `publicationStatus === 'PUBLISHED'` |
+| `hasGluten` | `boolean` | ❌ | Declaração se contém glúten (auto-sincronizada com `declaredAllergens.GLUTEN`) |
+| `crossContamination` | `string` | ❌ | Traços de ambiente declarados (texto legado) |
+| `price` | `number` | ❌ | Preço sugerido unitário |
+| `category` | `string` | ❌ | Categoria do produto |
+| `imageUrl` | `string` | ❌ | URL da imagem de capa (sincronizada com `images[isCover=true]`) |
+| `images` | `array` | ❌ | Lista de até 8 fotos classificadas (`PRODUCT`, `PACKAGING`, `LABEL`, `INGREDIENTS`, `NUTRITIONAL_INFO`, `CERTIFICATION`) |
+| `shortDescription` | `string` | ❌ | Breve descrição comercial |
+| `netContent` | `number` | ❌ | Quantidade / peso numérico líquido |
+| `unitOfMeasure` | `string` | ❌ | Unidade (`g`, `kg`, `ml`, `L`, `un`) |
+| `sku` | `string` | ❌ | Código de controle de estoque interno |
+| `ean` | `string` | ❌ | Código de barras EAN (8 a 14 dígitos numéricos) |
+| `commercialOrigin` | `string` | ❌ | `OWN_MANUFACTURE` (padrão) ou `THIRD_PARTY_RESELL` |
+| `mayContainTraces` | `string` | ❌ | Declaração textual de "Pode Conter..." (RDC 727/2022) |
+| `compositionNotes` | `string` | ❌ | Observações adicionais de composição |
+| `publicationStatus`| `string` | ❌ | `DRAFT`, `PUBLISHED` (padrão) ou `INACTIVE` |
+| `declaredAllergens`| `object` | ❌ | Matriz de 10 alérgenos da RDC 727 nos estados `FREE`, `CONTAINS`, `TRACES`, `NOT_INFORMED` |
+| `crossContaminationDetails` | `object` | ❌ | Isolamento fabril (`riskLevel`: `NONE`, `POSSIBLE`, `SHARED_FACILITY`, `NOT_APPLICABLE`), `isolationProtocols`, `sanitizationProtocol` |
+| `dietaryFeatures`  | `array`  | ❌ | Estilos de vida (`VEGAN`, `VEGETARIAN`, `ORGANIC`, `NO_ADDED_SUGAR`, `LOW_SODIUM`, `DAIRY_FREE`, `EGG_FREE`, `SOY_FREE`, `KOSHER`, `HALAL`) |
+| `informationOrigin`| `string` | ❌ | Origem dos dados: `PARTNER_DECLARED` (padrão) ou `VERIFIED_BY_CELILAC` |
+| `nutritionalInfo`  | `object` | ❌ | Informações nutricionais RDC 429 (`servingSize`, `caloriesKcal`, `carbohydratesG`, `sugarsG`, `addedSugarsG`, `proteinsG`, `totalFatG`, `saturatedFatG`, `transFatG`, `dietaryFiberG`, `sodiumMg`) |
+| `certifications`   | `array`  | ❌ | Selos e laudos (`certificationType`, `certificateNumber`, `issuingEntity`, `issuedAt`, `expiresAt`, `imageId`, `isVerified`) |
 
 **Response `201 Created`:**
 ```json
@@ -436,7 +525,75 @@ Cadastra um novo produto no catálogo.
   "ingredients": "Arroz integral, sal marinho.",
   "hasGluten": false,
   "crossContamination": "Pode conter traços de soja.",
-  "analysisStatus": "ANALISADO"
+  "analysisStatus": "ANALISADO",
+  "partnerId": "uuid-do-parceiro",
+  "price": 12.50,
+  "category": "Biscoitos & Snacks",
+  "imageUrl": "https://cdn.example.com/pao-capa.webp",
+  "shortDescription": "Biscoito crocante sem glúten.",
+  "netContent": 150,
+  "unitOfMeasure": "g",
+  "sku": "BIS-ARR-150",
+  "ean": "7891234567890",
+  "commercialOrigin": "OWN_MANUFACTURE",
+  "mayContainTraces": "Pode conter soja e gergelim.",
+  "compositionNotes": "Assado em forno dedicado.",
+  "publicationStatus": "PUBLISHED",
+  "declaredAllergens": {
+    "GLUTEN": "FREE",
+    "CRUSTACEANS": "FREE",
+    "EGGS": "FREE",
+    "FISH": "FREE",
+    "PEANUTS": "FREE",
+    "SOY": "TRACES",
+    "MILK": "FREE",
+    "NUTS": "FREE",
+    "SESAME": "TRACES",
+    "SULFITES": "FREE"
+  },
+  "crossContaminationDetails": {
+    "riskLevel": "SHARED_FACILITY",
+    "isolationProtocols": "Linhas de envase separadas por sala limpa",
+    "sanitizationProtocol": "Higienização química com swab de alérgenos"
+  },
+  "dietaryFeatures": ["VEGAN", "ORGANIC", "NO_ADDED_SUGAR"],
+  "informationOrigin": "PARTNER_DECLARED",
+  "nutritionalInfo": {
+    "servingSize": "30g (3 biscoitos)",
+    "caloriesKcal": 110,
+    "carbohydratesG": 24,
+    "sugarsG": 0,
+    "addedSugarsG": 0,
+    "proteinsG": 2.1,
+    "totalFatG": 0.5,
+    "saturatedFatG": 0.1,
+    "transFatG": 0,
+    "dietaryFiberG": 1.2,
+    "sodiumMg": 45
+  },
+  "certifications": [
+    {
+      "id": "uuid-do-selo",
+      "productId": "uuid-do-produto",
+      "certificationType": "ACELBRA",
+      "certificateNumber": "AC-2026-9981",
+      "issuingEntity": "ACELBRA Nacional",
+      "issuedAt": "2026-01-10T00:00:00.000Z",
+      "expiresAt": "2027-01-10T00:00:00.000Z",
+      "isVerified": false
+    }
+  ],
+  "images": [
+    {
+      "id": "uuid-da-imagem-1",
+      "productId": "uuid-do-produto",
+      "url": "https://cdn.example.com/pao-capa.webp",
+      "imageType": "PRODUCT",
+      "caption": "Foto do produto assado",
+      "displayOrder": 0,
+      "isCover": true
+    }
+  ]
 }
 ```
 
@@ -1274,5 +1431,89 @@ Revisa e modera o status e visibilidade de uma categoria.
   }
 }
 ```
+
+---
+
+## 13. Moderação de Certificações e Laudos Técnicos
+
+Módulo administrativo para homologação e auditoria de laudos laboratoriais (glúten < 20ppm), selos ACELBRA, Selo Vegano SVB, Orgânico Brasil e certificações de alérgenos anexadas aos produtos.
+
+### `GET /admin/certifications` 🔒 *(Restrito: ADMIN)*
+Lista certificações e laudos técnicos para análise da equipe.
+
+**Query Parameters:**
+| Parâmetro | Tipo | Padrão | Descrição |
+|:----------|:-----|:-------|:----------|
+| `status` | `string` | `undefined` | `DECLARED_BY_PARTNER`, `VERIFIED_BY_CELILAC` ou `REJECTED` |
+| `productId` | `string` | `undefined` | Filtra por ID de produto específico |
+| `page` | `integer` | `1` | Página atual |
+| `limit` | `integer` | `20` | Quantidade de itens por página |
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "uuid-da-certificacao",
+        "productId": "uuid-do-produto",
+        "productName": "Pão Francês Sem Glúten",
+        "productBrand": "CeliBakery",
+        "partnerId": "uuid-do-parceiro",
+        "partnerName": "Padaria Artesanal Segura",
+        "certificationType": "ACELBRA",
+        "certifyingEntity": "ACELBRA Nacional",
+        "certificateCode": "ACEL-2026-991",
+        "validUntil": "2027-12-31",
+        "imageId": "uuid-da-imagem",
+        "imageUrl": "https://cdn.example.com/laudo-acelbra.jpg",
+        "verificationStatus": "DECLARED_BY_PARTNER",
+        "verificationNotes": null,
+        "createdAt": "2026-09-10T19:00:00.000Z",
+        "updatedAt": "2026-09-10T19:00:00.000Z"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### `PATCH /admin/certifications/:id/review` 🔒 *(Restrito: ADMIN)*
+Homologa ou rejeita um selo ou laudo laboratorial, registrando auditoria imutável.
+
+**Request Body:**
+```json
+{
+  "action": "APPROVE",
+  "notes": "Laudo laboratorial verificado com resultado negativo para glúten (<5ppm)."
+}
+```
+*Ações suportadas:*
+- `APPROVE`: Homologa o laudo técnico, alterando o status para `VERIFIED_BY_CELILAC`. O produto passa a exibir o selo de segurança alimentar auditada (`AUDITED_BY_CELILAC`).
+- `REJECT`: Rejeita a certificação, exigindo `notes` com a justificativa obrigatória enviada ao parceiro.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-da-certificacao",
+    "productId": "uuid-do-produto",
+    "productName": "Pão Francês Sem Glúten",
+    "certificationType": "ACELBRA",
+    "verificationStatus": "VERIFIED_BY_CELILAC",
+    "verificationNotes": "Laudo laboratorial verificado com resultado negativo para glúten (<5ppm).",
+    "updatedAt": "2026-09-10T20:30:00.000Z"
+  },
+  "message": "Certificação homologada com sucesso."
+}
+```
+
 
 

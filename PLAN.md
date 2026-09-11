@@ -1,38 +1,66 @@
-# Plano de Implementação — Registro e Moderação de Categorias
+# PLAN.md - Fase 4: Integração com AllergenEngine & Verificação de Laudos/Selos
 
-## 1. Visão Geral
-Permitir que estabelecimentos parceiros registrem novas categorias de produtos sob demanda no catálogo, as quais ficam imediatamente utilizáveis pelo parceiro criador, mas no status `PENDING_APPROVAL` (não visíveis publicamente nos filtros de clientes até aprovação). A administração pode aprovar a categoria tornando-a pública (`GLOBAL` para todos os parceiros e clientes) ou restrita (`RESTRICTED` apenas para o parceiro que a criou), ou rejeitá-la (`REJECTED`).
+**Referência:** `PRDs/Feedback_Cadastro_Produtos_CeliLac.md` (Seções 3, 4, 6, 9 e 10)  
+**Branch de Trabalho:** `feat/product-registration-redesign`  
+**Status:** Aguardando Aprovação Humana
 
 ---
 
-## 2. Etapas de Execução
+## 1. Objetivo da Fase 4
+Integrar as informações estruturadas cadastradas nas fases anteriores (Matriz de 10 Alérgenos RDC 727, Isolamento de Contaminação Cruzada, Estilos de Vida e Selos Técnicos) diretamente ao **`AllergenEngine`** (Motor de Compatibilidade Alimentar) e implementar o **Módulo de Moderação e Auditoria de Laudos/Selos Técnicos** para a equipe administrativa do CeLiLac.
 
-### Etapa 1: Banco de Dados & Infraestrutura
-- Criar migração SQL `020_create_product_categories_table.sql` com schema da tabela `product_categories` e seed das 10 categorias padrão (`APPROVED`, `GLOBAL`).
-- Atualizar `backend/src/infrastructure/database/connection.ts` para sincronização automática.
+---
 
-### Etapa 2: Domínio & Casos de Uso (Backend DDD)
-- Entidade `Category.ts` (`id`, `name`, `normalizedName`, `status`, `visibility`, `partnerId`, `createdByUserId`, `rejectionReason`).
-- Interface `ICategoryRepository.ts` e implementação `PgCategoryRepository.ts`.
-- Casos de uso:
-  - `CreateCategoryUseCase` (Parceiro cadastra nova categoria em `PENDING_APPROVAL`).
-  - `ListCategoriesUseCase` (Lista categorias disponíveis para um parceiro ou públicas).
-  - `ReviewCategoryUseCase` (Admin aprova como `GLOBAL`, `RESTRICTED` ou rejeita).
-  - `ListAdminCategoriesUseCase` (Admin lista todas as categorias com filtros).
-- Testes unitários TDD cobrindo todos os cenários.
+## 2. Escopo Detalhado
 
-### Etapa 3: Controladores e Rotas
-- `CategoryController.ts` (`POST /catalog/categories`, `GET /catalog/categories`).
-- `AdminCategoryController.ts` (`GET /admin/categories`, `PATCH /admin/categories/:id/review`).
-- Registrar rotas em `catalog.routes.ts` e `admin.routes.ts`.
+### 2.1 Motor de Compatibilidade (`AllergenEngine`)
+- **Evolução do `ProductSnapshot`:** Incorporação de `declaredAllergens`, `crossContaminationDetails`, `certifications` ativas e `informationOrigin`.
+- **Preservação de Invariantes Biológicas:**
+  - R1: Produto sem ingredientes continua incondicionalmente `BLOCKED`.
+  - R2: Perfil inativo/incompleto continua `UNEVALUATED`.
+  - R3/R4: Restrição `FATAL` (ex: Doença Celíaca) bloqueia com glúten em ingredientes, glúten declarado (`CONTAINS`), traços declarados (`TRACES`), ou ambiente compartilhado sem protocolo de isolamento.
+- **Detecção de Divergência:** Se o parceiro declarou `FREE`, mas ingredientes contêm o alérgeno, o ingrediente prevalece e é gerado um alerta crítico de divergência.
+- **Transparência na Análise:** O `CompatibilityReport` passa a decompor a conclusão do CeLiLac, a declaração do parceiro e o nível de confiança auditada (`AUDITED_BY_CELILAC`, `PARTNER_DECLARED`).
 
-### Etapa 4: Frontend Web
-- Utilitário de API `frontend/web-app/src/api/category.ts`.
-- Atualizar `CreateProductModal.tsx` com carregamento dinâmico e opção/modal inline para registrar nova categoria instantaneamente.
-- Criar página de moderação administrativa `frontend/web-app/src/app/admin/categories/page.tsx`.
-- Adicionar atalho de navegação em `Header.tsx` para administradores.
+### 2.2 Governança e Moderação de Certificações (Admin)
+- **Repositório:** `PgProductCertificationRepository` para consultas com filtros (`PENDING`, `VERIFIED`, `REJECTED`) e atualização de status.
+- **Casos de Uso Admin:**
+  - `ListAdminCertificationsUseCase`: Lista paginada de certificações pendentes com dados do produto, parceiro e foto do laudo.
+  - `ReviewProductCertificationUseCase`: Homologa ou Rejeita o laudo técnico com parecer e registro imutável em `audit_logs`.
+- **Rotas HTTP:** `GET /admin/certifications` e `PATCH /admin/certifications/:id/review` protegidas por `adminOnlyMiddleware`.
+- **Painel Administrativo Web:** Tela `/admin/certifications` com visualização em alta resolução da foto do laudo (lightbox), dados cadastrais do selo, indicadores de validade e modais de confirmação.
+- **Visualização do Consumidor:** Badges visuais no `RiskBadge` refletindo comprovação técnica auditada pelo CeLiLac.
 
-### Etapa 5: Validação e Documentação
-- Executar testes backend (`npm test`).
-- Executar build frontend (`npm run build`).
-- Atualizar `API_CONTRACTS.md`, `DATABASE.md`, `README.md` e `CHANGELOG.md`.
+---
+
+## 3. Plano de Arquivos e Modificações
+
+| Camada | Arquivo | Ação |
+| :--- | :--- | :--- |
+| **Domínio (Engine)** | `backend/src/domain/allergen-engine/ProductSnapshot.ts` | [MODIFY] Novos campos da matriz e certificações |
+| **Domínio (Engine)** | `backend/src/domain/allergen-engine/CompatibilityReport.ts` | [MODIFY] Relatório multidimensional com confiança |
+| **Domínio (Engine)** | `backend/src/domain/allergen-engine/AllergenEngine.ts` | [MODIFY] Avaliação da matriz, divergências e ambiente |
+| **Domínio (Catálogo)** | `backend/src/domain/catalog/repositories/IProductCertificationRepository.ts` | [NEW] Interface do repositório de certificações |
+| **Infraestrutura** | `backend/src/application/catalog/mappers/toProductSnapshot.ts` | [MODIFY] Mapeamento de matriz e certificações |
+| **Infraestrutura** | `backend/src/infrastructure/database/product/PgProductRepository.ts` | [MODIFY] JOIN de certificações e dados estruturados |
+| **Infraestrutura** | `backend/src/infrastructure/database/catalog/PgProductCertificationRepository.ts` | [NEW] Implementação do repositório de certificações |
+| **Casos de Uso Admin** | `backend/src/application/admin/certifications/ListAdminCertificationsUseCase.ts` | [NEW] Listagem para moderação |
+| **Casos de Uso Admin** | `backend/src/application/admin/certifications/ReviewProductCertificationUseCase.ts` | [NEW] Homologação e auditoria de laudos |
+| **Controllers Admin** | `backend/src/interfaces/http/controllers/admin/AdminCertificationController.ts` | [NEW] Controller de moderação |
+| **Rotas Admin** | `backend/src/interfaces/http/routes/admin.routes.ts` | [MODIFY] Registro das novas rotas de certificação |
+| **Testes Backend** | `backend/tests/unit/domain/allergen-engine/AllergenEngine.spec.ts` | [MODIFY] Casos de teste da matriz e divergências |
+| **Testes Backend** | `backend/tests/unit/application/admin/ReviewProductCertificationUseCase.spec.ts` | [NEW] Testes unitários do caso de uso de moderação |
+| **Frontend API** | `frontend/web-app/src/api/certifications.ts` | [NEW] Cliente HTTP de certificações |
+| **Frontend Admin** | `frontend/web-app/src/app/admin/certifications/page.tsx` | [NEW] Painel administrativo de moderação |
+| **Frontend Layout** | `frontend/web-app/src/components/layout/Header.tsx` | [MODIFY] Link para "🏅 Selos & Laudos" no menu Admin |
+| **Frontend UI** | `frontend/web-app/src/components/common/RiskBadge.tsx` | [MODIFY] Selo auditado e alertas de divergência |
+
+---
+
+## 4. Guardrails e Critérios de Aceite
+- [ ] Invariantes biológicas R1 a R9 estritamente preservadas.
+- [ ] Detecção e alerta explícito de divergência entre ingredientes e declaração "Livre".
+- [ ] 100% de rastreabilidade de homologação/rejeição de laudos em `audit_logs`.
+- [ ] Proteção estrita RBAC em `/admin/certifications` (HTTP 403 para não-administradores).
+- [ ] Suíte de testes unitários passando no backend (`npm test`).
+- [ ] Build concluído com sucesso no backend (`tsc`) e frontend (`next build`).

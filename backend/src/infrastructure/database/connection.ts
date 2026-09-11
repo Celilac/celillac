@@ -137,6 +137,58 @@ export async function testDatabaseConnection(): Promise<void> {
       );
 
       ALTER TABLE products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS short_description TEXT;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS net_content NUMERIC(10, 2);
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS unit_of_measure VARCHAR(20);
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS sku VARCHAR(100);
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS ean VARCHAR(14);
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS commercial_origin VARCHAR(50) DEFAULT 'OWN_MANUFACTURE';
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS may_contain_traces TEXT DEFAULT '';
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS composition_notes TEXT;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS publication_status VARCHAR(50) DEFAULT 'PUBLISHED';
+
+      CREATE TABLE IF NOT EXISTS product_images (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        url TEXT NOT NULL,
+        image_type VARCHAR(50) NOT NULL DEFAULT 'PRODUCT',
+        caption VARCHAR(255),
+        display_order INT NOT NULL DEFAULT 0,
+        is_cover BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_product_images_product_id ON product_images(product_id);
+      CREATE INDEX IF NOT EXISTS idx_product_images_type ON product_images(image_type);
+      CREATE INDEX IF NOT EXISTS idx_product_images_order ON product_images(product_id, display_order);
+
+      -- Fase 3: Matriz de Alérgenos Declarados, Risco de Ambiente, Estilos de Vida e Certificações
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS declared_allergens JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS cross_contamination_details JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS dietary_features TEXT[] DEFAULT ARRAY[]::TEXT[];
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS information_origin VARCHAR(50) DEFAULT 'PARTNER_DECLARED';
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS nutritional_info JSONB DEFAULT NULL;
+
+      CREATE INDEX IF NOT EXISTS idx_products_dietary_features ON products USING GIN(dietary_features);
+      CREATE INDEX IF NOT EXISTS idx_products_information_origin ON products(information_origin);
+
+      CREATE TABLE IF NOT EXISTS product_certifications (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        certification_type VARCHAR(60) NOT NULL,
+        certifying_entity VARCHAR(150) NOT NULL,
+        certificate_code VARCHAR(100),
+        valid_until DATE,
+        image_id UUID REFERENCES product_images(id) ON DELETE SET NULL,
+        verification_status VARCHAR(30) NOT NULL DEFAULT 'DECLARED_BY_PARTNER',
+        verification_notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_product_certifications_product_id ON product_certifications(product_id);
+      CREATE INDEX IF NOT EXISTS idx_product_certifications_status ON product_certifications(verification_status);
 
       CREATE TABLE IF NOT EXISTS product_reports (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

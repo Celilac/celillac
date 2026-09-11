@@ -166,7 +166,50 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `price` | NUMERIC(10,2) | Preço unitário |
 | `image_url` | TEXT | Imagem do produto |
 | `is_active` | BOOLEAN | DEFAULT true |
+| `short_description` | TEXT | Breve descrição comercial do produto |
+| `net_content` | NUMERIC(10,2) | Peso líquido ou volume numérico (ex: 500, 1.5) |
+| `unit_of_measure` | VARCHAR(20) | Unidade de medida (g, kg, ml, L, un) |
+| `sku` | VARCHAR(100) | Código de referência/estoque interno |
+| `ean` | VARCHAR(14) | Código de barras / EAN (8 a 14 dígitos) |
+| `commercial_origin` | VARCHAR(50) | `OWN_MANUFACTURE` (Fabricação Própria) ou `THIRD_PARTY_RESELL` (Revenda) |
+| `may_contain_traces`| TEXT | Declaração de traços ("Pode Conter") RDC 727/2022 |
+| `composition_notes` | TEXT | Observações técnicas sobre a composição |
+| `publication_status`| VARCHAR(50) | `DRAFT`, `PUBLISHED`, `INACTIVE` |
+| `declared_allergens`| JSONB | Mapa de 10 alérgenos e situações (`FREE`, `CONTAINS`, `TRACES`, `NOT_INFORMED`) |
+| `cross_contamination_details` | JSONB | Risco de ambiente discriminado por restrição e protocolos |
+| `dietary_features` | TEXT[] | Tags de estilo de vida (`VEGAN`, `VEGETARIAN`, `NO_ADDED_SUGAR`, `SUGAR_FREE`, `ORGANIC`, `KOSHER`, `HALAL`) |
+| `information_origin`| VARCHAR(50) | `PARTNER_DECLARED`, `LABEL_EXTRACTED`, `MANUFACTURER_PROVIDED`, `VERIFIED_BY_CELILAC` |
+| `nutritional_info`  | JSONB | Informações nutricionais (porção, calorias, macros, sódio) |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
+| `updated_at` | TIMESTAMP | DEFAULT NOW() |
+
+### Tabela: `product_images` (Galeria de Imagens e Evidências)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `product_id` | UUID | FK → products.id (ON DELETE CASCADE) |
+| `url` | TEXT | URL ou Data URL da imagem comprimida (NOT NULL) |
+| `image_type` | VARCHAR(50) | `PRODUCT`, `PACKAGING`, `LABEL`, `INGREDIENTS`, `NUTRITIONAL_INFO`, `CERTIFICATION` |
+| `caption` | VARCHAR(255) | Legenda opcional da foto |
+| `display_order` | INT | Ordem de exibição na galeria (DEFAULT 0) |
+| `is_cover` | BOOLEAN | Indica se é a imagem de capa principal (DEFAULT false) |
+| `created_at` | TIMESTAMP | DEFAULT NOW() |
+| `updated_at` | TIMESTAMP | DEFAULT NOW() |
+
+### Tabela: `product_certifications` (Selos, Certificações e Evidências Auditáveis)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `product_id` | UUID | FK → products.id (ON DELETE CASCADE) |
+| `certification_type` | VARCHAR(60) | Tipo do selo (ex: `GLUTEN_FREE_ACELBRA`, `VEGAN_SVB`, `ORGANIC_BRASIL`, `KOSHER`, `HALAL`, `OTHER`) |
+| `certifying_entity` | VARCHAR(150) | Nome da entidade certificadora oficial |
+| `certificate_code` | VARCHAR(100) | Código de registro ou número da certificação |
+| `valid_until` | DATE | Data de validade da certificação (opcional) |
+| `image_id` | UUID | FK → product_images.id (vínculo opcional com foto do laudo na galeria) |
+| `verification_status` | VARCHAR(30) | `DECLARED_BY_PARTNER`, `VERIFIED_BY_CELILAC`, `REJECTED` |
+| `verification_notes` | TEXT | Parecer da equipe de auditoria CeLiLac |
+| `created_at` | TIMESTAMP | DEFAULT NOW() |
+| `updated_at` | TIMESTAMP | DEFAULT NOW() |
 
 ### Tabela: `product_categories` (Categorias e Moderação)
 | Coluna | Tipo | Restrições |

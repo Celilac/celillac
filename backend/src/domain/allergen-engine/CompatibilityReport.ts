@@ -19,6 +19,17 @@ export interface ConflictDetail {
   reason:    string;
 }
 
+export type ConfidenceLevel = 'AUDITED_BY_CELILAC' | 'PARTNER_DECLARED' | 'PRECAUTIONARY';
+
+export interface AnalysisDetails {
+  ingredientsEvaluation:    string;
+  declaredEvaluation:       string;
+  environmentEvaluation:    string;
+  certificationsEvaluation: string;
+  hasDivergence:            boolean;
+  divergenceNotes?:         string;
+}
+
 /**
  * CompatibilityReport — Saída do AllergenEngine.
  * ⚠️ ARQUIVO CRÍTICO — Qualquer alteração exige aprovação humana (GUARDRAILS.md #1)
@@ -27,8 +38,11 @@ export interface ConflictDetail {
  * para que o usuário tenha informação completa.
  */
 export interface CompatibilityReport {
-  isCompatible: boolean;
-  riskLevel:    RiskLevel;
-  conflicts:    ConflictDetail[];
-  reasoning:    string;
+  isCompatible:     boolean;
+  riskLevel:        RiskLevel;
+  conflicts:        ConflictDetail[];
+  reasoning:        string;
+  confidenceLevel?: ConfidenceLevel;
+  analysisDetails?: AnalysisDetails;
 }
+

@@ -103,6 +103,12 @@ export function Header() {
         )}
 
         {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
+          <Link href="/admin/certifications" className={navLinkClass('/admin/certifications')} onClick={() => setMenuOpen(false)}>
+            🏅 Selos & Laudos
+          </Link>
+        )}
+
+        {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
           <Link href="/admin/reports" className={navLinkClass('/admin/reports')} onClick={() => setMenuOpen(false)}>
             🚨 Denúncias
           </Link>
