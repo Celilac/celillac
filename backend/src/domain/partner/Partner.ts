@@ -266,4 +266,41 @@ export class Partner extends Entity<PartnerProps> {
       )
     );
   }
+
+  /**
+   * Reconstitui um Partner a partir da persistência (PostgreSQL).
+   * Tolera dados legados (ex: CNPJ anterior à regra do Módulo 11) sem quebrar consultas.
+   */
+  static reconstitute(props: PartnerProps, id: string): Partner {
+    let formattedCnpj = props.cnpj;
+    if (props.cnpj) {
+      const cnpjResult = Cnpj.create(props.cnpj);
+      if (cnpjResult.isSuccess) {
+        const validCnpj = cnpjResult.getValue();
+        formattedCnpj = validCnpj ? validCnpj.formatted : formattedCnpj;
+      }
+    }
+
+    return new Partner(
+      {
+        userId: props.userId,
+        name: (props.name || '').trim(),
+        cnpj: formattedCnpj,
+        description: (props.description || '').trim(),
+        address: (props.address || '').trim(),
+        phone: (props.phone || '').trim(),
+        type: props.type,
+        approvalStatus: props.approvalStatus || PartnerApprovalStatus.DRAFT,
+        operationalStatus: props.operationalStatus || PartnerOperationalStatus.INACTIVE,
+        rejectionReason: props.rejectionReason,
+        suspensionReason: props.suspensionReason,
+        city: props.city ? props.city.trim() : undefined,
+        state: props.state ? props.state.trim() : undefined,
+        deliveryRegion: props.deliveryRegion ? props.deliveryRegion.trim() : undefined,
+        logoUrl: props.logoUrl ? props.logoUrl.trim() : undefined,
+      },
+      id
+    );
+  }
 }
+
