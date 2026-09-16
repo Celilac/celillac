@@ -767,8 +767,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
               </h4>
 
               {/* Nome & Marca */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
+                <div style={{ minWidth: 0 }}>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                     Nome do Produto *
                   </label>
@@ -779,18 +779,20 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                     onChange={(e) => setName(e.target.value)}
                     style={{
                       width: '100%',
+                      minWidth: 0,
                       padding: '0.65rem',
                       borderRadius: '8px',
                       border: '1px solid var(--color-border)',
                       background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : '#ffffff',
                       color: 'var(--color-text)',
                       fontSize: '0.85rem',
+                      boxSizing: 'border-box',
                     }}
                     required
                   />
                 </div>
 
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                     Marca / Linha
                   </label>
@@ -801,20 +803,22 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                     onChange={(e) => setBrand(e.target.value)}
                     style={{
                       width: '100%',
+                      minWidth: 0,
                       padding: '0.65rem',
                       borderRadius: '8px',
                       border: '1px solid var(--color-border)',
                       background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : '#ffffff',
                       color: 'var(--color-text)',
                       fontSize: '0.85rem',
+                      boxSizing: 'border-box',
                     }}
                   />
                 </div>
               </div>
 
               {/* Categoria & Preço */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
+                <div style={{ minWidth: 0 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
                     <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>
                       Categoria *
@@ -851,12 +855,14 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                       }}
                       style={{
                         width: '100%',
+                        minWidth: 0,
                         padding: '0.65rem',
                         borderRadius: '8px',
                         border: '1px solid var(--color-border)',
                         background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : '#ffffff',
                         color: 'var(--color-text)',
                         fontSize: '0.85rem',
+                        boxSizing: 'border-box',
                       }}
                       disabled={loadingCategories}
                     >
@@ -886,12 +892,14 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                         onChange={(e) => setNewCategoryName(e.target.value)}
                         style={{
                           width: '100%',
+                          minWidth: 0,
                           padding: '0.4rem',
                           borderRadius: '6px',
                           border: '1px solid var(--color-border)',
                           background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : '#ffffff',
                           color: 'var(--color-text)',
                           fontSize: '0.8rem',
+                          boxSizing: 'border-box',
                         }}
                         autoFocus
                       />
@@ -916,7 +924,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   )}
                 </div>
 
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                     Preço Sugerido / Unitário (R$)
                   </label>
@@ -929,24 +937,26 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                     onChange={(e) => setPrice(e.target.value)}
                     style={{
                       width: '100%',
+                      minWidth: 0,
                       padding: '0.65rem',
                       borderRadius: '8px',
                       border: '1px solid var(--color-border)',
                       background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : '#ffffff',
                       color: 'var(--color-text)',
                       fontSize: '0.85rem',
+                      boxSizing: 'border-box',
                     }}
                   />
                 </div>
               </div>
 
               {/* Quantidade Líquida/Peso + Unidade de Medida */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
+                <div style={{ minWidth: 0 }}>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                     Peso Líquido / Volume
                   </label>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', width: '100%', gap: '0.4rem' }}>
                     <input
                       type="number"
                       step="any"
@@ -956,25 +966,32 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                       onChange={(e) => setNetContent(e.target.value)}
                       style={{
                         flex: 1,
+                        minWidth: 0,
+                        width: '100%',
                         padding: '0.65rem',
                         borderRadius: '8px',
                         border: '1px solid var(--color-border)',
                         background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : '#ffffff',
                         color: 'var(--color-text)',
                         fontSize: '0.85rem',
+                        boxSizing: 'border-box',
                       }}
                     />
                     <select
                       value={unitOfMeasure}
                       onChange={(e) => setUnitOfMeasure(e.target.value)}
                       style={{
-                        width: '130px',
-                        padding: '0.65rem',
+                        width: '120px',
+                        minWidth: '95px',
+                        flexShrink: 0,
+                        padding: '0.65rem 0.4rem',
                         borderRadius: '8px',
                         border: '1px solid var(--color-border)',
                         background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : '#ffffff',
                         color: 'var(--color-text)',
                         fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        boxSizing: 'border-box',
                       }}
                     >
                       {UNITS_OF_MEASURE.map((u) => (
@@ -984,7 +1001,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   </div>
                 </div>
 
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                     Descrição Curta
                   </label>
@@ -995,20 +1012,22 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                     onChange={(e) => setShortDescription(e.target.value)}
                     style={{
                       width: '100%',
+                      minWidth: 0,
                       padding: '0.65rem',
                       borderRadius: '8px',
                       border: '1px solid var(--color-border)',
                       background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : '#ffffff',
                       color: 'var(--color-text)',
                       fontSize: '0.85rem',
+                      boxSizing: 'border-box',
                     }}
                   />
                 </div>
               </div>
 
               {/* SKU & EAN */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
-                <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
+                <div style={{ minWidth: 0 }}>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                     Código Interno / SKU (Opcional)
                   </label>
@@ -1019,17 +1038,19 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                     onChange={(e) => setSku(e.target.value)}
                     style={{
                       width: '100%',
+                      minWidth: 0,
                       padding: '0.65rem',
                       borderRadius: '8px',
                       border: '1px solid var(--color-border)',
                       background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : '#ffffff',
                       color: 'var(--color-text)',
                       fontSize: '0.85rem',
+                      boxSizing: 'border-box',
                     }}
                   />
                 </div>
 
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.25rem' }}>
                     Código de Barras / EAN (Opcional)
                   </label>
@@ -1040,12 +1061,14 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                     onChange={(e) => setEan(e.target.value)}
                     style={{
                       width: '100%',
+                      minWidth: 0,
                       padding: '0.65rem',
                       borderRadius: '8px',
                       border: '1px solid var(--color-border)',
                       background: theme === 'dark' ? 'rgba(15, 23, 42, 0.6)' : '#ffffff',
                       color: 'var(--color-text)',
                       fontSize: '0.85rem',
+                      boxSizing: 'border-box',
                     }}
                   />
                 </div>
