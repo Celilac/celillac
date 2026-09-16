@@ -8,6 +8,10 @@ import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { validateImageFile, compressImage } from '@/utils/image';
+import { maskCnpj, validateCnpj, maskCep } from '@/utils/mask';
+import { fetchAddressByCep } from '@/services/viaCep';
+import InternationalPhoneInput from '@/components/common/InternationalPhoneInput';
+import PartnerLocationMap from '@/components/common/PartnerLocationMap';
 import styles from '../../partner.module.css';
 
 interface PageProps {
@@ -30,10 +34,14 @@ export default function EditPartnerPage({ params }: PageProps) {
 
   const [name,           setName]           = useState('');
   const [cnpj,           setCnpj]           = useState('');
+  const [cnpjError,      setCnpjError]      = useState('');
   const [description,    setDescription]    = useState('');
   const [address,        setAddress]        = useState('');
   const [phone,          setPhone]          = useState('');
   const [type,           setType]           = useState('RESTAURANT');
+  const [country,        setCountry]        = useState('BR');
+  const [cep,            setCep]            = useState('');
+  const [loadingCep,     setLoadingCep]     = useState(false);
   const [city,           setCity]           = useState('');
   const [state,          setState]          = useState('');
   const [deliveryRegion, setDeliveryRegion] = useState('');
@@ -52,7 +60,7 @@ export default function EditPartnerPage({ params }: PageProps) {
     partnerApi.get(id, token)
       .then((data) => {
         setName(data.name);
-        setCnpj(data.cnpj || '');
+        setCnpj(data.cnpj ? maskCnpj(data.cnpj) : '');
         setDescription(data.description || '');
         setAddress(data.address);
         setPhone(data.phone);
@@ -72,6 +80,42 @@ export default function EditPartnerPage({ params }: PageProps) {
       })
       .finally(() => setLoadingInit(false));
   }, [id, isAuthenticated, token, router, toast]);
+
+  async function handleCepChange(rawCep: string) {
+    const formatted = maskCep(rawCep);
+    setCep(formatted);
+    const clean = formatted.replace(/\D/g, '');
+    if (clean.length === 8) {
+      setLoadingCep(true);
+      try {
+        const addr = await fetchAddressByCep(clean);
+        if (addr) {
+          setCity(addr.localidade);
+          setState(addr.uf);
+          const base = [addr.logradouro, addr.bairro].filter(Boolean).join(', ');
+          setAddress(base);
+          toast.success(`Endereço localizado: ${addr.localidade} - ${addr.uf}`, 'CEP Encontrado');
+        } else {
+          toast.info('CEP não localizado automaticamente. Preencha o endereço manualmente.', 'Aviso');
+        }
+      } catch {
+        // silencioso
+      } finally {
+        setLoadingCep(false);
+      }
+    }
+  }
+
+  function handleCnpjChange(val: string) {
+    const formatted = maskCnpj(val);
+    setCnpj(formatted);
+    const validation = validateCnpj(formatted);
+    if (!validation.valid && formatted.replace(/\D/g, '').length === 14) {
+      setCnpjError(validation.error || 'CNPJ inválido');
+    } else {
+      setCnpjError('');
+    }
+  }
 
   async function processImageFile(file: File) {
     const validation = validateImageFile(file);
@@ -137,6 +181,14 @@ export default function EditPartnerPage({ params }: PageProps) {
     if (!name.trim() || !address.trim() || !phone.trim() || !type) {
       toast.warning('Por favor, preencha todos os campos obrigatórios (*).', 'Campos incompletos');
       return;
+    }
+
+    if (cnpj.trim().length > 0) {
+      const validation = validateCnpj(cnpj);
+      if (!validation.valid) {
+        toast.error(validation.error || 'CNPJ inválido. Verifique os dígitos informados.', 'Validação Fiscal');
+        return;
+      }
     }
 
     setLoading(true);
@@ -233,16 +285,28 @@ export default function EditPartnerPage({ params }: PageProps) {
                 </div>
 
                 <div className={styles.formGroup}>
-                  <label className={styles.label} htmlFor="partner-cnpj">CNPJ (Opcional)</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label className={styles.label} htmlFor="partner-cnpj">CNPJ (Opcional)</label>
+                    {cnpj.replace(/\D/g, '').length === 14 && (
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: cnpjError ? 'var(--color-danger, #EF4444)' : 'var(--color-success, #10B981)' }}>
+                        {cnpjError ? `❌ ${cnpjError}` : '✅ CNPJ Válido'}
+                      </span>
+                    )}
+                  </div>
                   <input
                     id="partner-cnpj"
                     type="text"
                     className={styles.input}
-                    placeholder="Ex: 12.345.678/0001-95"
+                    placeholder="00.000.000/0000-00"
                     value={cnpj}
-                    onChange={(e) => setCnpj(e.target.value)}
+                    maxLength={18}
+                    onChange={(e) => handleCnpjChange(e.target.value)}
                     disabled={loading}
+                    style={cnpjError ? { borderColor: 'var(--color-danger, #EF4444)' } : undefined}
                   />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748B)' }}>
+                    Opcional para produtor artesanal ou pessoa física sem registro de pessoa jurídica.
+                  </span>
                 </div>
 
                 <div className={styles.formGroup} style={{ marginBottom: 0 }}>
@@ -332,16 +396,13 @@ export default function EditPartnerPage({ params }: PageProps) {
                 </div>
 
                 <div className={styles.formGroup} style={{ marginBottom: 0, marginTop: 'auto' }}>
-                  <label className={styles.label} htmlFor="partner-phone">Telefone / WhatsApp de Contato *</label>
-                  <input
+                  <InternationalPhoneInput
                     id="partner-phone"
-                    type="text"
-                    className={styles.input}
-                    placeholder="Ex: (11) 99999-9999"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={setPhone}
                     required
                     disabled={loading}
+                    label="Telefone / WhatsApp de Contato"
                   />
                 </div>
               </div>
@@ -353,13 +414,69 @@ export default function EditPartnerPage({ params }: PageProps) {
                 📍 Localização e Atendimento
               </h2>
 
+              {/* Seletor de País e CEP */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                  <label className={styles.label} htmlFor="partner-country">País do Estabelecimento</label>
+                  <select
+                    id="partner-country"
+                    className={styles.select}
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
+                    disabled={loading}
+                  >
+                    <option value="BR">🇧🇷 Brasil</option>
+                    <option value="PT">🇵🇹 Portugal</option>
+                    <option value="US">🇺🇸 Estados Unidos</option>
+                    <option value="ES">🇪🇸 Espanha</option>
+                    <option value="AR">🇦🇷 Argentina</option>
+                    <option value="OTHER">🌐 Outro País</option>
+                  </select>
+                </div>
+
+                <div className={styles.formGroup} style={{ marginBottom: 0 }}>
+                  <label className={styles.label} htmlFor="partner-cep">
+                    {country === 'BR' ? 'CEP (Auto-completar)' : 'Código Postal / Zip Code'}
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      id="partner-cep"
+                      type="text"
+                      className={styles.input}
+                      placeholder={country === 'BR' ? '00000-000' : 'Zip / Postal Code'}
+                      value={cep}
+                      maxLength={country === 'BR' ? 9 : 15}
+                      onChange={(e) => {
+                        if (country === 'BR') {
+                          handleCepChange(e.target.value);
+                        } else {
+                          setCep(e.target.value);
+                        }
+                      }}
+                      disabled={loading || loadingCep}
+                    />
+                    {loadingCep && (
+                      <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: 'var(--color-accent)' }}>
+                        ⏳ Buscando...
+                      </span>
+                    )}
+                  </div>
+                  {country === 'BR' && (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                      Digite os 8 dígitos para preencher rua, bairro, cidade e estado via ViaCEP.
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Endereço Completo */}
               <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="partner-address">Endereço Completo *</label>
+                <label className={styles.label} htmlFor="partner-address">Logradouro / Endereço Completo *</label>
                 <input
                   id="partner-address"
                   type="text"
                   className={styles.input}
-                  placeholder="Ex: Av. Paulista, 1000, Bloco B"
+                  placeholder="Ex: Av. Paulista, 1000, Bloco B, Bela Vista"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
                   required
@@ -367,6 +484,7 @@ export default function EditPartnerPage({ params }: PageProps) {
                 />
               </div>
 
+              {/* Cidade e Estado */}
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1rem' }}>
                 <div className={styles.formGroup}>
                   <label className={styles.label} htmlFor="partner-city">Cidade</label>
@@ -381,7 +499,7 @@ export default function EditPartnerPage({ params }: PageProps) {
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label className={styles.label} htmlFor="partner-state">Estado</label>
+                  <label className={styles.label} htmlFor="partner-state">Estado / UF</label>
                   <input
                     id="partner-state"
                     type="text"
@@ -404,6 +522,21 @@ export default function EditPartnerPage({ params }: PageProps) {
                   value={deliveryRegion}
                   onChange={(e) => setDeliveryRegion(e.target.value)}
                   disabled={loading}
+                />
+              </div>
+
+              {/* Pré-visualização do Google Maps */}
+              <div style={{ marginTop: '1.25rem' }}>
+                <label className={styles.label} style={{ marginBottom: '8px', display: 'block' }}>
+                  🗺️ Localização no Mapa (Google Maps)
+                </label>
+                <PartnerLocationMap
+                  address={address}
+                  city={city}
+                  state={state}
+                  name={name}
+                  height={240}
+                  showDirectionsButton={true}
                 />
               </div>
             </div>

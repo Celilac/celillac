@@ -1,66 +1,50 @@
-# PLAN.md - Fase 4: Integração com AllergenEngine & Verificação de Laudos/Selos
+# PLAN.md - Melhorias no Cadastro e Gestão de Parceiros: Telefone Internacional, CEP Automático, Google Maps e Validação Oficial de CNPJ
 
-**Referência:** `PRDs/Feedback_Cadastro_Produtos_CeliLac.md` (Seções 3, 4, 6, 9 e 10)  
 **Branch de Trabalho:** `feat/product-registration-redesign`  
 **Status:** Aguardando Aprovação Humana
 
 ---
 
-## 1. Objetivo da Fase 4
-Integrar as informações estruturadas cadastradas nas fases anteriores (Matriz de 10 Alérgenos RDC 727, Isolamento de Contaminação Cruzada, Estilos de Vida e Selos Técnicos) diretamente ao **`AllergenEngine`** (Motor de Compatibilidade Alimentar) e implementar o **Módulo de Moderação e Auditoria de Laudos/Selos Técnicos** para a equipe administrativa do CeLiLac.
+## 1. Objetivo
+Implementar melhorias essenciais de usabilidade, internacionalização, conformidade fiscal e geolocalização no ecossistema de parceiros comerciais (`Partner`):
+1. **Telefone Internacional:** Máscara dinâmica por país, suporte a múltiplos DDIs (Brasil 🇧🇷, EUA 🇺🇸, Portugal 🇵🇹, etc.) e armazenamento no formato internacional E.164.
+2. **Endereço & CEP:** Consulta automática de CEP via ViaCEP (gratuito) para endereços no Brasil com auto-preenchimento e fallback manual; suporte a Código Postal para endereços internacionais.
+3. **Google Maps:** Integração de mapa interativo (Google Maps Embed `output=embed` com zero custos e sem dependência de API key paga) no cadastro/edição, no catálogo público e no painel administrativo com botão "Como Chegar".
+4. **CNPJ com Máscara e Validação Oficial:** Máscara em tempo real `99.999.999/9999-99` no frontend e validação algorítmica rigorosa (Módulo 11 da Receita Federal) no domínio com o Value Object `Cnpj`.
 
 ---
 
 ## 2. Escopo Detalhado
 
-### 2.1 Motor de Compatibilidade (`AllergenEngine`)
-- **Evolução do `ProductSnapshot`:** Incorporação de `declaredAllergens`, `crossContaminationDetails`, `certifications` ativas e `informationOrigin`.
-- **Preservação de Invariantes Biológicas:**
-  - R1: Produto sem ingredientes continua incondicionalmente `BLOCKED`.
-  - R2: Perfil inativo/incompleto continua `UNEVALUATED`.
-  - R3/R4: Restrição `FATAL` (ex: Doença Celíaca) bloqueia com glúten em ingredientes, glúten declarado (`CONTAINS`), traços declarados (`TRACES`), ou ambiente compartilhado sem protocolo de isolamento.
-- **Detecção de Divergência:** Se o parceiro declarou `FREE`, mas ingredientes contêm o alérgeno, o ingrediente prevalece e é gerado um alerta crítico de divergência.
-- **Transparência na Análise:** O `CompatibilityReport` passa a decompor a conclusão do CeLiLac, a declaração do parceiro e o nível de confiança auditada (`AUDITED_BY_CELILAC`, `PARTNER_DECLARED`).
+### 2.1 Domínio e Backend (`backend`)
+- **Value Object `Cnpj` (`backend/src/domain/partner/value-objects/Cnpj.ts`):**
+  - Implementação do algoritmo oficial do Módulo 11 (cálculo de 1º e 2º dígitos verificadores com pesos 5..2, 9..2 e 6..2, 9..2).
+  - Bloqueio de sequências repetidas (`00000000000000`, etc.).
+  - Preservação da opcionalidade para produtores artesanais/pessoa física.
+- **Entidade `Partner` (`backend/src/domain/partner/Partner.ts`):**
+  - Validação via `Cnpj.create()` nos métodos `create` e `updateDetails`.
+  - Suporte a telefones internacionais no formato E.164.
+- **Suíte de Testes Unitários:**
+  - `Cnpj.spec.ts` com cobertura de 100% de casos válidos e inválidos.
+  - Atualização dos testes existentes de `Partner.spec.ts`.
 
-### 2.2 Governança e Moderação de Certificações (Admin)
-- **Repositório:** `PgProductCertificationRepository` para consultas com filtros (`PENDING`, `VERIFIED`, `REJECTED`) e atualização de status.
-- **Casos de Uso Admin:**
-  - `ListAdminCertificationsUseCase`: Lista paginada de certificações pendentes com dados do produto, parceiro e foto do laudo.
-  - `ReviewProductCertificationUseCase`: Homologa ou Rejeita o laudo técnico com parecer e registro imutável em `audit_logs`.
-- **Rotas HTTP:** `GET /admin/certifications` e `PATCH /admin/certifications/:id/review` protegidas por `adminOnlyMiddleware`.
-- **Painel Administrativo Web:** Tela `/admin/certifications` com visualização em alta resolução da foto do laudo (lightbox), dados cadastrais do selo, indicadores de validade e modais de confirmação.
-- **Visualização do Consumidor:** Badges visuais no `RiskBadge` refletindo comprovação técnica auditada pelo CeLiLac.
-
----
-
-## 3. Plano de Arquivos e Modificações
-
-| Camada | Arquivo | Ação |
-| :--- | :--- | :--- |
-| **Domínio (Engine)** | `backend/src/domain/allergen-engine/ProductSnapshot.ts` | [MODIFY] Novos campos da matriz e certificações |
-| **Domínio (Engine)** | `backend/src/domain/allergen-engine/CompatibilityReport.ts` | [MODIFY] Relatório multidimensional com confiança |
-| **Domínio (Engine)** | `backend/src/domain/allergen-engine/AllergenEngine.ts` | [MODIFY] Avaliação da matriz, divergências e ambiente |
-| **Domínio (Catálogo)** | `backend/src/domain/catalog/repositories/IProductCertificationRepository.ts` | [NEW] Interface do repositório de certificações |
-| **Infraestrutura** | `backend/src/application/catalog/mappers/toProductSnapshot.ts` | [MODIFY] Mapeamento de matriz e certificações |
-| **Infraestrutura** | `backend/src/infrastructure/database/product/PgProductRepository.ts` | [MODIFY] JOIN de certificações e dados estruturados |
-| **Infraestrutura** | `backend/src/infrastructure/database/catalog/PgProductCertificationRepository.ts` | [NEW] Implementação do repositório de certificações |
-| **Casos de Uso Admin** | `backend/src/application/admin/certifications/ListAdminCertificationsUseCase.ts` | [NEW] Listagem para moderação |
-| **Casos de Uso Admin** | `backend/src/application/admin/certifications/ReviewProductCertificationUseCase.ts` | [NEW] Homologação e auditoria de laudos |
-| **Controllers Admin** | `backend/src/interfaces/http/controllers/admin/AdminCertificationController.ts` | [NEW] Controller de moderação |
-| **Rotas Admin** | `backend/src/interfaces/http/routes/admin.routes.ts` | [MODIFY] Registro das novas rotas de certificação |
-| **Testes Backend** | `backend/tests/unit/domain/allergen-engine/AllergenEngine.spec.ts` | [MODIFY] Casos de teste da matriz e divergências |
-| **Testes Backend** | `backend/tests/unit/application/admin/ReviewProductCertificationUseCase.spec.ts` | [NEW] Testes unitários do caso de uso de moderação |
-| **Frontend API** | `frontend/web-app/src/api/certifications.ts` | [NEW] Cliente HTTP de certificações |
-| **Frontend Admin** | `frontend/web-app/src/app/admin/certifications/page.tsx` | [NEW] Painel administrativo de moderação |
-| **Frontend Layout** | `frontend/web-app/src/components/layout/Header.tsx` | [MODIFY] Link para "🏅 Selos & Laudos" no menu Admin |
-| **Frontend UI** | `frontend/web-app/src/components/common/RiskBadge.tsx` | [MODIFY] Selo auditado e alertas de divergência |
+### 2.2 Frontend Web App (`frontend/web-app`)
+- **Utilitários de Máscara e Validação (`src/utils/mask.ts`):**
+  - `maskCnpj`, `validateCnpj`, `maskCep`, `maskPhone`, `parsePhoneToE164`.
+- **Serviço de CEP (`src/services/viaCep.ts`):**
+  - Consulta assíncrona ao ViaCEP com preenchimento automático de Logradouro, Bairro, Cidade e Estado.
+- **Componente `InternationalPhoneInput.tsx`:**
+  - Seletor de DDI/País com bandeiras e máscara adaptativa.
+- **Componente `PartnerLocationMap.tsx`:**
+  - Renderização responsiva do Google Maps Embed com pino e botão "Como Chegar / Abrir no Google Maps".
+- **Telas de Cadastro e Edição (`/partner/register` e `/partner/[id]/edit`):**
+  - Integração do input de telefone internacional, busca por CEP, campos de número/complemento, validação visual de CNPJ e mapa de preview ao vivo.
+- **Páginas de Visualização (`/public-partners/[id]`, `/partner/[id]`, `/admin/partners`):**
+  - Exibição de mapa de localização e telefone formatado com atalho para WhatsApp e chamada.
 
 ---
 
-## 4. Guardrails e Critérios de Aceite
-- [ ] Invariantes biológicas R1 a R9 estritamente preservadas.
-- [ ] Detecção e alerta explícito de divergência entre ingredientes e declaração "Livre".
-- [ ] 100% de rastreabilidade de homologação/rejeição de laudos em `audit_logs`.
-- [ ] Proteção estrita RBAC em `/admin/certifications` (HTTP 403 para não-administradores).
-- [ ] Suíte de testes unitários passando no backend (`npm test`).
-- [ ] Build concluído com sucesso no backend (`tsc`) e frontend (`next build`).
+## 3. Matriz de Testes e Validação
+- Testes unitários Jest: `npm test` no backend (todas as suítes verdes).
+- Build estático Next.js: `npm run build` no frontend (19/19 rotas com zero erros).
+- Validação manual de CEP real (`01310-100`), CNPJs válidos e inválidos, telefones de diferentes países e renderização do mapa.

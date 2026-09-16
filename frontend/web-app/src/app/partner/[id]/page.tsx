@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { CreateProductModal } from '@/components/common/CreateProductModal';
+import PartnerLocationMap from '@/components/common/PartnerLocationMap';
+import { formatDisplayPhone, maskCnpj } from '@/utils/mask';
 import styles from '../partner.module.css';
 
 interface PageProps {
@@ -281,13 +283,25 @@ export default function PartnerDetailPage({ params }: PageProps) {
               <div className={styles.infoGrid}>
                 <div>
                   <p className={styles.infoRow}><strong>Razão/Nome Fantasia:</strong> <span>{partner.name}</span></p>
-                  <p className={styles.infoRow}><strong>CNPJ:</strong> <span>{partner.cnpj || 'Não informado (Pessoa Física)'}</span></p>
+                  <p className={styles.infoRow}><strong>CNPJ:</strong> <span>{partner.cnpj ? maskCnpj(partner.cnpj) : 'Não informado (Pessoa Física)'}</span></p>
                   <p className={styles.infoRow}><strong>Tipo:</strong> <span>{partner.type}</span></p>
                 </div>
                 <div>
+                  <p className={styles.infoRow}><strong>Endereço:</strong> <span>{partner.address}</span></p>
                   <p className={styles.infoRow}><strong>Cidade/Estado:</strong> <span>{partner.city ? `${partner.city} - ${partner.state}` : 'Não cadastrado'}</span></p>
                   <p className={styles.infoRow}><strong>Região Atendimento:</strong> <span>{partner.deliveryRegion || 'Local'}</span></p>
-                  <p className={styles.infoRow}><strong>Telefone de Contato:</strong> <span>{partner.phone}</span></p>
+                  <p className={styles.infoRow}>
+                    <strong>Telefone:</strong>{' '}
+                    <a
+                      href={`https://wa.me/${partner.phone?.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'var(--color-accent, #2563EB)', textDecoration: 'none', fontWeight: 500 }}
+                      title="Abrir no WhatsApp"
+                    >
+                      {formatDisplayPhone(partner.phone)}
+                    </a>
+                  </p>
                 </div>
               </div>
               <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
@@ -295,6 +309,19 @@ export default function PartnerDetailPage({ params }: PageProps) {
                 <p style={{ color: 'var(--color-text-muted)', marginTop: '0.25rem', fontSize: 'var(--text-body)', lineHeight: '1.6' }}>
                   {partner.description || 'Nenhuma descrição adicionada.'}
                 </p>
+              </div>
+
+              {/* Mapa de Localização */}
+              <div style={{ marginTop: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+                <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>📍 Localização no Mapa:</p>
+                <PartnerLocationMap
+                  address={partner.address}
+                  city={partner.city}
+                  state={partner.state}
+                  name={partner.name}
+                  height={220}
+                  showDirectionsButton={true}
+                />
               </div>
             </div>
 

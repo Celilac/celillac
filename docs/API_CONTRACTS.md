@@ -786,13 +786,25 @@ Cadastra um novo perfil comercial de parceiro. Apenas para usuários com papel `
 }
 ```
 
+| Campo | Tipo | Obrigatório | Validação / Descrição |
+|:------|:-----|:-----------:|:----------------------|
+| `name` | `string` | ✅ | Nome comercial ou razão social |
+| `cnpj` | `string` | ❌ | Opcional (produtor artesanal/PF). Se informado, validado via Módulo 11 da Receita Federal |
+| `phone` | `string` | ✅ | Telefone no padrão internacional E.164 (ex: `+5511999998888`) |
+| `address` | `string` | ✅ | Endereço completo (georreferenciado via Google Maps no frontend) |
+| `type` | `string` | ✅ | `RESTAURANT`, `MARKET` ou `INDEPENDENT_PRODUCER` |
+| `city` | `string` | ❌ | Cidade (auto-preenchida via CEP) |
+| `state` | `string` | ❌ | Estado / UF (auto-preenchido via CEP) |
+| `deliveryRegion` | `string` | ❌ | Região de atendimento |
+| `logoUrl` | `string` | ❌ | Imagem da marca em Base64/WebP/PNG (até 5MB) |
+
 **Response `201 Created`:**
 ```json
 {
   "id": "uuid-do-parceiro",
   "userId": "uuid-do-dono",
   "name": "Cantina Vegana Sem Glúten",
-  "cnpj": "12345678000195",
+  "cnpj": "12.345.678/0001-95",
   "description": "Pratos saudáveis livres de contaminação cruzada.",
   "address": "Av. Paulista, 1000",
   "phone": "11999998888",

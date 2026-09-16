@@ -6,7 +6,7 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-63%20suites%20%7C%20379%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-64%20suites%20%7C%20387%20passing-brightgreen)](#-testes)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20%2B%20Oracle%20Cloud-orange)](#-segurança--governança)
 
 ---
@@ -44,7 +44,7 @@ celillac/
 │   │   ├── application/     # Casos de uso
 │   │   ├── infrastructure/  # PostgreSQL (pg), repositórios
 │   │   └── interfaces/      # Controllers HTTP (Express)
-│   └── tests/unit/          # 63 suítes | 379 testes
+│   └── tests/unit/          # 64 suítes | 387 testes
 ├── frontend/
 │   ├── web-app/             # Aplicação principal (Next.js 14, porta 3001)
 │   ├── landing-page/        # Landing page estática (Next.js 14, porta 3002)
@@ -135,11 +135,12 @@ cd backend
 npm test
 ```
 
-**63 suítes de teste | 379 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
+**64 suítes de teste | 387 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
 | `domain/Result.spec.ts` | 100% |
+| `domain/partner/Cnpj.spec.ts` | 100% |
 | `domain/iam/Email`, `PasswordHash`, `User` | 100% |
 | `domain/food-profile/SeverityLevel`, `Restriction`, `FoodProfile` | 100% |
 | `domain/allergen-engine/AllergenEngine` ← 9 casos críticos | ~98% |

@@ -95,10 +95,10 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `id` | UUID | PK |
 | `user_id` | UUID | FK → users.id, NOT NULL |
 | `name` | VARCHAR(255) | Nome comercial / Razão social, NOT NULL |
-| `cnpj` | VARCHAR(20) | Opcional (14 dígitos) |
+| `cnpj` | VARCHAR(20) | Opcional. Se informado, validado via Módulo 11 da Receita Federal e formatado (99.999.999/9999-99) |
 | `description` | TEXT | Descrição do negócio |
-| `address` | TEXT | Endereço completo, NOT NULL |
-| `phone` | VARCHAR(50) | Telefone / WhatsApp de contato |
+| `address` | TEXT | Endereço completo georreferenciado via Google Maps, NOT NULL |
+| `phone` | VARCHAR(50) | Telefone / WhatsApp de contato no padrão internacional E.164 (ex: +5511999998888) |
 | `type` | VARCHAR(50) | `RESTAURANT`, `MARKET`, `INDEPENDENT_PRODUCER` |
 | `approval_status` | VARCHAR(50) | `DRAFT`, `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `SUSPENDED` |
 | `operational_status` | VARCHAR(50) | `ACTIVE`, `INACTIVE`, `TEMPORARILY_CLOSED` |
