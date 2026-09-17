@@ -92,6 +92,13 @@
   --shadow-sm:   0 1px 8px rgba(0,0,0,0.3);
   --shadow-md:   0 4px 20px rgba(0,0,0,0.4);
   --shadow-glow: 0 0 30px var(--color-emerald-glow);
+
+  /* Aliases compatíveis para cards e formulários (Tema Escuro) */
+  --card-bg:           var(--color-surface);
+  --card-bg-selected:  rgba(255, 255, 255, 0.05);
+  --input-bg:          rgba(15, 23, 42, 0.6);
+  --border-color:      var(--color-border);
+  --text-primary:      var(--color-text);
 }
 
 /* Paleta — tema claro (ativado via [data-theme="light"] no <html>)
@@ -110,6 +117,13 @@
   --color-text:        #1C2B33;
   --color-text-muted:  #51616B;
   --color-text-subtle: #7C8B93;
+
+  /* Aliases compatíveis para cards e formulários (Tema Claro) */
+  --card-bg:           #FFFFFF;
+  --card-bg-selected:  rgba(16, 185, 129, 0.08);
+  --input-bg:          #FFFFFF;
+  --border-color:      rgba(36, 65, 81, 0.12);
+  --text-primary:      #1C2B33;
 
   /* Risco — escurecidos para manter ≥4.5:1 sobre fundo claro (WCAG AA).
      No tema escuro os tons originais já contrastam bem contra o fundo quase-preto;

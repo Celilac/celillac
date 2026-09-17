@@ -422,4 +422,66 @@ describe('Partner Domain Entity', () => {
     expect(partner.operationalStatus).toBe(PartnerOperationalStatus.INACTIVE);
     expect(partner.isActive).toBe(false);
   });
+
+  describe('reconstitute', () => {
+    it('should reconstitute a partner with valid formatted CNPJ', () => {
+      const partner = Partner.reconstitute(
+        {
+          userId: 'user-uuid',
+          name: 'Mercado Natural',
+          cnpj: '98765432000198',
+          description: 'Mercado de produtos sem glúten',
+          address: 'Rua A, 100',
+          phone: '11999999999',
+          type: PartnerType.MARKET,
+          approvalStatus: PartnerApprovalStatus.APPROVED,
+          operationalStatus: PartnerOperationalStatus.ACTIVE,
+        },
+        'partner-uuid-1'
+      );
+
+      expect(partner.id).toBe('partner-uuid-1');
+      expect(partner.name).toBe('Mercado Natural');
+      expect(partner.cnpj).toBe('98.765.432/0001-98');
+      expect(partner.approvalStatus).toBe(PartnerApprovalStatus.APPROVED);
+    });
+
+    it('should reconstitute safely when CNPJ is legacy or invalid without throwing', () => {
+      const partner = Partner.reconstitute(
+        {
+          userId: 'user-uuid',
+          name: 'Restaurante Legado',
+          cnpj: '12345678910121',
+          description: 'Restaurante tradicional',
+          address: 'Rua B, 200',
+          phone: '11988888888',
+          type: PartnerType.RESTAURANT,
+        },
+        'partner-uuid-2'
+      );
+
+      expect(partner.id).toBe('partner-uuid-2');
+      expect(partner.cnpj).toBe('12345678910121');
+    });
+
+    it('should reconstitute without CNPJ when optional or undefined', () => {
+      const partner = Partner.reconstitute(
+        {
+          userId: 'user-uuid',
+          name: 'Doceria da Ana',
+          description: 'Doces caseiros',
+          address: 'Rua C, 300',
+          phone: '11977777777',
+          type: PartnerType.INDEPENDENT_PRODUCER,
+        },
+        'partner-uuid-3'
+      );
+
+      expect(partner.id).toBe('partner-uuid-3');
+      expect(partner.cnpj).toBeUndefined();
+      expect(partner.approvalStatus).toBe(PartnerApprovalStatus.DRAFT);
+      expect(partner.operationalStatus).toBe(PartnerOperationalStatus.INACTIVE);
+    });
+  });
 });
+

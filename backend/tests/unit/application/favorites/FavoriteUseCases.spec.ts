@@ -29,7 +29,7 @@ describe('Favorite Use Cases', () => {
   const mockPartner = Partner.create({
     userId: 'user-2',
     name: 'Confeitaria SemG',
-    cnpj: '12.345.678/0001-90',
+    cnpj: '12.345.678/0001-95',
     address: 'Rua Principal, 200',
     description: 'Tudo gluten-free',
     phone: '1234-5678',

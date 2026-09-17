@@ -13,6 +13,8 @@ import { Header } from '@/components/layout/Header';
 import { FavoriteButton } from '@/components/common/FavoriteButton';
 import { ReviewsList } from '@/components/common/ReviewsList';
 import { ReportModal } from '@/components/common/ReportModal';
+import PartnerLocationMap from '@/components/common/PartnerLocationMap';
+import { formatDisplayPhone } from '@/utils/mask';
 import styles from '../../partner/partner.module.css';
 
 interface PageProps {
@@ -174,9 +176,32 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                   <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🌆 Cidade:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não informada'}</p>
                 </div>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>📞 Contato:</strong> {partner.phone}</p>
+                  <p style={{ marginBottom: '0.5rem' }}>
+                    <strong style={{ color: 'var(--color-text)' }}>📞 Contato:</strong>{' '}
+                    <a
+                      href={`https://wa.me/${partner.phone?.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'var(--color-accent, #2563EB)', textDecoration: 'none', fontWeight: 500 }}
+                      title="Clique para abrir no WhatsApp"
+                    >
+                      {formatDisplayPhone(partner.phone)}
+                    </a>
+                  </p>
                   <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🚗 Região Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
                 </div>
+              </div>
+
+              {/* Mapa de Localização Interativo */}
+              <div style={{ marginTop: '1.25rem' }}>
+                <PartnerLocationMap
+                  address={partner.address}
+                  city={partner.city}
+                  state={partner.state}
+                  name={partner.name}
+                  height={240}
+                  showDirectionsButton={true}
+                />
               </div>
             </div>
 

@@ -581,7 +581,7 @@ export default function DashboardPage() {
 
                 <div style={{ padding: 'var(--space-3)', background: 'var(--color-elevated)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
                   <span style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--color-warning)', display: 'block' }}>
-                    {partnerProducts.filter((p) => p.analysisStatus === 'PENDING_ANALYSIS').length}
+                    {partnerProducts.filter((p) => p.analysisStatus === 'PENDING_ANALYSIS' || p.analysisStatus === 'PENDENTE_DE_ANALISE').length}
                   </span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Em Análise</span>
                 </div>
@@ -848,11 +848,13 @@ export default function DashboardPage() {
                 }}>
                   {displayList.map((product) => {
                     const statusInfo: Record<string, { label: string; bg: string; color: string; border: string }> = {
+                      ANALISADO: { label: '✅ Analisado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
                       APPROVED: { label: '✅ Aprovado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+                      PENDENTE_DE_ANALISE: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
                       PENDING_ANALYSIS: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
                       FLAGGED: { label: '⚠️ Sinalizado', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
                     };
-                    const status = statusInfo[product.analysisStatus] || statusInfo['PENDING_ANALYSIS'];
+                    const status = statusInfo[product.analysisStatus] || statusInfo['PENDENTE_DE_ANALISE'];
 
                     return (
                       <Link

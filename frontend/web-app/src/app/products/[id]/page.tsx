@@ -211,7 +211,13 @@ export default function ProductDetailsPage({ params }: PageProps) {
                   })()}
                 </li>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  📋 <strong>Status da Análise:</strong> {product.analysisStatus || 'VERIFICADO'}
+                  📋 <strong>Status da Análise:</strong> {
+                    product.analysisStatus === 'ANALISADO' || product.analysisStatus === 'APPROVED'
+                      ? '✅ Analisado'
+                      : product.analysisStatus === 'PENDENTE_DE_ANALISE' || product.analysisStatus === 'PENDING_ANALYSIS'
+                      ? '⏳ Pendente de Análise'
+                      : product.analysisStatus || 'VERIFICADO'
+                  }
                 </li>
               </ul>
             </div>

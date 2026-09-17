@@ -292,7 +292,7 @@ const PARTNERS: Array<{
       id: 'c0000001-0000-0000-0000-000000000002',
       emailResponsavel: 'parceiro.restaurante@seed.celilac.dev',
       name: 'Mercado Natural & Cia',
-      cnpj: '98765432000121',
+      cnpj: '98765432000198',
       description: 'Mercearia com seleção de produtos embalados sem glúten e sem leite.',
       address: 'Rua das Flores, 123',
       phone: '11988887777',
