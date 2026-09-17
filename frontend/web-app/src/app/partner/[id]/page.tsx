@@ -370,11 +370,13 @@ export default function PartnerDetailPage({ params }: PageProps) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {products.map((p) => {
                     const statusInfo: Record<string, { label: string; bg: string; color: string; border: string }> = {
+                      ANALISADO: { label: '✅ Analisado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
                       APPROVED: { label: '✅ Aprovado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+                      PENDENTE_DE_ANALISE: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
                       PENDING_ANALYSIS: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
                       FLAGGED: { label: '⚠️ Sinalizado', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
                     };
-                    const st = statusInfo[p.analysisStatus] || statusInfo['PENDING_ANALYSIS'];
+                    const st = statusInfo[p.analysisStatus] || statusInfo['PENDENTE_DE_ANALISE'];
 
                     return (
                       <div
