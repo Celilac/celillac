@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { reviewApi } from '@/api/reviews';
 import { apiClient } from '@/api/client';
+import { useToast } from '@/hooks/useToast';
 import styles from '../../app/partner/partner.module.css';
 
 interface ReviewModalProps {
@@ -25,6 +26,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
   onSuccess,
 }) => {
   const { token, userId, isAuthenticated } = useAuth();
+  const toast = useToast();
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -74,6 +76,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         token
       );
       setComment('');
+      toast.success('Avaliação enviada com sucesso!', 'Obrigado');
       onSuccess?.();
       onClose();
     } catch (err: any) {

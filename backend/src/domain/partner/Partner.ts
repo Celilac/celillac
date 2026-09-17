@@ -1,6 +1,7 @@
 // backend/src/domain/partner/Partner.ts
 import { Entity } from '../Entity';
 import { Result } from '../Result';
+import { Cnpj } from './value-objects/Cnpj';
 
 export enum PartnerType {
   RESTAURANT = 'RESTAURANT',
@@ -180,15 +181,12 @@ export class Partner extends Entity<PartnerProps> {
       this.props.type = details.type;
     }
     if (details.cnpj !== undefined) {
-      if (details.cnpj && details.cnpj.trim().length > 0) {
-        const cleanCnpj = details.cnpj.replace(/\D/g, '');
-        if (cleanCnpj.length !== 14) {
-          return Result.fail<void>('CNPJ inválido (deve conter 14 dígitos).');
-        }
-        this.props.cnpj = details.cnpj.trim();
-      } else {
-        this.props.cnpj = undefined;
+      const cnpjResult = Cnpj.create(details.cnpj);
+      if (cnpjResult.isFailure) {
+        return Result.fail<void>(cnpjResult.getError());
       }
+      const validCnpj = cnpjResult.getValue();
+      this.props.cnpj = validCnpj ? validCnpj.formatted : undefined;
     }
     if (details.address !== undefined) {
       if (details.address.trim().length === 0) {
@@ -229,11 +227,14 @@ export class Partner extends Entity<PartnerProps> {
     if (!props.name || props.name.trim().length === 0) {
       return Result.fail<Partner>('O nome comercial do parceiro é obrigatório.');
     }
-    if (props.cnpj && props.cnpj.trim().length > 0) {
-      const cleanCnpj = props.cnpj.replace(/\D/g, '');
-      if (cleanCnpj.length !== 14) {
-        return Result.fail<Partner>('CNPJ inválido (deve conter 14 dígitos).');
+    let formattedCnpj: string | undefined;
+    if (props.cnpj !== undefined) {
+      const cnpjResult = Cnpj.create(props.cnpj);
+      if (cnpjResult.isFailure) {
+        return Result.fail<Partner>(cnpjResult.getError());
       }
+      const validCnpj = cnpjResult.getValue();
+      formattedCnpj = validCnpj ? validCnpj.formatted : undefined;
     }
     if (!props.address || props.address.trim().length === 0) {
       return Result.fail<Partner>('O endereço do parceiro é obrigatório.');
@@ -247,7 +248,7 @@ export class Partner extends Entity<PartnerProps> {
         {
           userId: props.userId,
           name: props.name.trim(),
-          cnpj: props.cnpj ? props.cnpj.trim() : undefined,
+          cnpj: formattedCnpj,
           description: (props.description || '').trim(),
           address: props.address.trim(),
           phone: (props.phone || '').trim(),
@@ -265,4 +266,41 @@ export class Partner extends Entity<PartnerProps> {
       )
     );
   }
+
+  /**
+   * Reconstitui um Partner a partir da persistência (PostgreSQL).
+   * Tolera dados legados (ex: CNPJ anterior à regra do Módulo 11) sem quebrar consultas.
+   */
+  static reconstitute(props: PartnerProps, id: string): Partner {
+    let formattedCnpj = props.cnpj;
+    if (props.cnpj) {
+      const cnpjResult = Cnpj.create(props.cnpj);
+      if (cnpjResult.isSuccess) {
+        const validCnpj = cnpjResult.getValue();
+        formattedCnpj = validCnpj ? validCnpj.formatted : formattedCnpj;
+      }
+    }
+
+    return new Partner(
+      {
+        userId: props.userId,
+        name: (props.name || '').trim(),
+        cnpj: formattedCnpj,
+        description: (props.description || '').trim(),
+        address: (props.address || '').trim(),
+        phone: (props.phone || '').trim(),
+        type: props.type,
+        approvalStatus: props.approvalStatus || PartnerApprovalStatus.DRAFT,
+        operationalStatus: props.operationalStatus || PartnerOperationalStatus.INACTIVE,
+        rejectionReason: props.rejectionReason,
+        suspensionReason: props.suspensionReason,
+        city: props.city ? props.city.trim() : undefined,
+        state: props.state ? props.state.trim() : undefined,
+        deliveryRegion: props.deliveryRegion ? props.deliveryRegion.trim() : undefined,
+        logoUrl: props.logoUrl ? props.logoUrl.trim() : undefined,
+      },
+      id
+    );
+  }
 }
+

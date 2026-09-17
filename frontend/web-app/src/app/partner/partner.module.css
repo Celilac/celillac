@@ -584,6 +584,40 @@ input:checked + .slider:before {
   transform: translateX(24px);
 }
 
+/* Slider específico para Status Operacional (Verde = Ativo/Aberto, Vermelho = Inativo/Fechado) */
+.sliderOperational {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ef4444;
+  transition: 0.25s ease;
+  border-radius: var(--radius-full);
+}
+
+.sliderOperational:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.25s ease;
+  border-radius: var(--radius-full);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+input:checked + .sliderOperational {
+  background-color: #10b981;
+}
+
+input:checked + .sliderOperational:before {
+  transform: translateX(24px);
+}
+
 /* Modal Dialog */
 .dialogOverlay {
   position: fixed;
@@ -864,6 +898,18 @@ input:checked + .slider:before {
 
 :global(html[data-theme='light']) .slider {
   background-color: #cbd5e1;
+}
+
+:global(html[data-theme='light']) input:checked + .slider {
+  background-color: #10b981;
+}
+
+:global(html[data-theme='light']) .sliderOperational {
+  background-color: #ef4444;
+}
+
+:global(html[data-theme='light']) input:checked + .sliderOperational {
+  background-color: #10b981;
 }
 
 :global(html[data-theme='light']) .dialogOverlay {

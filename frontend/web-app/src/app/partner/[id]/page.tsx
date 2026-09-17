@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { CreateProductModal } from '@/components/common/CreateProductModal';
+import PartnerLocationMap from '@/components/common/PartnerLocationMap';
+import { formatDisplayPhone, maskCnpj } from '@/utils/mask';
 import styles from '../partner.module.css';
 
 interface PageProps {
@@ -67,10 +69,21 @@ export default function PartnerDetailPage({ params }: PageProps) {
       .finally(() => setLoading(false));
   }, [id, isAuthenticated, token, router, toast, loadProducts]);
 
-  async function handleToggleOperationalStatus() {
-    if (!partner || !token) return;
+  const [isConfirmStatusModalOpen, setIsConfirmStatusModalOpen] = useState(false);
+  const [pendingOperationalStatus, setPendingOperationalStatus] = useState<'ACTIVE' | 'TEMPORARILY_CLOSED' | null>(null);
 
+  function handleRequestToggleOperationalStatus() {
+    if (!partner || !token || updating) return;
     const nextStatus = partner.operationalStatus === 'ACTIVE' ? 'TEMPORARILY_CLOSED' : 'ACTIVE';
+    setPendingOperationalStatus(nextStatus);
+    setIsConfirmStatusModalOpen(true);
+  }
+
+  async function handleConfirmToggleOperationalStatus() {
+    if (!partner || !token || !pendingOperationalStatus) return;
+
+    const nextStatus = pendingOperationalStatus;
+    setIsConfirmStatusModalOpen(false);
     setUpdating(true);
     try {
       await partnerApi.updateOperationalStatus(partner.id, nextStatus, token);
@@ -83,6 +96,7 @@ export default function PartnerDetailPage({ params }: PageProps) {
       );
     } finally {
       setUpdating(false);
+      setPendingOperationalStatus(null);
     }
   }
 
@@ -269,13 +283,25 @@ export default function PartnerDetailPage({ params }: PageProps) {
               <div className={styles.infoGrid}>
                 <div>
                   <p className={styles.infoRow}><strong>Razão/Nome Fantasia:</strong> <span>{partner.name}</span></p>
-                  <p className={styles.infoRow}><strong>CNPJ:</strong> <span>{partner.cnpj || 'Não informado (Pessoa Física)'}</span></p>
+                  <p className={styles.infoRow}><strong>CNPJ:</strong> <span>{partner.cnpj ? maskCnpj(partner.cnpj) : 'Não informado (Pessoa Física)'}</span></p>
                   <p className={styles.infoRow}><strong>Tipo:</strong> <span>{partner.type}</span></p>
                 </div>
                 <div>
+                  <p className={styles.infoRow}><strong>Endereço:</strong> <span>{partner.address}</span></p>
                   <p className={styles.infoRow}><strong>Cidade/Estado:</strong> <span>{partner.city ? `${partner.city} - ${partner.state}` : 'Não cadastrado'}</span></p>
                   <p className={styles.infoRow}><strong>Região Atendimento:</strong> <span>{partner.deliveryRegion || 'Local'}</span></p>
-                  <p className={styles.infoRow}><strong>Telefone de Contato:</strong> <span>{partner.phone}</span></p>
+                  <p className={styles.infoRow}>
+                    <strong>Telefone:</strong>{' '}
+                    <a
+                      href={`https://wa.me/${partner.phone?.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'var(--color-accent, #2563EB)', textDecoration: 'none', fontWeight: 500 }}
+                      title="Abrir no WhatsApp"
+                    >
+                      {formatDisplayPhone(partner.phone)}
+                    </a>
+                  </p>
                 </div>
               </div>
               <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
@@ -283,6 +309,19 @@ export default function PartnerDetailPage({ params }: PageProps) {
                 <p style={{ color: 'var(--color-text-muted)', marginTop: '0.25rem', fontSize: 'var(--text-body)', lineHeight: '1.6' }}>
                   {partner.description || 'Nenhuma descrição adicionada.'}
                 </p>
+              </div>
+
+              {/* Mapa de Localização */}
+              <div style={{ marginTop: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+                <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>📍 Localização no Mapa:</p>
+                <PartnerLocationMap
+                  address={partner.address}
+                  city={partner.city}
+                  state={partner.state}
+                  name={partner.name}
+                  height={220}
+                  showDirectionsButton={true}
+                />
               </div>
             </div>
 
@@ -331,11 +370,13 @@ export default function PartnerDetailPage({ params }: PageProps) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {products.map((p) => {
                     const statusInfo: Record<string, { label: string; bg: string; color: string; border: string }> = {
+                      ANALISADO: { label: '✅ Analisado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
                       APPROVED: { label: '✅ Aprovado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+                      PENDENTE_DE_ANALISE: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
                       PENDING_ANALYSIS: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
                       FLAGGED: { label: '⚠️ Sinalizado', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
                     };
-                    const st = statusInfo[p.analysisStatus] || statusInfo['PENDING_ANALYSIS'];
+                    const st = statusInfo[p.analysisStatus] || statusInfo['PENDENTE_DE_ANALISE'];
 
                     return (
                       <div
@@ -389,11 +430,43 @@ export default function PartnerDetailPage({ params }: PageProps) {
                               </span>
                             )}
 
-                            {p.crossContamination && p.crossContamination !== 'NONE' && (
-                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: '1px solid var(--color-warning-border)' }}>
-                                ⚠️ Contaminação Cruzada
-                              </span>
-                            )}
+                            {/* Badge de Leite e Derivados */}
+                            {(() => {
+                              const ing = (p.ingredients || '').toLowerCase();
+                              const cross = (p.crossContamination || '').toLowerCase();
+                              const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme de leite', 'soro de leite', 'whey'];
+                              const hasMilkInIng = milkTerms.some((t) => ing.includes(t));
+                              const hasMilkInTraces = milkTerms.some((t) => cross.includes(t));
+
+                              if (hasMilkInIng) {
+                                return (
+                                  <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                                    🥛 Contém Leite
+                                  </span>
+                                );
+                              }
+                              if (hasMilkInTraces) {
+                                return (
+                                  <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                                    ⚠️ Traços de Leite
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)' }}>
+                                  🥛 Sem Leite
+                                </span>
+                              );
+                            })()}
+
+                            {p.crossContamination &&
+                              p.crossContamination !== 'NONE' &&
+                              p.crossContamination !== 'NENHUM' &&
+                              !p.crossContamination.toLowerCase().startsWith('nenhum') && (
+                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: '1px solid var(--color-warning-border)' }}>
+                                  ⚠️ Contaminação Cruzada
+                                </span>
+                              )}
                           </div>
                         </div>
 
@@ -426,14 +499,14 @@ export default function PartnerDetailPage({ params }: PageProps) {
                     {partner.operationalStatus === 'ACTIVE' ? 'Visível na busca e apto a operar.' : 'Exibe aviso de fechamento aos clientes.'}
                   </p>
                 </div>
-                <label className={styles.switch}>
+                <label className={styles.switch} title="Alterar status operacional">
                   <input 
                     type="checkbox" 
                     checked={partner.operationalStatus === 'ACTIVE'}
-                    onChange={handleToggleOperationalStatus}
+                    onChange={handleRequestToggleOperationalStatus}
                     disabled={updating}
                   />
-                  <span className={styles.slider}></span>
+                  <span className={styles.sliderOperational}></span>
                 </label>
               </div>
 
@@ -446,6 +519,103 @@ export default function PartnerDetailPage({ params }: PageProps) {
           </aside>
         </div>
       </main>
+
+      {/* Modal de Confirmação de Alteração do Status Operacional */}
+      {isConfirmStatusModalOpen && (
+        <div
+          className={styles.dialogOverlay}
+          style={{ backdropFilter: 'blur(4px)', zIndex: 1200 }}
+          onClick={() => {
+            if (!updating) {
+              setIsConfirmStatusModalOpen(false);
+              setPendingOperationalStatus(null);
+            }
+          }}
+        >
+          <div
+            className={styles.dialogCard}
+            style={{ maxWidth: '500px', width: '90%' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>
+                {pendingOperationalStatus === 'TEMPORARILY_CLOSED'
+                  ? '⚠️ Pausar Operação do Estabelecimento?'
+                  : '🟢 Abrir Estabelecimento?'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!updating) {
+                    setIsConfirmStatusModalOpen(false);
+                    setPendingOperationalStatus(null);
+                  }
+                }}
+                style={{ background: 'transparent', border: 'none', fontSize: '1.25rem', cursor: 'pointer', color: 'var(--color-text-muted)' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ marginTop: '0.5rem', marginBottom: '1.5rem', fontSize: '0.9rem', lineHeight: '1.6', color: 'var(--color-text)' }}>
+              {pendingOperationalStatus === 'TEMPORARILY_CLOSED' ? (
+                <p>
+                  Você tem certeza que deseja <strong>fechar o estabelecimento "{partner.name}"</strong>?
+                  <br />
+                  <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', display: 'block', marginTop: '0.5rem' }}>
+                    Ao desativar, seu estabelecimento e produtos associados ficarão sinalizados como temporariamente fechados e não receberão novas consultas na busca pública.
+                  </span>
+                </p>
+              ) : (
+                <p>
+                  Você tem certeza que deseja <strong>abrir o estabelecimento "{partner.name}"</strong>?
+                  <br />
+                  <span style={{ color: 'var(--color-text-muted)', fontSize: '0.85rem', display: 'block', marginTop: '0.5rem' }}>
+                    Ao abrir, seu estabelecimento e seu catálogo de produtos ficarão imediatamente disponíveis e visíveis para busca e pedidos de clientes.
+                  </span>
+                </p>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => {
+                  setIsConfirmStatusModalOpen(false);
+                  setPendingOperationalStatus(null);
+                }}
+                disabled={updating}
+                style={{ padding: '0.55rem 1.1rem', fontSize: '0.85rem' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={handleConfirmToggleOperationalStatus}
+                disabled={updating}
+                style={{
+                  padding: '0.55rem 1.25rem',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  backgroundColor: pendingOperationalStatus === 'TEMPORARILY_CLOSED' ? '#dc2626' : '#10b981',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                }}
+              >
+                {updating
+                  ? 'Atualizando…'
+                  : pendingOperationalStatus === 'TEMPORARILY_CLOSED'
+                  ? 'Sim, Fechar Estabelecimento'
+                  : 'Sim, Abrir Estabelecimento'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de Publicação de Produto no Estabelecimento */}
       <CreateProductModal

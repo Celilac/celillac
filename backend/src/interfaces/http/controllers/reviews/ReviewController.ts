@@ -13,13 +13,13 @@ export class ReviewController {
   public async submit(req: Request, res: Response): Promise<Response> {
     try {
       const { productId, partnerId, rating, comment } = req.body;
-      const userId = req.body.userId || req.user?.id;
+      const userId = req.user?.id || req.body.userId;
 
       if (!userId || (!productId && !partnerId) || rating === undefined) {
-        return res.status(400).json({ error: 'Os campos userId, rating (1-5) e pelo menos um de productId ou partnerId são obrigatórios.' });
+        return res.status(400).json({ error: 'Os campos rating (1-5) e pelo menos um de productId ou partnerId são obrigatórios.' });
       }
 
-      if (req.user?.id !== userId && req.user?.role !== 'ADMIN') {
+      if (req.user?.id && req.body.userId && req.user.id !== req.body.userId && req.user?.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Você não tem permissão para enviar avaliação em nome de outro usuário.' });
       }
 

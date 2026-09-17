@@ -33,12 +33,15 @@ As 9 regras abaixo são a **única definição oficial** de como o motor funcion
 | **R7** | Traços para severidades não-FATAL (com tolerância ativada) | found in crossContamination, severity ≠ FATAL, acceptsCrossContamination = true | `WARNING` |
 | **R8** | Risco final = maior entre todos os conflitos | múltiplos conflitos encontrados | RiskLevel mais alto vence |
 | **R9** | Invariante 11.5: Traços + Não-Tolerância a Contaminação Cruzada | found in crossContamination, severity = HIGH, acceptsCrossContamination = false | `DANGER` (eleva de WARNING para DANGER) |
+| **R10** | Detecção de Divergência Crítica (Fase 4 - Feedback Cadastro) | declared = FREE, mas encontrado nos ingredientes textuais | Conflito mantido por precaução + Alerta de Divergência |
 
 > **Nota sobre R1:** O princípio da precaução prioriza a segurança do celíaco. Um produto sem informação é tratado como produto perigoso — nunca como produto seguro.
 
 > **Nota sobre R2 (RN-CONSUMER-07 / Issue #32):** Se o consumidor não configurou perfil alimentar completo (`restrictions.length === 0`), o sistema retorna `UNEVALUATED` e `isCompatible = false`. Isso impede a falsa sensação de segurança de exibir produtos como seguros para perfis sem dados configurados.
 
 > **Nota sobre R9 (Invariante 11.5):** Quando o consumidor declara `acceptsCrossContamination = false` (padrão do sistema para máxima segurança), o alérgeno detectado nos traços para restrições de severidade `HIGH` eleva o risco para `DANGER`. Para severidade `FATAL`, o resultado é sempre `BLOCKED` independente da tolerância declarada.
+
+> **Nota sobre R10 (Fase 4 — Prevalência de Ingredientes e Alerta de Divergência):** Se o estabelecimento declara `FREE` na Matriz de Alérgenos (RDC 727), porém a lista de ingredientes textuais do rótulo contém o alérgeno (ex: farinha de trigo), o motor **NUNCA** confia cegamente na declaração "Livre". Por princípio da precaução e segurança de vida do celíaco, a presença física de ingredientes prevalece sobre qualquer declaração, bloqueando o consumo e sinalizando `hasDivergence = true` e `confidenceLevel = 'PRECAUTIONARY'`.
 
 > **RN-CONSUMER-05 (Issue #34 — aprovado 2026-08-01):** Uma restrição com `type === ALLERGY` exige severidade mínima `MEDIUM`. A regra vive em `Restriction.create()` (não no motor). O motor é enxuto: recebe apenas objetos de domínio válidos. O campo `type` da restrição é agora propagado para `ConflictDetail.type` e incluído no `reasoning` para transparência no frontend (“Alergia” vs. “Intolerância”). A combinação `ALLERGY + LOW/LIFESTYLE` é rejeitada na fronteira do domínio com HTTP 422.
 

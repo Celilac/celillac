@@ -1,38 +1,50 @@
-# Plano de Implementação — Registro e Moderação de Categorias
+# PLAN.md - Melhorias no Cadastro e Gestão de Parceiros: Telefone Internacional, CEP Automático, Google Maps e Validação Oficial de CNPJ
 
-## 1. Visão Geral
-Permitir que estabelecimentos parceiros registrem novas categorias de produtos sob demanda no catálogo, as quais ficam imediatamente utilizáveis pelo parceiro criador, mas no status `PENDING_APPROVAL` (não visíveis publicamente nos filtros de clientes até aprovação). A administração pode aprovar a categoria tornando-a pública (`GLOBAL` para todos os parceiros e clientes) ou restrita (`RESTRICTED` apenas para o parceiro que a criou), ou rejeitá-la (`REJECTED`).
+**Branch de Trabalho:** `feat/product-registration-redesign`  
+**Status:** Aguardando Aprovação Humana
 
 ---
 
-## 2. Etapas de Execução
+## 1. Objetivo
+Implementar melhorias essenciais de usabilidade, internacionalização, conformidade fiscal e geolocalização no ecossistema de parceiros comerciais (`Partner`):
+1. **Telefone Internacional:** Máscara dinâmica por país, suporte a múltiplos DDIs (Brasil 🇧🇷, EUA 🇺🇸, Portugal 🇵🇹, etc.) e armazenamento no formato internacional E.164.
+2. **Endereço & CEP:** Consulta automática de CEP via ViaCEP (gratuito) para endereços no Brasil com auto-preenchimento e fallback manual; suporte a Código Postal para endereços internacionais.
+3. **Google Maps:** Integração de mapa interativo (Google Maps Embed `output=embed` com zero custos e sem dependência de API key paga) no cadastro/edição, no catálogo público e no painel administrativo com botão "Como Chegar".
+4. **CNPJ com Máscara e Validação Oficial:** Máscara em tempo real `99.999.999/9999-99` no frontend e validação algorítmica rigorosa (Módulo 11 da Receita Federal) no domínio com o Value Object `Cnpj`.
 
-### Etapa 1: Banco de Dados & Infraestrutura
-- Criar migração SQL `020_create_product_categories_table.sql` com schema da tabela `product_categories` e seed das 10 categorias padrão (`APPROVED`, `GLOBAL`).
-- Atualizar `backend/src/infrastructure/database/connection.ts` para sincronização automática.
+---
 
-### Etapa 2: Domínio & Casos de Uso (Backend DDD)
-- Entidade `Category.ts` (`id`, `name`, `normalizedName`, `status`, `visibility`, `partnerId`, `createdByUserId`, `rejectionReason`).
-- Interface `ICategoryRepository.ts` e implementação `PgCategoryRepository.ts`.
-- Casos de uso:
-  - `CreateCategoryUseCase` (Parceiro cadastra nova categoria em `PENDING_APPROVAL`).
-  - `ListCategoriesUseCase` (Lista categorias disponíveis para um parceiro ou públicas).
-  - `ReviewCategoryUseCase` (Admin aprova como `GLOBAL`, `RESTRICTED` ou rejeita).
-  - `ListAdminCategoriesUseCase` (Admin lista todas as categorias com filtros).
-- Testes unitários TDD cobrindo todos os cenários.
+## 2. Escopo Detalhado
 
-### Etapa 3: Controladores e Rotas
-- `CategoryController.ts` (`POST /catalog/categories`, `GET /catalog/categories`).
-- `AdminCategoryController.ts` (`GET /admin/categories`, `PATCH /admin/categories/:id/review`).
-- Registrar rotas em `catalog.routes.ts` e `admin.routes.ts`.
+### 2.1 Domínio e Backend (`backend`)
+- **Value Object `Cnpj` (`backend/src/domain/partner/value-objects/Cnpj.ts`):**
+  - Implementação do algoritmo oficial do Módulo 11 (cálculo de 1º e 2º dígitos verificadores com pesos 5..2, 9..2 e 6..2, 9..2).
+  - Bloqueio de sequências repetidas (`00000000000000`, etc.).
+  - Preservação da opcionalidade para produtores artesanais/pessoa física.
+- **Entidade `Partner` (`backend/src/domain/partner/Partner.ts`):**
+  - Validação via `Cnpj.create()` nos métodos `create` e `updateDetails`.
+  - Suporte a telefones internacionais no formato E.164.
+- **Suíte de Testes Unitários:**
+  - `Cnpj.spec.ts` com cobertura de 100% de casos válidos e inválidos.
+  - Atualização dos testes existentes de `Partner.spec.ts`.
 
-### Etapa 4: Frontend Web
-- Utilitário de API `frontend/web-app/src/api/category.ts`.
-- Atualizar `CreateProductModal.tsx` com carregamento dinâmico e opção/modal inline para registrar nova categoria instantaneamente.
-- Criar página de moderação administrativa `frontend/web-app/src/app/admin/categories/page.tsx`.
-- Adicionar atalho de navegação em `Header.tsx` para administradores.
+### 2.2 Frontend Web App (`frontend/web-app`)
+- **Utilitários de Máscara e Validação (`src/utils/mask.ts`):**
+  - `maskCnpj`, `validateCnpj`, `maskCep`, `maskPhone`, `parsePhoneToE164`.
+- **Serviço de CEP (`src/services/viaCep.ts`):**
+  - Consulta assíncrona ao ViaCEP com preenchimento automático de Logradouro, Bairro, Cidade e Estado.
+- **Componente `InternationalPhoneInput.tsx`:**
+  - Seletor de DDI/País com bandeiras e máscara adaptativa.
+- **Componente `PartnerLocationMap.tsx`:**
+  - Renderização responsiva do Google Maps Embed com pino e botão "Como Chegar / Abrir no Google Maps".
+- **Telas de Cadastro e Edição (`/partner/register` e `/partner/[id]/edit`):**
+  - Integração do input de telefone internacional, busca por CEP, campos de número/complemento, validação visual de CNPJ e mapa de preview ao vivo.
+- **Páginas de Visualização (`/public-partners/[id]`, `/partner/[id]`, `/admin/partners`):**
+  - Exibição de mapa de localização e telefone formatado com atalho para WhatsApp e chamada.
 
-### Etapa 5: Validação e Documentação
-- Executar testes backend (`npm test`).
-- Executar build frontend (`npm run build`).
-- Atualizar `API_CONTRACTS.md`, `DATABASE.md`, `README.md` e `CHANGELOG.md`.
+---
+
+## 3. Matriz de Testes e Validação
+- Testes unitários Jest: `npm test` no backend (todas as suítes verdes).
+- Build estático Next.js: `npm run build` no frontend (19/19 rotas com zero erros).
+- Validação manual de CEP real (`01310-100`), CNPJs válidos e inválidos, telefones de diferentes países e renderização do mapa.

@@ -90,7 +90,7 @@ export class PgPartnerRepository implements IPartnerRepository {
   }
 
   private mapRowToPartner(row: any): Partner {
-    return Partner.create(
+    return Partner.reconstitute(
       {
         userId:            row.user_id,
         name:              row.name,
@@ -109,6 +109,6 @@ export class PgPartnerRepository implements IPartnerRepository {
         logoUrl:           row.logo_url || undefined,
       },
       row.id
-    ).getValue();
+    );
   }
 }

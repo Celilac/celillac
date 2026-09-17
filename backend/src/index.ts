@@ -19,9 +19,9 @@ const port = process.env.PORT ?? 3000;
 app.use(corsMiddleware);
 app.use(securityHeadersMiddleware);
 
-// Permite upload de imagens de avatar de até 10MB em base64
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+// Permite upload de múltiplas imagens/rótulos em base64 com segurança
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ limit: '25mb', extended: true }));
 
 // --- Rotas ---
 app.get('/health', (_req, res) => {

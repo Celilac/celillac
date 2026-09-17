@@ -7,7 +7,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
+import PartnerLocationMap from '@/components/common/PartnerLocationMap';
+import { formatDisplayPhone, maskCnpj } from '@/utils/mask';
 import styles from '../../partner/partner.module.css';
+
+const PARTNER_TYPE_LABELS: Record<string, string> = {
+  RESTAURANT: 'Restaurante / Lanchonete',
+  MARKET: 'Mercado / Empório',
+  INDEPENDENT_PRODUCER: 'Produtor Independente',
+};
 
 export default function AdminPartnersPage() {
   const { token, isAuthenticated, isInitializing } = useAuth();
@@ -196,8 +204,8 @@ export default function AdminPartnersPage() {
                   
                   <div className={styles.partnerMeta}>
                     <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
-                    <span className={styles.metaItem}>📞 {partner.phone}</span>
-                    <span className={styles.metaItem}>💼 {partner.type}</span>
+                    <span className={styles.metaItem}>📞 {formatDisplayPhone(partner.phone)}</span>
+                    <span className={styles.metaItem}>💼 {PARTNER_TYPE_LABELS[partner.type] || partner.type}</span>
                   </div>
 
                   {partner.approvalStatus === 'REJECTED' && partner.rejectionReason && (
@@ -324,15 +332,25 @@ export default function AdminPartnersPage() {
                 <div className={styles.infoGrid}>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>CNPJ / Registro</span>
-                    <p className={styles.detailValue}>{detailPartner.cnpj || 'Não informado (Pessoa Física)'}</p>
+                    <p className={styles.detailValue}>{detailPartner.cnpj ? maskCnpj(detailPartner.cnpj) : 'Não informado (Pessoa Física)'}</p>
                   </div>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>Tipo de Fornecedor</span>
-                    <p className={styles.detailValue}>{detailPartner.type}</p>
+                    <p className={styles.detailValue}>{PARTNER_TYPE_LABELS[detailPartner.type] || detailPartner.type}</p>
                   </div>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>Telefone de Contato</span>
-                    <p className={styles.detailValue}>{detailPartner.phone}</p>
+                    <p className={styles.detailValue}>
+                      <a
+                        href={`https://wa.me/${detailPartner.phone?.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'var(--color-accent, #2563EB)', textDecoration: 'none', fontWeight: 500 }}
+                        title="Abrir no WhatsApp"
+                      >
+                        {formatDisplayPhone(detailPartner.phone)}
+                      </a>
+                    </p>
                   </div>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>Cidade / Estado</span>
@@ -343,6 +361,17 @@ export default function AdminPartnersPage() {
                 <div className={styles.detailBox}>
                   <span className={styles.detailLabel}>📍 Endereço Completo</span>
                   <p className={styles.detailValue} style={{ marginTop: '0.25rem' }}>{detailPartner.address}</p>
+
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <PartnerLocationMap
+                      address={detailPartner.address}
+                      city={detailPartner.city}
+                      state={detailPartner.state}
+                      name={detailPartner.name}
+                      height={200}
+                      showDirectionsButton={true}
+                    />
+                  </div>
                 </div>
 
                 <div className={styles.detailBox}>

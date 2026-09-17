@@ -1,7 +1,7 @@
 // frontend/web-app/src/utils/image.ts
 
 export const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-export const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+export const MAX_IMAGE_SIZE_BYTES = 15 * 1024 * 1024; // 15 MB (suporta fotos de alta resolução tiradas por smartphones)
 
 export interface ImageValidationResult {
   valid: boolean;
@@ -22,7 +22,7 @@ export function validateImageFile(file: File): ImageValidationResult {
   if (file.size > MAX_IMAGE_SIZE_BYTES) {
     return {
       valid: false,
-      error: 'A imagem excede o tamanho máximo permitido de 5 MB.',
+      error: 'A imagem excede o tamanho máximo permitido de 15 MB.',
     };
   }
 
@@ -31,11 +31,12 @@ export function validateImageFile(file: File): ImageValidationResult {
 
 /**
  * Otimiza e comprime uma imagem utilizando HTML5 Canvas, preservando a proporção original.
+ * Redimensiona fotos grandes (ex: tiradas com câmera de celular) mantendo nitidez de rótulos.
  */
 export function compressImage(
   file: File,
-  maxWidth = 1024,
-  maxHeight = 1024,
+  maxWidth = 1280,
+  maxHeight = 1280,
   quality = 0.85
 ): Promise<string> {
   return new Promise((resolve, reject) => {

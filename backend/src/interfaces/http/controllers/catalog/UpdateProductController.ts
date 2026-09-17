@@ -17,7 +17,33 @@ export class UpdateProductController extends BaseController {
       return;
     }
 
-    const { name, brand, ingredients, hasGluten, crossContamination, price, category, imageUrl, isActive } = req.body;
+    const {
+      name,
+      brand,
+      ingredients,
+      hasGluten,
+      crossContamination,
+      price,
+      category,
+      imageUrl,
+      isActive,
+      shortDescription,
+      netContent,
+      unitOfMeasure,
+      sku,
+      ean,
+      commercialOrigin,
+      mayContainTraces,
+      compositionNotes,
+      publicationStatus,
+      images,
+      declaredAllergens,
+      crossContaminationDetails,
+      dietaryFeatures,
+      informationOrigin,
+      nutritionalInfo,
+      certifications,
+    } = req.body;
 
     if (!name || price === undefined || !category) {
       this.badRequest(res, 'Os campos name, price e category são obrigatórios.');
@@ -30,12 +56,28 @@ export class UpdateProductController extends BaseController {
       name,
       brand,
       ingredients,
-      hasGluten,
+      hasGluten: hasGluten !== undefined ? Boolean(hasGluten) : undefined,
       crossContamination,
       price: parseFloat(price),
       category,
       imageUrl,
       isActive,
+      shortDescription,
+      netContent: netContent !== undefined && netContent !== '' ? parseFloat(netContent) : undefined,
+      unitOfMeasure,
+      sku,
+      ean,
+      commercialOrigin,
+      mayContainTraces,
+      compositionNotes,
+      publicationStatus,
+      images,
+      declaredAllergens,
+      crossContaminationDetails,
+      dietaryFeatures,
+      informationOrigin,
+      nutritionalInfo,
+      certifications,
     });
 
     if (result.isFailure) {

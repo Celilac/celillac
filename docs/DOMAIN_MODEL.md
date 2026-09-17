@@ -35,10 +35,12 @@
 - **Value Objects:**
     - `PartnerApprovalStatus` (DRAFT, PENDING_REVIEW, APPROVED, REJECTED, SUSPENDED).
     - `PartnerOperationalStatus` (ACTIVE, INACTIVE, TEMPORARILY_CLOSED).
+    - `Cnpj` (Validação oficial Módulo 11 da Receita Federal com verificação dos 2 dígitos verificadores, rejeição de sequências repetidas, formatação `99.999.999/9999-99` e suporte à opcionalidade para produtores artesanais/PF).
 - **Regras:**
     - Um parceiro deve ter `approvalStatus = APPROVED` e `operationalStatus = ACTIVE` antes de poder publicar produtos.
     - Parceiro com cadastro em `DRAFT` ou `PENDING_REVIEW` aguarda revisão administrativa antes de operar.
     - Parceiro suspenso ou inativo perde acesso ao cadastro de novos produtos e tem seus itens sinalizados/ocultados.
+    - Se informado, o CNPJ DEVE ser estritamente válido matematicamente pelas regras da Receita Federal; cadastros com CNPJ inválido são sumariamente rejeitados (*fail-fast* no domínio).
 
 ---
 

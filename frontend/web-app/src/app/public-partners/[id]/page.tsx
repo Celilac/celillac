@@ -13,6 +13,8 @@ import { Header } from '@/components/layout/Header';
 import { FavoriteButton } from '@/components/common/FavoriteButton';
 import { ReviewsList } from '@/components/common/ReviewsList';
 import { ReportModal } from '@/components/common/ReportModal';
+import PartnerLocationMap from '@/components/common/PartnerLocationMap';
+import { formatDisplayPhone } from '@/utils/mask';
 import styles from '../../partner/partner.module.css';
 
 interface PageProps {
@@ -174,9 +176,32 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                   <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🌆 Cidade:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não informada'}</p>
                 </div>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>📞 Contato:</strong> {partner.phone}</p>
+                  <p style={{ marginBottom: '0.5rem' }}>
+                    <strong style={{ color: 'var(--color-text)' }}>📞 Contato:</strong>{' '}
+                    <a
+                      href={`https://wa.me/${partner.phone?.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: 'var(--color-accent, #2563EB)', textDecoration: 'none', fontWeight: 500 }}
+                      title="Clique para abrir no WhatsApp"
+                    >
+                      {formatDisplayPhone(partner.phone)}
+                    </a>
+                  </p>
                   <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🚗 Região Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
                 </div>
+              </div>
+
+              {/* Mapa de Localização Interativo */}
+              <div style={{ marginTop: '1.25rem' }}>
+                <PartnerLocationMap
+                  address={partner.address}
+                  city={partner.city}
+                  state={partner.state}
+                  name={partner.name}
+                  height={240}
+                  showDirectionsButton={true}
+                />
               </div>
             </div>
 
@@ -199,23 +224,46 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   {products.map((product) => (
                     <div key={product.id} className={styles.card} style={{ padding: '1.25rem', gap: '0.5rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
                         <h3 className={styles.partnerName} style={{ fontSize: 'var(--text-title)', fontWeight: '700' }}>{product.name}</h3>
-                        {product.hasGluten ? (
-                          <span className={`${styles.badge} ${styles.badgeRejected}`}>Contém Glúten</span>
-                        ) : (
-                          <span className={`${styles.badge} ${styles.badgeApproved}`}>Sem Glúten</span>
-                        )}
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {product.hasGluten ? (
+                            <span className={`${styles.badge} ${styles.badgeRejected}`}>Contém Glúten</span>
+                          ) : (
+                            <span className={`${styles.badge} ${styles.badgeApproved}`}>Sem Glúten</span>
+                          )}
+
+                          {(() => {
+                            const ing = (product.ingredients || '').toLowerCase();
+                            const cross = (product.crossContamination || '').toLowerCase();
+                            const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme', 'whey', 'soro'];
+                            if (milkTerms.some((t) => ing.includes(t))) {
+                              return <span className={`${styles.badge} ${styles.badgeRejected}`}>Contém Leite</span>;
+                            }
+                            if (milkTerms.some((t) => cross.includes(t))) {
+                              return <span className={`${styles.badge} ${styles.badgePending}`}>Traços de Leite</span>;
+                            }
+                            return <span className={`${styles.badge} ${styles.badgeApproved}`}>Sem Leite</span>;
+                          })()}
+                        </div>
                       </div>
                       <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>Marca: {product.brand}</p>
                       <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         Ingredientes: {product.ingredients}
                       </p>
-                      {product.crossContamination && (
-                        <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-warning)', fontStyle: 'italic' }}>
-                          ⚠️ Traços: {product.crossContamination}
-                        </p>
-                      )}
+                      {product.crossContamination &&
+                        product.crossContamination !== 'NONE' &&
+                        product.crossContamination !== 'NENHUM' &&
+                        !product.crossContamination.toLowerCase().startsWith('nenhum') && (
+                          <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-warning)', fontStyle: 'italic' }}>
+                            ⚠️ Traços: {(() => {
+                              const cc = product.crossContamination;
+                              if (cc === 'TRACES' || cc === 'TRACOS') return 'Pode conter traços (Alerta preventivo no rótulo)';
+                              if (cc === 'SHARED_EQUIPMENT' || cc === 'MAQUINARIO_COMPARTILHADO') return 'Compartilha maquinário / linhas de produção';
+                              return cc;
+                            })()}
+                          </p>
+                        )}
                     </div>
                   ))}
                 </div>
