@@ -13,6 +13,7 @@ import { FavoriteButton } from '@/components/common/FavoriteButton';
 import { ReportModal } from '@/components/common/ReportModal';
 import { ReviewsList } from '@/components/common/ReviewsList';
 import { useToast } from '@/hooks/useToast';
+import { translateReasoning, translateConflictReason, translateAllergen } from '@/utils/compatibilityTranslator';
 import styles from '../../dashboard/dashboard.module.css';
 
 interface PageProps {
@@ -165,11 +166,11 @@ export default function ProductDetailsPage({ params }: PageProps) {
             {compatibility && (
               <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px dotted var(--color-border)' }}>
                 <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text)' }}>
-                  {compatibility.reasoning}
+                  {translateReasoning(compatibility.reasoning)}
                 </p>
                 {compatibility.conflicts?.map((conflict, index) => (
                   <div key={index} style={{ marginTop: '0.5rem', color: 'var(--color-danger)', fontSize: '0.9rem' }}>
-                    ⚠️ <strong>{conflict.allergen}:</strong> {conflict.reason}
+                    ⚠️ <strong>{translateAllergen(conflict.allergen)}:</strong> {translateConflictReason(conflict.reason)}
                   </div>
                 ))}
               </div>

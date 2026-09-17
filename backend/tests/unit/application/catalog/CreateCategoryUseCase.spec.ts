@@ -33,6 +33,7 @@ describe('CreateCategoryUseCase', () => {
     partnerRepository = {
       create: jest.fn(),
       findById: jest.fn().mockResolvedValue(mockPartner),
+      findByCnpj: jest.fn(),
       findAllByUserId: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),

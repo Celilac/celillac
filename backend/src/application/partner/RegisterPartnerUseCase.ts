@@ -51,12 +51,14 @@ export class RegisterPartnerUseCase {
       return Result.fail<PartnerResponseDTO>('Usuário não encontrado.');
     }
 
-    // 2. Verificar se o usuário tem o papel de PARCEIRO
-    if (user.role !== UserRole.PARCEIRO) {
-      return Result.fail<PartnerResponseDTO>('Apenas usuários com o papel de PARCEIRO podem cadastrar um perfil comercial.');
+    // 2. Verificar se o usuário tem o papel de PARCEIRO ou ADMIN
+    if (user.role !== UserRole.PARCEIRO && user.role !== UserRole.ADMIN) {
+      return Result.fail<PartnerResponseDTO>('Apenas usuários com o papel de PARCEIRO ou ADMINISTRADOR podem cadastrar um perfil comercial.');
     }
 
-    // 3. Criar o Parceiro (inicia como DRAFT e INACTIVE)
+    const isAdmin = user.role === UserRole.ADMIN;
+
+    // 3. Criar o Parceiro (Admin já cria como APPROVED e ACTIVE para testes/operação ágil)
     const partnerResult = Partner.create({
       userId:            dto.userId,
       name:              dto.name,
@@ -69,8 +71,8 @@ export class RegisterPartnerUseCase {
       state:             dto.state,
       deliveryRegion:    dto.deliveryRegion,
       logoUrl:           dto.logoUrl,
-      approvalStatus:    PartnerApprovalStatus.DRAFT,
-      operationalStatus: PartnerOperationalStatus.INACTIVE,
+      approvalStatus:    isAdmin ? PartnerApprovalStatus.APPROVED : PartnerApprovalStatus.DRAFT,
+      operationalStatus: isAdmin ? PartnerOperationalStatus.ACTIVE : PartnerOperationalStatus.INACTIVE,
     });
 
     if (partnerResult.isFailure) {
@@ -78,6 +80,15 @@ export class RegisterPartnerUseCase {
     }
 
     const partner = partnerResult.getValue();
+
+    // 4. Se tiver CNPJ informado, verificar se já existe outro parceiro cadastrado
+    if (partner.cnpj) {
+      const existingPartner = await this.partnerRepository.findByCnpj(partner.cnpj);
+      if (existingPartner) {
+        return Result.fail<PartnerResponseDTO>('Já existe um estabelecimento cadastrado com este CNPJ.');
+      }
+    }
+
     await this.partnerRepository.create(partner);
 
     return Result.ok<PartnerResponseDTO>({

@@ -45,6 +45,25 @@ export class PgPartnerRepository implements IPartnerRepository {
     return this.mapRowToPartner(result.rows[0]);
   }
 
+  async findByCnpj(cnpj: string): Promise<Partner | null> {
+    const clean = cnpj.replace(/\D/g, '');
+    if (!clean) return null;
+
+    const result = await this.pool.query(
+      `SELECT id, user_id, name, cnpj, description, address, phone, type, approval_status, operational_status, rejection_reason, suspension_reason, city, state, delivery_region, logo_url
+       FROM partners 
+       WHERE regexp_replace(COALESCE(cnpj, ''), '\\D', '', 'g') = $1 
+       LIMIT 1`,
+      [clean]
+    );
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return this.mapRowToPartner(result.rows[0]);
+  }
+
   async findAllByUserId(userId: string): Promise<Partner[]> {
     const result = await this.pool.query(
       `SELECT id, user_id, name, cnpj, description, address, phone, type, approval_status, operational_status, rejection_reason, suspension_reason, city, state, delivery_region, logo_url

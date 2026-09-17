@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { CreateProductModal } from '@/components/common/CreateProductModal';
+import { translateReasoning, translateConflictReason } from '@/utils/compatibilityTranslator';
 import styles from './dashboard.module.css';
 
 interface ReportWithName extends CompatibilityResponse {
@@ -694,11 +695,11 @@ export default function DashboardPage() {
                         {productReport && (
                           <div style={{ padding: 'var(--space-3)', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
                             <p style={{ margin: 0, fontSize: 'var(--text-body)', color: 'var(--color-text)' }}>
-                              {productReport.reasoning}
+                              {translateReasoning(productReport.reasoning)}
                             </p>
                             {productReport.conflicts?.map((c, index) => (
                               <p key={index} style={{ margin: '4px 0 0 0', fontSize: 'var(--text-label)', color: 'var(--color-danger)' }}>
-                                ⚠️ {c.reason}
+                                ⚠️ {translateConflictReason(c.reason)}
                               </p>
                             ))}
                           </div>
@@ -925,13 +926,9 @@ export default function DashboardPage() {
                                 background: 'var(--color-elevated)',
                                 border: '1px solid var(--color-border)',
                                 fontSize: '0.85rem',
-                                lineHeight: 1.4,
+                                lineHeight: 1.5,
                                 color: 'var(--color-text-muted)',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                display: '-webkit-box',
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: 'vertical',
+                                wordBreak: 'break-word',
                               }}>
                                 <strong style={{ color: 'var(--color-text)' }}>Ingredientes:</strong> {product.ingredients}
                               </div>

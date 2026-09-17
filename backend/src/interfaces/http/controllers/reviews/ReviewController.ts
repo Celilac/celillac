@@ -80,7 +80,18 @@ export class ReviewController {
         return res.status(400).json({ error: result.getError() });
       }
 
-      return res.status(200).json(result.getValue());
+      const reviews = result.getValue();
+      const dtos = reviews.map((rev) => ({
+        id: rev.id,
+        userId: rev.userId,
+        productId: rev.productId,
+        partnerId: rev.partnerId,
+        rating: rev.rating,
+        comment: rev.comment,
+        createdAt: rev.createdAt,
+      }));
+
+      return res.status(200).json(dtos);
     } catch (error: any) {
       return res.status(500).json({ error: 'Erro interno no servidor ao buscar avaliações.' });
     }
