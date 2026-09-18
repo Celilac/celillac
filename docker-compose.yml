@@ -34,6 +34,8 @@ services:
       POSTGRES_USER: celilac_user
       POSTGRES_PASSWORD: celilac_password
       POSTGRES_DB: celilac_db
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./harness/scripts/init_db.sql:/docker-entrypoint-initdb.d/00_init_db.sql:ro

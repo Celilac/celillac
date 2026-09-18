@@ -9,13 +9,8 @@ import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import PartnerLocationMap from '@/components/common/PartnerLocationMap';
 import { formatDisplayPhone, maskCnpj } from '@/utils/mask';
+import { translatePartnerType } from '@/utils/compatibilityTranslator';
 import styles from '../../partner/partner.module.css';
-
-const PARTNER_TYPE_LABELS: Record<string, string> = {
-  RESTAURANT: 'Restaurante / Lanchonete',
-  MARKET: 'Mercado / Empório',
-  INDEPENDENT_PRODUCER: 'Produtor Independente',
-};
 
 export default function AdminPartnersPage() {
   const { token, isAuthenticated, isInitializing } = useAuth();
@@ -196,7 +191,7 @@ export default function AdminPartnersPage() {
             partners.map((partner) => (
               <section key={partner.id} className={styles.card}>
                 <div className={styles.cardContent}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                  <div className={styles.cardHeader}>
                     <h2 className={styles.partnerName}>{partner.name}</h2>
                     {getStatusLabel(partner.approvalStatus)}
                   </div>
@@ -205,7 +200,7 @@ export default function AdminPartnersPage() {
                   <div className={styles.partnerMeta}>
                     <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
                     <span className={styles.metaItem}>📞 {formatDisplayPhone(partner.phone)}</span>
-                    <span className={styles.metaItem}>💼 {PARTNER_TYPE_LABELS[partner.type] || partner.type}</span>
+                    <span className={styles.metaItem}>💼 {translatePartnerType(partner.type)}</span>
                   </div>
 
                   {partner.approvalStatus === 'REJECTED' && partner.rejectionReason && (
@@ -336,7 +331,7 @@ export default function AdminPartnersPage() {
                   </div>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>Tipo de Fornecedor</span>
-                    <p className={styles.detailValue}>{PARTNER_TYPE_LABELS[detailPartner.type] || detailPartner.type}</p>
+                    <p className={styles.detailValue}>{translatePartnerType(detailPartner.type)}</p>
                   </div>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>Telefone de Contato</span>

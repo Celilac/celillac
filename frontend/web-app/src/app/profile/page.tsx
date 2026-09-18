@@ -13,6 +13,7 @@ import { Header } from '@/components/layout/Header';
 import { UserAvatar } from '@/components/common/UserAvatar';
 import { HttpError } from '@/api/client';
 import { validateImageFile, compressImage as compressBrandImage } from '@/utils/image';
+import { translatePartnerType } from '@/utils/compatibilityTranslator';
 import partnerStyles from '../partner/partner.module.css';
 
 const ALLERGEN_OPTIONS = [
@@ -802,7 +803,7 @@ export default function ProfilePage() {
                   </span>
                 </div>
                 <Link
-                  href="/auth/verify-email"
+                  href="/auth/verify-email?send=true"
                   style={{
                     padding: '8px 16px',
                     borderRadius: '8px',
@@ -988,6 +989,23 @@ export default function ProfilePage() {
               <button type="button" className="btn btn-ghost add-restriction-button" id="add-allergen-btn" onClick={addRow}>
                 + Adicionar restrição
               </button>
+
+              <div className="cross-contamination-section">
+                <label className="cross-contamination-note">
+                  <input
+                    type="checkbox"
+                    id="accept-cross-contamination-chk"
+                    checked={acceptsCrossContamination}
+                    onChange={(e) => setAcceptsCrossContamination(e.target.checked)}
+                  />
+                  <div>
+                    <strong>Aceito risco de contaminação cruzada (traços)</strong>
+                    <span>
+                      Desmarcado por padrão. Se você for celíaco ou alérgico severo, mantenha desmarcado para bloquear produtos com avisos de &quot;pode conter traços&quot;.
+                    </span>
+                  </div>
+                </label>
+              </div>
             </section>
             )}
 
@@ -1033,7 +1051,7 @@ export default function ProfilePage() {
                     >
                       {partners.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name} ({p.city ? `${p.city} - ${p.state}` : p.type})
+                          {p.name} ({p.city ? `${p.city} - ${p.state}` : translatePartnerType(p.type)})
                         </option>
                       ))}
                     </select>
@@ -1059,7 +1077,7 @@ export default function ProfilePage() {
                           {currentPartner.name}
                         </strong>
                         <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                          📍 {currentPartner.address ? `${currentPartner.address} • ` : ''}{currentPartner.city ? `${currentPartner.city}/${currentPartner.state}` : currentPartner.type}
+                          📍 {currentPartner.address ? `${currentPartner.address} • ` : ''}{currentPartner.city ? `${currentPartner.city}/${currentPartner.state}` : translatePartnerType(currentPartner.type)}
                         </span>
                       </div>
                       <Link
@@ -1182,25 +1200,13 @@ export default function ProfilePage() {
             )}
           </div>
 
-          <div className="profile-footer-row">
-            {userRole === 'CELIACO' && (
-            <label className="cross-contamination-note">
-              <input
-                type="checkbox"
-                id="accept-cross-contamination-chk"
-                checked={acceptsCrossContamination}
-                onChange={(e) => setAcceptsCrossContamination(e.target.checked)}
-              />
-              <div>
-                <strong>Aceito risco de contaminação cruzada (traços)</strong>
-                <span>
-                  Desmarcado por padrão. Se você for celíaco ou alérgico severo, mantenha desmarcado para bloquear produtos com avisos de &quot;pode conter traços&quot;.
-                </span>
-              </div>
-            </label>
-            )}
-
-            <button type="submit" className="btn btn-em save-profile-button" id="save-profile-btn" disabled={loading || (userRole === 'CELIACO' && rows.length === 0)}>
+          <div className="profile-actions-bar">
+            <button
+              type="submit"
+              className="btn btn-em save-profile-button"
+              id="save-profile-btn"
+              disabled={loading || (userRole === 'CELIACO' && rows.length === 0)}
+            >
               {loading ? 'Salvando…' : 'Salvar alterações'}
             </button>
           </div>

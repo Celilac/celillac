@@ -17,16 +17,46 @@ export default function VerifyEmailPage() {
   const [digits, setDigits] = useState<string[]>(Array(6).fill(''));
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
-  const [countdown, setCountdown] = useState(60);
+  const [countdown, setCountdown] = useState(0);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const hasSentRef = useRef(false);
 
   useEffect(() => {
     const localToken = typeof window !== 'undefined' ? localStorage.getItem('celilac:token') : null;
-    if (!isAuthenticated && !localToken) {
+    const currentToken = token || localToken;
+
+    if (!isAuthenticated && !currentToken) {
       router.push('/auth/login');
+      return;
     }
-  }, [isAuthenticated, router]);
+
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const shouldSend = urlParams.get('send') === 'true';
+    const isRecent = urlParams.get('recent') === 'true';
+
+    if (isRecent) {
+      setCountdown(60);
+    } else if (shouldSend && !hasSentRef.current && currentToken) {
+      hasSentRef.current = true;
+      setResendLoading(true);
+      iamApi.resendEmailVerificationCode(currentToken)
+        .then(() => {
+          toast.success('Código de verificação gerado e enviado para seu e-mail!', 'Código Enviado');
+          setCountdown(60);
+        })
+        .catch((err) => {
+          toast.error(
+            err instanceof HttpError ? err.message : 'Erro ao enviar código de verificação.',
+            'Aviso'
+          );
+        })
+        .finally(() => {
+          setResendLoading(false);
+        });
+    }
+  }, [isAuthenticated, token, router, toast]);
 
   // Contador regressivo para reenvio manual de código
   useEffect(() => {
