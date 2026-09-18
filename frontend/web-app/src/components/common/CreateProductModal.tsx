@@ -26,6 +26,7 @@ import { CrossContaminationSelector } from './CrossContaminationSelector';
 import { DietaryFeaturesPicker } from './DietaryFeaturesPicker';
 import { ProductCertificationsManager } from './ProductCertificationsManager';
 import { NutritionalInfoAccordion } from './NutritionalInfoAccordion';
+import { translatePartnerType } from '@/utils/compatibilityTranslator';
 
 interface CreateProductModalProps {
   isOpen: boolean;
@@ -676,7 +677,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                     >
                       {partners.map((p) => (
                         <option key={p.id} value={p.id}>
-                          {p.name} ({p.type})
+                          {p.name} ({translatePartnerType(p.type)})
                         </option>
                       ))}
                     </select>

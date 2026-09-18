@@ -10,6 +10,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
+import { PasswordEyeIcon } from '@/components/common/PasswordEyeIcon';
 
 // Decodifica o payload do JWT (sem verificar assinatura — só para extrair userId)
 function decodeJwtPayload(token: string): { sub?: string } {
@@ -41,6 +42,7 @@ export default function LoginPage() {
   const [email,   setEmail]   = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -105,16 +107,27 @@ export default function LoginPage() {
 
                 <div className="field">
                   <label className="field-label" htmlFor="login-password">Senha</label>
-                  <input
-                    id="login-password"
-                    type="password"
-                    className="field-input"
-                    placeholder="Sua senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                  />
+                  <div className="password-input-wrap">
+                    <input
+                      id="login-password"
+                      type={showPassword ? 'text' : 'password'}
+                      className="field-input password-input"
+                      placeholder="Sua senha"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      className="password-visibility-toggle"
+                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      aria-pressed={showPassword}
+                      onClick={() => setShowPassword((current) => !current)}
+                    >
+                      <PasswordEyeIcon visible={showPassword} />
+                    </button>
+                  </div>
                 </div>
 
                 <button

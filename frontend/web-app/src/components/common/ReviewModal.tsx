@@ -115,7 +115,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
               </div>
             </div>
             <Link
-              href="/auth/verify-email"
+              href="/auth/verify-email?send=true"
               style={{
                 fontSize: '0.8rem',
                 fontWeight: 600,

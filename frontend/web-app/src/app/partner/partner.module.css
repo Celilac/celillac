@@ -61,11 +61,21 @@
   gap: var(--space-3);
 }
 
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
 .partnerName {
   font-size: var(--text-title);
   font-weight: 700;
   color: var(--color-text);
-  line-height: 1.2;
+  line-height: 1.25;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .partnerDescription {
@@ -120,18 +130,21 @@
 /* Status Badges — status administrativo de cadastro, deliberadamente
    separado da paleta de Risco alimentar (ver globals.css). */
 .badge {
-  font-size: var(--text-label);
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: var(--space-2) var(--space-3);
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.75rem;
   border-radius: var(--radius-full);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-1);
   width: fit-content;
   white-space: nowrap;
   flex-shrink: 0;
+  line-height: 1.25;
+  margin-top: 1px;
 }
 
 .badgeDraft {

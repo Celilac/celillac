@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { CreateProductModal } from '@/components/common/CreateProductModal';
-import { translateReasoning, translateConflictReason } from '@/utils/compatibilityTranslator';
+import { translateReasoning, translateConflictReason, translatePartnerType } from '@/utils/compatibilityTranslator';
 import styles from './dashboard.module.css';
 
 interface ReportWithName extends CompatibilityResponse {
@@ -242,7 +242,7 @@ export default function DashboardPage() {
                 Enviamos um código de verificação para o seu e-mail. Confirme seu e-mail para garantir a segurança da sua conta.
               </span>
             </div>
-            <Link href="/auth/verify-email" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: 'var(--space-3) var(--space-6)', textDecoration: 'none', background: 'var(--color-danger)' }}>
+            <Link href="/auth/verify-email?send=true" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: 'var(--space-3) var(--space-6)', textDecoration: 'none', background: 'var(--color-danger)' }}>
               Verificar E-mail Agora
             </Link>
           </div>
@@ -319,7 +319,7 @@ export default function DashboardPage() {
                     </div>
 
                     <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', margin: '0 0 4px 0' }}>
-                      <strong>Ramo:</strong> {userPartners[0].type} • <strong>Região:</strong> {userPartners[0].deliveryRegion || userPartners[0].city || 'Local'}
+                      <strong>Ramo:</strong> {translatePartnerType(userPartners[0].type)} • <strong>Região:</strong> {userPartners[0].deliveryRegion || userPartners[0].city || 'Local'}
                     </p>
 
                     <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', margin: 0 }}>
@@ -369,7 +369,7 @@ export default function DashboardPage() {
                             </span>
                           </div>
                           <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                            {pt.type} • {pt.city || 'Local'} • {pt.operationalStatus === 'ACTIVE' ? '🟢 Aberto' : '🟡 Fechado'}
+                            {translatePartnerType(pt.type)} • {pt.city || 'Local'} • {pt.operationalStatus === 'ACTIVE' ? '🟢 Aberto' : '🟡 Fechado'}
                           </p>
                         </div>
 
@@ -720,7 +720,7 @@ export default function DashboardPage() {
           <section style={{
             width: '100%',
             maxWidth: '1000px',
-            marginTop: 'var(--space-8)',
+            marginTop: 'var(--space-6)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: '12px' }}>
               {userRole === 'PARCEIRO' ? (

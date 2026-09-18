@@ -116,7 +116,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               </div>
             </div>
             <Link
-              href="/auth/verify-email"
+              href="/auth/verify-email?send=true"
               style={{
                 fontSize: '0.8rem',
                 fontWeight: 600,
