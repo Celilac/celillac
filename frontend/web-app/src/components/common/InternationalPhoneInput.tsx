@@ -99,10 +99,10 @@ export default function InternationalPhoneInput({
           aria-label="Código de Discagem Internacional (DDI)"
           style={{
             padding: '0.625rem 0.5rem',
-            borderRadius: '8px',
-            border: '1px solid var(--color-border, #CBD5E1)',
-            backgroundColor: 'var(--color-card-bg, #FFFFFF)',
-            color: 'var(--color-text, #0F172A)',
+            borderRadius: 'var(--radius-md, 8px)',
+            border: '1px solid var(--color-border)',
+            backgroundColor: 'var(--color-elevated)',
+            color: 'var(--color-text)',
             fontSize: '0.9rem',
             fontWeight: 500,
             cursor: disabled ? 'not-allowed' : 'pointer',
@@ -112,7 +112,11 @@ export default function InternationalPhoneInput({
           }}
         >
           {COUNTRIES.map((country) => (
-            <option key={`${country.code}-${country.ddi}`} value={country.ddi}>
+            <option
+              key={`${country.code}-${country.ddi}`}
+              value={country.ddi}
+              style={{ backgroundColor: 'var(--color-surface, #101C23)', color: 'var(--color-text, #ffffff)' }}
+            >
               {country.flag} {country.ddi}
             </option>
           ))}
@@ -131,10 +135,10 @@ export default function InternationalPhoneInput({
             style={{
               width: '100%',
               padding: '0.625rem 0.875rem',
-              borderRadius: '8px',
-              border: '1px solid var(--color-border, #CBD5E1)',
-              backgroundColor: 'var(--color-card-bg, #FFFFFF)',
-              color: 'var(--color-text, #0F172A)',
+              borderRadius: 'var(--radius-md, 8px)',
+              border: '1px solid var(--color-border)',
+              backgroundColor: 'var(--color-elevated)',
+              color: 'var(--color-text)',
               fontSize: '0.925rem',
               outline: 'none',
               transition: 'border-color 0.2s, box-shadow 0.2s',

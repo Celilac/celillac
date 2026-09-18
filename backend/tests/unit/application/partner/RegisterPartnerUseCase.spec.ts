@@ -20,6 +20,7 @@ describe('RegisterPartnerUseCase', () => {
     partnerRepository = {
       create: jest.fn(),
       findById: jest.fn(),
+      findByCnpj: jest.fn().mockResolvedValue(null),
       findAllByUserId: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),
@@ -64,6 +65,34 @@ describe('RegisterPartnerUseCase', () => {
     expect(data.operationalStatus).toBe('INACTIVE');
   });
 
+  it('deve registrar um parceiro com sucesso se usuário for do papel ADMIN, iniciando como APPROVED e ACTIVE', async () => {
+    const adminUser = User.create({
+      email: makeValidEmail('admin@celilac.com.br'),
+      passwordHash: makeValidHash(),
+      role: UserRole.ADMIN,
+    }, 'admin-1').getValue();
+
+    userRepository.findById.mockResolvedValue(adminUser);
+    partnerRepository.findAllByUserId.mockResolvedValue([]);
+
+    const result = await useCase.execute({
+      userId: 'admin-1',
+      name: 'Estabelecimento Modelo Admin',
+      cnpj: '12.345.678/0001-95',
+      description: 'Estabelecimento cadastrado para testes e vitrine',
+      address: 'Av. Brasil, 500',
+      phone: '45999998888',
+      type: PartnerType.RESTAURANT,
+    });
+
+    expect(result.isSuccess).toBe(true);
+    expect(partnerRepository.create).toHaveBeenCalled();
+    const data = result.getValue();
+    expect(data.name).toBe('Estabelecimento Modelo Admin');
+    expect(data.approvalStatus).toBe('APPROVED');
+    expect(data.operationalStatus).toBe('ACTIVE');
+  });
+
   it('deve falhar se o usuário não tiver papel de PARCEIRO', async () => {
     const user = User.create({
       email: makeValidEmail('ana@teste.com'),
@@ -101,5 +130,30 @@ describe('RegisterPartnerUseCase', () => {
 
     expect(result.isFailure).toBe(true);
     expect(result.getError()).toContain('Usuário não encontrado');
+  });
+
+  it('deve falhar se o CNPJ já estiver cadastrado em outro estabelecimento', async () => {
+    const user = User.create({
+      email: makeValidEmail('carlos@teste.com'),
+      passwordHash: makeValidHash(),
+      role: UserRole.PARCEIRO,
+    }, 'user-1').getValue();
+
+    userRepository.findById.mockResolvedValue(user);
+    partnerRepository.findByCnpj.mockResolvedValue({ id: 'outro-parceiro' } as any);
+
+    const result = await useCase.execute({
+      userId: 'user-1',
+      name: 'Padaria CeliLac Nova',
+      cnpj: '12.345.678/0001-95',
+      description: 'Livre de glúten',
+      address: 'Rua Principal, 100',
+      phone: '1234-5678',
+      type: PartnerType.RESTAURANT,
+    });
+
+    expect(result.isFailure).toBe(true);
+    expect(result.getError()).toContain('Já existe um estabelecimento cadastrado com este CNPJ');
+    expect(partnerRepository.create).not.toHaveBeenCalled();
   });
 });

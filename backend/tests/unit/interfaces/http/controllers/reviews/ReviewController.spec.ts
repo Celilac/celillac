@@ -124,4 +124,58 @@ describe('ReviewController', () => {
       expect(getProductReviewsMock.execute).toHaveBeenCalledWith('prod-123');
     });
   });
+
+  describe('getPartnerReviews', () => {
+    it('deve retornar avaliações do parceiro mapeadas em DTO com status 200', async () => {
+      req = {
+        params: { partnerId: 'partner-123' },
+      };
+
+      const mockReview = Review.create(
+        {
+          userId: 'user-abc',
+          partnerId: 'partner-123',
+          rating: 5,
+          comment: 'Excelente atendimento sem glúten!',
+          createdAt: new Date('2026-09-17T12:00:00Z'),
+        },
+        'review-xyz'
+      ).getValue();
+
+      getPartnerReviewsMock.execute.mockResolvedValue(Result.ok([mockReview]));
+
+      await controller.getPartnerReviews(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(200);
+      expect(getPartnerReviewsMock.execute).toHaveBeenCalledWith('partner-123');
+      expect(jsonMock).toHaveBeenCalledWith([
+        {
+          id: 'review-xyz',
+          userId: 'user-abc',
+          productId: undefined,
+          partnerId: 'partner-123',
+          rating: 5,
+          comment: 'Excelente atendimento sem glúten!',
+          createdAt: new Date('2026-09-17T12:00:00Z'),
+        },
+      ]);
+    });
+
+    it('deve retornar 400 se o caso de uso falhar', async () => {
+      req = {
+        params: { partnerId: ' ' },
+      };
+
+      getPartnerReviewsMock.execute.mockResolvedValue(
+        Result.fail('O ID do parceiro comercial é obrigatório.')
+      );
+
+      await controller.getPartnerReviews(req as Request, res as Response);
+
+      expect(statusMock).toHaveBeenCalledWith(400);
+      expect(jsonMock).toHaveBeenCalledWith({
+        error: 'O ID do parceiro comercial é obrigatório.',
+      });
+    });
+  });
 });

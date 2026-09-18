@@ -2,6 +2,7 @@
 // frontend/web-app/src/app/public-partners/[id]/page.tsx
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { catalogApi, ProductSummary } from '@/api/catalog';
@@ -225,7 +226,25 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                   {products.map((product) => (
                     <div key={product.id} className={styles.card} style={{ padding: '1.25rem', gap: '0.5rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
-                        <h3 className={styles.partnerName} style={{ fontSize: 'var(--text-title)', fontWeight: '700' }}>{product.name}</h3>
+                        <Link
+                          href={`/products/${product.id}`}
+                          style={{ textDecoration: 'none', color: 'inherit' }}
+                        >
+                          <h3
+                            className={styles.partnerName}
+                            style={{
+                              fontSize: 'var(--text-title)',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            {product.name}
+                            <span style={{ fontSize: '0.8rem', color: 'var(--color-emerald, #059669)' }}>↗</span>
+                          </h3>
+                        </Link>
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                           {product.hasGluten ? (
                             <span className={`${styles.badge} ${styles.badgeRejected}`}>Contém Glúten</span>
@@ -248,8 +267,8 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                         </div>
                       </div>
                       <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>Marca: {product.brand}</p>
-                      <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        Ingredientes: {product.ingredients}
+                      <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', lineHeight: '1.5', wordBreak: 'break-word' }}>
+                        <strong style={{ color: 'var(--color-text)' }}>Ingredientes:</strong> {product.ingredients}
                       </p>
                       {product.crossContamination &&
                         product.crossContamination !== 'NONE' &&
@@ -264,6 +283,27 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                             })()}
                           </p>
                         )}
+                      <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                        <Link
+                          href={`/products/${product.id}`}
+                          style={{
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            color: 'var(--color-emerald, #059669)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            textDecoration: 'none',
+                            padding: '4px 8px',
+                            borderRadius: 'var(--radius-md, 6px)',
+                            background: 'rgba(16, 185, 129, 0.08)',
+                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          📦 Ver Detalhes do Produto
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>

@@ -162,7 +162,7 @@ export default function RegisterPartnerPage() {
 
     setLoading(true);
     try {
-      await partnerApi.register({
+      const created = await partnerApi.register({
         name,
         cnpj: cnpj || undefined,
         description,
@@ -175,8 +175,12 @@ export default function RegisterPartnerPage() {
         logoUrl: logoUrl || undefined,
       }, token);
 
+      const isApproved = created?.approvalStatus === 'APPROVED';
+
       toast.success({
-        description: 'Estabelecimento cadastrado com sucesso! Envie para revisão para poder ativá-lo.',
+        description: isApproved
+          ? 'Estabelecimento cadastrado e ativado com sucesso!'
+          : 'Estabelecimento cadastrado com sucesso! Envie para revisão para poder ativá-lo.',
         actionLabel: 'Ver Estabelecimentos',
         onAction: () => router.push('/partner'),
       });

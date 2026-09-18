@@ -743,6 +743,10 @@ input:checked + .sliderOperational:before {
     align-items: flex-start;
     gap: var(--space-4);
   }
+  .dialogCard {
+    padding: var(--space-5) var(--space-4);
+    border-radius: var(--radius-md);
+  }
 }
 
 /* ── Light Theme Overrides ── */

@@ -38,33 +38,41 @@ export class PartnerController extends BaseController {
   }
 
   async register(req: Request, res: Response): Promise<void> {
-    const userId = req.user?.id;
-    const { name, cnpj, description, address, phone, type, city, state, deliveryRegion, logoUrl } = req.body;
+    try {
+      const userId = req.user?.id;
+      const { name, cnpj, description, address, phone, type, city, state, deliveryRegion, logoUrl } = req.body;
 
-    if (!userId) {
-      this.unauthorized(res, 'Usuário não autenticado.');
-      return;
+      if (!userId) {
+        this.unauthorized(res, 'Usuário não autenticado.');
+        return;
+      }
+
+      const result = await this.registerPartnerUseCase.execute({
+        userId,
+        name,
+        cnpj,
+        description,
+        address,
+        phone,
+        type,
+        city,
+        state,
+        deliveryRegion,
+        logoUrl,
+      });
+
+      if (result.isFailure) {
+        this.badRequest(res, result.getError());
+        return;
+      }
+      this.created(res, result.getValue());
+    } catch (error: any) {
+      if (error?.code === '23505' && error?.constraint?.includes('cnpj')) {
+        this.badRequest(res, 'Já existe um estabelecimento cadastrado com este CNPJ.');
+        return;
+      }
+      this.serverError(res, 'Erro interno ao cadastrar estabelecimento.');
     }
-
-    const result = await this.registerPartnerUseCase.execute({
-      userId,
-      name,
-      cnpj,
-      description,
-      address,
-      phone,
-      type,
-      city,
-      state,
-      deliveryRegion,
-      logoUrl,
-    });
-
-    if (result.isFailure) {
-      this.badRequest(res, result.getError());
-      return;
-    }
-    this.created(res, result.getValue());
   }
 
   async update(req: Request, res: Response): Promise<void> {

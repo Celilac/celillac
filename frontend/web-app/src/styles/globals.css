@@ -251,6 +251,20 @@ button { cursor: pointer; font-family: inherit; }
 
 /* Menu mobile — abaixo de 768px a navegação vira um painel empilhado
    por trás de um botão hambúrguer, com alvos de toque ≥44px. */
+.topbar-mobile-controls {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.topbar-theme-toggle-mobile {
+  display: none;
+}
+
+.topbar-theme-toggle-desktop {
+  display: inline-flex;
+}
+
 .topbar-nav-toggle {
   display: none;
   align-items: center; justify-content: center;
@@ -262,6 +276,35 @@ button { cursor: pointer; font-family: inherit; }
 }
 
 @media (max-width: 767px) {
+  .topbar {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .page-container {
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .topbar-mobile-controls {
+    display: flex;
+  }
+
+  .topbar-theme-toggle-mobile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: transparent;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
+  .topbar-theme-toggle-desktop {
+    display: none !important;
+  }
+
   .topbar-nav-toggle { display: inline-flex; }
 
   .topbar-actions {
