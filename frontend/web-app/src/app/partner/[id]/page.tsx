@@ -14,6 +14,7 @@ import { Header } from '@/components/layout/Header';
 import { CreateProductModal } from '@/components/common/CreateProductModal';
 import PartnerLocationMap from '@/components/common/PartnerLocationMap';
 import { formatDisplayPhone, maskCnpj } from '@/utils/mask';
+import { translatePartnerType } from '@/utils/compatibilityTranslator';
 import styles from '../partner.module.css';
 
 interface PageProps {
@@ -244,7 +245,7 @@ export default function PartnerDetailPage({ params }: PageProps) {
             )}
             <div className={styles.titleArea}>
               <h1 className={styles.title} style={{ margin: 0, fontSize: 'clamp(1.5rem, 2.5vw, 2.25rem)' }}>{partner.name}</h1>
-              <p className={styles.subtitle} style={{ margin: '4px 0 0 0' }}>Gestão operacional do perfil `{partner.type}`</p>
+              <p className={styles.subtitle} style={{ margin: '4px 0 0 0' }}>Gestão operacional do perfil ({translatePartnerType(partner.type)})</p>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -284,7 +285,7 @@ export default function PartnerDetailPage({ params }: PageProps) {
                 <div>
                   <p className={styles.infoRow}><strong>Razão/Nome Fantasia:</strong> <span>{partner.name}</span></p>
                   <p className={styles.infoRow}><strong>CNPJ:</strong> <span>{partner.cnpj ? maskCnpj(partner.cnpj) : 'Não informado (Pessoa Física)'}</span></p>
-                  <p className={styles.infoRow}><strong>Tipo:</strong> <span>{partner.type}</span></p>
+                  <p className={styles.infoRow}><strong>Tipo:</strong> <span>{translatePartnerType(partner.type)}</span></p>
                 </div>
                 <div>
                   <p className={styles.infoRow}><strong>Endereço:</strong> <span>{partner.address}</span></p>

@@ -10,6 +10,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
+import { translatePartnerType } from '@/utils/compatibilityTranslator';
 import styles from './partner.module.css';
 
 export default function PartnerListPage() {
@@ -92,7 +93,7 @@ export default function PartnerListPage() {
             partners.map((partner) => (
               <section key={partner.id} className={styles.card}>
                 <div className={styles.cardContent}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div className={styles.cardHeader}>
                     <h2 className={styles.partnerName}>{partner.name}</h2>
                     {getStatusLabel(partner.approvalStatus)}
                   </div>
@@ -101,7 +102,7 @@ export default function PartnerListPage() {
                   <div className={styles.partnerMeta}>
                     <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
                     <span className={styles.metaItem}>📞 {partner.phone}</span>
-                    <span className={styles.metaItem}>💼 {partner.type}</span>
+                    <span className={styles.metaItem}>💼 {translatePartnerType(partner.type)}</span>
                   </div>
 
                   {partner.approvalStatus === 'REJECTED' && partner.rejectionReason && (

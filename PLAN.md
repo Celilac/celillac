@@ -1,50 +1,30 @@
-# PLAN.md - Melhorias no Cadastro e Gestão de Parceiros: Telefone Internacional, CEP Automático, Google Maps e Validação Oficial de CNPJ
+# PLAN.md - Disparo e Geração de Código OTP na Verificação de E-mail
 
-**Branch de Trabalho:** `feat/product-registration-redesign`  
-**Status:** Aguardando Aprovação Humana
-
----
-
-## 1. Objetivo
-Implementar melhorias essenciais de usabilidade, internacionalização, conformidade fiscal e geolocalização no ecossistema de parceiros comerciais (`Partner`):
-1. **Telefone Internacional:** Máscara dinâmica por país, suporte a múltiplos DDIs (Brasil 🇧🇷, EUA 🇺🇸, Portugal 🇵🇹, etc.) e armazenamento no formato internacional E.164.
-2. **Endereço & CEP:** Consulta automática de CEP via ViaCEP (gratuito) para endereços no Brasil com auto-preenchimento e fallback manual; suporte a Código Postal para endereços internacionais.
-3. **Google Maps:** Integração de mapa interativo (Google Maps Embed `output=embed` com zero custos e sem dependência de API key paga) no cadastro/edição, no catálogo público e no painel administrativo com botão "Como Chegar".
-4. **CNPJ com Máscara e Validação Oficial:** Máscara em tempo real `99.999.999/9999-99` no frontend e validação algorítmica rigorosa (Módulo 11 da Receita Federal) no domínio com o Value Object `Cnpj`.
+**Status:** Pronto para execução  
+**Escopo:** Frontend Web (`verify-email/page.tsx`, `profile/page.tsx`, `dashboard/page.tsx`, `register/page.tsx`, modais de denúncia/avaliação)
 
 ---
 
-## 2. Escopo Detalhado
-
-### 2.1 Domínio e Backend (`backend`)
-- **Value Object `Cnpj` (`backend/src/domain/partner/value-objects/Cnpj.ts`):**
-  - Implementação do algoritmo oficial do Módulo 11 (cálculo de 1º e 2º dígitos verificadores com pesos 5..2, 9..2 e 6..2, 9..2).
-  - Bloqueio de sequências repetidas (`00000000000000`, etc.).
-  - Preservação da opcionalidade para produtores artesanais/pessoa física.
-- **Entidade `Partner` (`backend/src/domain/partner/Partner.ts`):**
-  - Validação via `Cnpj.create()` nos métodos `create` e `updateDetails`.
-  - Suporte a telefones internacionais no formato E.164.
-- **Suíte de Testes Unitários:**
-  - `Cnpj.spec.ts` com cobertura de 100% de casos válidos e inválidos.
-  - Atualização dos testes existentes de `Partner.spec.ts`.
-
-### 2.2 Frontend Web App (`frontend/web-app`)
-- **Utilitários de Máscara e Validação (`src/utils/mask.ts`):**
-  - `maskCnpj`, `validateCnpj`, `maskCep`, `maskPhone`, `parsePhoneToE164`.
-- **Serviço de CEP (`src/services/viaCep.ts`):**
-  - Consulta assíncrona ao ViaCEP com preenchimento automático de Logradouro, Bairro, Cidade e Estado.
-- **Componente `InternationalPhoneInput.tsx`:**
-  - Seletor de DDI/País com bandeiras e máscara adaptativa.
-- **Componente `PartnerLocationMap.tsx`:**
-  - Renderização responsiva do Google Maps Embed com pino e botão "Como Chegar / Abrir no Google Maps".
-- **Telas de Cadastro e Edição (`/partner/register` e `/partner/[id]/edit`):**
-  - Integração do input de telefone internacional, busca por CEP, campos de número/complemento, validação visual de CNPJ e mapa de preview ao vivo.
-- **Páginas de Visualização (`/public-partners/[id]`, `/partner/[id]`, `/admin/partners`):**
-  - Exibição de mapa de localização e telefone formatado com atalho para WhatsApp e chamada.
+## 1. Problema Identificado
+Ao clicar em "Verificar E-mail Agora" na página de perfil ou no dashboard, o usuário era apenas redirecionado para a rota `/auth/verify-email`. Como a página não disparava nenhuma requisição para o endpoint de envio de código e o botão de reenvio iniciava bloqueado em 60s, nenhum código OTP era gerado no banco ou logado no terminal do backend.
 
 ---
 
-## 3. Matriz de Testes e Validação
-- Testes unitários Jest: `npm test` no backend (todas as suítes verdes).
-- Build estático Next.js: `npm run build` no frontend (19/19 rotas com zero erros).
-- Validação manual de CEP real (`01310-100`), CNPJs válidos e inválidos, telefones de diferentes países e renderização do mapa.
+## 2. Escopo de Alterações
+
+1. **Página de Verificação (`src/app/auth/verify-email/page.tsx`):**
+   - Inicializar `countdown` em `0` (permitindo reenvio imediato caso o usuário não tenha recebido código).
+   - Adicionar lógica no `useEffect` para detectar o parâmetro `?send=true`.
+   - Se `?send=true` estiver presente e o usuário estiver autenticado, chamar automaticamente `iamApi.resendEmailVerificationCode(currentToken)`.
+   - O backend então gerará o código OTP, salvará no banco e logará no console: `[FakeEmailService]: Enviando código XXXXXX para ...`.
+   - Iniciar o contador de 60s e exibir toast de confirmação.
+
+2. **Links de Redirecionamento (`profile`, `dashboard`, modais):**
+   - Atualizar os botões "Verificar E-mail Agora" para apontar para `/auth/verify-email?send=true`.
+   - Em `register/page.tsx`, passar `?recent=true` para indicar que um código já foi gerado no cadastro.
+
+---
+
+## 3. Validação
+- `npx tsc --noEmit` no `frontend/web-app`.
+- Acesso à tela de perfil do parceiro, clique no botão e verificação do log do terminal do backend.

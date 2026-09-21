@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Header } from '@/components/layout/Header';
+import { translatePartnerType } from '@/utils/compatibilityTranslator';
 import styles from '../partner/partner.module.css';
 
 export default function PublicPartnersListPage() {
@@ -103,7 +104,7 @@ export default function PublicPartnersListPage() {
                   
                   <div className={styles.partnerMeta}>
                     <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
-                    <span className={styles.metaItem}>💼 {partner.type === 'RESTAURANT' ? '🍽️ Lanchonete/Restaurante' : partner.type === 'MARKET' ? '🛒 Mercado/Empório' : '👩‍🍳 Produtor Artesanal'}</span>
+                    <span className={styles.metaItem}>💼 {translatePartnerType(partner.type)}</span>
                   </div>
 
                   {partner.operationalStatus === 'TEMPORARILY_CLOSED' && (

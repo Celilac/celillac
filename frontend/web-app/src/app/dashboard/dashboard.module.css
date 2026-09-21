@@ -1,6 +1,6 @@
 .container {
   min-height: 100vh;
-  padding: var(--space-12) var(--space-8);
+  padding: var(--space-4) var(--space-8) var(--space-12);
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
@@ -11,7 +11,7 @@
 
 .header {
   text-align: center;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-4);
 }
 
 .title {
@@ -29,7 +29,7 @@
 .grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: var(--space-8);
+  gap: var(--space-6);
   width: 100%;
   max-width: 1000px;
 }
@@ -44,7 +44,7 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--space-8);
+  padding: var(--space-6);
   transition: border-color 0.2s ease;
 }
 
@@ -160,8 +160,8 @@
   width: 100%;
   max-width: 1000px;
   box-sizing: border-box;
-  padding: var(--space-6);
-  border-radius: var(--radius-md);
+  padding: 1.25rem 1.75rem;
+  border-radius: var(--radius-lg);
   margin-bottom: var(--space-6);
   display: flex;
   justify-content: space-between;

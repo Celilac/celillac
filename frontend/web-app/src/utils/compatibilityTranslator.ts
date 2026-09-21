@@ -98,3 +98,42 @@ export function translateConflictReason(reason: string): string {
 
   return text;
 }
+
+export const PARTNER_TYPE_LABELS: Record<string, string> = {
+  RESTAURANT:           'Restaurante / Lanchonete',
+  MARKET:               'Mercado / Empório',
+  INDEPENDENT_PRODUCER: 'Produtor Independente',
+  BAKERY:               'Padaria / Confeitaria',
+  CAFE:                 'Cafeteria',
+  SUPERMARKET:          'Supermercado',
+  OTHER:                'Outro',
+};
+
+/**
+ * Traduz o enum de tipo de estabelecimento parceiro para português.
+ * Exemplo: 'RESTAURANT' -> 'Restaurante / Lanchonete'
+ */
+export function translatePartnerType(type?: string | null): string {
+  if (!type) return '';
+  const key = type.trim().toUpperCase();
+  return PARTNER_TYPE_LABELS[key] || type;
+}
+
+export const PARTNER_APPROVAL_STATUS_LABELS: Record<string, string> = {
+  DRAFT:          'Rascunho',
+  PENDING:        'Pendente de Revisão',
+  PENDING_REVIEW: 'Pendente de Revisão',
+  APPROVED:       'Aprovado',
+  REJECTED:       'Rejeitado',
+  SUSPENDED:      'Suspenso',
+};
+
+/**
+ * Traduz o status de aprovação do parceiro para português.
+ * Exemplo: 'PENDING_REVIEW' -> 'Pendente de Revisão'
+ */
+export function translatePartnerApprovalStatus(status?: string | null): string {
+  if (!status) return '';
+  const key = status.trim().toUpperCase();
+  return PARTNER_APPROVAL_STATUS_LABELS[key] || status;
+}
