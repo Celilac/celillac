@@ -69,7 +69,14 @@ async function request<T>(
         const body = JSON.parse(text);
         errorMessage = body.error || body.message || errorMessage;
       } catch (_) {
-        errorMessage = text;
+        const preMatch = text.match(/<pre>([\s\S]*?)<\/pre>/i);
+        if (preMatch && preMatch[1]) {
+          errorMessage = preMatch[1].replace(/<[^>]*>?/gm, '').trim();
+        } else if (text.includes('<html') || text.includes('<!DOCTYPE')) {
+          errorMessage = `Erro ${response.status}: Não foi possível processar a solicitação no servidor.`;
+        } else {
+          errorMessage = text.trim().slice(0, 200);
+        }
       }
     }
     throw new HttpError(response.status, errorMessage);

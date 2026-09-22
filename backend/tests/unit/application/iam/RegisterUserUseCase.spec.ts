@@ -25,6 +25,7 @@ describe('RegisterUserUseCase', () => {
 
     emailService = {
       sendVerificationCode: jest.fn().mockResolvedValue(undefined),
+      sendPasswordResetCode: jest.fn().mockResolvedValue(undefined),
       sendAdminApprovalNotification: jest.fn().mockResolvedValue(undefined),
       sendNewUserRegisteredAdminNotification: jest.fn().mockResolvedValue(undefined),
     };

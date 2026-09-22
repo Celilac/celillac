@@ -138,6 +138,10 @@ export class User extends Entity<UserProps> {
     this.props.isEmailVerified = true;
   }
 
+  public changePassword(newPasswordHash: PasswordHash): void {
+    this.props.passwordHash = newPasswordHash;
+  }
+
   public updateProfileDetails(details: {
     fullName?: string;
     birthDate?: Date;

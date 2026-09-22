@@ -219,6 +219,128 @@ curl -X POST http://localhost:3000/iam/logout \
 
 ---
 
+### `POST /iam/password-reset/request`
+
+Solicita a geração e envio por e-mail de um código OTP de recuperação de senha (válido por 15 minutos). **Público — sem autenticação.** Protegido contra enumeração de usuários (retorna 200 OK mesmo se o e-mail não existir na base).
+
+**Request Body:**
+```json
+{
+  "email": "usuario@exemplo.com"
+}
+```
+
+| Campo | Tipo | Obrigatório | Validação |
+|:------|:-----|:-----------:|:----------|
+| `email` | `string` | ✅ | Formato de e-mail válido. |
+
+**Response `200 OK`:**
+```json
+{
+  "message": "Se o endereço de e-mail estiver cadastrado em nossa plataforma, você receberá em instantes um código para redefinir sua senha."
+}
+```
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `400` | `"O e-mail é obrigatório."` | Campo ausente ou vazio |
+| `400` | `"Formato de e-mail inválido."` | Sintaxe de e-mail não compatível |
+| `429` | `"Muitas tentativas de recuperação de senha a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente."` | Limite de taxa excedido (máximo 3 requisições por IP a cada 15 minutos; cabeçalhos `X-RateLimit-*` e `Retry-After` presentes) |
+
+---
+
+### `POST /iam/password-reset/confirm`
+
+Valida o código OTP de 6 dígitos recebido por e-mail e define uma nova senha para a conta do usuário. **Público — sem autenticação.**
+
+**Request Body:**
+```json
+{
+  "email": "usuario@exemplo.com",
+  "code": "123456",
+  "newPassword": "NovaSenh@Forte123"
+}
+```
+
+| Campo | Tipo | Obrigatório | Validação |
+|:------|:-----|:-----------:|:----------|
+| `email` | `string` | ✅ | E-mail da conta do usuário. |
+| `code` | `string` | ✅ | Código numérico OTP de exatamente 6 dígitos. |
+| `newPassword` | `string` | ✅ | Mínimo 8 caracteres, maiúscula, minúscula, número e caractere especial. |
+
+**Response `200 OK`:**
+```json
+{
+  "message": "Senha redefinida com sucesso! Você já pode entrar com sua nova senha."
+}
+```
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `400` | `"O código de recuperação deve possuir 6 dígitos."` | Código com tamanho incorreto |
+| `400` | `"A nova senha deve ter no mínimo 8 caracteres..."` | Complexidade da senha insuficiente |
+| `400` | `"Código de recuperação inválido ou já utilizado."` | Código não confere ou já foi usado |
+| `400` | `"Este código de recuperação expirou. Por favor, solicite um novo código."` | Código com mais de 15 minutos |
+
+---
+
+### `POST /iam/email-verification/verify`
+
+Valida o código numérico OTP de 6 dígitos recebido por e-mail para confirmar a titularidade da conta. 🔒 **Autenticação obrigatória — Bearer Token.**
+
+**Request Body:**
+```json
+{
+  "code": "123456"
+}
+```
+
+| Campo | Tipo | Obrigatório | Validação |
+|:------|:-----|:-----------:|:----------|
+| `code` | `string` | ✅ | Código numérico OTP de exatamente 6 dígitos. |
+
+**Response `200 OK`:**
+```json
+{
+  "message": "Endereço de e-mail verificado com sucesso!"
+}
+```
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `401` | `"Token de autenticação não fornecido."` | Header Authorization ausente |
+| `400` | `"O código de verificação deve conter 6 dígitos."` | Código com tamanho ou formato inválido |
+| `400` | `"Código de verificação incorreto ou inexistente."` | Código não confere com o gerado |
+| `400` | `"Código de verificação expirado."` | Código emitido há mais de 15 minutos |
+
+---
+
+### `POST /iam/email-verification/resend`
+
+Solicita o reenvio de um novo código OTP de verificação para o e-mail do usuário autenticado. 🔒 **Autenticação obrigatória — Bearer Token.** Protegido por rate limiting configurável.
+
+**Request Body:**
+*(Nenhum)*
+
+**Response `200 OK`:**
+```json
+{
+  "message": "Novo código de verificação enviado por e-mail."
+}
+```
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `401` | `"Token de autenticação não fornecido."` | Header Authorization ausente |
+| `400` | `"E-mail já verificado."` | A conta já se encontra com status verificado |
+| `429` | `"Muitas tentativas de reenvio de código de verificação a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente."` | Limite de taxa excedido (máximo 3 requisições por IP a cada 15 minutos; cabeçalhos `X-RateLimit-*` e `Retry-After` presentes) |
+
+---
+
 ## 3. Perfil Alimentar
 
 O Perfil Alimentar é o **elo central** da plataforma: conecta o Usuário (IAM) ao Motor de Alérgenos. Sem um perfil ativo, nenhuma verificação de compatibilidade é possível.
