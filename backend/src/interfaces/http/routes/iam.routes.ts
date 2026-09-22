@@ -83,13 +83,13 @@ const resetPasswordController = new ResetPasswordController(resetPasswordUseCase
 // Middlewares de Limitação de Taxa (Rate Limit) para proteção de endpoints com envio de e-mails
 const passwordResetRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5,                   // máximo 5 tentativas por IP a cada 15 minutos
+  max: 3,                   // máximo 3 tentativas por IP a cada 15 minutos
   message: 'Muitas tentativas de recuperação de senha a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente.',
 });
 
 const emailVerificationRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 5,                   // máximo 5 reenvios de código por IP a cada 15 minutos
+  max: 3,                   // máximo 3 reenvios de código por IP a cada 15 minutos
   message: 'Muitas tentativas de reenvio de código de verificação a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente.',
 });
 

@@ -246,7 +246,7 @@ Solicita a geração e envio por e-mail de um código OTP de recuperação de se
 |:-------|:--------|:------|
 | `400` | `"O e-mail é obrigatório."` | Campo ausente ou vazio |
 | `400` | `"Formato de e-mail inválido."` | Sintaxe de e-mail não compatível |
-| `429` | `"Muitas tentativas de recuperação de senha a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente."` | Limite de taxa excedido (máximo 5 requisições por IP a cada 15 minutos; cabeçalhos `X-RateLimit-*` e `Retry-After` presentes) |
+| `429` | `"Muitas tentativas de recuperação de senha a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente."` | Limite de taxa excedido (máximo 3 requisições por IP a cada 15 minutos; cabeçalhos `X-RateLimit-*` e `Retry-After` presentes) |
 
 ---
 
@@ -337,7 +337,7 @@ Solicita o reenvio de um novo código OTP de verificação para o e-mail do usu�
 |:-------|:--------|:------|
 | `401` | `"Token de autenticação não fornecido."` | Header Authorization ausente |
 | `400` | `"E-mail já verificado."` | A conta já se encontra com status verificado |
-| `429` | `"Muitas tentativas de reenvio de código de verificação a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente."` | Limite de taxa excedido (máximo 5 requisições por IP a cada 15 minutos; cabeçalhos `X-RateLimit-*` e `Retry-After` presentes) |
+| `429` | `"Muitas tentativas de reenvio de código de verificação a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente."` | Limite de taxa excedido (máximo 3 requisições por IP a cada 15 minutos; cabeçalhos `X-RateLimit-*` e `Retry-After` presentes) |
 
 ---
 

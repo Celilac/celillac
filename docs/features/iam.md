@@ -13,10 +13,10 @@
 | `POST` | `/iam/logout` | Sim (Bearer JWT) | Revoga o token atual inserindo-o na blacklist |
 | `GET`  | `/iam/me` | Sim (Bearer JWT) | Retorna os dados do usuário autenticado |
 | `PUT`  | `/iam/profile` | Sim (Bearer JWT) | Atualiza dados pessoais (Nome, Nascimento, Gênero, Avatar) |
-| `POST` | `/iam/password-reset/request` | Não (Rate Limited: 5/15min) | Solicita envio de OTP de recuperação de senha |
+| `POST` | `/iam/password-reset/request` | Não (Rate Limited: 3/15min) | Solicita envio de OTP de recuperação de senha |
 | `POST` | `/iam/password-reset/confirm` | Não | Valida OTP e define nova senha para a conta |
 | `POST` | `/iam/email-verification/verify` | Sim (Bearer JWT) | Confirma o código OTP de verificação de e-mail |
-| `POST` | `/iam/email-verification/resend` | Sim (Bearer JWT + Rate Limited: 5/15min) | Reenvia o código OTP para o e-mail cadastrado |
+| `POST` | `/iam/email-verification/resend` | Sim (Bearer JWT + Rate Limited: 3/15min) | Reenvia o código OTP para o e-mail cadastrado |
 | `GET`  | `/health` | Não | Status do servidor |
 
 ## Domínio
@@ -62,7 +62,7 @@
 
 - **Objetivo:** Mitigar abusos e disparos em massa que sobrecarreguem ou causem bloqueio da conta no servidor SMTP (Zoho Mail).
 - **Mecanismo:** Middleware nativo em memória (`createRateLimiter`), sem dependências externas, com limpeza automática por ciclo de vida.
-- **Configuração:** Limite de **5 requisições por IP a cada 15 minutos** (janela de 900.000 ms).
+- **Configuração:** Limite de **3 requisições por IP a cada 15 minutos** (janela de 900.000 ms).
 - **Tratamento de Proxies:** Suporte a cabeçalho `x-forwarded-for` com fallback seguro para `req.ip` e `socket.remoteAddress`, configurado via `app.set('trust proxy', 1)`.
 - **Headers RFC/IETF:** Retorna `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` e `Retry-After`.
 - **Status de Erro:** `429 Too Many Requests` com mensagem padronizada no formato JSON `{ error: string }`.

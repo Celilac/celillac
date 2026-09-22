@@ -7,8 +7,8 @@
 
 ## 1. Objetivo
 Implementar middleware de limitação de taxa (*Rate Limiting*) nativo em TypeScript (sem dependências externas) para proteger os endpoints públicos/sensíveis que disparam e-mails e geram códigos OTP:
-1. `POST /iam/password-reset/request` (limite: 5 requisições por IP a cada 15 minutos).
-2. `POST /iam/email-verification/resend` (limite: 5 requisições por IP a cada 15 minutos).
+1. `POST /iam/password-reset/request` (limite: 3 requisições por IP a cada 15 minutos).
+2. `POST /iam/email-verification/resend` (limite: 3 requisições por IP a cada 15 minutos).
 
 O middleware deve responder com `429 Too Many Requests` caso o limite seja excedido, retornando headers padrão de controle (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` e `Retry-After`) e mensagem amigável no formato `{ error: string }`.
 
@@ -19,7 +19,7 @@ O middleware deve responder com `429 Too Many Requests` caso o limite seja exced
 ### Fase 1: Middleware de Rate Limit (`backend/src/interfaces/http/middlewares/RateLimitMiddleware.ts`)
 - Criar a factory `createRateLimiter(options: RateLimitOptions)`:
   - `windowMs`: Janela de tempo em ms (padrão: 15 minutos = 900.000 ms).
-  - `max`: Número máximo de requisições permitidas (padrão: 5).
+  - `max`: Número máximo de requisições permitidas (padrão: 3).
   - `message`: Mensagem descritiva de bloqueio.
   - `keyGenerator`: Identificação do cliente por IP (respeitando `x-forwarded-for` de proxies reversos e fallback para `req.ip` ou `socket.remoteAddress`).
 - Armazenamento em memória com limpeza periódica (para evitar acúmulo de memória).
@@ -29,8 +29,8 @@ O middleware deve responder com `429 Too Many Requests` caso o limite seja exced
 - Em `backend/src/index.ts`:
   - Adicionar `app.set('trust proxy', 1);` para resolução fidedigna de IPs atrás de proxies.
 - Em `backend/src/interfaces/http/routes/iam.routes.ts`:
-  - Instanciar `passwordResetRateLimiter` (5 req / 15 min).
-  - Instanciar `emailVerificationRateLimiter` (5 req / 15 min).
+  - Instanciar `passwordResetRateLimiter` (3 req / 15 min).
+  - Instanciar `emailVerificationRateLimiter` (3 req / 15 min).
   - Aplicar nas rotas `POST /password-reset/request` e `POST /email-verification/resend`.
 
 ### Fase 3: Testes Automatizados
