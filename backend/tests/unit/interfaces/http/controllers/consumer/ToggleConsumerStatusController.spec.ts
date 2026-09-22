@@ -90,9 +90,9 @@ describe('ToggleConsumerStatusController', () => {
     });
   });
 
-  it('deve reativar consumidor com sucesso aceitando req.user.sub para compatibilidade', async () => {
+  it('deve reativar consumidor com sucesso lendo req.user.id', async () => {
     req = {
-      user: { id: 'user-123', sub: 'user-123', role: 'CELIACO' },
+      user: { id: 'user-123', role: 'CELIACO' },
       body: { action: 'ACTIVATE' },
     };
 
