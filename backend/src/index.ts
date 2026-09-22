@@ -16,6 +16,9 @@ import { corsMiddleware, securityHeadersMiddleware } from './interfaces/http/mid
 const app  = express();
 const port = process.env.PORT ?? 3000;
 
+// Configuração para proxies reversos (Traefik, Nginx, Cloudflare)
+app.set('trust proxy', 1);
+
 app.use(corsMiddleware);
 app.use(securityHeadersMiddleware);
 

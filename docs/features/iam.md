@@ -1,7 +1,7 @@
 # IAM — Identity & Access Management
 
 **Status:** ✅ Implementado
-**Entregue em:** 2026-06-29 (Cadastro/Login), 2026-07-24 (Logout), 2026-07-28 (Perfil Estendido, OTP e Moderação) e 2026-08-13 (Onboarding Flow & Dev OTP Logging)
+**Entregue em:** 2026-06-29 (Cadastro/Login), 2026-07-24 (Logout), 2026-07-28 (Perfil Estendido, OTP e Moderação), 2026-08-13 (Onboarding Flow & Dev OTP Logging) e 2026-09-22 (Recuperação de Senha via OTP & Rate Limiting)
 **Contrato completo:** [`docs/API_CONTRACTS.md`](../API_CONTRACTS.md#2-iam--autenticação)
 
 ## Endpoints
@@ -13,8 +13,10 @@
 | `POST` | `/iam/logout` | Sim (Bearer JWT) | Revoga o token atual inserindo-o na blacklist |
 | `GET`  | `/iam/me` | Sim (Bearer JWT) | Retorna os dados do usuário autenticado |
 | `PUT`  | `/iam/profile` | Sim (Bearer JWT) | Atualiza dados pessoais (Nome, Nascimento, Gênero, Avatar) |
+| `POST` | `/iam/password-reset/request` | Não (Rate Limited: 5/15min) | Solicita envio de OTP de recuperação de senha |
+| `POST` | `/iam/password-reset/confirm` | Não | Valida OTP e define nova senha para a conta |
 | `POST` | `/iam/email-verification/verify` | Sim (Bearer JWT) | Confirma o código OTP de verificação de e-mail |
-| `POST` | `/iam/email-verification/resend` | Sim (Bearer JWT) | Reenvia o código OTP para o e-mail cadastrado |
+| `POST` | `/iam/email-verification/resend` | Sim (Bearer JWT + Rate Limited: 5/15min) | Reenvia o código OTP para o e-mail cadastrado |
 | `GET`  | `/health` | Não | Status do servidor |
 
 ## Domínio
@@ -47,4 +49,22 @@
   - `POST /reports` (Envio de denúncias de segurança alimentar)
   - `POST /partners` (Cadastro de estabelecimentos/parceiros)
   - `POST /products` (Cadastro de produtos no catálogo)
+
+## Recuperação de Senha ("Esqueceu a senha?") via OTP
+
+- **Entidade:** `PasswordReset` com campos `id`, `userId`, `email`, `code`, `expiresAt`, `usedAt`, `createdAt`.
+- **Validade do Código:** 15 minutos. Invalidação automática de solicitações pendentes anteriores para o mesmo e-mail.
+- **Proteção Anti-Enumeração:** A rota de requisição retorna `200 OK` indistintamente para e-mails cadastrados e inexistentes.
+- **Validação de Senha Forte:** Mínimo de 8 caracteres, com letra maiúscula, minúscula, número e caractere especial exigido no domínio (`PasswordHash`).
+- **Persistência:** Tabela `password_resets` (Migration 024) com índices otimizados por e-mail e status de expiração/uso.
+
+## Proteção por Rate Limiting (`RateLimitMiddleware`)
+
+- **Objetivo:** Mitigar abusos e disparos em massa que sobrecarreguem ou causem bloqueio da conta no servidor SMTP (Zoho Mail).
+- **Mecanismo:** Middleware nativo em memória (`createRateLimiter`), sem dependências externas, com limpeza automática por ciclo de vida.
+- **Configuração:** Limite de **5 requisições por IP a cada 15 minutos** (janela de 900.000 ms).
+- **Tratamento de Proxies:** Suporte a cabeçalho `x-forwarded-for` com fallback seguro para `req.ip` e `socket.remoteAddress`, configurado via `app.set('trust proxy', 1)`.
+- **Headers RFC/IETF:** Retorna `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` e `Retry-After`.
+- **Status de Erro:** `429 Too Many Requests` com mensagem padronizada no formato JSON `{ error: string }`.
+
 

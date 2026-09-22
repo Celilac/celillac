@@ -28,6 +28,7 @@ import { RequestPasswordResetController } from '../controllers/iam/RequestPasswo
 import { ResetPasswordController } from '../controllers/iam/ResetPasswordController';
 
 import { authMiddleware } from '../middlewares/AuthMiddleware';
+import { createRateLimiter } from '../middlewares/RateLimitMiddleware';
 
 const router = Router();
 
@@ -79,6 +80,19 @@ const resendEmailVerificationCodeController = new ResendEmailVerificationCodeCon
 const requestPasswordResetController = new RequestPasswordResetController(requestPasswordResetUseCase);
 const resetPasswordController = new ResetPasswordController(resetPasswordUseCase);
 
+// Middlewares de Limitação de Taxa (Rate Limit) para proteção de endpoints com envio de e-mails
+const passwordResetRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5,                   // máximo 5 tentativas por IP a cada 15 minutos
+  message: 'Muitas tentativas de recuperação de senha a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente.',
+});
+
+const emailVerificationRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5,                   // máximo 5 reenvios de código por IP a cada 15 minutos
+  message: 'Muitas tentativas de reenvio de código de verificação a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente.',
+});
+
 // Rotas IAM
 router.post('/register', (req, res) => registerUserController.execute(req, res));
 router.post('/login', (req, res) => loginUserController.execute(req, res));
@@ -87,11 +101,11 @@ router.get('/me', authMiddleware, (req, res) => getUserProfileController.execute
 router.put('/profile', authMiddleware, (req, res) => updateUserProfileController.execute(req, res));
 
 // Rotas de Recuperação de Senha via OTP (Públicas)
-router.post('/password-reset/request', (req, res) => requestPasswordResetController.execute(req, res));
+router.post('/password-reset/request', passwordResetRateLimiter, (req, res) => requestPasswordResetController.execute(req, res));
 router.post('/password-reset/confirm', (req, res) => resetPasswordController.execute(req, res));
 
 // Rotas de Verificação de E-mail via OTP
 router.post('/email-verification/verify', authMiddleware, (req, res) => verifyEmailCodeController.execute(req, res));
-router.post('/email-verification/resend', authMiddleware, (req, res) => resendEmailVerificationCodeController.execute(req, res));
+router.post('/email-verification/resend', authMiddleware, emailVerificationRateLimiter, (req, res) => resendEmailVerificationCodeController.execute(req, res));
 
 export { router as iamRouter };

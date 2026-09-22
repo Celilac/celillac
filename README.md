@@ -6,7 +6,7 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-65%20suites%20%7C%20394%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-71%20suites%20%7C%20436%20passing-brightgreen)](#-testes)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20%2B%20Oracle%20Cloud-orange)](#-segurança--governança)
 
 ---
@@ -135,13 +135,13 @@ cd backend
 npm test
 ```
 
-**65 suítes de teste | 394 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
+**71 suítes de teste | 436 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
 | `domain/Result.spec.ts` | 100% |
 | `domain/partner/Cnpj.spec.ts` | 100% |
-| `domain/iam/Email`, `PasswordHash`, `User` | 100% |
+| `domain/iam/Email`, `PasswordHash`, `User`, `PasswordReset` | 100% |
 | `domain/food-profile/SeverityLevel`, `Restriction`, `FoodProfile` | 100% |
 | `domain/allergen-engine/AllergenEngine` ← 9 casos críticos | ~98% |
 | `domain/catalog/Product`, `Category` | ~98.5% |
@@ -154,9 +154,10 @@ npm test
 | `application/catalog/CreateProductUseCase`, `CreateCategoryUseCase`, `SearchProductsUseCase` | 100% |
 | `application/reviews/SubmitReviewUseCase`, `GetProductReviewsUseCase` | ~94% |
 | `application/admin/CreateReportUseCase`, `ListReportsUseCase`, `ReviewReportUseCase`, `ReviewCategoryUseCase` | ~94% |
-| `application/iam/LogoutUserUseCase` | ~92.8% |
+| `application/iam/LogoutUserUseCase`, `RequestPasswordResetUseCase`, `ResetPasswordUseCase` | ~96% |
 | `interfaces/http/middlewares/AuthMiddleware` | 100% |
 | `interfaces/http/middlewares/SecurityMiddleware` | 100% |
+| `interfaces/http/middlewares/RateLimitMiddleware` | 100% |
 
 Para relatório de cobertura: `npm test -- --coverage`.
 
