@@ -32,6 +32,7 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/iam',          iamRouter);
+app.use('/consumer',     consumerRouter);
 app.use('/consumers',    consumerRouter);
 app.use('/food-profile', foodProfileRouter);
 app.use('/compatibility', compatibilityRouter);
