@@ -65,6 +65,38 @@ export class ZohoEmailService implements IEmailService {
     await this.dispatchEmail(recipientEmail, subject, htmlContent);
   }
 
+  async sendPasswordResetCode(recipientEmail: string, code: string, recipientName?: string): Promise<void> {
+    console.log(`[ZohoEmailService]: 🔑 Código de recuperação de senha gerado para ${recipientEmail}: [ ${code} ]`);
+    const subject = 'CeLiLac — Recuperação de Senha';
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #059669; margin: 0; font-size: 24px;">Celi<span style="color: #10b981;">Lac</span></h2>
+          <p style="color: #6b7280; font-size: 13px; margin-top: 4px;">Segurança Alimentar</p>
+        </div>
+        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <h3 style="color: #111827; margin-top: 0;">Recuperação de Senha</h3>
+          <p style="color: #374151; font-size: 14px; line-height: 1.5;">
+            Olá${recipientName ? ' <strong>' + recipientName + '</strong>' : ''},
+          </p>
+          <p style="color: #374151; font-size: 14px; line-height: 1.5;">
+            Você solicitou a recuperação de senha da sua conta no CeLiLac. Utilize o código de 6 dígitos abaixo para prosseguir com a redefinição:
+          </p>
+          <div style="text-align: center; margin: 24px 0;">
+            <span style="display: inline-block; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #059669; background-color: #ecfdf5; padding: 12px 28px; border-radius: 8px; border: 1px solid #a7f3d0;">
+              ${code}
+            </span>
+          </div>
+          <p style="color: #6b7280; font-size: 13px; text-align: center;">
+            Este código é válido por <strong>15 minutos</strong>. Se você não solicitou a redefinição de senha, nenhuma ação é necessária e sua senha atual permanece segura.
+          </p>
+        </div>
+      </div>
+    `;
+
+    await this.dispatchEmail(recipientEmail, subject, htmlContent);
+  }
+
   async sendAdminApprovalNotification(recipientEmail: string, adminName?: string): Promise<void> {
     const subject = 'CeLiLac — Sua conta de Administrador foi aprovada!';
     const htmlContent = `

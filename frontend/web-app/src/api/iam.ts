@@ -24,6 +24,12 @@ export interface LoginResponse {
   expiresIn: string;
 }
 
+export interface ResetPasswordRequest {
+  email:       string;
+  code:        string;
+  newPassword: string;
+}
+
 export const iamApi = {
   register: (body: RegisterRequest) =>
     apiClient.post<RegisterResponse>('/iam/register', body),
@@ -39,4 +45,10 @@ export const iamApi = {
 
   resendEmailVerificationCode: (token: string) =>
     apiClient.post<{ message: string }>('/iam/email-verification/resend', {}, token),
+
+  requestPasswordReset: (email: string) =>
+    apiClient.post<{ message: string }>('/iam/password-reset/request', { email }),
+
+  resetPassword: (body: ResetPasswordRequest) =>
+    apiClient.post<{ message: string }>('/iam/password-reset/confirm', body),
 };
