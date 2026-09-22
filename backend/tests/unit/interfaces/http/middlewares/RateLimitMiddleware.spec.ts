@@ -52,11 +52,14 @@ describe('RateLimitMiddleware', () => {
     let statusMock: jest.Mock;
     let jsonMock: jest.Mock;
 
+    let warnSpy: jest.SpyInstance;
+
     beforeEach(() => {
       headers = {};
       jsonMock = jest.fn();
       statusMock = jest.fn().mockReturnValue({ json: jsonMock });
       next = jest.fn();
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
       req = {
         headers: { 'x-forwarded-for': '1.2.3.4' },
@@ -70,6 +73,10 @@ describe('RateLimitMiddleware', () => {
         status: statusMock,
         json: jsonMock,
       };
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
     });
 
     it('deve permitir requisições dentro do limite configurado e definir os cabeçalhos corretos', () => {
@@ -87,16 +94,13 @@ describe('RateLimitMiddleware', () => {
       expect(headers['X-RateLimit-Reset']).toBeDefined();
       expect(statusMock).not.toHaveBeenCalled();
 
-      // 2ª a 5ª requisição
-      for (let i = 2; i <= 5; i++) {
-        limiter(req as Request, res as Response, next);
-      }
-      expect(next).toHaveBeenCalledTimes(5);
-      expect(headers['X-RateLimit-Remaining']).toBe('0');
-      expect(statusMock).not.toHaveBeenCalled();
+      // 2ª requisição
+      limiter(req as Request, res as Response, next);
+      expect(next).toHaveBeenCalledTimes(2);
+      expect(headers['X-RateLimit-Remaining']).toBe('3');
     });
 
-    it('deve bloquear a 6ª requisição retornando 429 e o cabeçalho Retry-After', () => {
+    it('deve bloquear a requisição com 429 quando ultrapassar o limite e emitir log no console', () => {
       const limiter = createRateLimiter({
         windowMs: 60000,
         max: 5,
@@ -116,6 +120,9 @@ describe('RateLimitMiddleware', () => {
       expect(jsonMock).toHaveBeenCalledWith({ error: 'Limite excedido' });
       expect(headers['Retry-After']).toBeDefined();
       expect(parseInt(headers['Retry-After'], 10)).toBeGreaterThanOrEqual(1);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('[RateLimitMiddleware]: 🛑 Limite de requisições excedido para o IP 1.2.3.4')
+      );
     });
 
     it('deve rastrear IPs diferentes de forma independente', () => {

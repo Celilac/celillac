@@ -89,6 +89,11 @@ export function createRateLimiter(options: RateLimitOptions) {
       const retryAfterSeconds = Math.max(1, Math.ceil((record.resetTime - now) / 1000));
       res.setHeader('Retry-After', retryAfterSeconds.toString());
 
+      const targetPath = req.originalUrl || req.url || '';
+      console.warn(
+        `[RateLimitMiddleware]: 🛑 Limite de requisições excedido para o IP ${key}${targetPath ? ` em ${req.method} ${targetPath}` : ''}. Tentativa ${record.count}/${max} bloqueada (HTTP 429). Aguarde ${retryAfterSeconds}s antes de tentar novamente.`
+      );
+
       res.status(429).json({ error: message });
       return;
     }
