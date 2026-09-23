@@ -14,6 +14,7 @@ import { ReportModal } from '@/components/common/ReportModal';
 import { ReviewsList } from '@/components/common/ReviewsList';
 import { useToast } from '@/hooks/useToast';
 import { translateReasoning, translateConflictReason, translateAllergen } from '@/utils/compatibilityTranslator';
+import { saveRecentCheck } from '@/services/recentChecks';
 import styles from '../../dashboard/dashboard.module.css';
 
 interface PageProps {
@@ -43,6 +44,16 @@ export default function ProductDetailsPage({ params }: PageProps) {
           try {
             const comp = await compatibilityApi.check({ userId, productId }, token);
             setCompatibility(comp);
+            if (prodData) {
+              saveRecentCheck(
+                {
+                  productId: prodData.id,
+                  productName: prodData.name,
+                  riskLevel: comp.riskLevel,
+                },
+                userId
+              );
+            }
           } catch (_) {
             // Ignora erro de compatibilidade se perfil incompleto
           }

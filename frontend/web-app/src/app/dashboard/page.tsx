@@ -20,6 +20,7 @@ import { Header } from '@/components/layout/Header';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { CreateProductModal } from '@/components/common/CreateProductModal';
 import { translateReasoning, translateConflictReason, translatePartnerType } from '@/utils/compatibilityTranslator';
+import { saveRecentCheck } from '@/services/recentChecks';
 import styles from './dashboard.module.css';
 
 interface ReportWithName extends CompatibilityResponse {
@@ -207,6 +208,14 @@ export default function DashboardPage() {
         token,
       );
       setReport({ ...compatibility, productName: product.name, productId: product.id });
+      saveRecentCheck(
+        {
+          productId: product.id,
+          productName: product.name,
+          riskLevel: compatibility.riskLevel,
+        },
+        userId
+      );
     } catch (err) {
       const message = err instanceof HttpError ? err.message : (err as Error).message ?? 'Erro desconhecido.';
       toast.error(message, 'Erro ao analisar produto');
