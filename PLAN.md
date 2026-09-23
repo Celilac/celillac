@@ -1,30 +1,49 @@
-# PLAN.md - Disparo e Geração de Código OTP na Verificação de E-mail
+# PLAN.md - Rate Limiting nos Endpoints Transacionais de E-mail / OTP (IAM)
 
-**Status:** Pronto para execução  
-**Escopo:** Frontend Web (`verify-email/page.tsx`, `profile/page.tsx`, `dashboard/page.tsx`, `register/page.tsx`, modais de denúncia/avaliação)
-
----
-
-## 1. Problema Identificado
-Ao clicar em "Verificar E-mail Agora" na página de perfil ou no dashboard, o usuário era apenas redirecionado para a rota `/auth/verify-email`. Como a página não disparava nenhuma requisição para o endpoint de envio de código e o botão de reenvio iniciava bloqueado em 60s, nenhum código OTP era gerado no banco ou logado no terminal do backend.
+**Status:** Aprovado e em Execução  
+**Escopo:** Backend (Middlewares HTTP, Express, Rotas IAM, Testes Automatizados)
 
 ---
 
-## 2. Escopo de Alterações
+## 1. Objetivo
+Implementar middleware de limitação de taxa (*Rate Limiting*) nativo em TypeScript (sem dependências externas) para proteger os endpoints públicos/sensíveis que disparam e-mails e geram códigos OTP:
+1. `POST /iam/password-reset/request` (limite: 3 requisições por IP a cada 15 minutos).
+2. `POST /iam/email-verification/resend` (limite: 3 requisições por IP a cada 15 minutos).
 
-1. **Página de Verificação (`src/app/auth/verify-email/page.tsx`):**
-   - Inicializar `countdown` em `0` (permitindo reenvio imediato caso o usuário não tenha recebido código).
-   - Adicionar lógica no `useEffect` para detectar o parâmetro `?send=true`.
-   - Se `?send=true` estiver presente e o usuário estiver autenticado, chamar automaticamente `iamApi.resendEmailVerificationCode(currentToken)`.
-   - O backend então gerará o código OTP, salvará no banco e logará no console: `[FakeEmailService]: Enviando código XXXXXX para ...`.
-   - Iniciar o contador de 60s e exibir toast de confirmação.
-
-2. **Links de Redirecionamento (`profile`, `dashboard`, modais):**
-   - Atualizar os botões "Verificar E-mail Agora" para apontar para `/auth/verify-email?send=true`.
-   - Em `register/page.tsx`, passar `?recent=true` para indicar que um código já foi gerado no cadastro.
+O middleware deve responder com `429 Too Many Requests` caso o limite seja excedido, retornando headers padrão de controle (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset` e `Retry-After`) e mensagem amigável no formato `{ error: string }`.
 
 ---
 
-## 3. Validação
-- `npx tsc --noEmit` no `frontend/web-app`.
-- Acesso à tela de perfil do parceiro, clique no botão e verificação do log do terminal do backend.
+## 2. Etapas de Execução
+
+### Fase 1: Middleware de Rate Limit (`backend/src/interfaces/http/middlewares/RateLimitMiddleware.ts`)
+- Criar a factory `createRateLimiter(options: RateLimitOptions)`:
+  - `windowMs`: Janela de tempo em ms (padrão: 15 minutos = 900.000 ms).
+  - `max`: Número máximo de requisições permitidas (padrão: 3).
+  - `message`: Mensagem descritiva de bloqueio.
+  - `keyGenerator`: Identificação do cliente por IP (respeitando `x-forwarded-for` de proxies reversos e fallback para `req.ip` ou `socket.remoteAddress`).
+- Armazenamento em memória com limpeza periódica (para evitar acúmulo de memória).
+- Inclusão dos headers RFC/IETF no response (`X-RateLimit-*` e `Retry-After`).
+
+### Fase 2: Configuração do Servidor e Rotas
+- Em `backend/src/index.ts`:
+  - Adicionar `app.set('trust proxy', 1);` para resolução fidedigna de IPs atrás de proxies.
+- Em `backend/src/interfaces/http/routes/iam.routes.ts`:
+  - Instanciar `passwordResetRateLimiter` (3 req / 15 min).
+  - Instanciar `emailVerificationRateLimiter` (3 req / 15 min).
+  - Aplicar nas rotas `POST /password-reset/request` e `POST /email-verification/resend`.
+
+### Fase 3: Testes Automatizados
+- Criar suíte de testes unitários: `backend/tests/unit/interfaces/http/middlewares/RateLimitMiddleware.spec.ts`:
+  - Permitir requisições dentro da cota (1..5).
+  - Validar cabeçalhos `X-RateLimit-*`.
+  - Bloquear a 6ª requisição com status 429 e `Retry-After`.
+  - Resetar a cota após expiração da janela.
+  - Isolar requisições entre IPs distintos.
+  - Suportar múltiplos IPs em `x-forwarded-for`.
+
+### Fase 4: Validação, Build e Documentação
+- Executar `npm test` no backend.
+- Executar `npm run build` no backend.
+- Atualizar `docs/API_CONTRACTS.md`.
+- Atualizar `CHANGELOG.md` e `walkthrough.md`.

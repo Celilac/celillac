@@ -106,7 +106,21 @@ export default function LoginPage() {
                 </div>
 
                 <div className="field">
-                  <label className="field-label" htmlFor="login-password">Senha</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-1)' }}>
+                    <label className="field-label" htmlFor="login-password" style={{ marginBottom: 0 }}>Senha</label>
+                    <Link
+                      href="/auth/forgot-password"
+                      id="forgot-password-link"
+                      style={{
+                        fontSize: '0.8125rem',
+                        color: 'var(--color-primary)',
+                        textDecoration: 'none',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Esqueceu a senha?
+                    </Link>
+                  </div>
                   <div className="password-input-wrap">
                     <input
                       id="login-password"
