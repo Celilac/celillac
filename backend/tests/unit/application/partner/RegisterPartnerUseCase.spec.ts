@@ -35,7 +35,7 @@ describe('RegisterPartnerUseCase', () => {
     useCase = new RegisterPartnerUseCase(partnerRepository, userRepository);
   });
 
-  it('deve registrar um parceiro com sucesso se usuário for do papel PARCEIRO', async () => {
+  it('deve registrar um parceiro com sucesso se usuário for do papel PARCEIRO, enviando automaticamente para PENDING_REVIEW', async () => {
     const user = User.create({
       email: makeValidEmail('carlos@teste.com'),
       passwordHash: makeValidHash(),
@@ -61,6 +61,34 @@ describe('RegisterPartnerUseCase', () => {
     const data = result.getValue();
     expect(data.name).toBe('Padaria CeliLac');
     expect(data.logoUrl).toBe('data:image/webp;base64,sample-logo');
+    expect(data.approvalStatus).toBe('PENDING_REVIEW');
+    expect(data.operationalStatus).toBe('INACTIVE');
+  });
+
+  it('deve manter o parceiro como DRAFT se isDraft for explicitamente informado como true', async () => {
+    const user = User.create({
+      email: makeValidEmail('carlos@teste.com'),
+      passwordHash: makeValidHash(),
+      role: UserRole.PARCEIRO,
+    }, 'user-1').getValue();
+
+    userRepository.findById.mockResolvedValue(user);
+    partnerRepository.findAllByUserId.mockResolvedValue([]);
+
+    const result = await useCase.execute({
+      userId: 'user-1',
+      name: 'Padaria CeliLac Rascunho',
+      cnpj: '12.345.678/0001-95',
+      description: 'Rascunho de parceiro',
+      address: 'Rua Principal, 100',
+      phone: '1234-5678',
+      type: PartnerType.RESTAURANT,
+      isDraft: true,
+    });
+
+    expect(result.isSuccess).toBe(true);
+    expect(partnerRepository.create).toHaveBeenCalled();
+    const data = result.getValue();
     expect(data.approvalStatus).toBe('DRAFT');
     expect(data.operationalStatus).toBe('INACTIVE');
   });
