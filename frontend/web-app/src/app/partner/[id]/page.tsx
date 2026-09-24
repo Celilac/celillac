@@ -35,6 +35,22 @@ export default function PartnerDetailPage({ params }: PageProps) {
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductSummary | null>(null);
+
+  const handleOpenCreateProduct = () => {
+    setEditingProduct(null);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleOpenEditProduct = (prod: ProductSummary) => {
+    setEditingProduct(prod);
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCloseProductModal = () => {
+    setIsCreateModalOpen(false);
+    setEditingProduct(null);
+  };
 
   const loadProducts = useCallback(() => {
     if (!id || !token) return;
@@ -259,18 +275,26 @@ export default function PartnerDetailPage({ params }: PageProps) {
             <button
               type="button"
               className="btn btn-em"
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleOpenCreateProduct}
               style={{ whiteSpace: 'nowrap', fontSize: '0.875rem', padding: '0.5rem 1.1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              ➕ Publicar Produto
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Publicar Produto
             </button>
             <Link 
               href={`/partner/${partner.id}/edit`}
               className="btn btn-secondary"
-              style={{ textDecoration: 'none', whiteSpace: 'nowrap', fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+              style={{ textDecoration: 'none', whiteSpace: 'nowrap', fontSize: '0.875rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               id="edit-partner-btn"
             >
-              ✏️ Editar Cadastro
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+              Editar Cadastro
             </Link>
           </div>
         </div>
@@ -337,11 +361,15 @@ export default function PartnerDetailPage({ params }: PageProps) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsCreateModalOpen(true)}
+                  onClick={handleOpenCreateProduct}
                   className="btn btn-em"
                   style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  ➕ Novo Produto
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Novo Produto
                 </button>
               </div>
 
@@ -360,11 +388,15 @@ export default function PartnerDetailPage({ params }: PageProps) {
                   </p>
                   <button
                     type="button"
-                    onClick={() => setIsCreateModalOpen(true)}
+                    onClick={handleOpenCreateProduct}
                     className="btn btn-em"
-                    style={{ fontSize: '0.85rem', padding: '0.5rem 1rem' }}
+                    style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                   >
-                    ➕ Cadastrar Primeiro Produto
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    Cadastrar Primeiro Produto
                   </button>
                 </div>
               ) : (
@@ -471,13 +503,36 @@ export default function PartnerDetailPage({ params }: PageProps) {
                           </div>
                         </div>
 
-                        <Link
-                          href={`/products/${p.id}`}
-                          className="btn btn-ghost"
-                          style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', whiteSpace: 'nowrap' }}
-                        >
-                          📦 Ver no Catálogo
-                        </Link>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditProduct(p)}
+                            className="btn btn-secondary"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '0.8rem',
+                              padding: '0.4rem 0.8rem',
+                              whiteSpace: 'nowrap',
+                              cursor: 'pointer',
+                            }}
+                            title="Editar informações do produto"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 20h9" />
+                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                            </svg>
+                            Editar
+                          </button>
+                          <Link
+                            href={`/products/${p.id}`}
+                            className="btn btn-ghost"
+                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', whiteSpace: 'nowrap' }}
+                          >
+                            Ver no Catálogo
+                          </Link>
+                        </div>
                       </div>
                     );
                   })}
@@ -618,12 +673,13 @@ export default function PartnerDetailPage({ params }: PageProps) {
         </div>
       )}
 
-      {/* Modal de Publicação de Produto no Estabelecimento */}
+      {/* Modal de Publicação / Edição de Produto no Estabelecimento */}
       <CreateProductModal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={handleCloseProductModal}
         partnerId={partner.id}
         partnerName={partner.name}
+        productToEdit={editingProduct}
         onSuccess={loadProducts}
       />
     </div>

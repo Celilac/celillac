@@ -320,6 +320,78 @@ const PARTNERS: Array<{
     }
   ];
 
+const CERTIFICATIONS: Array<{
+  id: string;
+  product_id: string;
+  certification_type: string;
+  certifying_entity: string;
+  certificate_code: string;
+  valid_until: string;
+  verification_status: string;
+  verification_notes?: string;
+}> = [
+  // ── Pendente de Revisão (DECLARED_BY_PARTNER) ──────────────────────────
+  {
+    id: 'e0000001-0000-0000-0000-000000000001',
+    product_id: 'b0000008-0000-0000-0000-000000000001', // Pão Francês Artesanal Sem Glúten (Bistro)
+    certification_type: 'ACELBRA_SEAL',
+    certifying_entity: 'ACELBRA - Associação dos Celíacos do Brasil',
+    certificate_code: 'ACEL-BR-2026-991',
+    valid_until: '2027-12-31',
+    verification_status: 'DECLARED_BY_PARTNER',
+  },
+  {
+    id: 'e0000001-0000-0000-0000-000000000002',
+    product_id: 'b0000008-0000-0000-0000-000000000001', // Pão Francês Artesanal Sem Glúten
+    certification_type: 'GLUTEN_FREE_LAB',
+    certifying_entity: 'Laboratório Eurofins Food Testing',
+    certificate_code: 'EUR-BR-2026-8812',
+    valid_until: '2026-11-30',
+    verification_status: 'DECLARED_BY_PARTNER',
+  },
+  {
+    id: 'e0000001-0000-0000-0000-000000000003',
+    product_id: 'b0000008-0000-0000-0000-000000000002', // Bolo de Cenoura com Chocolate Sem Leite
+    certification_type: 'VEGAN_SVB',
+    certifying_entity: 'Sociedade Vegetariana Brasileira',
+    certificate_code: 'SVB-VG-2025-104',
+    valid_until: '2026-08-15',
+    verification_status: 'DECLARED_BY_PARTNER',
+  },
+  // ── Aprovado / Homologado (VERIFIED_BY_CELILAC) ────────────────────────
+  {
+    id: 'e0000001-0000-0000-0000-000000000004',
+    product_id: 'b0000001-0000-0000-0000-000000000001', // Arroz Integral Orgânico
+    certification_type: 'ORGANIC_BRAZIL',
+    certifying_entity: 'Ministério da Agricultura / SisOrg',
+    certificate_code: 'SISORG-BR-2025-4421',
+    valid_until: '2027-05-30',
+    verification_status: 'VERIFIED_BY_CELILAC',
+    verification_notes: 'Certificado orgânico ativo verificado no cadastro SisOrg em 10/01/2026.',
+  },
+  {
+    id: 'e0000001-0000-0000-0000-000000000005',
+    product_id: 'b0000001-0000-0000-0000-000000000002', // Feijão Carioca Seco
+    certification_type: 'OTHER',
+    certifying_entity: 'BKA Certificações Kosher',
+    certificate_code: 'KSH-2025-09',
+    valid_until: '2026-12-31',
+    verification_status: 'VERIFIED_BY_CELILAC',
+    verification_notes: 'Documento homologado pela equipe de auditoria CeLiLac.',
+  },
+  // ── Rejeitado (REJECTED) ───────────────────────────────────────────────
+  {
+    id: 'e0000001-0000-0000-0000-000000000006',
+    product_id: 'b0000002-0000-0000-0000-000000000002', // Granola Sem Glúten
+    certification_type: 'GLUTEN_FREE_LAB',
+    certifying_entity: 'Biotec Análises Químicas',
+    certificate_code: 'BIO-990-2024',
+    valid_until: '2024-12-31',
+    verification_status: 'REJECTED',
+    verification_notes: 'Laudo com validade expirada e sem laudo microbiológico complementar.',
+  },
+];
+
 // ─── Funções auxiliares ─────────────────────────────────────────────────────
 
 async function createProductsTableIfNotExists(): Promise<void> {
@@ -347,6 +419,29 @@ async function createProductsTableIfNotExists(): Promise<void> {
   await pool.query(`CREATE INDEX IF NOT EXISTS idx_products_partner_id ON products(partner_id)`);
 
   console.log('  ✅ Tabela products garantida.');
+}
+
+async function createCertificationsTableIfNotExists(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS product_certifications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      certification_type VARCHAR(60) NOT NULL,
+      certifying_entity VARCHAR(150) NOT NULL,
+      certificate_code VARCHAR(100),
+      valid_until DATE,
+      image_id UUID,
+      verification_status VARCHAR(30) NOT NULL DEFAULT 'DECLARED_BY_PARTNER',
+      verification_notes TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_product_certifications_product_id ON product_certifications(product_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_product_certifications_status ON product_certifications(verification_status)`);
+
+  console.log('  ✅ Tabela product_certifications garantida.');
 }
 
 async function seedUsers(): Promise<Map<string, string>> {
@@ -479,6 +574,41 @@ async function seedProducts(): Promise<void> {
   }
 }
 
+async function seedProductCertifications(): Promise<void> {
+  for (const cert of CERTIFICATIONS) {
+    await pool.query(
+      `INSERT INTO product_certifications (
+         id, product_id, certification_type, certifying_entity,
+         certificate_code, valid_until, verification_status, verification_notes
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       ON CONFLICT (id) DO UPDATE SET
+         certification_type  = EXCLUDED.certification_type,
+         certifying_entity   = EXCLUDED.certifying_entity,
+         certificate_code    = EXCLUDED.certificate_code,
+         valid_until         = EXCLUDED.valid_until,
+         verification_status = EXCLUDED.verification_status,
+         verification_notes  = EXCLUDED.verification_notes,
+         updated_at          = CURRENT_TIMESTAMP`,
+      [
+        cert.id,
+        cert.product_id,
+        cert.certification_type,
+        cert.certifying_entity,
+        cert.certificate_code,
+        cert.valid_until,
+        cert.verification_status,
+        cert.verification_notes || null,
+      ],
+    );
+
+    const statusBadge = cert.verification_status === 'DECLARED_BY_PARTNER' ? '⏳ PENDENTE' :
+      cert.verification_status === 'VERIFIED_BY_CELILAC' ? '✅ VERIFICADO' : '❌ REJEITADO';
+
+    console.log(`  🎖️  [${statusBadge}] ${cert.certification_type} (${cert.certifying_entity})`);
+  }
+}
+
 // ─── Entry point ────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -491,9 +621,10 @@ async function main(): Promise<void> {
     await pool.query('SELECT 1');
     console.log('📡 Conexão com PostgreSQL estabelecida.\n');
 
-    // 1. Garantir tabela products
-    console.log('📦 Verificando tabela products…');
+    // 1. Garantir tabelas products e certifications
+    console.log('📦 Verificando tabelas…');
     await createProductsTableIfNotExists();
+    await createCertificationsTableIfNotExists();
     console.log('');
 
     // 2. Usuários
@@ -516,18 +647,25 @@ async function main(): Promise<void> {
     await seedProducts();
     console.log('');
 
+    // 6. Certificações e Laudos
+    console.log('🏅 Inserindo certificações e laudos de produtos…');
+    await seedProductCertifications();
+    console.log('');
+
     // Resumo final
     const { rows: userCount } = await pool.query('SELECT COUNT(*) FROM users');
     const { rows: profileCount } = await pool.query('SELECT COUNT(*) FROM food_profiles');
     const { rows: partnerCount } = await pool.query('SELECT COUNT(*) FROM partners');
     const { rows: productCount } = await pool.query('SELECT COUNT(*) FROM products');
+    const { rows: certCount } = await pool.query('SELECT COUNT(*) FROM product_certifications');
 
     console.log('═'.repeat(55));
     console.log('✅ Seed concluído com sucesso!');
-    console.log(`   👤 Usuários:    ${userCount[0].count}`);
-    console.log(`   🥗 Perfis:      ${profileCount[0].count}`);
-    console.log(`   🏢 Parceiros:   ${partnerCount[0].count}`);
-    console.log(`   🏪 Produtos:    ${productCount[0].count}`);
+    console.log(`   👤 Usuários:       ${userCount[0].count}`);
+    console.log(`   🥗 Perfis:         ${profileCount[0].count}`);
+    console.log(`   🏢 Parceiros:      ${partnerCount[0].count}`);
+    console.log(`   🏪 Produtos:       ${productCount[0].count}`);
+    console.log(`   🏅 Certificações:  ${certCount[0].count}`);
     console.log('');
     console.log('📋 Credenciais de teste:');
     for (const user of USERS) {
