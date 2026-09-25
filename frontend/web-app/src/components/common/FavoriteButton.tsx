@@ -88,9 +88,9 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         fontWeight: 600,
         cursor: loading ? 'wait' : 'pointer',
         transition: 'all 0.2s ease-in-out',
-        background: isFavorite ? 'var(--color-danger-bg)' : 'var(--color-surface)',
-        color: isFavorite ? 'var(--color-danger)' : 'var(--color-text)',
-        border: isFavorite ? '1px solid var(--color-danger-border)' : '1px solid var(--color-border)',
+        background: isFavorite ? 'var(--color-favorite-bg, rgba(239, 68, 68, 0.12))' : 'var(--color-surface)',
+        color: isFavorite ? 'var(--color-favorite, #EF4444)' : 'var(--color-text)',
+        border: isFavorite ? '1px solid var(--color-favorite-border, rgba(239, 68, 68, 0.35))' : '1px solid var(--color-border)',
         opacity: loading ? 0.6 : 1,
       }}
     >
@@ -109,7 +109,7 @@ export const FavoriteButton: React.FC<FavoriteButtonProps> = ({
           flexShrink: 0,
           transition: 'transform 0.2s ease',
           transform: isFavorite ? 'scale(1.1)' : 'scale(1)',
-          color: isFavorite ? 'var(--color-danger)' : 'var(--color-text-muted)',
+          color: isFavorite ? 'var(--color-favorite, #EF4444)' : 'var(--color-text-muted)',
         }}
       >
         <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />

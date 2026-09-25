@@ -49,6 +49,12 @@
   --color-info-bg:     rgba(59,130,246,0.1);
   --color-info-border: rgba(59,130,246,0.3);
 
+  /* Favoritos — Ações de afeto / coração vermelho constante */
+  --color-favorite:        #EF4444;
+  --color-favorite-bg:     rgba(239, 68, 68, 0.12);
+  --color-favorite-border: rgba(239, 68, 68, 0.35);
+  --color-favorite-hover-bg: rgba(239, 68, 68, 0.2);
+
   /* Status Administrativo — cadastro de parceiro (aprovado/pendente/rejeitado/suspenso).
      Deliberadamente separado da paleta de Risco acima: BLOCKED/DANGER/WARNING/SAFE
      pertencem exclusivamente ao veredito do AllergenEngine (ver DESIGN.md, "The Blocked-Is-Loudest Rule");
@@ -138,6 +144,12 @@
   --color-status-pending:   #92400E;
   --color-status-rejected:  #B91C1C;
   --color-status-suspended: #6D28D9;
+
+  /* Favoritos no Tema Claro */
+  --color-favorite:        #DC2626;
+  --color-favorite-bg:     rgba(220, 38, 38, 0.10);
+  --color-favorite-border: rgba(220, 38, 38, 0.30);
+  --color-favorite-hover-bg: rgba(220, 38, 38, 0.18);
 }
 
 /* ═══════════════════════════════════════
