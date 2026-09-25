@@ -51,10 +51,21 @@ export default function ProductDetailsPage({ params }: PageProps) {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
+      let role = userRole;
+      if (isAuthenticated && token && !role) {
+        try {
+          const u = await apiClient.get<any>('/iam/me', token);
+          role = u?.role || null;
+          setUserRole(role);
+        } catch (_) {}
+      }
+
       const prodData = await catalogApi.getById(productId, token || undefined);
       setProduct(prodData);
 
-      if (isAuthenticated && token && userId) {
+      // A análise de compatibilidade pertence exclusivamente a consumidores (CELIACO)
+      // Parceiros e administradores gerenciam o catálogo e não possuem restrições pessoais
+      if (isAuthenticated && token && userId && role === 'CELIACO') {
         try {
           const comp = await compatibilityApi.check({ userId, productId }, token);
           setCompatibility(comp);
@@ -69,15 +80,18 @@ export default function ProductDetailsPage({ params }: PageProps) {
             );
           }
         } catch (_) {
-          // Ignora erro de compatibilidade se perfil incompleto
+          // Perfil incompleto do celíaco
+          setCompatibility(null);
         }
+      } else {
+        setCompatibility(null);
       }
     } catch (err: any) {
       toast.error('Erro ao carregar detalhes do produto.', 'Erro');
     } finally {
       setLoading(false);
     }
-  }, [productId, token, userId, isAuthenticated, toast]);
+  }, [productId, token, userId, isAuthenticated, userRole, toast]);
 
   useEffect(() => {
     loadData();
@@ -127,8 +141,6 @@ export default function ProductDetailsPage({ params }: PageProps) {
 
     setIsReportModalOpen(true);
   };
-
-  const activeRiskLevel = compatibility?.riskLevel || product.compatibilityReport?.riskLevel || 'UNEVALUATED';
 
   return (
     <div>
@@ -211,26 +223,90 @@ export default function ProductDetailsPage({ params }: PageProps) {
 
           <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '1.5rem 0' }} />
 
-          {/* Veredito de Compatibilidade Alimentar */}
-          <div style={{ background: 'var(--color-elevated)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '0.75rem' }}>
-              🛡️ Análise de Compatibilidade Alimentar
-            </h3>
-            <RiskBadge riskLevel={activeRiskLevel} showDescription={true} />
-
-            {compatibility && (
-              <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px dotted var(--color-border)' }}>
-                <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text)' }}>
-                  {translateReasoning(compatibility.reasoning)}
-                </p>
-                {compatibility.conflicts?.map((conflict, index) => (
-                  <div key={index} style={{ marginTop: '0.5rem', color: 'var(--color-danger)', fontSize: '0.9rem' }}>
-                    ⚠️ <strong>{translateAllergen(conflict.allergen)}:</strong> {translateConflictReason(conflict.reason)}
+          {/* Veredito de Compatibilidade Alimentar (Condicional por Papel do Usuário) */}
+          {isAuthenticated && userRole === 'CELIACO' ? (
+            <div style={{ background: 'var(--color-elevated)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '0.75rem' }}>
+                🛡️ Análise de Compatibilidade Alimentar
+              </h3>
+              {compatibility ? (
+                <>
+                  <RiskBadge riskLevel={compatibility.riskLevel} showDescription={true} />
+                  <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px dotted var(--color-border)' }}>
+                    <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text)' }}>
+                      {translateReasoning(compatibility.reasoning)}
+                    </p>
+                    {compatibility.conflicts?.map((conflict, index) => (
+                      <div key={index} style={{ marginTop: '0.5rem', color: 'var(--color-danger)', fontSize: '0.9rem' }}>
+                        ⚠️ <strong>{translateAllergen(conflict.allergen)}:</strong> {translateConflictReason(conflict.reason)}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </>
+              ) : (
+                <div>
+                  <RiskBadge riskLevel="UNEVALUATED" showDescription={true} />
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <Link href="/profile" style={{ color: 'var(--color-emerald)', fontSize: '0.875rem', fontWeight: 600 }}>
+                      Configurar restrições no perfil alimentar →
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : isAuthenticated && userRole === 'PARCEIRO' ? (
+            <div
+              style={{
+                background: 'var(--color-elevated)',
+                padding: '1.1rem 1.25rem',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '1.5rem',
+                borderLeft: '4px solid var(--color-brand-gold)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '1.1rem' }}>🏢</span>
+                <h3 style={{ fontSize: '1rem', color: 'var(--color-text)', margin: 0 }}>
+                  Visão do Estabelecimento Parceiro
+                </h3>
               </div>
-            )}
-          </div>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
+                Como parceiro comercial, você gerencia as especificações e laudos técnicos deste produto. A compatibilidade alimentar é avaliada automaticamente para cada consumidor que visualiza o item no catálogo.
+              </p>
+            </div>
+          ) : isAuthenticated && userRole === 'ADMIN' ? (
+            <div
+              style={{
+                background: 'var(--color-elevated)',
+                padding: '1.1rem 1.25rem',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '1.5rem',
+                borderLeft: '4px solid #3b82f6',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '1.1rem' }}>🛡️</span>
+                <h3 style={{ fontSize: '1rem', color: 'var(--color-text)', margin: 0 }}>
+                  Visão Administrativa (Moderação)
+                </h3>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
+                Produto cadastrado no catálogo geral da plataforma. O veredito de segurança alimentar é calculado individualmente de acordo com as restrições de cada consumidor.
+              </p>
+            </div>
+          ) : !isAuthenticated ? (
+            <div style={{ background: 'var(--color-elevated)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '0.5rem' }}>
+                🛡️ Análise de Compatibilidade Alimentar
+              </h3>
+              <p style={{ margin: '0 0 0.85rem 0', fontSize: '0.875rem', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
+                Faça login como consumidor para verificar se este produto é seguro para o seu perfil e restrições alimentares.
+              </p>
+              <Link href="/auth/login" className="btn btn-em" style={{ fontSize: '0.8rem', padding: '0.45rem 1rem', textDecoration: 'none', display: 'inline-block' }}>
+                Entrar para verificar compatibilidade
+              </Link>
+            </div>
+          ) : null}
 
           {/* Ficha Técnica / Detalhes */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>

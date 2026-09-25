@@ -212,7 +212,7 @@ export default function DashboardPage() {
 
       setSearchResults(products);
 
-      if (products.length === 1) {
+      if (products.length === 1 && userRole === 'CELIACO') {
         await checkProductCompatibility(products[0]);
       }
     } catch (err) {
