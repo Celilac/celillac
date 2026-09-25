@@ -176,11 +176,14 @@ export default function RegisterPartnerPage() {
       }, token);
 
       const isApproved = created?.approvalStatus === 'APPROVED';
+      const isPending = created?.approvalStatus === 'PENDING_REVIEW';
 
       toast.success({
         description: isApproved
           ? 'Estabelecimento cadastrado e ativado com sucesso!'
-          : 'Estabelecimento cadastrado com sucesso! Envie para revisão para poder ativá-lo.',
+          : isPending
+          ? 'Estabelecimento cadastrado com sucesso! Enviado para análise e moderação da plataforma.'
+          : 'Estabelecimento cadastrado como rascunho com sucesso!',
         actionLabel: 'Ver Estabelecimentos',
         onAction: () => router.push('/partner'),
       });

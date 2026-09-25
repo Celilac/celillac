@@ -40,7 +40,7 @@ export class PartnerController extends BaseController {
   async register(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user?.id;
-      const { name, cnpj, description, address, phone, type, city, state, deliveryRegion, logoUrl } = req.body;
+      const { name, cnpj, description, address, phone, type, city, state, deliveryRegion, logoUrl, isDraft } = req.body;
 
       if (!userId) {
         this.unauthorized(res, 'Usuário não autenticado.');
@@ -59,6 +59,7 @@ export class PartnerController extends BaseController {
         state,
         deliveryRegion,
         logoUrl,
+        isDraft: typeof isDraft === 'boolean' ? isDraft : undefined,
       });
 
       if (result.isFailure) {

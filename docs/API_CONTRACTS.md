@@ -919,6 +919,7 @@ Cadastra um novo perfil comercial de parceiro. Apenas para usuários com papel `
 | `state` | `string` | ❌ | Estado / UF (auto-preenchido via CEP) |
 | `deliveryRegion` | `string` | ❌ | Região de atendimento |
 | `logoUrl` | `string` | ❌ | Imagem da marca em Base64/WebP/PNG (até 5MB) |
+| `isDraft` | `boolean` | ❌ | Se `true`, salva como `DRAFT`. Por padrão (`false`/omitido), submete automaticamente para `PENDING_REVIEW` |
 
 **Response `201 Created`:**
 ```json
@@ -931,7 +932,7 @@ Cadastra um novo perfil comercial de parceiro. Apenas para usuários com papel `
   "address": "Av. Paulista, 1000",
   "phone": "11999998888",
   "type": "RESTAURANT",
-  "approvalStatus": "DRAFT",
+  "approvalStatus": "PENDING_REVIEW",
   "operationalStatus": "INACTIVE",
   "city": "São Paulo",
   "state": "SP",
