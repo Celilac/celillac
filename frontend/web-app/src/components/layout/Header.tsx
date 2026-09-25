@@ -149,7 +149,11 @@ export function Header() {
           {mounted && isAuthenticated && (
             <button
               type="button"
-              onClick={() => { setMenuOpen(false); logout().then(() => router.push('/auth/login')); }}
+              onClick={() => {
+                setMenuOpen(false);
+                logout();
+                router.push('/auth/login');
+              }}
               className="nav-logout-btn"
               id="btn-logout"
             >
