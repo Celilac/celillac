@@ -79,7 +79,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         setSuccessMsg(false);
         onSuccess?.();
         onClose();
-      }, 1500);
+      }, 5000);
     } catch (err: any) {
       setError(err.message || 'Erro ao enviar denúncia.');
     } finally {
@@ -146,9 +146,21 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <h4 className={styles.partnerName} style={{ marginTop: '1rem' }}>
               Denúncia enviada com sucesso!
             </h4>
-            <p className={styles.subtitle} style={{ marginTop: '0.5rem' }}>
+            <p className={styles.subtitle} style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>
               Nossa equipe de moderação revisará o relato com prioridade máxima.
             </p>
+            <button
+              type="button"
+              className={styles.btnPrimary}
+              style={{ padding: '0.5rem 1.5rem', minWidth: '130px', margin: '0 auto', display: 'inline-flex' }}
+              onClick={() => {
+                setSuccessMsg(false);
+                onSuccess?.();
+                onClose();
+              }}
+            >
+              Entendido
+            </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>

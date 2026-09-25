@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +12,7 @@ import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { FavoriteButton } from '@/components/common/FavoriteButton';
 import { ReportModal } from '@/components/common/ReportModal';
 import { ReviewsList } from '@/components/common/ReviewsList';
+import { CreateProductModal } from '@/components/common/CreateProductModal';
 import { useToast } from '@/hooks/useToast';
 import { translateReasoning, translateConflictReason, translateAllergen } from '@/utils/compatibilityTranslator';
 import { saveRecentCheck } from '@/services/recentChecks';
@@ -28,44 +29,59 @@ export default function ProductDetailsPage({ params }: PageProps) {
   const router = useRouter();
   const toast = useToast();
 
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [product, setProduct] = useState<ProductDetails | null>(null);
   const [compatibility, setCompatibility] = useState<CompatibilityResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        const prodData = await catalogApi.getById(productId, token || undefined);
-        setProduct(prodData);
-
-        if (isAuthenticated && token && userId) {
-          try {
-            const comp = await compatibilityApi.check({ userId, productId }, token);
-            setCompatibility(comp);
-            if (prodData) {
-              saveRecentCheck(
-                {
-                  productId: prodData.id,
-                  productName: prodData.name,
-                  riskLevel: comp.riskLevel,
-                },
-                userId
-              );
-            }
-          } catch (_) {
-            // Ignora erro de compatibilidade se perfil incompleto
-          }
-        }
-      } catch (err: any) {
-        toast.error('Erro ao carregar detalhes do produto.', 'Erro');
-      } finally {
-        setLoading(false);
-      }
+    if (isAuthenticated && token) {
+      apiClient.get<any>('/iam/me', token)
+        .then((u) => {
+          setUserRole(u?.role || null);
+        })
+        .catch(() => {});
     }
-    loadData();
+  }, [isAuthenticated, token]);
+
+  const canEdit = isAuthenticated && (userRole === 'ADMIN' || userRole === 'PARCEIRO');
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const prodData = await catalogApi.getById(productId, token || undefined);
+      setProduct(prodData);
+
+      if (isAuthenticated && token && userId) {
+        try {
+          const comp = await compatibilityApi.check({ userId, productId }, token);
+          setCompatibility(comp);
+          if (prodData) {
+            saveRecentCheck(
+              {
+                productId: prodData.id,
+                productName: prodData.name,
+                riskLevel: comp.riskLevel,
+              },
+              userId
+            );
+          }
+        } catch (_) {
+          // Ignora erro de compatibilidade se perfil incompleto
+        }
+      }
+    } catch (err: any) {
+      toast.error('Erro ao carregar detalhes do produto.', 'Erro');
+    } finally {
+      setLoading(false);
+    }
   }, [productId, token, userId, isAuthenticated, toast]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   if (loading) {
     return (
@@ -141,6 +157,30 @@ export default function ProductDetailsPage({ params }: PageProps) {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="btn btn-secondary"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '999px',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  title="Editar informações do produto"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                  Editar
+                </button>
+              )}
               <FavoriteButton productId={product.id} />
               <button
                 type="button"
@@ -160,7 +200,11 @@ export default function ProductDetailsPage({ params }: PageProps) {
                 }}
                 title="Denunciar Produto"
               >
-                🚩 Denunciar
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                  <line x1="4" y1="22" x2="4" y2="15" />
+                </svg>
+                Denunciar
               </button>
             </div>
           </div>
@@ -240,6 +284,16 @@ export default function ProductDetailsPage({ params }: PageProps) {
         <div className={styles.card}>
           <ReviewsList productId={product.id} targetName={product.name} />
         </div>
+
+        {/* Modal de Edição de Produto */}
+        {canEdit && (
+          <CreateProductModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            productToEdit={product}
+            onSuccess={loadData}
+          />
+        )}
       </main>
 
       {/* Modal de Denúncia */}
