@@ -208,7 +208,9 @@ export default function ProductDetailsPage({ params }: PageProps) {
                   fontWeight: 600,
                   color: 'var(--color-danger)',
                   border: '1px solid var(--color-danger-border)',
-                  background: 'transparent',
+                  background: 'var(--color-danger-bg)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                 }}
                 title="Denunciar Produto"
               >

@@ -134,10 +134,12 @@
   /* Risco — escurecidos para manter ≥4.5:1 sobre fundo claro (WCAG AA).
      No tema escuro os tons originais já contrastam bem contra o fundo quase-preto;
      aqui a versão crua (#22C55E etc.) reprova contraste sobre branco/quase-branco. */
-  --color-safe:        #15803D;
-  --color-warning:     #854D0E;
-  --color-danger:      #9A3412;
-  --color-blocked:     #B91C1C;
+  --color-safe:          #15803D;
+  --color-warning:       #854D0E;
+  --color-danger:        #D97706; /* Tom laranja/âmbar vivo */
+  --color-danger-bg:     rgba(245, 158, 11, 0.10);
+  --color-danger-border: rgba(217, 119, 6, 0.35);
+  --color-blocked:       #B91C1C;
 
   /* Status Administrativo — escurecidos para o mesmo motivo acima */
   --color-status-approved:  #047857;
