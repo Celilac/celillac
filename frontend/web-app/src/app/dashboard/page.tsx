@@ -20,6 +20,7 @@ import { Header } from '@/components/layout/Header';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { CreateProductModal } from '@/components/common/CreateProductModal';
 import { translateReasoning, translateConflictReason, translatePartnerType } from '@/utils/compatibilityTranslator';
+import { saveRecentCheck } from '@/services/recentChecks';
 import styles from './dashboard.module.css';
 
 interface ReportWithName extends CompatibilityResponse {
@@ -81,11 +82,35 @@ export default function DashboardPage() {
   const [partnerProducts, setPartnerProducts] = useState<ProductSummary[]>([]);
   const [loadingPartnerData, setLoadingPartnerData] = useState(false);
   const [isCreateProductModalOpen, setIsCreateProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<ProductSummary | null>(null);
   const [activePartnerTab, setActivePartnerTab] = useState<'MY_PRODUCTS' | 'ALL_CATALOG'>('MY_PRODUCTS');
+
+  const handleOpenCreateProduct = () => {
+    setEditingProduct(null);
+    setIsCreateProductModalOpen(true);
+  };
+
+  const handleOpenEditProduct = (e: React.MouseEvent, prod: ProductSummary) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingProduct(prod);
+    setIsCreateProductModalOpen(true);
+  };
+
+  const handleCloseProductModal = () => {
+    setIsCreateProductModalOpen(false);
+    setEditingProduct(null);
+  };
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted && !isAuthenticated) {
+      router.push('/auth/login');
+    }
+  }, [mounted, isAuthenticated, router]);
 
   const loadData = useCallback(() => {
     if (!isAuthenticated || !token || !userId) return;
@@ -187,7 +212,7 @@ export default function DashboardPage() {
 
       setSearchResults(products);
 
-      if (products.length === 1) {
+      if (products.length === 1 && userRole === 'CELIACO') {
         await checkProductCompatibility(products[0]);
       }
     } catch (err) {
@@ -207,6 +232,14 @@ export default function DashboardPage() {
         token,
       );
       setReport({ ...compatibility, productName: product.name, productId: product.id });
+      saveRecentCheck(
+        {
+          productId: product.id,
+          productName: product.name,
+          riskLevel: compatibility.riskLevel,
+        },
+        userId
+      );
     } catch (err) {
       const message = err instanceof HttpError ? err.message : (err as Error).message ?? 'Erro desconhecido.';
       toast.error(message, 'Erro ao analisar produto');
@@ -535,7 +568,7 @@ export default function DashboardPage() {
 
                 <button
                   type="button"
-                  onClick={() => setIsCreateProductModalOpen(true)}
+                  onClick={handleOpenCreateProduct}
                   className="btn btn-em"
                   style={{
                     width: '100%',
@@ -780,11 +813,15 @@ export default function DashboardPage() {
               {userRole === 'PARCEIRO' && (
                 <button
                   type="button"
-                  onClick={() => setIsCreateProductModalOpen(true)}
+                  onClick={handleOpenCreateProduct}
                   className="btn btn-em"
-                  style={{ fontSize: '0.85rem', padding: 'var(--space-2) var(--space-4)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                  style={{ fontSize: '0.85rem', padding: 'var(--space-2) var(--space-4)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  ➕ Publicar Novo Produto
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Publicar Novo Produto
                 </button>
               )}
             </div>
@@ -827,11 +864,15 @@ export default function DashboardPage() {
                         <p style={{ marginBottom: '1rem' }}>Você ainda não cadastrou nenhum produto para seu estabelecimento.</p>
                         <button
                           type="button"
-                          onClick={() => setIsCreateProductModalOpen(true)}
+                          onClick={handleOpenCreateProduct}
                           className="btn btn-em"
-                          style={{ padding: 'var(--space-2) var(--space-4)', fontSize: '0.85rem' }}
+                          style={{ padding: 'var(--space-2) var(--space-4)', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                         >
-                          ➕ Publicar Primeiro Produto
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                          Publicar Primeiro Produto
                         </button>
                       </div>
                     ) : (
@@ -903,19 +944,56 @@ export default function DashboardPage() {
                                   {product.brand}
                                 </span>
                               </div>
-                              <span style={{
-                                padding: '4px 10px',
-                                borderRadius: '9999px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                background: status.bg,
-                                color: status.color,
-                                border: `1px solid ${status.border}`,
-                                whiteSpace: 'nowrap',
-                                flexShrink: 0,
-                              }}>
-                                {status.label}
-                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {userRole === 'PARCEIRO' && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleOpenEditProduct(e, product)}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      padding: '3px 8px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 600,
+                                      background: 'var(--color-elevated, rgba(255, 255, 255, 0.08))',
+                                      color: 'var(--color-text)',
+                                      border: '1px solid var(--color-border)',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.15s ease',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.borderColor = 'var(--color-emerald, #10b981)';
+                                      e.currentTarget.style.color = 'var(--color-emerald, #10b981)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.borderColor = 'var(--color-border)';
+                                      e.currentTarget.style.color = 'var(--color-text)';
+                                    }}
+                                    title="Editar informações do produto"
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M12 20h9" />
+                                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                                    </svg>
+                                    Editar
+                                  </button>
+                                )}
+                                <span style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '9999px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  background: status.bg,
+                                  color: status.color,
+                                  border: `1px solid ${status.border}`,
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0,
+                                }}>
+                                  {status.label}
+                                </span>
+                              </div>
                             </div>
 
                             {product.ingredients && (
@@ -996,10 +1074,11 @@ export default function DashboardPage() {
         )}
       </main>
 
-      {/* Modal de Publicação de Produto */}
+      {/* Modal de Publicação / Edição de Produto */}
       <CreateProductModal
         isOpen={isCreateProductModalOpen}
-        onClose={() => setIsCreateProductModalOpen(false)}
+        onClose={handleCloseProductModal}
+        productToEdit={editingProduct}
         onSuccess={loadData}
       />
     </div>

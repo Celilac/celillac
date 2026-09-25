@@ -49,6 +49,12 @@
   --color-info-bg:     rgba(59,130,246,0.1);
   --color-info-border: rgba(59,130,246,0.3);
 
+  /* Favoritos — Ações de afeto / coração vermelho constante */
+  --color-favorite:        #EF4444;
+  --color-favorite-bg:     rgba(239, 68, 68, 0.12);
+  --color-favorite-border: rgba(239, 68, 68, 0.35);
+  --color-favorite-hover-bg: rgba(239, 68, 68, 0.2);
+
   /* Status Administrativo — cadastro de parceiro (aprovado/pendente/rejeitado/suspenso).
      Deliberadamente separado da paleta de Risco acima: BLOCKED/DANGER/WARNING/SAFE
      pertencem exclusivamente ao veredito do AllergenEngine (ver DESIGN.md, "The Blocked-Is-Loudest Rule");
@@ -128,16 +134,24 @@
   /* Risco — escurecidos para manter ≥4.5:1 sobre fundo claro (WCAG AA).
      No tema escuro os tons originais já contrastam bem contra o fundo quase-preto;
      aqui a versão crua (#22C55E etc.) reprova contraste sobre branco/quase-branco. */
-  --color-safe:        #15803D;
-  --color-warning:     #854D0E;
-  --color-danger:      #9A3412;
-  --color-blocked:     #B91C1C;
+  --color-safe:          #15803D;
+  --color-warning:       #854D0E;
+  --color-danger:        #D97706; /* Tom laranja/âmbar vivo */
+  --color-danger-bg:     rgba(245, 158, 11, 0.10);
+  --color-danger-border: rgba(217, 119, 6, 0.35);
+  --color-blocked:       #B91C1C;
 
   /* Status Administrativo — escurecidos para o mesmo motivo acima */
   --color-status-approved:  #047857;
   --color-status-pending:   #92400E;
   --color-status-rejected:  #B91C1C;
   --color-status-suspended: #6D28D9;
+
+  /* Favoritos no Tema Claro */
+  --color-favorite:        #DC2626;
+  --color-favorite-bg:     rgba(220, 38, 38, 0.10);
+  --color-favorite-border: rgba(220, 38, 38, 0.30);
+  --color-favorite-hover-bg: rgba(220, 38, 38, 0.18);
 }
 
 /* ═══════════════════════════════════════

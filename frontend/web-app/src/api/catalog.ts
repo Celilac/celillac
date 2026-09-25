@@ -151,6 +151,8 @@ export interface CreateProductInput {
   certifications?:             ProductCertificationDTO[];
 }
 
+export type UpdateProductInput = Partial<CreateProductInput>;
+
 export const catalogApi = {
   // Rota real do backend: GET /catalog/products?query=...
   search: (query: string, token?: string) =>
@@ -167,4 +169,9 @@ export const catalogApi = {
   // Criar / publicar novo produto no catálogo
   create: (data: CreateProductInput, token: string) =>
     apiClient.post<ProductSummary>('/catalog/products', data, token),
+
+  // Atualizar produto existente no catálogo
+  update: (id: string, data: UpdateProductInput, token: string) =>
+    apiClient.put<ProductSummary>(`/catalog/products/${id}`, data, token),
 };
+

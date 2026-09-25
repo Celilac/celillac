@@ -7,6 +7,8 @@ import { useToast } from '@/hooks/useToast';
 import {
   catalogApi,
   CreateProductInput,
+  ProductDetails,
+  ProductSummary,
   CommercialOrigin,
   PublicationStatus,
   ProductImageDTO,
@@ -34,6 +36,7 @@ interface CreateProductModalProps {
   partnerId?: string;
   partnerName?: string;
   onSuccess?: () => void;
+  productToEdit?: ProductDetails | ProductSummary | null;
 }
 
 const DEFAULT_CATEGORIES = [
@@ -63,6 +66,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
   partnerId: initialPartnerId,
   partnerName: initialPartnerName,
   onSuccess,
+  productToEdit,
 }) => {
   const { token, isAuthenticated } = useAuth();
   const { theme } = useTheme();
@@ -168,6 +172,59 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
+    const populateFromProduct = (data: ProductDetails | ProductSummary) => {
+      setName(data.name || '');
+      setBrand(data.brand || '');
+      setCategory((data as any).category || 'Padaria & Confeitaria');
+      setPrice((data as any).price !== undefined && (data as any).price !== null ? String((data as any).price) : '');
+      setShortDescription(data.shortDescription || '');
+      setNetContent(data.netContent !== undefined && data.netContent !== null ? String(data.netContent) : '');
+      setUnitOfMeasure(data.unitOfMeasure || 'g');
+      setSku(data.sku || '');
+      setEan(data.ean || '');
+      setCommercialOrigin(data.commercialOrigin || 'OWN_MANUFACTURE');
+      setIngredients(data.ingredients || '');
+      setMayContainTraces(data.mayContainTraces || '');
+      setCompositionNotes(data.compositionNotes || '');
+      setHasGluten(Boolean(data.hasGluten));
+      if (data.images && data.images.length > 0) {
+        setImages(data.images);
+      } else if (data.imageUrl) {
+        setImages([{ url: data.imageUrl, imageType: 'PRODUCT', isCover: true, displayOrder: 0 }]);
+      } else {
+        setImages([]);
+      }
+      setDeclaredAllergens(data.declaredAllergens || {});
+      setCrossContaminationDetails(data.crossContaminationDetails || { environmentRisk: 'UNKNOWN_RISK' });
+      setDietaryFeatures(data.dietaryFeatures || []);
+      setInformationOrigin(data.informationOrigin || 'PARTNER_DECLARED');
+      setNutritionalInfo(data.nutritionalInfo || {});
+      setCertifications(data.certifications || []);
+      if ((data as any).partnerId) {
+        setSelectedPartnerId((data as any).partnerId);
+        fetchCategories((data as any).partnerId);
+      } else if (initialPartnerId) {
+        fetchCategories(initialPartnerId);
+      } else {
+        fetchCategories();
+      }
+    };
+
+    if (productToEdit) {
+      populateFromProduct(productToEdit);
+      if (token) {
+        catalogApi.getById(productToEdit.id, token)
+          .then((fullProduct) => {
+            if (fullProduct) {
+              populateFromProduct(fullProduct);
+            }
+          })
+          .catch(() => {});
+      }
+      return;
+    }
+
+    // Modo Criação — Reset e busca de estabelecimentos/categorias
     if (initialPartnerId) {
       setSelectedPartnerId(initialPartnerId);
       fetchCategories(initialPartnerId);
@@ -191,7 +248,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
       fetchCategories();
     }
 
-    // Tentar restaurar rascunho local se existir
+    // Tentar restaurar rascunho local se for nova criação
     try {
       const savedDraft = localStorage.getItem(draftStorageKey);
       if (savedDraft) {
@@ -230,7 +287,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
     } catch {
       // Ignora falhas de leitura do storage
     }
-  }, [isOpen, token, initialPartnerId, fetchCategories, draftStorageKey]);
+  }, [isOpen, token, initialPartnerId, fetchCategories, draftStorageKey, productToEdit]);
 
   // Sincronização entre Matriz de Alérgenos e seletores rápidos de Glúten e Leite
   const handleAllergenMatrixChange = useCallback((updated: Record<string, AllergenPresence>) => {
@@ -455,18 +512,22 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
         certifications: certifications.length > 0 ? certifications : undefined,
       };
 
-      await catalogApi.create(payload, token);
+      if (productToEdit) {
+        await catalogApi.update(productToEdit.id, payload, token);
+        toast.success('Produto atualizado com sucesso!', 'Atualizado');
+      } else {
+        await catalogApi.create(payload, token);
+        if (statusToSave === 'PUBLISHED') {
+          toast.success('Produto publicado com sucesso no catálogo!', 'Publicado');
+        } else {
+          toast.info('Rascunho salvo com sucesso! Você pode continuar a edição a qualquer momento.', 'Rascunho Salvo');
+        }
+      }
 
       // Limpar rascunho salvo localmente
       try {
         localStorage.removeItem(draftStorageKey);
       } catch {}
-
-      if (statusToSave === 'PUBLISHED') {
-        toast.success('Produto publicado com sucesso no catálogo!', 'Publicado');
-      } else {
-        toast.info('Rascunho salvo com sucesso! Você pode continuar a edição a qualquer momento.', 'Rascunho Salvo');
-      }
 
       if (onSuccess) {
         onSuccess();
@@ -526,9 +587,22 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
         >
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontSize: '1.4rem' }}>📦</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                {productToEdit ? (
+                  <>
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                    <line x1="12" y1="22.08" x2="12" y2="12" />
+                  </>
+                )}
+              </svg>
               <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--color-text)' }}>
-                Publicar Produto no Catálogo
+                {productToEdit ? `Editar Produto: ${name || productToEdit.name}` : 'Publicar Produto no Catálogo'}
               </h2>
               <span
                 style={{
@@ -542,11 +616,13 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   border: '1px solid rgba(16, 185, 129, 0.3)',
                 }}
               >
-                Fases 1 & 2 • Ficha Técnica & Galeria
+                {productToEdit ? 'Modo de Edição' : 'Fases 1 & 2 • Ficha Técnica & Galeria'}
               </span>
             </div>
             <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-              Cadastre itens com origem, especificação técnica detalhada, segurança contra alérgenos e galeria de fotos.
+              {productToEdit
+                ? 'Atualize a ficha técnica, ingredientes, fotos ou adicione novos laudos e certificações oficiais.'
+                : 'Cadastre itens com origem, especificação técnica detalhada, segurança contra alérgenos e galeria de fotos.'}
             </p>
           </div>
 
@@ -1876,7 +1952,16 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                 gap: '6px',
               }}
             >
-              {loading ? 'Publicando…' : '🚀 Publicar Produto'}
+              {loading ? (
+                productToEdit ? 'Salvando…' : 'Publicando…'
+              ) : (
+                <>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  {productToEdit ? 'Salvar Alterações' : 'Publicar Produto'}
+                </>
+              )}
             </button>
           </div>
         </div>

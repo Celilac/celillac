@@ -116,18 +116,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    if (auth.token) {
-      try {
-        await iamApi.logout(auth.token);
-      } catch {
-        // Silencia erros para garantir logout client-side incondicional
-      }
-    }
+    const tokenToRevoke = auth.token;
+
+    // 1. Limpeza IMEDIATA no cliente para resposta instantânea da interface
     try {
       localStorage.removeItem(STORAGE_KEY_TOKEN);
       localStorage.removeItem(STORAGE_KEY_USERID);
     } catch { /* sem ação */ }
     setAuth({ token: null, userId: null });
+
+    // 2. Notifica o backend em segundo plano para revogação segura na blacklist
+    if (tokenToRevoke) {
+      try {
+        await iamApi.logout(tokenToRevoke);
+      } catch {
+        // Silencia erros para garantir logout client-side incondicional
+      }
+    }
   }, [auth.token]);
 
   return (

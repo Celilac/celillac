@@ -7,7 +7,7 @@ import { partnerApi, PartnerSummary } from '@/api/partner';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Header } from '@/components/layout/Header';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
-import styles from '../partner/partner.module.css';
+import styles from './public-partners.module.css';
 
 export default function PublicPartnersListPage() {
   const { theme, toggleTheme } = useTheme();
@@ -49,58 +49,67 @@ export default function PublicPartnersListPage() {
           </div>
         </div>
 
-        {/* Buscador */}
-        <div className={styles.card} style={{ padding: '1rem 1.5rem', marginBottom: '2rem', gap: '0' }}>
-          <input
-            type="text"
-            className={styles.input}
-            placeholder="Pesquise por nome ou cidade..."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            id="public-partner-search-input"
-          />
+        {/* Buscador com metadados */}
+        <div className={styles.searchSection}>
+          <div className={styles.searchCard}>
+            <span className={styles.searchIcon}>🔍</span>
+            <input
+              type="text"
+              className={styles.input}
+              placeholder="Pesquise por nome ou cidade..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              id="public-partner-search-input"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                style={{ background: 'transparent', border: 'none', color: 'var(--color-text-muted)', cursor: 'pointer', fontSize: '1rem', padding: '0 4px' }}
+                title="Limpar busca"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <div className={styles.resultsMeta}>
+            <span>
+              Exibindo <strong className={styles.resultsCount}>{filteredPartners.length}</strong> {filteredPartners.length === 1 ? 'estabelecimento homologado' : 'estabelecimentos homologados'}
+            </span>
+            {query && <span>Filtro ativo: &quot;{query}&quot;</span>}
+          </div>
         </div>
 
-        <div className={styles.grid}>
+        {/* Grid Responsivo de Estabelecimentos */}
+        <div className={styles.partnersGrid}>
           {filteredPartners.length === 0 ? (
             <div className={styles.emptyState}>
               <span className={styles.emptyIcon}>🔍</span>
               <h2>Nenhum parceiro encontrado</h2>
-              <p>Tente alterar sua busca para localizar estabelecimentos.</p>
+              <p>Tente alterar sua busca para localizar outros estabelecimentos homologados.</p>
             </div>
           ) : (
             filteredPartners.map((partner) => (
               <section key={partner.id} className={styles.card}>
                 <div className={styles.cardContent}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+                  <div className={styles.cardHeader}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', minWidth: 0 }}>
                       {partner.logoUrl && (
-                        <div style={{
-                          width: '42px',
-                          height: '42px',
-                          borderRadius: '8px',
-                          background: 'var(--color-elevated)',
-                          border: '1px solid var(--color-border)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          overflow: 'hidden',
-                          flexShrink: 0,
-                          padding: '2px',
-                        }}>
+                        <div className={styles.brandWrapper}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={partner.logoUrl}
                             alt={`Marca de ${partner.name}`}
-                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                            className={styles.brandImage}
                           />
                         </div>
                       )}
-                      <h2 className={styles.partnerName} style={{ margin: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{partner.name}</h2>
+                      <h2 className={styles.partnerName}>{partner.name}</h2>
                     </div>
-                    <span className={`${styles.badge} ${styles.badgeApproved}`}>Homologado</span>
+                    <span className={styles.badgeApproved}>Homologado</span>
                   </div>
-                  <p className={styles.partnerDescription}>{partner.description || 'Sem descrição.'}</p>
+
+                  <p className={styles.partnerDescription}>{partner.description || 'Sem descrição cadastrada.'}</p>
                   
                   <div className={styles.partnerMeta}>
                     <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
@@ -108,7 +117,7 @@ export default function PublicPartnersListPage() {
                   </div>
 
                   {partner.operationalStatus === 'TEMPORARILY_CLOSED' && (
-                    <div style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: '#fbbf24', display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                    <div className={styles.statusNotice}>
                       <span>⚠️</span>
                       <strong>Temporariamente Fechado</strong>
                     </div>
@@ -118,8 +127,7 @@ export default function PublicPartnersListPage() {
                 <div className={styles.cardActions}>
                   <button 
                     type="button" 
-                    className={`${styles.btn} ${styles.btnPrimary}`} 
-                    style={{ flex: 1 }}
+                    className={styles.btnPrimary}
                     onClick={() => router.push(`/public-partners/${partner.id}`)}
                     id={`view-public-partner-${partner.id}`}
                   >

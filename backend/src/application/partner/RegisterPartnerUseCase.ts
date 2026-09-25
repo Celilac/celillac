@@ -17,6 +17,7 @@ export interface RegisterPartnerDTO {
   state?:          string;
   deliveryRegion?: string;
   logoUrl?:        string;
+  isDraft?:        boolean;
 }
 
 export interface PartnerResponseDTO {
@@ -58,7 +59,24 @@ export class RegisterPartnerUseCase {
 
     const isAdmin = user.role === UserRole.ADMIN;
 
-    // 3. Criar o Parceiro (Admin já cria como APPROVED e ACTIVE para testes/operação ágil)
+    // 3. Determinar o status inicial de aprovação:
+    // - Admin: Aprovado imediatamente (para testes e operação ágil)
+    // - isDraft === true: Permanece em Rascunho se explicitamente solicitado
+    // - Parceiro (padrão): Enviado imediatamente para análise e moderação (PENDING_REVIEW)
+    let initialApprovalStatus: PartnerApprovalStatus;
+    let initialOperationalStatus: PartnerOperationalStatus;
+
+    if (isAdmin) {
+      initialApprovalStatus = PartnerApprovalStatus.APPROVED;
+      initialOperationalStatus = PartnerOperationalStatus.ACTIVE;
+    } else if (dto.isDraft) {
+      initialApprovalStatus = PartnerApprovalStatus.DRAFT;
+      initialOperationalStatus = PartnerOperationalStatus.INACTIVE;
+    } else {
+      initialApprovalStatus = PartnerApprovalStatus.PENDING_REVIEW;
+      initialOperationalStatus = PartnerOperationalStatus.INACTIVE;
+    }
+
     const partnerResult = Partner.create({
       userId:            dto.userId,
       name:              dto.name,
@@ -71,8 +89,8 @@ export class RegisterPartnerUseCase {
       state:             dto.state,
       deliveryRegion:    dto.deliveryRegion,
       logoUrl:           dto.logoUrl,
-      approvalStatus:    isAdmin ? PartnerApprovalStatus.APPROVED : PartnerApprovalStatus.DRAFT,
-      operationalStatus: isAdmin ? PartnerOperationalStatus.ACTIVE : PartnerOperationalStatus.INACTIVE,
+      approvalStatus:    initialApprovalStatus,
+      operationalStatus: initialOperationalStatus,
     });
 
     if (partnerResult.isFailure) {

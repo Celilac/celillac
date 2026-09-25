@@ -34,6 +34,7 @@
 - `address`: Endereço integrado com auto-completar via CEP (ViaCEP) e mapa interativo (Google Maps)
 
 **Regras críticas:**
+- Ao finalizar o cadastro completo de um estabelecimento (`POST /partners`), o parceiro é submetido automaticamente para análise com o status `PENDING_REVIEW` (evitando atrito de rascunhos acidentais). O status `DRAFT` é mantido apenas quando `isDraft: true` for explicitamente solicitado.
 - Alterações em campos críticos (`name`, `type`, `cnpj`, `address`, `phone`, `city`, `state`) em estabelecimentos aprovados regridem o status para `PENDING_REVIEW`.
 - CNPJ é opcional para produtores artesanais/pessoa física, mas quando fornecido DEVE ser estritamente válido pelo cálculo de dígitos verificadores (Módulo 11).
 - Alterações em `description` e `logoUrl` são não-críticas e preservam o status `APPROVED`.

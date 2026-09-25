@@ -45,8 +45,8 @@ export class UpdateProductController extends BaseController {
       certifications,
     } = req.body;
 
-    if (!name || price === undefined || !category) {
-      this.badRequest(res, 'Os campos name, price e category são obrigatórios.');
+    if (!name || !category) {
+      this.badRequest(res, 'Os campos name e category são obrigatórios.');
       return;
     }
 
@@ -58,7 +58,7 @@ export class UpdateProductController extends BaseController {
       ingredients,
       hasGluten: hasGluten !== undefined ? Boolean(hasGluten) : undefined,
       crossContamination,
-      price: parseFloat(price),
+      price: price !== undefined && price !== '' ? parseFloat(price) : undefined,
       category,
       imageUrl,
       isActive,
