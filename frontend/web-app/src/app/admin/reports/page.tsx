@@ -52,7 +52,7 @@ export default function AdminReportsPage() {
     if (isInitializing) return;
 
     if (!isAuthenticated || !token) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
 
@@ -234,7 +234,15 @@ export default function AdminReportsPage() {
     }
   };
 
-  if (!mounted || isInitializing || (isAdmin === null && loading)) {
+  if (!mounted || !isAuthenticated) {
+    return (
+      <div className="profile-page">
+        <Header />
+      </div>
+    );
+  }
+
+  if (isInitializing || (isAdmin === null && loading)) {
     return (
       <div className="profile-page">
         <Header />

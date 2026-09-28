@@ -26,7 +26,8 @@ export function Header() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    router.prefetch('/auth/login');
+  }, [router]);
 
   useEffect(() => {
     if (isAuthenticated && token && userId) {
@@ -36,10 +37,11 @@ export function Header() {
           setUserInfo(null);
           if (err instanceof HttpError && err.status === 401) {
             logout();
+            router.replace('/auth/login');
           }
         });
     }
-  }, [isAuthenticated, token, userId, logout]);
+  }, [isAuthenticated, token, userId, logout, router]);
 
   return (
     <>
@@ -152,13 +154,18 @@ export function Header() {
               onClick={() => {
                 setMenuOpen(false);
                 logout();
-                router.push('/auth/login');
+                router.replace('/auth/login');
               }}
               className="nav-logout-btn"
               id="btn-logout"
             >
               <LogoutIcon /> Sair
             </button>
+          )}
+
+          {/* Prefetch oculto garantindo que o payload de login esteja sempre em cache */}
+          {mounted && isAuthenticated && (
+            <Link href="/auth/login" prefetch={true} style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
           )}
 
           {mounted && !isAuthenticated && (

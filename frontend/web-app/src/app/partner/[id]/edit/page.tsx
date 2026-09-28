@@ -53,7 +53,7 @@ export default function EditPartnerPage({ params }: PageProps) {
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
 
@@ -218,10 +218,15 @@ export default function EditPartnerPage({ params }: PageProps) {
     }
   }
 
-  if (loadingInit) {
+  if (loadingInit || !isAuthenticated) {
     return (
-      <div className={styles.container}>
-        <p className="profile-loading" role="status">Carregando formulário…</p>
+      <div className="profile-page">
+        <Header />
+        {loadingInit && (
+          <main className={styles.container}>
+            <p className="profile-loading" role="status">Carregando formulário…</p>
+          </main>
+        )}
       </div>
     );
   }

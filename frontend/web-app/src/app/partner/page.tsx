@@ -26,7 +26,7 @@ export default function PartnerListPage() {
     if (isInitializing) return;
 
     if (!isAuthenticated || !token) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
 
@@ -41,10 +41,13 @@ export default function PartnerListPage() {
       .finally(() => setLoading(false));
   }, [isAuthenticated, token, isInitializing, router, toast]);
 
-  if (loading || isInitializing) {
+  if (loading || isInitializing || !isAuthenticated) {
     return (
       <div className={styles.container}>
-        <p className="profile-loading" role="status">Carregando seus estabelecimentos…</p>
+        <Header />
+        {(loading || isInitializing) && (
+          <p className="profile-loading" role="status">Carregando seus estabelecimentos…</p>
+        )}
       </div>
     );
   }

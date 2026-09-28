@@ -67,7 +67,7 @@ export default function PartnerDetailPage({ params }: PageProps) {
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
 
@@ -135,10 +135,13 @@ export default function PartnerDetailPage({ params }: PageProps) {
     }
   }
 
-  if (loading) {
+  if (loading || !isAuthenticated) {
     return (
       <div className={styles.container}>
-        <p className="profile-loading" role="status">Carregando painel do estabelecimento…</p>
+        <Header />
+        {loading && (
+          <p className="profile-loading" role="status">Carregando painel do estabelecimento…</p>
+        )}
       </div>
     );
   }

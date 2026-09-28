@@ -108,7 +108,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (mounted && !isAuthenticated) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
     }
   }, [mounted, isAuthenticated, router]);
 
@@ -193,7 +193,7 @@ export default function DashboardPage() {
     if (!searchQuery.trim()) return;
 
     if (!isAuthenticated || !token || !userId) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
 
@@ -247,6 +247,14 @@ export default function DashboardPage() {
       setLoading(false);
     }
   };
+
+  if (mounted && !isAuthenticated) {
+    return (
+      <div className="dashboard-page-wrapper">
+        <Header />
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-page-wrapper">

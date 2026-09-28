@@ -55,7 +55,7 @@ export default function AdminPartnersPage() {
     if (isInitializing) return;
 
     if (!isAuthenticated || !token) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
 
@@ -146,10 +146,13 @@ export default function AdminPartnersPage() {
     setReason('');
   }
 
-  if (loading || isInitializing) {
+  if (loading || isInitializing || !isAuthenticated) {
     return (
-      <div className={styles.container}>
-        <p className="profile-loading" role="status">Carregando painel de moderação…</p>
+      <div className="profile-page">
+        <Header />
+        <main className={styles.container}>
+          <p className="profile-loading" role="status">Carregando painel de moderação…</p>
+        </main>
       </div>
     );
   }
