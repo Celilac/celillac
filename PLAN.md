@@ -1,48 +1,47 @@
-# PLAN.md - Submissão Automática para Análise no Cadastro de Parceiros
+# PLAN.md - Correção de Persistência e Restauração da Declaração de Leite e Derivados na Edição de Produtos
 
 **Status:** Aprovado e em Execução  
-**Escopo:** Backend (Application, Casos de Uso, DTOs, Testes Automatizados) & Frontend Web (Páginas de Cadastro, Gestão e Toasts)
+**Escopo:** Frontend Web (`CreateProductModal.tsx`) & Backend (`SearchProductsUseCase.ts`, DTOs e Testes)
 
 ---
 
-## 1. Contexto e Motivação
-Atualmente, quando um usuário parceiro preenche o formulário completo de cadastro de um estabelecimento comercial (`/partner/register`) e salva com sucesso, o estabelecimento é registrado no banco com o status `DRAFT` (Rascunho). 
-Isso gera grande atrito e confusão de UX:
-- O parceiro acredita que o cadastro já foi finalizado e submetido para a plataforma.
-- No entanto, ele permanece invisível e estagnado em "Rascunho", exigindo que o usuário descubra que precisa acessar outra tela interna para clicar manualmente em "Enviar para Revisão".
-- O status `DRAFT` deve existir apenas para cadastros com dados incompletos ou rascunhos voluntários (ex: autosave ou saída antecipada). Ao submeter o formulário completo, o estabelecimento deve ir diretamente para `PENDING_REVIEW` (Sob Análise).
+## 1. Diagnóstico do Problema
+O usuário relatou que ao cadastrar um produto marcando "Contém Leite", ao abrir a edição do produto ("Editar Produto: Peixe ao molho branco") e tentar salvar sem alterar nada:
+1. A opção "Contém Leite" aparece desmarcada visualmente no modal.
+2. Ao tentar salvar, uma notificação de erro bloqueia o salvamento:
+   *"Declaração Obrigatória: Selecione a declaração de Leite e Derivados (Sem Leite, Contém Leite ou Traços)."*
+
+### Causa Raiz
+1. **Frontend (`CreateProductModal.tsx`)**:
+   - A função `populateFromProduct(data)` (executada tanto com `productToEdit` quanto com o retorno de `catalogApi.getById`) populava quase todos os campos, mas **não executava `setMilkDeclaration(...)`**.
+   - Como o estado inicial de `milkDeclaration` é `null`, os botões de seleção de Leite ficavam desmarcados.
+   - Ao salvar, a validação de segurança alimentar `if (!milkDeclaration)` bloqueava a submissão.
+   - Além disso, faltava o fallback para inferência textual caso o produto fosse legado ou não possuísse `declaredAllergens.MILK` explicitamente.
+
+2. **Backend (`SearchProductsUseCase.ts`)**:
+   - O repositório `PgProductCatalogRepository.search` carrega `declared_allergens` do banco de dados na entidade `Product`.
+   - Porém, o DTO `ProductSearchResponseDTO` e o mapeamento em `SearchProductsUseCase` descartavam `declaredAllergens` e outros atributos complementares da entidade.
+   - Isso fazia com que, ao clicar em "Editar" diretamente da listagem de produtos do parceiro no Dashboard, o objeto `productToEdit` inicial chegasse com `declaredAllergens` indefinido antes da conclusão da chamada de `getById`.
 
 ---
 
 ## 2. Etapas de Execução
 
-### Fase 1: Atualização da Lógica de Aplicação no Backend
-- Em `backend/src/application/partner/RegisterPartnerUseCase.ts`:
-  - Adicionar suporte a `isDraft?: boolean` no `RegisterPartnerDTO`.
-  - Definir o status de aprovação inicial:
-    - Se o criador for `ADMIN`: `APPROVED` (e `ACTIVE`).
-    - Se for `isDraft === true`: `DRAFT` (e `INACTIVE`).
-    - Caso contrário (padrão de submissão completa por `PARCEIRO`): `PENDING_REVIEW` (e `INACTIVE`).
+### Fase 1: Testes no Backend (TDD)
+- Atualizar `backend/tests/unit/application/catalog/SearchProductsUseCase.spec.ts`:
+  - Garantir que `SearchProductsUseCase` inclua `declaredAllergens` e metadados nos itens retornados da busca e listagem de produtos.
 
-### Fase 2: Atualização dos Testes Automatizados (TDD)
-- Em `backend/tests/unit/application/partner/RegisterPartnerUseCase.spec.ts`:
-  - Atualizar o teste principal de cadastro por `PARCEIRO`: validar que `approvalStatus` agora é `PENDING_REVIEW`.
-  - Adicionar teste cobrindo a opção explícita de `isDraft: true` resultando em `DRAFT`.
-  - Manter teste de usuário `ADMIN` nascendo como `APPROVED`.
+### Fase 2: Ajuste no Backend (`SearchProductsUseCase.ts`)
+- Incluir `declaredAllergens`, `crossContaminationDetails`, `shortDescription`, `netContent`, etc., em `ProductSearchResponseDTO` e no retorno de `SearchProductsUseCase.ts`.
 
-### Fase 3: Ajustes no Frontend Web
-- Em `frontend/web-app/src/app/partner/register/page.tsx`:
-  - Atualizar o feedback visual (toast) após o cadastro bem-sucedido:
-    - Se `APPROVED` (admin): *"Estabelecimento cadastrado e ativado com sucesso!"*
-    - Se `PENDING_REVIEW`: *"Estabelecimento cadastrado com sucesso e enviado para análise e moderação da plataforma!"*
-    - Ação: Redirecionar para `/partner` onde o usuário visualiza o card com o badge de *Pendente de Revisão*.
-- Revisar badge e labels em `frontend/web-app/src/app/partner/page.tsx` para assegurar coerência textual ("Sob Análise" / "Pendente de Revisão").
+### Fase 3: Correção no Frontend (`CreateProductModal.tsx`)
+- Na função `populateFromProduct`:
+  - Ler `data.declaredAllergens?.['MILK']`. Se for `'FREE' | 'CONTAINS' | 'TRACES'`, atualizar `setMilkDeclaration(decl)`.
+  - Fallback inteligente: Se não houver `declaredAllergens.MILK`, inferir através dos termos de leite em `ingredients`, `mayContainTraces` e `crossContamination`.
+  - Garantir que `declaredAllergens` mantenha `MILK` em sincronia caso seja inferido.
+  - Resetar adequadamente os estados quando o modal for aberto no modo criação (`!productToEdit`).
 
-### Fase 4: Validação, Build e Documentação
-- Executar suíte de testes com `npm test` no backend.
-- Executar build do backend (`npm run build`).
-- Atualizar documentação:
-  - `docs/features/partner.md`
-  - `docs/API_CONTRACTS.md`
-  - `CHANGELOG.md`
-  - `walkthrough.md`
+### Fase 4: Validação e Testes
+- Rodar a suíte de testes com `npm test` no backend.
+- Executar `npm run build` no backend e no frontend (`frontend/web-app`).
+- Atualizar `walkthrough.md` e `CHANGELOG.md`.
