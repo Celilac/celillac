@@ -148,6 +148,16 @@ const PRODUCTS: Array<{
       cross_contamination: 'Produzido em fábrica que processa castanhas e amendoim.',
       analysis_status: 'ANALISADO',
     },
+    {
+      id: 'b0000002-0000-0000-0000-000000000003',
+      name: 'Arroz 7 Grãos com Castanhas',
+      brand: 'Grão & Vida',
+      ingredients: 'arroz integral, arroz vermelho, arroz preto, castanha-de-caju, gergelim',
+      has_gluten: false,
+      cross_contamination: 'Produzido em fábrica que processa leite e soja.',
+      analysis_status: 'ANALISADO',
+      partner_id: 'c0000001-0000-0000-0000-000000000002', // Mercado Natural & Cia
+    },
     // ── DANGER — alérgeno de alta severidade ──────────────────────────────────
     {
       id: 'b0000003-0000-0000-0000-000000000001',
@@ -174,6 +184,15 @@ const PRODUCTS: Array<{
       ingredients: 'leite integral pasteurizado, creme de leite, fermento lático',
       has_gluten: false,
       cross_contamination: '',
+      analysis_status: 'ANALISADO',
+    },
+    {
+      id: 'b0000003-0000-0000-0000-000000000004',
+      name: 'Arroz de Forno Cremoso Quatro Queijos',
+      brand: 'Pronto & Saboroso',
+      ingredients: 'arroz agulhinha, queijo mussarela, queijo parmesão, requeijão cremoso, leite integral, manteiga, sal',
+      has_gluten: false,
+      cross_contamination: 'Livre de glúten. Contém derivados de leite.',
       analysis_status: 'ANALISADO',
     },
     // ── BLOCKED — FATAL para celíacos ─────────────────────────────────────────
@@ -203,6 +222,24 @@ const PRODUCTS: Array<{
       ingredients: 'farinha de mandioca, óleo vegetal, sal, temperos',
       has_gluten: false,
       cross_contamination: 'Pode conter traços de glúten de trigo.',
+      analysis_status: 'ANALISADO',
+    },
+    {
+      id: 'b0000004-0000-0000-0000-000000000004',
+      name: 'Arroz com Cevada e Ervas Finas',
+      brand: 'Sabor Gourmet',
+      ingredients: 'arroz agulhinha, cevada perolada, salsa desidratada, cebolinha, alho',
+      has_gluten: true,
+      cross_contamination: 'Contém cevada e glúten.',
+      analysis_status: 'ANALISADO',
+    },
+    {
+      id: 'b0000004-0000-0000-0000-000000000005',
+      name: 'Arroz Oriental para Sushi (Linha Compartilhada)',
+      brand: 'Tokyo Grãos',
+      ingredients: 'arroz para culinária oriental polido',
+      has_gluten: false,
+      cross_contamination: 'ALÉRGICOS: Embalado no mesmo maquinário que processa trigo. Pode conter traços de glúten.',
       analysis_status: 'ANALISADO',
     },
     // ── PENDENTE — sem ingredientes declarados → BLOCKED por precaução ─────────

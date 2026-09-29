@@ -8,6 +8,7 @@ import { AllergenPresence } from '../../domain/catalog/value-objects/AllergenPre
 import { DietaryFeature } from '../../domain/catalog/value-objects/DietaryFeature';
 import { InformationOrigin } from '../../domain/catalog/value-objects/InformationOrigin';
 import { VerifyPartnerPublicationCapability } from '../../domain/partner/services/VerifyPartnerPublicationCapability';
+import { FileSecurityValidator } from '../../infrastructure/services/FileSecurityValidator';
 
 export interface UpdateProductDTO {
   id:                          string;
@@ -74,6 +75,23 @@ export class UpdateProductUseCase {
     // Se estiver publicando, ingredientes são obrigatórios
     if (publicationStatus === 'PUBLISHED' && (!ingredients || ingredients.trim().length === 0)) {
       return Result.fail<ProductResponseDTO>('A lista de ingredientes é obrigatória para publicar o produto no catálogo.');
+    }
+
+    // A08: Upload Seguro — Validação de Magic Bytes e sanitização de imagens/rótulos
+    if (dto.imageUrl) {
+      const imgValidation = FileSecurityValidator.validateImagePayload(dto.imageUrl);
+      if (imgValidation.isFailure) {
+        return Result.fail<ProductResponseDTO>(imgValidation.getError());
+      }
+    }
+
+    if (dto.images && dto.images.length > 0) {
+      for (const img of dto.images) {
+        const imgValidation = FileSecurityValidator.validateImagePayload(img.url);
+        if (imgValidation.isFailure) {
+          return Result.fail<ProductResponseDTO>(imgValidation.getError());
+        }
+      }
     }
 
     // 4. Criar a nova entidade com os novos dados preservando o ID original

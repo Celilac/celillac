@@ -406,6 +406,62 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
     const dataParams = [...queryParams, limit, offset];
     const dataResult = await this.pool.query(dataQuery, dataParams);
 
+    const productIds = dataResult.rows.map((row) => row.id);
+    const certsByProductId: Record<string, any[]> = {};
+    const imagesByProductId: Record<string, any[]> = {};
+
+    if (productIds.length > 0) {
+      const [certsResult, imagesResult] = await Promise.all([
+        this.pool.query(
+          `SELECT id, product_id, certification_type, certifying_entity, certificate_code,
+                  valid_until, image_id, verification_status, verification_notes
+           FROM product_certifications
+           WHERE product_id = ANY($1)
+           ORDER BY created_at ASC`,
+          [productIds]
+        ),
+        this.pool.query(
+          `SELECT id, product_id, url, image_type, caption, display_order, is_cover
+           FROM product_images
+           WHERE product_id = ANY($1)
+           ORDER BY display_order ASC, created_at ASC`,
+          [productIds]
+        ),
+      ]);
+
+      for (const cRow of certsResult.rows) {
+        if (!certsByProductId[cRow.product_id]) {
+          certsByProductId[cRow.product_id] = [];
+        }
+        certsByProductId[cRow.product_id].push({
+          id: cRow.id,
+          productId: cRow.product_id,
+          certificationType: cRow.certification_type,
+          certifyingEntity: cRow.certifying_entity,
+          certificateCode: cRow.certificate_code || undefined,
+          validUntil: cRow.valid_until ? (cRow.valid_until instanceof Date ? cRow.valid_until.toISOString().split('T')[0] : String(cRow.valid_until).split('T')[0]) : undefined,
+          imageId: cRow.image_id || undefined,
+          verificationStatus: cRow.verification_status,
+          verificationNotes: cRow.verification_notes || undefined,
+        });
+      }
+
+      for (const imgRow of imagesResult.rows) {
+        if (!imagesByProductId[imgRow.product_id]) {
+          imagesByProductId[imgRow.product_id] = [];
+        }
+        imagesByProductId[imgRow.product_id].push({
+          id: imgRow.id,
+          productId: imgRow.product_id,
+          url: imgRow.url,
+          imageType: imgRow.image_type as ProductImageType,
+          caption: imgRow.caption || undefined,
+          displayOrder: parseInt(imgRow.display_order, 10),
+          isCover: Boolean(imgRow.is_cover),
+        });
+      }
+    }
+
     const data = dataResult.rows.map((row) => {
       const declaredAllergens = typeof row.declared_allergens === 'string'
         ? JSON.parse(row.declared_allergens)
@@ -445,11 +501,13 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
           mayContainTraces:          row.may_contain_traces || '',
           compositionNotes:          row.composition_notes || undefined,
           publicationStatus:         (row.publication_status as PublicationStatus) || 'PUBLISHED',
+          images:                    imagesByProductId[row.id] || [],
           declaredAllergens,
           crossContaminationDetails,
           dietaryFeatures,
           informationOrigin:         row.information_origin || 'PARTNER_DECLARED',
           nutritionalInfo,
+          certifications:            certsByProductId[row.id] || [],
         },
         row.id
       ).getValue();

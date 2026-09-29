@@ -45,7 +45,7 @@ export default function RegisterPartnerPage() {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
     }
   }, [isAuthenticated, router]);
 
@@ -196,6 +196,14 @@ export default function RegisterPartnerPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="profile-page">
+        <Header />
+      </div>
+    );
   }
 
   return (

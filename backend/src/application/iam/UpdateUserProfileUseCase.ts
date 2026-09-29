@@ -11,12 +11,19 @@ export interface UpdateUserProfileInput {
   gender?: string;
   avatarUrl?: string;
   whatsappPhone?: string;
+  actorId?: string;
+  actorRole?: string;
 }
 
 export class UpdateUserProfileUseCase {
   constructor(private readonly userRepository: IUserRepository) {}
 
   async execute(input: UpdateUserProfileInput): Promise<Result<User>> {
+    // BOLA / IDOR Defense (A01): Apenas o próprio usuário ou administradores podem atualizar o perfil
+    if (input.actorId && input.actorId !== input.userId && input.actorRole !== 'ADMIN') {
+      return Result.fail<User>('Acesso negado: Você não possui permissão para modificar o perfil deste usuário.');
+    }
+
     const user = await this.userRepository.findById(input.userId);
     if (!user) {
       return Result.fail<User>('Usuário não encontrado.');

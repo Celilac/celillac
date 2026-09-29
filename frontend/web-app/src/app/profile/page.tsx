@@ -199,7 +199,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const localToken = typeof window !== 'undefined' ? localStorage.getItem('celilac:token') : null;
     if (!isAuthenticated && !localToken) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
     if (!token || !userId) {
@@ -550,7 +550,15 @@ export default function ProfilePage() {
     }
   }
 
-  if (!mounted || loadingInit) {
+  if (!mounted || !isAuthenticated) {
+    return (
+      <div className="profile-page">
+        <Header />
+      </div>
+    );
+  }
+
+  if (loadingInit) {
     return (
       <div className="profile-page">
         <Header />

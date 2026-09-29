@@ -2,10 +2,11 @@
 import { Request, Response } from 'express';
 import { BaseController } from '../BaseController';
 import { LogoutUserUseCase } from '../../../../application/iam/LogoutUserUseCase';
+import { extractAuthToken } from '../../middlewares/AuthMiddleware';
 
 /**
  * LogoutUserController — Controlador HTTP para processar a revogação de tokens (Logout).
- * Extrai o token JWT do cabeçalho Authorization e o passa para o caso de uso.
+ * Extrai o token JWT de cookies httpOnly ou do cabeçalho Authorization e limpa a sessão.
  */
 export class LogoutUserController extends BaseController {
   constructor(private readonly logoutUserUseCase: LogoutUserUseCase) {
@@ -13,20 +14,17 @@ export class LogoutUserController extends BaseController {
   }
 
   protected async executeImpl(req: Request, res: Response): Promise<void> {
-    const authHeader = req.headers.authorization;
+    const extracted = extractAuthToken(req);
 
-    if (!authHeader) {
-      this.unauthorized(res, 'Token de autenticação não fornecido.');
+    if (extracted.error || !extracted.token) {
+      this.unauthorized(res, extracted.error || 'Token de autenticação não fornecido.');
       return;
     }
 
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2) {
-      this.badRequest(res, 'Token de autenticação malformado.');
-      return;
-    }
+    const token = extracted.token;
 
-    const [, token] = parts;
+    // A02: Roubo de Sessão — Limpa o cookie httpOnly
+    res.clearCookie('token', { path: '/' });
 
     const result = await this.logoutUserUseCase.execute({ token });
 

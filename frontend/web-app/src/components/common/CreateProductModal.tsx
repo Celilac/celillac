@@ -186,7 +186,34 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
       setIngredients(data.ingredients || '');
       setMayContainTraces(data.mayContainTraces || '');
       setCompositionNotes(data.compositionNotes || '');
-      setHasGluten(Boolean(data.hasGluten));
+      // Glúten
+      const glutenDeclared = data.declaredAllergens?.['GLUTEN'];
+      if (glutenDeclared === 'CONTAINS') {
+        setHasGluten(true);
+      } else if (glutenDeclared === 'FREE') {
+        setHasGluten(false);
+      } else {
+        setHasGluten(Boolean(data.hasGluten));
+      }
+
+      // Declaração de Leite e Derivados
+      let milk: 'FREE' | 'CONTAINS' | 'TRACES' | null = null;
+      const declaredMilk = data.declaredAllergens?.['MILK'];
+      if (declaredMilk === 'CONTAINS' || declaredMilk === 'FREE' || declaredMilk === 'TRACES') {
+        milk = declaredMilk;
+      } else {
+        // Fallback: tentar inferir por termos de leite nos ingredientes ou contaminação
+        const lowerIng = (data.ingredients || '').toLowerCase();
+        const lowerCross = ((data.crossContamination || '') + ' ' + (data.mayContainTraces || '')).toLowerCase();
+        const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme', 'whey', 'soro'];
+        if (milkTerms.some((t) => lowerIng.includes(t))) {
+          milk = 'CONTAINS';
+        } else if (milkTerms.some((t) => lowerCross.includes(t))) {
+          milk = 'TRACES';
+        }
+      }
+      setMilkDeclaration(milk);
+
       if (data.images && data.images.length > 0) {
         setImages(data.images);
       } else if (data.imageUrl) {
@@ -194,7 +221,17 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
       } else {
         setImages([]);
       }
-      setDeclaredAllergens(data.declaredAllergens || {});
+
+      // Sincronizar declaredAllergens com glúten e leite
+      const allergens = { ...(data.declaredAllergens || {}) };
+      if (milk && !allergens['MILK']) {
+        allergens['MILK'] = milk;
+      }
+      if (data.hasGluten !== undefined && !allergens['GLUTEN']) {
+        allergens['GLUTEN'] = data.hasGluten ? 'CONTAINS' : 'FREE';
+      }
+      setDeclaredAllergens(allergens);
+
       setCrossContaminationDetails(data.crossContaminationDetails || { environmentRisk: 'UNKNOWN_RISK' });
       setDietaryFeatures(data.dietaryFeatures || []);
       setInformationOrigin(data.informationOrigin || 'PARTNER_DECLARED');
@@ -225,6 +262,30 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
     }
 
     // Modo Criação — Reset e busca de estabelecimentos/categorias
+    setName('');
+    setBrand('');
+    setCategory('Padaria & Confeitaria');
+    setPrice('');
+    setShortDescription('');
+    setNetContent('');
+    setUnitOfMeasure('g');
+    setSku('');
+    setEan('');
+    setCommercialOrigin('OWN_MANUFACTURE');
+    setIngredients('');
+    setMayContainTraces('');
+    setCompositionNotes('');
+    setHasGluten(false);
+    setMilkDeclaration(null);
+    setCrossContaminationType('NENHUM');
+    setImages([]);
+    setDeclaredAllergens({});
+    setCrossContaminationDetails({ environmentRisk: 'UNKNOWN_RISK' });
+    setDietaryFeatures([]);
+    setInformationOrigin('PARTNER_DECLARED');
+    setNutritionalInfo({});
+    setCertifications([]);
+
     if (initialPartnerId) {
       setSelectedPartnerId(initialPartnerId);
       fetchCategories(initialPartnerId);
@@ -462,7 +523,13 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
       let finalIngredients = ingredients.trim();
       let finalCrossContamination = 'Nenhum (Ambiente 100% livre)';
 
-      if (crossContaminationType === 'MAQUINARIO_COMPARTILHADO') {
+      if (crossContaminationDetails.environmentRisk === 'SHARED_WITH_PROTOCOL') {
+        finalCrossContamination = 'Ambiente Compartilhado com Protocolo Rígido';
+      } else if (crossContaminationDetails.environmentRisk === 'SHARED_ENVIRONMENT') {
+        finalCrossContamination = 'Ambiente Compartilhado com Risco de Traços';
+      } else if (crossContaminationDetails.environmentRisk === 'UNKNOWN_RISK') {
+        finalCrossContamination = 'Não testado / Risco Desconhecido';
+      } else if (crossContaminationType === 'MAQUINARIO_COMPARTILHADO') {
         finalCrossContamination = 'Compartilha maquinário / linhas de produção';
       } else if (crossContaminationType === 'TRACOS') {
         finalCrossContamination = 'Pode conter traços (Alerta preventivo no rótulo)';
@@ -475,10 +542,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
           finalIngredients = `${finalIngredients} (Contém leite e derivados)`;
         }
       } else if (milkDeclaration === 'TRACES') {
-        if (crossContaminationType === 'MAQUINARIO_COMPARTILHADO') {
-          finalCrossContamination = 'Pode conter traços de leite (Compartilha maquinário / linhas de produção)';
-        } else {
-          finalCrossContamination = 'Pode conter traços de leite (Alerta preventivo no rótulo)';
+        if (!finalCrossContamination.toLowerCase().includes('leite')) {
+          finalCrossContamination = `${finalCrossContamination} (Pode conter traços de leite)`;
         }
       }
 

@@ -152,7 +152,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     if (isInitializing) return;
     if (!isAuthenticated || !token) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
     apiClient.get<UserSummary[]>('/admin/users', token)
@@ -237,10 +237,15 @@ export default function AdminUsersPage() {
     } finally { setUpdating(false); }
   }
 
-  if (loading || isInitializing) {
+  if (loading || isInitializing || !isAuthenticated) {
     return (
-      <div className={styles.container}>
-        <p className="profile-loading" role="status">Carregando gestão de usuários…</p>
+      <div className="profile-page">
+        <Header />
+        {(loading || isInitializing) && (
+          <main className={styles.container}>
+            <p className="profile-loading" role="status">Carregando gestão de usuários…</p>
+          </main>
+        )}
       </div>
     );
   }

@@ -6,7 +6,16 @@ import { AllergenEngine } from '../../domain/allergen-engine/AllergenEngine';
 import { CompatibilityReport } from '../../domain/allergen-engine/CompatibilityReport';
 import { toProductSnapshot } from './mappers/toProductSnapshot';
 import { Result } from '../../domain/Result';
-import { AnalysisStatus } from '../../domain/catalog/Product';
+import {
+  AnalysisStatus,
+  CommercialOrigin,
+  PublicationStatus,
+  NutritionalInfo,
+  CrossContaminationDetails,
+} from '../../domain/catalog/Product';
+import { AllergenPresence } from '../../domain/catalog/value-objects/AllergenPresence';
+import { DietaryFeature } from '../../domain/catalog/value-objects/DietaryFeature';
+import { InformationOrigin } from '../../domain/catalog/value-objects/InformationOrigin';
 
 export interface SearchProductsDTO {
   query?:                  string;
@@ -19,18 +28,51 @@ export interface SearchProductsDTO {
 }
 
 export interface ProductSearchResponseDTO {
-  id:                  string;
-  name:                string;
-  brand:               string;
-  ingredients:         string;
-  hasGluten:           boolean;
-  crossContamination:  string;
-  analysisStatus:      AnalysisStatus;
-  partnerId?:          string;
-  price:               number;
-  category:            string;
-  imageUrl?:           string;
-  compatibilityReport?: CompatibilityReport;
+  id:                          string;
+  name:                        string;
+  brand:                       string;
+  ingredients:                 string;
+  hasGluten:                   boolean;
+  crossContamination:          string;
+  analysisStatus:              AnalysisStatus;
+  partnerId?:                  string;
+  price:                       number;
+  category:                    string;
+  imageUrl?:                   string;
+  compatibilityReport?:        CompatibilityReport;
+  isActive?:                   boolean;
+  shortDescription?:           string;
+  netContent?:                 number;
+  unitOfMeasure?:              string;
+  sku?:                        string;
+  ean?:                        string;
+  commercialOrigin?:           CommercialOrigin;
+  mayContainTraces?:           string;
+  compositionNotes?:           string;
+  publicationStatus?:          PublicationStatus;
+  images?:                     Array<{
+    id?:          string;
+    url:          string;
+    imageType?:   string;
+    caption?:     string;
+    displayOrder?: number;
+    isCover?:     boolean;
+  }>;
+  declaredAllergens?:          Record<string, AllergenPresence>;
+  crossContaminationDetails?: CrossContaminationDetails;
+  dietaryFeatures?:            DietaryFeature[];
+  informationOrigin?:          InformationOrigin;
+  nutritionalInfo?:           NutritionalInfo;
+  certifications?:             Array<{
+    id?:                 string;
+    certificationType:   string;
+    certifyingEntity:    string;
+    certificateCode?:    string;
+    validUntil?:         string;
+    imageId?:            string;
+    verificationStatus?: string;
+    verificationNotes?:  string;
+  }>;
 }
 
 export class SearchProductsUseCase {
@@ -69,17 +111,50 @@ export class SearchProductsUseCase {
 
     const data: ProductSearchResponseDTO[] = paginatedProducts.data.map((product) => {
       const response: ProductSearchResponseDTO = {
-        id:                 product.id,
-        name:               product.name,
-        brand:              product.brand,
-        ingredients:        product.ingredients,
-        hasGluten:          product.hasGluten,
-        crossContamination: product.crossContamination,
-        analysisStatus:     product.analysisStatus,
-        partnerId:          product.partnerId,
-        price:              product.price,
-        category:           product.category,
-        imageUrl:           product.imageUrl,
+        id:                        product.id,
+        name:                      product.name,
+        brand:                     product.brand,
+        ingredients:               product.ingredients,
+        hasGluten:                 product.hasGluten,
+        crossContamination:        product.crossContamination,
+        analysisStatus:            product.analysisStatus,
+        partnerId:                 product.partnerId,
+        price:                     product.price,
+        category:                  product.category,
+        imageUrl:                  product.imageUrl,
+        isActive:                  product.isActive,
+        shortDescription:          product.shortDescription,
+        netContent:                product.netContent,
+        unitOfMeasure:             product.unitOfMeasure,
+        sku:                       product.sku,
+        ean:                       product.ean,
+        commercialOrigin:          product.commercialOrigin,
+        mayContainTraces:          product.mayContainTraces,
+        compositionNotes:          product.compositionNotes,
+        publicationStatus:         product.publicationStatus,
+        images:                    product.images.map((img) => ({
+          id:           img.id,
+          url:          img.url,
+          imageType:    img.imageType,
+          caption:      img.caption,
+          displayOrder: img.displayOrder,
+          isCover:      img.isCover,
+        })),
+        declaredAllergens:         product.declaredAllergens,
+        crossContaminationDetails: product.crossContaminationDetails,
+        dietaryFeatures:           product.dietaryFeatures,
+        informationOrigin:         product.informationOrigin,
+        nutritionalInfo:           product.nutritionalInfo,
+        certifications:            product.certifications.map((c) => ({
+          id:                 c.id,
+          certificationType:   c.certificationType,
+          certifyingEntity:    c.certifyingEntity,
+          certificateCode:    c.certificateCode,
+          validUntil:         c.validUntil,
+          imageId:            c.imageId,
+          verificationStatus: c.verificationStatus,
+          verificationNotes:  c.verificationNotes,
+        })),
       };
 
       // Se o perfil do usuário foi carregado, calcula o relatório de compatibilidade dinâmico

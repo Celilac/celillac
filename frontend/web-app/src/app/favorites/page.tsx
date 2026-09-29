@@ -22,7 +22,7 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     if (mounted && !isInitializing && !isAuthenticated) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
     }
   }, [mounted, isInitializing, isAuthenticated, router]);
 
@@ -61,7 +61,15 @@ export default function FavoritesPage() {
     return true;
   });
 
-  if (!mounted || isInitializing || loading) {
+  if (!mounted || !isAuthenticated) {
+    return (
+      <div className="profile-page">
+        <Header />
+      </div>
+    );
+  }
+
+  if (isInitializing || loading) {
     return (
       <div className="profile-page">
         <Header />

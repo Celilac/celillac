@@ -46,7 +46,7 @@ export default function AdminCertificationsPage() {
     if (isInitializing) return;
 
     if (!isAuthenticated || !token) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
 
@@ -138,7 +138,7 @@ export default function AdminCertificationsPage() {
     }
   };
 
-  if (!mounted || isInitializing || isAdmin === null) {
+  if (!mounted || isInitializing || !isAuthenticated || isAdmin === null) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="skeleton-line" style={{ width: 140, height: 28 }} />

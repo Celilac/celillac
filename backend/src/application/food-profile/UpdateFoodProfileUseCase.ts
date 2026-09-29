@@ -15,18 +15,21 @@ export interface UpdateFoodProfileDTO {
   userId:                     string;
   restrictions:               RestrictionDTO[];
   acceptsCrossContamination?: boolean;
+  actorId?:                   string;
+  actorRole?:                 string;
 }
 
 /**
  * UpdateFoodProfileUseCase — Orquestra a atualização do perfil alimentar.
  *
  * Fluxo:
- *  1. Valida que o usuário tem um perfil existente
- *  2. Coleta snapshot das restrições anteriores para auditoria
- *  3. Constrói as novas Restriction entities e atualiza o perfil
- *  4. Persiste via IFoodProfileRepository.update
- *  5. Sincroniza o estado no agregado Consumer (se IConsumerRepository estiver injetado)
- *  6. Grava registro imutável em audit_logs (se IAuditLogRepository estiver injetado - RN-16.2 / Issue #39)
+ *  1. Valida permissão de posse (A01: BOLA / IDOR)
+ *  2. Valida que o usuário tem um perfil existente
+ *  3. Coleta snapshot das restrições anteriores para auditoria
+ *  4. Constrói as novas Restriction entities e atualiza o perfil
+ *  5. Persiste via IFoodProfileRepository.update
+ *  6. Sincroniza o estado no agregado Consumer (se IConsumerRepository estiver injetado)
+ *  7. Grava registro imutável em audit_logs (se IAuditLogRepository estiver injetado - RN-16.2 / Issue #39)
  */
 export class UpdateFoodProfileUseCase {
   constructor(
@@ -36,6 +39,13 @@ export class UpdateFoodProfileUseCase {
   ) {}
 
   async execute(dto: UpdateFoodProfileDTO): Promise<Result<FoodProfileResponseDTO>> {
+    // BOLA / IDOR Defense (A01): Apenas o próprio usuário ou administradores podem alterar o perfil alimentar
+    if (dto.actorId && dto.actorId !== dto.userId && dto.actorRole !== 'ADMIN') {
+      return Result.fail<FoodProfileResponseDTO>(
+        'Acesso negado: Você não possui permissão para modificar o perfil alimentar deste usuário.',
+      );
+    }
+
     // 1. Verificar perfil existente
     const profile = await this.profileRepository.findByUserId(dto.userId);
     if (!profile) {

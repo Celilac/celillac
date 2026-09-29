@@ -5,6 +5,7 @@
 // Nenhuma página deve usar fetch() diretamente para /catalog.
 //
 import { apiClient } from './client';
+import { CompatibilityResponse } from './compatibility';
 
 export type CommercialOrigin = 'OWN_MANUFACTURE' | 'THIRD_PARTY_RESELL';
 export type PublicationStatus = 'DRAFT' | 'PUBLISHED' | 'INACTIVE';
@@ -102,6 +103,7 @@ export interface ProductSummary {
   informationOrigin?:          InformationOrigin;
   nutritionalInfo?:           NutritionalInfo;
   certifications?:             ProductCertificationDTO[];
+  compatibilityReport?:        CompatibilityResponse;
 }
 
 export interface ProductDetails extends ProductSummary {

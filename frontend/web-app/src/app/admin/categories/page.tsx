@@ -39,7 +39,7 @@ export default function AdminCategoriesPage() {
     if (isInitializing) return;
 
     if (!isAuthenticated || !token) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
 
@@ -133,7 +133,7 @@ export default function AdminCategoriesPage() {
     });
   };
 
-  if (!mounted || isInitializing || isAdmin === null) {
+  if (!mounted || isInitializing || !isAuthenticated || isAdmin === null) {
     return (
       <div className="profile-page">
         <Header />
