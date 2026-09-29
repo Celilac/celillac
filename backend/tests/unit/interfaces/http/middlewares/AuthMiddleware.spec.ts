@@ -298,4 +298,26 @@ describe('AuthMiddleware', () => {
       expect(mockResponse.status).not.toHaveBeenCalled();
     });
   });
+
+  describe('Autenticação via Cookies HttpOnly (A02: Roubo de Sessão)', () => {
+    it('deve autenticar com sucesso se o token estiver presente no cookie req.cookies.token', async () => {
+      const validToken = jwt.sign({ sub: 'user-cookie-1', role: 'CONSUMER' }, 'test-secret-value');
+      (mockRequest as any).cookies = { token: validToken };
+
+      await authMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(nextFunction).toHaveBeenCalledTimes(1);
+      expect(mockRequest.user).toEqual({ id: 'user-cookie-1', role: 'CONSUMER' });
+    });
+
+    it('deve autenticar com sucesso se o token estiver presente no header Cookie', async () => {
+      const validToken = jwt.sign({ sub: 'user-cookie-2', role: 'CONSUMER' }, 'test-secret-value');
+      mockRequest.headers = { cookie: `other_cookie=xyz; token=${validToken}; tracking=123` };
+
+      await authMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(nextFunction).toHaveBeenCalledTimes(1);
+      expect(mockRequest.user).toEqual({ id: 'user-cookie-2', role: 'CONSUMER' });
+    });
+  });
 });

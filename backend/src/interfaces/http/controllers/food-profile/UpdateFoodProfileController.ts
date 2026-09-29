@@ -31,9 +31,15 @@ export class UpdateFoodProfileController extends BaseController {
       userId,
       restrictions,
       acceptsCrossContamination,
+      actorId: requestUserId,
+      actorRole: req.user?.role,
     });
 
     if (result.isFailure) {
+      if (result.getError().includes('Acesso negado')) {
+        this.forbidden(res, result.getError());
+        return;
+      }
       this.badRequest(res, result.getError());
       return;
     }

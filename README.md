@@ -6,7 +6,7 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-72%20suites%20%7C%20442%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-77%20suites%20%7C%20474%20passing-brightgreen)](#-testes)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20%2B%20Oracle%20Cloud-orange)](#-segurança--governança)
 
 ---
@@ -125,6 +125,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | ❤️ Favoritos | ✅ Implementado | [`docs/features/favorites.md`](docs/features/favorites.md) |
 | 📜 Auditoria & Rastreabilidade do Domínio | ✅ Implementado | [`docs/features/audit.md`](docs/features/audit.md) |
 | 📱 App Mobile (Flutter) | ✅ Implementado | [`docs/features/mobile-app.md`](docs/features/mobile-app.md) |
+| 🛡️ Segurança, Anti-Bot & Anti-DDoS | ✅ Implementado | [`docs/features/security-hardening.md`](docs/features/security-hardening.md) |
 
 ---
 
@@ -135,7 +136,7 @@ cd backend
 npm test
 ```
 
-**72 suítes de teste | 442 casos**, cobrindo domínio, casos de uso, controllers, middlewares de segurança e o Motor de Alérgenos:
+**77 suítes de teste | 474 casos**, cobrindo domínio, casos de uso, controllers, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|

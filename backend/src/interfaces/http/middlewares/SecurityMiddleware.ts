@@ -21,7 +21,10 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction):
 
   if (origin) {
     const isDomainMatch = origin === 'https://celilac.com.br' || origin.endsWith('.celilac.com.br');
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || isDomainMatch || !process.env.ALLOWED_ORIGINS) {
+    const isLocalOrIp = origin.includes('localhost') || origin.includes('127.0.0.1') || /^https?:\/\/\d+\.\d+\.\d+\.\d+(:\d+)?$/.test(origin);
+    const allowByDefault = !process.env.ALLOWED_ORIGINS && (isDomainMatch || isLocalOrIp);
+
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || isDomainMatch || allowByDefault) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     } else {
       res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
@@ -46,5 +49,7 @@ export function securityHeadersMiddleware(req: Request, res: Response, next: Nex
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   next();
 }

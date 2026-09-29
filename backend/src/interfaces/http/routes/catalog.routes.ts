@@ -24,6 +24,7 @@ import { InactivateProductController } from '../controllers/catalog/InactivatePr
 import { CategoryController } from '../controllers/catalog/CategoryController';
 
 import { authMiddleware, optionalAuthMiddleware, verifiedEmailOnlyMiddleware } from '../middlewares/AuthMiddleware';
+import { createRateLimiter } from '../middlewares/RateLimitMiddleware';
 
 const router = Router();
 
@@ -48,9 +49,16 @@ const updateProductController = new UpdateProductController(updateProductUseCase
 const inactivateProductController = new InactivateProductController(inactivateProductUseCase);
 const categoryController = new CategoryController(createCategoryUseCase, listCategoriesUseCase);
 
+// Rate Limiter para prevenir raspagem massiva e DoS no catálogo
+const catalogSearchRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 60,            // 60 buscas por minuto por IP
+  message: 'Muitas consultas ao catálogo em sequência. Por favor, aguarde alguns instantes.',
+});
+
 // --- Rotas de Produtos ---
 router.post('/products', authMiddleware, verifiedEmailOnlyMiddleware, (req, res) => createProductController.execute(req, res));
-router.get('/products', optionalAuthMiddleware, (req, res) => searchProductsController.execute(req, res));
+router.get('/products', optionalAuthMiddleware, catalogSearchRateLimiter, (req, res) => searchProductsController.execute(req, res));
 router.get('/products/:id', optionalAuthMiddleware, (req, res) => getProductController.execute(req, res));
 router.put('/products/:id', authMiddleware, (req, res) => updateProductController.execute(req, res));
 router.patch('/products/:id/status', authMiddleware, (req, res) => inactivateProductController.execute(req, res));

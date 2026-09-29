@@ -53,6 +53,7 @@ async function request<T>(
   const baseUrl = getApiBaseUrl();
 
   const response = await fetch(`${baseUrl}${path}`, {
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(optionHeaders ?? {}),

@@ -1,5 +1,6 @@
 // backend/src/interfaces/http/middlewares/RateLimitMiddleware.ts
 import { Request, Response, NextFunction } from 'express';
+import { SecurityLogger } from '../../../infrastructure/logging/SecurityLogger';
 
 export interface RateLimitOptions {
   windowMs: number;                          // Duração da janela em ms (ex: 15 * 60 * 1000)
@@ -93,6 +94,7 @@ export function createRateLimiter(options: RateLimitOptions) {
       console.warn(
         `[RateLimitMiddleware]: 🛑 Limite de requisições excedido para o IP ${key}${targetPath ? ` em ${req.method} ${targetPath}` : ''}. Tentativa ${record.count}/${max} bloqueada (HTTP 429). Aguarde ${retryAfterSeconds}s antes de tentar novamente.`
       );
+      SecurityLogger.logRateLimitTriggered(key, targetPath, record.count, max);
 
       res.status(429).json({ error: message });
       return;

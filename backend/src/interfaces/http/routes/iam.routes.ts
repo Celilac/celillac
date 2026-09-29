@@ -29,6 +29,14 @@ import { ResetPasswordController } from '../controllers/iam/ResetPasswordControl
 
 import { authMiddleware } from '../middlewares/AuthMiddleware';
 import { createRateLimiter } from '../middlewares/RateLimitMiddleware';
+import { validateBody } from '../middlewares/ValidationMiddleware';
+import {
+  LoginSchema,
+  RegisterSchema,
+  RequestPasswordResetSchema,
+  ConfirmPasswordResetSchema,
+  VerifyEmailCodeSchema,
+} from '../schemas/AuthSchemas';
 
 const router = Router();
 
@@ -80,11 +88,29 @@ const resendEmailVerificationCodeController = new ResendEmailVerificationCodeCon
 const requestPasswordResetController = new RequestPasswordResetController(requestPasswordResetUseCase);
 const resetPasswordController = new ResetPasswordController(resetPasswordUseCase);
 
-// Middlewares de Limitação de Taxa (Rate Limit) para proteção de endpoints com envio de e-mails
+// Middlewares de Limitação de Taxa (Rate Limit) para proteção de endpoints críticos de autenticação
+const loginRateLimiter = createRateLimiter({
+  windowMs: 5 * 60 * 1000, // 5 minutos
+  max: 10,                 // máximo 10 tentativas por IP a cada 5 minutos
+  message: 'Muitas tentativas de login a partir deste IP. Por favor, aguarde 5 minutos antes de tentar novamente.',
+});
+
+const registerRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5,                   // máximo 5 cadastros por IP a cada 15 minutos
+  message: 'Muitas tentativas de cadastro a partir deste IP. Por favor, aguarde 15 minutos antes de tentar novamente.',
+});
+
 const passwordResetRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 3,                   // máximo 3 tentativas por IP a cada 15 minutos
   message: 'Muitas tentativas de recuperação de senha a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente.',
+});
+
+const confirmPasswordResetRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5,                   // máximo 5 tentativas de validação de OTP a cada 15 minutos
+  message: 'Muitas tentativas incorretas de validação de código OTP. Por favor, aguarde 15 minutos antes de tentar novamente.',
 });
 
 const emailVerificationRateLimiter = createRateLimiter({
@@ -93,19 +119,25 @@ const emailVerificationRateLimiter = createRateLimiter({
   message: 'Muitas tentativas de reenvio de código de verificação a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente.',
 });
 
+const verifyEmailRateLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 5,                   // máximo 5 tentativas de verificação de código por IP a cada 15 minutos
+  message: 'Muitas tentativas incorretas de verificação de código OTP. Por favor, aguarde 15 minutos antes de tentar novamente.',
+});
+
 // Rotas IAM
-router.post('/register', (req, res) => registerUserController.execute(req, res));
-router.post('/login', (req, res) => loginUserController.execute(req, res));
+router.post('/register', registerRateLimiter, validateBody(RegisterSchema), (req, res) => registerUserController.execute(req, res));
+router.post('/login', loginRateLimiter, validateBody(LoginSchema), (req, res) => loginUserController.execute(req, res));
 router.post('/logout', authMiddleware, (req, res) => logoutUserController.execute(req, res));
 router.get('/me', authMiddleware, (req, res) => getUserProfileController.execute(req, res));
 router.put('/profile', authMiddleware, (req, res) => updateUserProfileController.execute(req, res));
 
 // Rotas de Recuperação de Senha via OTP (Públicas)
-router.post('/password-reset/request', passwordResetRateLimiter, (req, res) => requestPasswordResetController.execute(req, res));
-router.post('/password-reset/confirm', (req, res) => resetPasswordController.execute(req, res));
+router.post('/password-reset/request', passwordResetRateLimiter, validateBody(RequestPasswordResetSchema), (req, res) => requestPasswordResetController.execute(req, res));
+router.post('/password-reset/confirm', confirmPasswordResetRateLimiter, validateBody(ConfirmPasswordResetSchema), (req, res) => resetPasswordController.execute(req, res));
 
 // Rotas de Verificação de E-mail via OTP
-router.post('/email-verification/verify', authMiddleware, (req, res) => verifyEmailCodeController.execute(req, res));
+router.post('/email-verification/verify', authMiddleware, verifyEmailRateLimiter, validateBody(VerifyEmailCodeSchema), (req, res) => verifyEmailCodeController.execute(req, res));
 router.post('/email-verification/resend', authMiddleware, emailVerificationRateLimiter, (req, res) => resendEmailVerificationCodeController.execute(req, res));
 
 export { router as iamRouter };

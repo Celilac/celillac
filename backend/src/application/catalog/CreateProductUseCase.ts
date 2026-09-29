@@ -9,6 +9,7 @@ import { InformationOrigin } from '../../domain/catalog/value-objects/Informatio
 import { CertificationVerificationStatus } from '../../domain/catalog/ProductCertification';
 import { Result } from '../../domain/Result';
 import { VerifyPartnerPublicationCapability } from '../../domain/partner/services/VerifyPartnerPublicationCapability';
+import { FileSecurityValidator } from '../../infrastructure/services/FileSecurityValidator';
 
 export interface ProductImageDTO {
   id?:           string;
@@ -120,6 +121,23 @@ export class CreateProductUseCase {
     // Se estiver publicando, ingredientes são obrigatórios
     if (publicationStatus === 'PUBLISHED' && (!dto.ingredients || dto.ingredients.trim().length === 0)) {
       return Result.fail<ProductResponseDTO>('A lista de ingredientes é obrigatória para publicar o produto no catálogo.');
+    }
+
+    // A08: Upload Seguro — Validação de Magic Bytes e sanitização de imagens/rótulos
+    if (dto.imageUrl) {
+      const imgValidation = FileSecurityValidator.validateImagePayload(dto.imageUrl);
+      if (imgValidation.isFailure) {
+        return Result.fail<ProductResponseDTO>(imgValidation.getError());
+      }
+    }
+
+    if (dto.images && dto.images.length > 0) {
+      for (const img of dto.images) {
+        const imgValidation = FileSecurityValidator.validateImagePayload(img.url);
+        if (imgValidation.isFailure) {
+          return Result.fail<ProductResponseDTO>(imgValidation.getError());
+        }
+      }
     }
 
     const productResult = Product.create({

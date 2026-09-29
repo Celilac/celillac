@@ -11,27 +11,44 @@ export interface DecodedToken {
 
 const blacklistRepository = new PgBlacklistTokenRepository(pool);
 
-export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const authHeader = req.headers.authorization;
+export function extractAuthToken(req: Request): { token?: string; error?: string } {
+  // 1. Prioriza Cookie HttpOnly (A02: Roubo de Sessão)
+  if (req.cookies && req.cookies.token) {
+    return { token: req.cookies.token };
+  }
+  if (req.headers.cookie) {
+    const cookies = req.headers.cookie.split(';');
+    for (const c of cookies) {
+      const [name, ...val] = c.trim().split('=');
+      if (name === 'token') {
+        const parsed = decodeURIComponent(val.join('='));
+        if (parsed) return { token: parsed };
+      }
+    }
+  }
 
+  // 2. Fallback transparente para Authorization: Bearer <token>
+  const authHeader = req.headers.authorization;
   if (!authHeader) {
-    res.status(401).json({ error: 'Token de autenticação não fornecido.' });
-    return;
+    return { error: 'Token de autenticação não fornecido.' };
   }
 
   const parts = authHeader.split(' ');
+  if (parts.length !== 2 || !/^Bearer$/i.test(parts[0])) {
+    return { error: 'Token de autenticação malformado.' };
+  }
 
-  if (parts.length !== 2) {
-    res.status(401).json({ error: 'Token de autenticação malformado.' });
+  return { token: parts[1] };
+}
+
+export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const extracted = extractAuthToken(req);
+  if (extracted.error || !extracted.token) {
+    res.status(401).json({ error: extracted.error || 'Token de autenticação não fornecido.' });
     return;
   }
 
-  const [scheme, token] = parts;
-
-  if (!/^Bearer$/i.test(scheme)) {
-    res.status(401).json({ error: 'Token de autenticação malformado.' });
-    return;
-  }
+  const token = extracted.token;
 
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -92,27 +109,13 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 }
 
 export async function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
+  const extracted = extractAuthToken(req);
+  if (extracted.error || !extracted.token) {
     next();
     return;
   }
 
-  const parts = authHeader.split(' ');
-
-  if (parts.length !== 2) {
-    next();
-    return;
-  }
-
-  const [scheme, token] = parts;
-
-  if (!/^Bearer$/i.test(scheme)) {
-    next();
-    return;
-  }
-
+  const token = extracted.token;
   const secret = process.env.JWT_SECRET || 'secret';
 
   try {

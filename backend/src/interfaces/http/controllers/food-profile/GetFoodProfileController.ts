@@ -22,9 +22,17 @@ export class GetFoodProfileController extends BaseController {
       return;
     }
 
-    const result = await this.getProfileUseCase.execute({ userId });
+    const result = await this.getProfileUseCase.execute({
+      userId,
+      actorId: req.user?.id,
+      actorRole: req.user?.role,
+    });
 
     if (result.isFailure) {
+      if (result.getError().includes('Acesso negado')) {
+        this.forbidden(res, result.getError());
+        return;
+      }
       this.badRequest(res, result.getError());
       return;
     }

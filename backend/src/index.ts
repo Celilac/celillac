@@ -12,9 +12,14 @@ import { partnerRouter } from './interfaces/http/routes/partner.routes';
 import { favoriteRouter } from './interfaces/http/routes/favorite.routes';
 import { consumerRouter } from './interfaces/http/routes/consumer.routes';
 import { corsMiddleware, securityHeadersMiddleware } from './interfaces/http/middlewares/SecurityMiddleware';
+import { botBlockerMiddleware } from './interfaces/http/middlewares/BotBlockerMiddleware';
+import { createRateLimiter } from './interfaces/http/middlewares/RateLimitMiddleware';
 
 const app  = express();
 const port = process.env.PORT ?? 3000;
+
+// Oculta header que identifica Express para dificultar fingerprinting
+app.disable('x-powered-by');
 
 // Configuração para proxies reversos (Traefik, Nginx, Cloudflare)
 app.set('trust proxy', 1);
@@ -22,14 +27,37 @@ app.set('trust proxy', 1);
 app.use(corsMiddleware);
 app.use(securityHeadersMiddleware);
 
-// Permite upload de múltiplas imagens/rótulos em base64 com segurança
-app.use(express.json({ limit: '25mb' }));
-app.use(express.urlencoded({ limit: '25mb', extended: true }));
+// Bloqueia crawlers abusivos, web scrapers conhecidos e bots de IA antes de qualquer processamento
+app.use(botBlockerMiddleware);
+
+// Limite rigoroso de payload para prevenir DoS por esgotamento de memória.
+// Permite 25MB apenas em rotas autorizadas de upload de imagens (catálogo e perfil de parceiro), 2MB no restante.
+app.use((req, res, next) => {
+  const isImageUploadRoute =
+    (req.path.startsWith('/catalog/products') || req.path.startsWith('/partner/profile')) &&
+    (req.method === 'POST' || req.method === 'PUT');
+
+  const limit = isImageUploadRoute ? '25mb' : '2mb';
+  express.json({ limit })(req, res, (err) => {
+    if (err) return next(err);
+    express.urlencoded({ limit, extended: true })(req, res, next);
+  });
+});
+
+// Limiter global contra flood / ataques volumétricos L7 (120 req/min por IP)
+const globalApiRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  max: 120,
+  message: 'Taxa máxima de requisições excedida. Por favor, aguarde um minuto.',
+});
 
 // --- Rotas ---
 app.get('/health', (_req, res) => {
   res.json({ status: 'OK', service: 'CeLiLac Backend' });
 });
+
+// Aplica limiter global em todas as rotas da API
+app.use(globalApiRateLimiter);
 
 app.use('/iam',          iamRouter);
 app.use('/consumer',     consumerRouter);

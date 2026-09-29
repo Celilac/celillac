@@ -4,6 +4,7 @@ Histórico de entregas do projeto. Formato: `Data | Feature | Descrição`.
 
 | Data | Feature | Descrição |
 |:-----|:--------|:----------|
+| 2026-09-29 | FEAT-054 | Segurança em Profundidade & Blindagem AppSec (OWASP Top 10): Proteção contra DDoS L7, tráfego de agentes de IA / scrapers e mitigação de vulnerabilidades OWASP. BOLA / IDOR (A01) com verificação de posse do recurso em Use Cases; Roubo de Sessão (A02) via cookies HttpOnly, Secure e SameSite=Lax com fallback Bearer; Injection (A03) com validação estrita de DTOs via Zod; XSS Defense (A05) com Content-Security-Policy (CSP) no Next.js; Upload Seguro (A08) com validação de Magic Bytes (PNG, JPEG, WebP, GIF) e sanitização de SVG; Auditoria (A09) com SecurityLogger estruturado em JSON para SIEM; Traefik com buffering anti-Slowloris e inflight limit; BotBlockerMiddleware (403 para GPTBot, ClaudeBot, Scrapy); Rate Limiters dedicados e payload limits. |
 | 2026-06-29 | FEAT-001 | Módulo IAM completo (22 testes) |
 | 2026-06-30 | FEAT-002 | Perfil Alimentar (`FoodProfile` + `Restriction`) |
 | 2026-06-30 | FEAT-003 | Motor de Alérgenos com 9 casos críticos |
