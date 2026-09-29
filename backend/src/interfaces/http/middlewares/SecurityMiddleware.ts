@@ -10,6 +10,9 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction):
     'https://celilac.com.br',
     'https://www.celilac.com.br',
     'https://api.celilac.com.br',
+    'http://celilac.com.br',
+    'http://www.celilac.com.br',
+    'http://api.celilac.com.br',
   ];
 
   const customOrigins = process.env.ALLOWED_ORIGINS
@@ -20,12 +23,13 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction):
   const origin = req.headers.origin;
 
   if (origin) {
-    const isDomainMatch = origin === 'https://celilac.com.br' || origin.endsWith('.celilac.com.br');
+    const isDomainMatch = /^https?:\/\/(.+\.)?celilac\.com\.br$/.test(origin);
     const isLocalOrIp = origin.includes('localhost') || origin.includes('127.0.0.1') || /^https?:\/\/\d+\.\d+\.\d+\.\d+(:\d+)?$/.test(origin);
     const allowByDefault = !process.env.ALLOWED_ORIGINS && (isDomainMatch || isLocalOrIp);
 
     if (allowedOrigins.includes('*') || allowedOrigins.includes(origin) || isDomainMatch || allowByDefault) {
       res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
     } else {
       res.setHeader('Access-Control-Allow-Origin', allowedOrigins[0]);
     }

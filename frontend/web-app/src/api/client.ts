@@ -21,9 +21,16 @@ function getApiBaseUrl(): string {
 
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    // Se o envUrl não estiver definido ou se for localhost, mas o navegador estiver em um IP/domínio remoto (ex: VPS Oracle 163.176.195.210)
-    if (!envUrl || (envUrl.includes('localhost') && hostname !== 'localhost' && hostname !== '127.0.0.1')) {
-      const protocol = window.location.protocol;
+    const protocol = window.location.protocol;
+
+    // Domínio oficial de produção e subdomínios (ex: celilac.com.br, www.celilac.com.br)
+    if (hostname === 'celilac.com.br' || hostname.endsWith('.celilac.com.br')) {
+      return `${protocol}//api.celilac.com.br`;
+    }
+
+    // Se o envUrl não estiver definido ou se for localhost, mas o navegador estiver em um IP remoto (ex: VPS Oracle 163.176.195.210)
+    const isNumericIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+    if (isNumericIp && (!envUrl || envUrl.includes('localhost'))) {
       return `${protocol}//${hostname}:3002`;
     }
   }
