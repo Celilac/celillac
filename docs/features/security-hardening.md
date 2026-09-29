@@ -1,7 +1,7 @@
 # Segurança e Proteção Anti-DDoS / Anti-Bot (Security Hardening)
 
 **Status:** ✅ Implementado  
-**Entregue em:** 2026-09-29 (FEAT-SECURITY / Hardening 3-Camadas - ver [CHANGELOG.md](../../CHANGELOG.md))  
+**Entregue em:** 2026-09-29 (FEAT-091 / Hardening 3-Camadas - ver [CHANGELOG.md](../../CHANGELOG.md))  
 **Contrato completo:** [`docs/API_CONTRACTS.md`](../API_CONTRACTS.md)  
 **Arquitetura:** [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md)  
 
