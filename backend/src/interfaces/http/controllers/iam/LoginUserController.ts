@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 
 import { BaseController } from '../BaseController';
 import { LoginUserUseCase } from '../../../../application/iam/LoginUserUseCase';
+import { SecurityLogger } from '../../../../infrastructure/logging/SecurityLogger';
 
 /**
  * LoginUserController — Traduz HTTP para o LoginUserUseCase.
@@ -25,11 +26,25 @@ export class LoginUserController extends BaseController {
     const result = await this.loginUserUseCase.execute({ email, password });
 
     if (result.isFailure) {
+      // A09: Auditoria — Registra falha de login de forma estruturada
+      SecurityLogger.logLoginFailed(req.ip || '127.0.0.1', email, req.headers['user-agent'], result.getError());
       // 401 para credenciais inválidas — mensagem genérica intencional
       this.unauthorized(res, result.getError());
       return;
     }
 
-    this.ok(res, result.getValue());
+    const { token, expiresIn } = result.getValue();
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    // A02: Roubo de Sessão — Emite cookie HttpOnly, Secure e SameSite=Lax
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    this.ok(res, { token, expiresIn });
   }
 }
