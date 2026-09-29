@@ -68,7 +68,8 @@ export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
   const [userRole, setUserRole] = useState<'CELIACO' | 'PARCEIRO' | 'ADMIN' | string>('CELIACO');
   const [searchQuery, setSearchQuery] = useState('');
-  const [report, setReport] = useState<ReportWithName | null>(null);
+  const [reports, setReports] = useState<Record<string, ReportWithName>>({});
+  const [checkingProductId, setCheckingProductId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isProfileIncomplete, setIsProfileIncomplete] = useState(false);
   const [isEmailVerified, setIsEmailVerified] = useState(true);
@@ -198,7 +199,7 @@ export default function DashboardPage() {
     }
 
     setLoading(true);
-    setReport(null);
+    setReports({});
     setSearchResults([]);
 
     try {
@@ -212,7 +213,21 @@ export default function DashboardPage() {
 
       setSearchResults(products);
 
-      if (products.length === 1 && userRole === 'CELIACO') {
+      // Preenche imediatamente a compatibilidade de TODOS os produtos calculados pelo backend
+      const initialReports: Record<string, ReportWithName> = {};
+      for (const prod of products) {
+        if (prod.compatibilityReport) {
+          initialReports[prod.id] = {
+            ...prod.compatibilityReport,
+            productName: prod.name,
+            productId: prod.id,
+          };
+        }
+      }
+      setReports(initialReports);
+
+      // Fallback: se porventura o backend não retornou o relatório em lote e for 1 produto
+      if (products.length === 1 && userRole === 'CELIACO' && !initialReports[products[0].id]) {
         await checkProductCompatibility(products[0]);
       }
     } catch (err) {
@@ -225,13 +240,16 @@ export default function DashboardPage() {
 
   const checkProductCompatibility = async (product: ProductSummary) => {
     if (!token || !userId) return;
-    setLoading(true);
+    setCheckingProductId(product.id);
     try {
       const compatibility = await compatibilityApi.check(
         { userId, productId: product.id },
         token,
       );
-      setReport({ ...compatibility, productName: product.name, productId: product.id });
+      setReports((prev) => ({
+        ...prev,
+        [product.id]: { ...compatibility, productName: product.name, productId: product.id },
+      }));
       saveRecentCheck(
         {
           productId: product.id,
@@ -244,7 +262,7 @@ export default function DashboardPage() {
       const message = err instanceof HttpError ? err.message : (err as Error).message ?? 'Erro desconhecido.';
       toast.error(message, 'Erro ao analisar produto');
     } finally {
-      setLoading(false);
+      setCheckingProductId(null);
     }
   };
 
@@ -671,7 +689,8 @@ export default function DashboardPage() {
                     Resultados encontrados ({searchResults.length}):
                   </h3>
                   {searchResults.map((product) => {
-                    const productReport = report?.productId === product.id ? report : null;
+                    const productReport = reports[product.id];
+                    const isCheckingThis = checkingProductId === product.id;
                     return (
                       <div
                         key={product.id}
@@ -721,11 +740,15 @@ export default function DashboardPage() {
                           <button
                             type="button"
                             onClick={() => checkProductCompatibility(product)}
-                            disabled={loading}
+                            disabled={loading || isCheckingThis}
                             className="btn btn-em"
                             style={{ fontSize: 'var(--text-label)', padding: 'var(--space-2) var(--space-4)' }}
                           >
-                            🧪 Checar Compatibilidade
+                            {isCheckingThis
+                              ? '⏳ Analisando…'
+                              : productReport
+                              ? '🔄 Rechecar Compatibilidade'
+                              : '🧪 Checar Compatibilidade'}
                           </button>
 
                           {productReport && (
