@@ -15,10 +15,15 @@ O CeLiLac é uma plataforma de segurança alimentar focada em celíacos e pessoa
 - Nunca reintroduzir os assets placeholder padrão do template Flutter (o ícone azul "F") nem emojis como substituto da logo.
 
 ## Regras Obrigatórias
-1. **Nunca implemente sem um plano:** Antes de qualquer código, crie um `PLAN.md` na tarefa.
-2. **Camadas Isoladas:** Regras de negócio ficam APENAS no `domain`. Controllers não decidem lógica.
-3. **Segurança Alimentar:** Qualquer alteração no `ALLERGEN_ENGINE` exige aprovação humana imediata.
-4. **Testes Primeiro:** Siga a cultura de TDD sempre que possível.
+1. **Planejamento Obrigatório por Ambiente:**
+   - **No Antigravity IDE (Gemini / Code Agent):** O plano de implementação DEVE ser apresentado EXCLUSIVAMENTE como o **Artefato Nativo do IDE** denominado obrigatoriamente **`plano_de_implementacao.md`** com o título `# Plano de Implementação` (`write_to_file` no diretório de artefatos com `RequestFeedback: true` no `ArtifactMetadata`), exibindo o botão "Proceed". É TERMINANTEMENTE PROIBIDO criar múltiplos arquivos de plano (`plan_x.md`, `plan_y.md`) ou arquivos `PLAN.md` no workspace. Para qualquer nova solicitação, o Agente deve SEMPRE atualizar/sobrescrever o mesmo artefato `plano_de_implementacao.md`.
+   - **No Claude Code (CLI via terminal):** Crie o plano como `PLAN.md` local para acompanhamento da tarefa.
+
+2. **Aprovação Humana Prévia Obrigatória (Nenhum código sem autorização):** O Agente está PROIBIDO de iniciar desenvolvimento, alterar arquivos de código, criar componentes ou aplicar correções sem que o usuário tenha explicitamente aprovado o plano (seja clicando em "Proceed" no artefato nativo ou autorizando explicitamente no chat). Após criar o artefato de plano, o Agente DEVE pausar e aguardar a decisão do usuário.
+3. **Camadas Isoladas:** Regras de negócio ficam APENAS no `domain`. Controllers não decidem lógica.
+4. **Segurança Alimentar:** Qualquer alteração no `ALLERGEN_ENGINE` exige aprovação humana imediata.
+5. **Testes Primeiro:** Siga a cultura de TDD sempre que possível.
+
 
 ## Guardrails e Políticas de Segurança (Harness)
 Esta seção define as limitações estritas de operação do Agente, baseadas no princípio do menor privilégio e segurança *by-design*.
@@ -47,8 +52,8 @@ Esta seção define as limitações estritas de operação do Agente, baseadas n
 - **Princípio do Menor Privilégio:** A infraestrutura de um contexto não pode acessar as tabelas de outro diretamente. Funções não devem ter poderes além do seu propósito estrito.
 - **Remoção de Testes:** É expressamente proibido deletar, comentar ou pular testes (`.skip`) para mascarar quebras. Se um teste quebrar, a lógica (ou o teste defasado) deve ser corrigida.
 
-### Ações Autônomas (Exemplos de Tarefas Permitidas)
-O Agente tem autonomia total para prosseguir sem interrupção nestes cenários:
+### Execução de Tarefas Autorizadas (Após Aprovação do Plano)
+SOMENTE após o usuário ter revisado e aprovado o plano da tarefa, o Agente tem autonomia para proceder com os passos acordados nos seguintes cenários:
 - Criar testes unitários para o motor de compatibilidade alimentar (`AllergenEngine.spec.ts`).
 - Criar testes de integração para o cadastro de produtos.
 - Implementar lógicas de validação em Value Objects (ex: `Email`, `Rating`).
@@ -84,19 +89,21 @@ O Agente DEVE adaptar seu comportamento de acordo com o tipo da tarefa solicitad
 ### 1. Workflow para Nova Feature
 1. **Ler** documentação obrigatória (`PRD`, `DOMAIN_MODEL`, `API_CONTRACTS`, `DATABASE`).
 2. **Identificar** o módulo/contexto afetado.
-3. **Criar plano** estruturado.
-4. **Solicitar confirmação humana** se a feature afetar algum domínio crítico (ex: motor de alérgenos).
+3. **Criar ou Atualizar o Plano no Artefato Único (`plano_de_implementacao.md`):** Gerar ou sobrescrever exclusivamente o arquivo `plano_de_implementacao.md` com o título `# Plano de Implementação` e `RequestFeedback: true` no metadata. NUNCA criar múltiplos arquivos de plano nem arquivos `PLAN.md` no workspace.
+4. **PAUSAR e Aguardar Aprovação Humana:** Aguardar o usuário clicar no botão "Proceed" ou autorizar explicitamente no chat antes de editar ou criar arquivos.
 5. **Criar ou atualizar testes** antes ou junto do código (TDD).
 6. **Implementar** em pequenos passos.
 7. **Rodar testes** e linter (`npm test`, `npm run build`).
 8. **Gerar relatório final** atualizando `walkthrough.md`.
 
 ### 2. Workflow para Correção de Bug
-1. **Reproduzir** o problema (analisar logs ou código existente).
-2. **Criar teste que falha** para garantir que o bug foi isolado.
-3. **Corrigir** a menor parte possível para não causar regressões.
-4. **Rodar testes** em toda a suíte para validar a correção.
-5. **Explicar** de forma concisa a causa e a correção no relatório de entrega.
+1. **Reproduzir e Diagnosticar** o problema (analisar logs ou código existente).
+2. **Apresentar Diagnóstico e Atualizar o Plano Único (`plano_de_implementacao.md`):** Atualizar o artefato único `plano_de_implementacao.md` com `RequestFeedback: true`. NUNCA criar novos arquivos de plano separados.
+3. **PAUSAR e Aguardar Aprovação Humana:** Somente aplicar as alterações após autorização expressa do usuário.
+4. **Criar teste que falha** para garantir que o bug foi isolado.
+5. **Corrigir** a menor parte possível para não causar regressões.
+6. **Rodar testes** em toda a suíte para validar a correção.
+7. **Explicar** de forma concisa a causa e a correção no relatório de entrega.
 
 ### 3. Workflow para Alteração de Regra de Negócio
 1. **Ler** `docs/ALLERGEN_ENGINE.md` e `docs/DOMAIN_MODEL.md`.

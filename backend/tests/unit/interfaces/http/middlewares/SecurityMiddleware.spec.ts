@@ -21,15 +21,28 @@ describe('SecurityMiddleware', () => {
   });
 
   describe('corsMiddleware', () => {
-    it('deve configurar headers de CORS e chamar next() em rotas normais', () => {
+    it('deve configurar headers de CORS, credenciais e chamar next() em rotas normais', () => {
       mockRequest.headers = { origin: 'http://localhost:3001' };
 
       corsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
       expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'http://localhost:3001');
+      expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true');
       expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
       expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Headers', 'Content-Type, Authorization');
       expect(nextFunction).toHaveBeenCalled();
+    });
+
+    it('deve autorizar e enviar credenciais para domínios oficiais celilac.com.br tanto em HTTP quanto HTTPS', () => {
+      mockRequest.headers = { origin: 'http://celilac.com.br' };
+      corsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+      expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'http://celilac.com.br');
+      expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true');
+
+      mockRequest.headers = { origin: 'https://api.celilac.com.br' };
+      corsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+      expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'https://api.celilac.com.br');
+      expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true');
     });
 
     it('deve retornar status 200 para requisicoes OPTIONS (Preflight) sem chamar next()', () => {
@@ -38,6 +51,7 @@ describe('SecurityMiddleware', () => {
 
       corsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
+      expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Credentials', 'true');
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(200);
       expect(nextFunction).not.toHaveBeenCalled();
     });

@@ -97,7 +97,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: 'var(--color-text-muted)' }}
+            className={styles.modalCloseBtn}
+            aria-label="Fechar"
           >
             ✕
           </button>
@@ -216,7 +217,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               </label>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.5rem' }}>
+            <div className={styles.modalActions}>
               <button
                 type="button"
                 onClick={onClose}
