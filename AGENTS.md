@@ -16,7 +16,7 @@ O CeLiLac é uma plataforma de segurança alimentar focada em celíacos e pessoa
 
 ## Regras Obrigatórias
 1. **Planejamento Obrigatório por Ambiente:**
-   - **No Antigravity IDE (Gemini / Code Agent):** O plano de implementação DEVE ser apresentado EXCLUSIVAMENTE como um **Artefato Nativo do IDE** (`write_to_file` no diretório de artefatos com `RequestFeedback: true` no `ArtifactMetadata`), exibindo o botão "Proceed". É TERMINANTEMENTE PROIBIDO criar arquivos `PLAN.md` no workspace.
+   - **No Antigravity IDE (Gemini / Code Agent):** O plano de implementação DEVE ser apresentado EXCLUSIVAMENTE como o **Artefato Nativo do IDE** denominado obrigatoriamente **`plano_de_implementacao.md`** com o título `# Plano de Implementação` (`write_to_file` no diretório de artefatos com `RequestFeedback: true` no `ArtifactMetadata`), exibindo o botão "Proceed". É TERMINANTEMENTE PROIBIDO criar múltiplos arquivos de plano (`plan_x.md`, `plan_y.md`) ou arquivos `PLAN.md` no workspace. Para qualquer nova solicitação, o Agente deve SEMPRE atualizar/sobrescrever o mesmo artefato `plano_de_implementacao.md`.
    - **No Claude Code (CLI via terminal):** Crie o plano como `PLAN.md` local para acompanhamento da tarefa.
 
 2. **Aprovação Humana Prévia Obrigatória (Nenhum código sem autorização):** O Agente está PROIBIDO de iniciar desenvolvimento, alterar arquivos de código, criar componentes ou aplicar correções sem que o usuário tenha explicitamente aprovado o plano (seja clicando em "Proceed" no artefato nativo ou autorizando explicitamente no chat). Após criar o artefato de plano, o Agente DEVE pausar e aguardar a decisão do usuário.
@@ -89,7 +89,7 @@ O Agente DEVE adaptar seu comportamento de acordo com o tipo da tarefa solicitad
 ### 1. Workflow para Nova Feature
 1. **Ler** documentação obrigatória (`PRD`, `DOMAIN_MODEL`, `API_CONTRACTS`, `DATABASE`).
 2. **Identificar** o módulo/contexto afetado.
-3. **Criar Plano como Artefato Nativo:** Gerar o plano no diretório de artefatos com `RequestFeedback: true` no metadata. NUNCA criar arquivo `PLAN.md` no workspace.
+3. **Criar ou Atualizar o Plano no Artefato Único (`plano_de_implementacao.md`):** Gerar ou sobrescrever exclusivamente o arquivo `plano_de_implementacao.md` com o título `# Plano de Implementação` e `RequestFeedback: true` no metadata. NUNCA criar múltiplos arquivos de plano nem arquivos `PLAN.md` no workspace.
 4. **PAUSAR e Aguardar Aprovação Humana:** Aguardar o usuário clicar no botão "Proceed" ou autorizar explicitamente no chat antes de editar ou criar arquivos.
 5. **Criar ou atualizar testes** antes ou junto do código (TDD).
 6. **Implementar** em pequenos passos.
@@ -98,7 +98,7 @@ O Agente DEVE adaptar seu comportamento de acordo com o tipo da tarefa solicitad
 
 ### 2. Workflow para Correção de Bug
 1. **Reproduzir e Diagnosticar** o problema (analisar logs ou código existente).
-2. **Apresentar Diagnóstico e Plano via Artefato Nativo:** Gerar no diretório de artefatos com `RequestFeedback: true`. NUNCA criar `PLAN.md` no workspace.
+2. **Apresentar Diagnóstico e Atualizar o Plano Único (`plano_de_implementacao.md`):** Atualizar o artefato único `plano_de_implementacao.md` com `RequestFeedback: true`. NUNCA criar novos arquivos de plano separados.
 3. **PAUSAR e Aguardar Aprovação Humana:** Somente aplicar as alterações após autorização expressa do usuário.
 4. **Criar teste que falha** para garantir que o bug foi isolado.
 5. **Corrigir** a menor parte possível para não causar regressões.
