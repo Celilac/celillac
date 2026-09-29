@@ -158,7 +158,12 @@
    RESET
 ═══════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; height: 100%; }
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
 body {
   font-family: var(--font-sans);
   background: var(--color-bg);
@@ -166,6 +171,8 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  overflow-x: hidden;
+  max-width: 100vw;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 a { color: inherit; text-decoration: none; }
@@ -181,6 +188,7 @@ input, select, textarea { font-family: inherit; }
   margin: 0 auto;
   padding: var(--space-8) var(--space-6);
   width: 100%;
+  box-sizing: border-box;
 }
 
 /* ═══════════════════════════════════════
@@ -669,6 +677,17 @@ input, select, textarea { font-family: inherit; }
   gap: var(--space-4);
   margin-bottom: var(--space-6);
 }
+.profile-header-text {
+  flex: 1;
+  min-width: 0;
+}
+.profile-header-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 .profile-status-badge {
   display: inline-flex;
   align-items: center;
@@ -828,11 +847,55 @@ input, select, textarea { font-family: inherit; }
 
 @media (max-width: 639px) {
   .profile-container { padding: var(--space-4); }
-  .profile-header { flex-direction: column; align-items: flex-start; }
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-3);
+  }
+  .profile-header-text {
+    width: 100%;
+    text-align: center;
+  }
+  .profile-header-text .page-title {
+    text-align: center;
+  }
+  .profile-header-text .page-subtitle {
+    text-align: center;
+    margin: 0.5rem auto 0 auto;
+    max-width: 540px;
+  }
+  .profile-header-badges {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
   .profile-fields-grid { grid-template-columns: 1fr; }
   .profile-field-full { grid-column: span 1; }
   .profile-actions-bar { justify-content: stretch; }
   .save-profile-button { width: 100%; justify-content: center; }
+  .avatar-row {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--space-4);
+    gap: var(--space-3);
+  }
+  .avatar-actions {
+    width: 100%;
+    justify-content: center;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+  .avatar-upload-btn,
+  .avatar-remove-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ═══════════════════════════════════════
@@ -844,51 +907,86 @@ input, select, textarea { font-family: inherit; }
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: var(--space-4);
 }
 
-/* Profile allergen select — allergen + severity + type selects, plus remove button */
-.allergen-list { display: flex; flex-direction: column; gap: var(--space-3); }
-.allergen-row {
-  display: grid;
-  grid-template-columns: minmax(150px, 1.2fr) minmax(130px, 1fr) minmax(130px, 1fr) auto;
-  gap: var(--space-2);
+/* Profile allergen cardlet */
+.allergen-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.allergen-cardlet {
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 12px);
+  padding: 14px 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.allergen-cardlet:hover {
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.allergen-cardlet-header {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
 }
-.allergen-row .field-input {
-  min-width: 0;
-  font-size: 0.85rem;
-  padding-left: 0.6rem;
-  padding-right: 1.6rem;
-  text-overflow: ellipsis;
+
+.allergen-cardlet-index {
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.03em;
 }
-@media (max-width: 900px) {
-  .allergen-row {
-    grid-template-columns: 1fr 1fr;
-  }
-  .allergen-row .remove-btn {
-    grid-column: span 2;
-    width: 100%;
-  }
+
+.allergen-cardlet-body {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 12px;
 }
-@media (max-width: 639px) {
-  .allergen-row {
+
+@media (max-width: 768px) {
+  .allergen-cardlet-body {
     grid-template-columns: 1fr;
-  }
-  .allergen-row .remove-btn {
-    grid-column: span 1;
-    width: 100%;
+    gap: 10px;
   }
 }
+
 .remove-btn {
-  display: flex; align-items: center; justify-content: center;
-  width: 36px; height: 36px;
-  background: var(--color-blocked-bg); border: 1px solid var(--color-blocked-border);
-  border-radius: var(--radius-md); color: var(--color-blocked);
-  font-size: 1rem; transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-full);
+  color: #ef4444;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
-.remove-btn:hover { background: rgba(239,68,68,0.25); }
+.remove-btn:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  transform: translateY(-1px);
+}
+.remove-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* ═══════════════════════════════════════
    ANIMAÇÕES

@@ -578,8 +578,8 @@ export default function ProfilePage() {
       <Header />
 
       <main className="page-container profile-container">
-        <div className="profile-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: '24px' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="profile-header">
+          <div className="profile-header-text">
             <h1 className="page-title">Meu Perfil</h1>
             <p className="page-subtitle">
               {userRole === 'PARCEIRO'
@@ -589,7 +589,7 @@ export default function ProfilePage() {
                 : 'Mantenha seus dados pessoais e restrições alimentares atualizados.'}
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, whiteSpace: 'nowrap' }}>
+          <div className="profile-header-badges">
             <span style={{
               background: userRole === 'PARCEIRO' ? 'rgba(99, 102, 241, 0.15)' : userRole === 'ADMIN' ? 'rgba(234, 179, 8, 0.15)' : 'rgba(16, 185, 129, 0.15)',
               color: userRole === 'PARCEIRO' ? '#818cf8' : userRole === 'ADMIN' ? '#facc15' : '#34d399',
@@ -946,50 +946,71 @@ export default function ProfilePage() {
 
               <div className="allergen-list">
                 {rows.map((row, idx) => (
-                  <div key={idx} className="allergen-row">
-                    <select
-                      id={`allergen-select-${idx}`}
-                      className="field-input field-select"
-                      value={row.allergen}
-                      onChange={(e) => updateRow(idx, 'allergen', e.target.value)}
-                    >
-                      {ALLERGEN_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
+                  <div key={idx} className="allergen-cardlet">
+                    <div className="allergen-cardlet-header">
+                      <span className="allergen-cardlet-index">
+                        ⚠️ Restrição #{idx + 1}
+                      </span>
+                      {rows.length > 1 && (
+                        <button
+                          type="button"
+                          className="remove-btn"
+                          id={`remove-allergen-${idx}`}
+                          onClick={() => removeRow(idx)}
+                          aria-label={`Remover ${row.allergen}`}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
+                          <span>Remover</span>
+                        </button>
+                      )}
+                    </div>
 
-                    <select
-                      id={`severity-select-${idx}`}
-                      className="field-input field-select"
-                      value={row.severity}
-                      onChange={(e) => updateRow(idx, 'severity', e.target.value)}
-                    >
-                      {SEVERITY_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
+                    <div className="allergen-cardlet-body">
+                      <div className="field">
+                        <label className="field-label" htmlFor={`allergen-select-${idx}`}>Alérgeno</label>
+                        <select
+                          id={`allergen-select-${idx}`}
+                          className="field-input field-select"
+                          value={row.allergen}
+                          onChange={(e) => updateRow(idx, 'allergen', e.target.value)}
+                        >
+                          {ALLERGEN_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                    <select
-                      id={`type-select-${idx}`}
-                      className="field-input field-select"
-                      value={row.type || 'ALLERGY'}
-                      onChange={(e) => updateRow(idx, 'type', e.target.value)}
-                    >
-                      {RESTRICTION_TYPE_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
+                      <div className="field">
+                        <label className="field-label" htmlFor={`severity-select-${idx}`}>Severidade</label>
+                        <select
+                          id={`severity-select-${idx}`}
+                          className="field-input field-select"
+                          value={row.severity}
+                          onChange={(e) => updateRow(idx, 'severity', e.target.value)}
+                        >
+                          {SEVERITY_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
+                      </div>
 
-                    <button
-                      type="button"
-                      className="remove-btn"
-                      id={`remove-allergen-${idx}`}
-                      onClick={() => removeRow(idx)}
-                      aria-label={`Remover ${row.allergen}`}
-                      disabled={rows.length === 1}
-                    >
-                      ×
-                    </button>
+                      <div className="field">
+                        <label className="field-label" htmlFor={`type-select-${idx}`}>Tipo de Condição</label>
+                        <select
+                          id={`type-select-${idx}`}
+                          className="field-input field-select"
+                          value={row.type || 'ALLERGY'}
+                          onChange={(e) => updateRow(idx, 'type', e.target.value)}
+                        >
+                          {RESTRICTION_TYPE_OPTIONS.map((o) => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
