@@ -96,7 +96,8 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: 'var(--color-text-muted)' }}
+            className={styles.modalCloseBtn}
+            aria-label="Fechar"
           >
             ✕
           </button>
@@ -192,7 +193,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.5rem' }}>
+          <div className={styles.modalActions}>
             <button
               type="button"
               onClick={onClose}

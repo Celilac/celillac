@@ -141,9 +141,9 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
           <section className={styles.mainPanel}>
             {/* Detalhes do parceiro com variáveis adaptativas de tema */}
             <div className={styles.card} style={{ gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 className={styles.sectionTitle}>ℹ️ Sobre o Estabelecimento</h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div className={styles.partnerSectionHeader}>
+                <h2 className={styles.sectionTitle} style={{ margin: 0 }}>ℹ️ Sobre o Estabelecimento</h2>
+                <div className={styles.partnerHeaderActions}>
                   <FavoriteButton partnerId={partner.id} />
                   <button
                     type="button"
@@ -160,6 +160,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                       backgroundColor: 'rgba(239, 68, 68, 0.1)',
                       color: '#ef4444',
                       cursor: 'pointer',
+                      whiteSpace: 'nowrap',
                     }}
                   >
                     🚩 Denunciar Estabelecimento
@@ -171,7 +172,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                 {partner.description || 'Este parceiro ainda não forneceu uma descrição detalhada.'}
               </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+              <div className={styles.partnerInfoGrid}>
                 <div>
                   <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>📍 Endereço:</strong> {partner.address}</p>
                   <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🌆 Cidade:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não informada'}</p>
@@ -183,7 +184,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                       href={`https://wa.me/${partner.phone?.replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{ color: 'var(--color-accent, #2563EB)', textDecoration: 'none', fontWeight: 500 }}
+                      className={styles.phoneLink}
                       title="Clique para abrir no WhatsApp"
                     >
                       {formatDisplayPhone(partner.phone)}
@@ -222,7 +223,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                   <p>Volte em breve para verificar novos lançamentos de produtos seguros.</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className={styles.partnerProductsGrid}>
                   {products.map((product) => (
                     <div key={product.id} className={styles.card} style={{ padding: '1.25rem', gap: '0.5rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
