@@ -125,6 +125,12 @@ export default function PartnerListPage() {
                   <Link href={`/partner/${partner.id}`} className={`${styles.btn} ${styles.btnPrimary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
                     Gerenciar
                   </Link>
+                  <Link href={`/partner/orders?partnerId=${partner.id}`} className={`${styles.btn} ${styles.btnSecondary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
+                    🍳 Pedidos
+                  </Link>
+                  <Link href={`/partner/financial?partnerId=${partner.id}`} className={`${styles.btn} ${styles.btnSecondary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
+                    💰 Financeiro
+                  </Link>
                   <Link href={`/partner/${partner.id}/edit`} className={`${styles.btn} ${styles.btnSecondary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
                     Editar Dados
                   </Link>

@@ -91,6 +91,12 @@ export function Header() {
           )}
 
           {mounted && isAuthenticated && (
+            <Link href="/orders" className={navLinkClass('/orders')} onClick={() => setMenuOpen(false)}>
+              📦 Meus Pedidos
+            </Link>
+          )}
+
+          {mounted && isAuthenticated && (
             <Link href="/favorites" className={navLinkClass('/favorites')} onClick={() => setMenuOpen(false)}>
               ❤️ Favoritos
             </Link>

@@ -6,7 +6,7 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-77%20suites%20%7C%20474%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-82%20suites%20%7C%20512%20passing-brightgreen)](#-testes)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20%2B%20Oracle%20Cloud-orange)](#-segurança--governança)
 
 ---
@@ -42,9 +42,9 @@ celillac/
 │   ├── src/
 │   │   ├── domain/          # Coração: entidades, VOs, interfaces (zero dependências)
 │   │   ├── application/     # Casos de uso
-│   │   ├── infrastructure/  # PostgreSQL (pg), repositórios
+│   │   ├── infrastructure/  # PostgreSQL (pg), gateways (Asaas), repositórios
 │   │   └── interfaces/      # Controllers HTTP (Express)
-│   └── tests/unit/          # 65 suítes | 394 testes
+│   └── tests/unit/          # 82 suítes | 512 testes
 ├── frontend/
 │   ├── web-app/             # Aplicação principal (Next.js 14, porta 3001)
 │   ├── landing-page/        # Landing page estática (Next.js 14, porta 3002)
@@ -119,6 +119,8 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 🛒 Catálogo de Produtos | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
 | 🏷️ Categorias de Produtos & Moderação | ✅ Implementado | [`docs/features/categories.md`](docs/features/categories.md) |
 | 🏪 Gestão de Parceiros Comerciais | ✅ Implementado | [`docs/features/partner.md`](docs/features/partner.md) |
+| 📦 Pedidos & Trava Biológica | ✅ Implementado | [`docs/features/orders.md`](docs/features/orders.md) |
+| 💳 Pagamentos, Asaas & Split Marketplace | ✅ Implementado | [`docs/features/payments.md`](docs/features/payments.md) |
 | 🌐 Frontend (Web App + Landing Page) | ✅ Implementado | [`docs/features/frontend.md`](docs/features/frontend.md) |
 | 🛡️ Administração & Moderação | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
 | ⭐ Avaliações e Confiança | ✅ Implementado | [`docs/features/reviews.md`](docs/features/reviews.md) |
@@ -136,7 +138,7 @@ cd backend
 npm test
 ```
 
-**77 suítes de teste | 474 casos**, cobrindo domínio, casos de uso, controllers, middlewares de segurança e o Motor de Alérgenos:
+**82 suítes de teste | 512 casos**, cobrindo domínio, casos de uso, controllers, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
@@ -147,12 +149,16 @@ npm test
 | `domain/allergen-engine/AllergenEngine` ← 9 casos críticos | ~98% |
 | `domain/catalog/Product`, `Category` | ~98.5% |
 | `domain/partner/Partner` | ~97.8% |
+| `domain/order/Order`, `OrderItem`, `OrderStatus` | 100% |
+| `domain/payment/Payment`, `PartnerFinancialAccount`, `PaymentRefund` | 100% |
 | `domain/reviews/Review` | 95% |
 | `domain/audit/AuditLog`, `PgAuditLogRepository` | 100% |
 | `application/food-profile/UpdateFoodProfileUseCase` | 100% |
 | `application/consumer/ToggleConsumerStatusUseCase` | ~95.8% |
 | `application/allergen-engine/CheckCompatibilityUseCase` | 100% |
 | `application/catalog/CreateProductUseCase`, `CreateCategoryUseCase`, `SearchProductsUseCase` | 100% |
+| `application/order/CreateOrderUseCase`, `OrderUseCases` (Cancel, Get, List, UpdateStatus) | 100% |
+| `application/payment/PaymentUseCases` (Checkout, Subaccount, Webhook, Refund) | 100% |
 | `application/reviews/SubmitReviewUseCase`, `GetProductReviewsUseCase` | ~94% |
 | `application/admin/CreateReportUseCase`, `ListReportsUseCase`, `ReviewReportUseCase`, `ReviewCategoryUseCase` | ~94% |
 | `application/iam/LogoutUserUseCase`, `RequestPasswordResetUseCase`, `ResetPasswordUseCase` | ~96% |
