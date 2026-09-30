@@ -113,7 +113,29 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
             )}
             <div className={styles.titleArea}>
               <h1 className={styles.title}>{partner.name}</h1>
-              <p className={styles.subtitle}>Perfil comercial homologado pelo CeLiLac</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <p className={styles.subtitle} style={{ margin: 0 }}>Perfil comercial homologado pelo CeLiLac</p>
+                <a
+                  href="#avaliacoes"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: 'var(--color-emerald, #059669)',
+                    textDecoration: 'none',
+                    padding: '0.2rem 0.65rem',
+                    background: 'rgba(16, 185, 129, 0.08)',
+                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    borderRadius: '999px',
+                    transition: 'all 0.15s ease',
+                  }}
+                  title="Ver avaliações da comunidade"
+                >
+                  💬 Ver avaliações ↓
+                </a>
+              </div>
             </div>
           </div>
           <button 
@@ -207,13 +229,8 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* Avaliações do Parceiro */}
-            <div className={styles.card} style={{ marginTop: '1rem', padding: '1.5rem' }}>
-              <ReviewsList partnerId={partner.id} targetName={partner.name} />
-            </div>
-
-            {/* Listagem de produtos */}
-            <div style={{ marginTop: '1rem' }}>
+            {/* Listagem de produtos ofertados */}
+            <div style={{ marginTop: '1.25rem' }}>
               <h2 className={styles.sectionTitle} style={{ marginBottom: '1rem' }}>📦 Produtos Ofertados ({products.length})</h2>
               
               {products.length === 0 ? (
@@ -322,6 +339,11 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                   Este parceiro comercial declarou conformidade e responsabilidade no manejo de alimentos para celíacos.
                 </p>
               </div>
+            </div>
+
+            {/* Avaliações da Comunidade na Coluna Lateral */}
+            <div id="avaliacoes" className={styles.card} style={{ padding: '1.5rem', scrollMarginTop: '2rem' }}>
+              <ReviewsList partnerId={partner.id} targetName={partner.name} />
             </div>
           </aside>
         </div>
