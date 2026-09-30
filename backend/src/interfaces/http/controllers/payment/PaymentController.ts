@@ -5,13 +5,19 @@ import { CheckoutOrderUseCase } from '../../../../application/payment/CheckoutOr
 import { SetupPartnerFinancialAccountUseCase } from '../../../../application/payment/SetupPartnerFinancialAccountUseCase';
 import { IPaymentRepository } from '../../../../domain/payment/repositories/IPaymentRepository';
 import { IPartnerFinancialAccountRepository } from '../../../../domain/payment/repositories/IPartnerFinancialAccountRepository';
+import { IOrderRepository } from '../../../../domain/order/repositories/IOrderRepository';
+import { IPartnerRepository } from '../../../../domain/partner/repositories/IPartnerRepository';
+import { SecurityLogger } from '../../../../infrastructure/logging/SecurityLogger';
+import { getClientIp } from '../../middlewares/RateLimitMiddleware';
 
 export class PaymentController extends BaseController {
   constructor(
     private readonly checkoutOrderUseCase: CheckoutOrderUseCase,
     private readonly setupFinancialAccountUseCase: SetupPartnerFinancialAccountUseCase,
     private readonly paymentRepository: IPaymentRepository,
-    private readonly financialAccountRepository: IPartnerFinancialAccountRepository
+    private readonly financialAccountRepository: IPartnerFinancialAccountRepository,
+    private readonly orderRepository: IOrderRepository,
+    private readonly partnerRepository: IPartnerRepository
   ) {
     super();
   }
@@ -53,6 +59,35 @@ export class PaymentController extends BaseController {
       const payment = await this.paymentRepository.findByOrderId(orderId);
       if (!payment) {
         return this.notFound(res, 'Nenhum pagamento gerado para este pedido.');
+      }
+
+      // Validação de Autorização BOLA/IDOR
+      const order = await this.orderRepository.findById(orderId);
+      if (!order) {
+        return this.notFound(res, 'Pedido associado não encontrado.');
+      }
+
+      const isConsumerOwner = order.consumerId === user.id;
+      const isAdmin = user.role === 'ADMIN';
+      let isPartnerOwner = false;
+
+      if (!isConsumerOwner && !isAdmin) {
+        const partner = await this.partnerRepository.findById(order.partnerId);
+        if (partner && partner.userId === user.id) {
+          isPartnerOwner = true;
+        }
+      }
+
+      if (!isConsumerOwner && !isAdmin && !isPartnerOwner) {
+        const ip = getClientIp(req);
+        SecurityLogger.logBolaViolation(
+          ip,
+          user.id,
+          'OrderPayment',
+          orderId,
+          `/payments/order/${orderId}`
+        );
+        return this.forbidden(res, 'Você não tem permissão para visualizar os detalhes deste pagamento.');
       }
 
       return this.ok(res, payment.toJSON());
@@ -99,6 +134,28 @@ export class PaymentController extends BaseController {
       if (!user) return this.unauthorized(res, 'Não autenticado.');
 
       const { partnerId } = req.params;
+
+      // Validação de Autorização BOLA/IDOR
+      const partner = await this.partnerRepository.findById(partnerId);
+      if (!partner) {
+        return this.notFound(res, 'Estabelecimento parceiro não encontrado.');
+      }
+
+      const isAdmin = user.role === 'ADMIN';
+      const isPartnerOwner = partner.userId === user.id;
+
+      if (!isAdmin && !isPartnerOwner) {
+        const ip = getClientIp(req);
+        SecurityLogger.logBolaViolation(
+          ip,
+          user.id,
+          'PartnerFinancialAccount',
+          partnerId,
+          `/payments/partner/${partnerId}/financial-account`
+        );
+        return this.forbidden(res, 'Acesso negado. Apenas o responsável pelo estabelecimento ou administradores podem visualizar dados financeiros.');
+      }
+
       const account = await this.financialAccountRepository.findByPartnerId(partnerId);
       if (!account) {
         return this.notFound(res, 'Conta financeira ainda não configurada para este parceiro.');
