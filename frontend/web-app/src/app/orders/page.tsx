@@ -115,13 +115,18 @@ export default function MyOrdersPage() {
         </div>
 
         {orders.length === 0 ? (
-          <div className={styles.orderCard} style={{ textAlign: 'center', padding: '3rem 1.5rem' }}>
-            <p style={{ color: '#94a3b8', marginBottom: '1.5rem', fontSize: '1.1rem' }}>
+          <div className={`${styles.orderCard} ${styles.emptyState}`}>
+            <p className={styles.emptyText}>
               Você ainda não realizou nenhum pedido no CeLiLac.
             </p>
             <Link href="/public-partners" className={styles.payActionBtn}>
               Explorar Restaurantes Seguros
             </Link>
+            <div style={{ marginTop: '1.5rem', padding: '0.75rem 1rem', background: 'var(--color-bg)', borderRadius: '8px', border: '1px dashed var(--color-border)', maxWidth: '440px' }}>
+              <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', margin: 0, lineHeight: 1.4 }}>
+                💡 <strong>Dica para testes locais:</strong> Faça login com a conta <strong style={{ color: 'var(--color-primary, #059669)' }}>celiaco.classico@seed.celilac.dev</strong> (senha: <code>Seed@123456</code>) para visualizar os pedidos previamente semeados.
+              </p>
+            </div>
           </div>
         ) : (
           <div className={styles.orderList}>

@@ -144,85 +144,92 @@ export default function PartnerOrdersPage() {
           </div>
         </div>
 
-        {/* Abas de Produção */}
-        <div className={styles.tabsBar}>
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === 'NEW' ? styles.tabBtnActive : ''}`}
-            onClick={() => setActiveTab('NEW')}
-          >
-            Novos Pedidos
-            <span className={styles.badgeCount}>
-              {orders.filter((o) => o.status === 'PAID' || o.status === 'AWAITING_PAYMENT').length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === 'PREPARING' ? styles.tabBtnActive : ''}`}
-            onClick={() => setActiveTab('PREPARING')}
-          >
-            Em Preparo
-            <span className={styles.badgeCount}>
-              {orders.filter((o) => o.status === 'CONFIRMED' || o.status === 'PREPARING').length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === 'READY' ? styles.tabBtnActive : ''}`}
-            onClick={() => setActiveTab('READY')}
-          >
-            Prontos / Despachados
-            <span className={styles.badgeCount}>
-              {orders.filter((o) => o.status === 'READY_FOR_PICKUP' || o.status === 'OUT_FOR_DELIVERY').length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === 'COMPLETED' ? styles.tabBtnActive : ''}`}
-            onClick={() => setActiveTab('COMPLETED')}
-          >
-            Histórico / Entregues
-            <span className={styles.badgeCount}>
-              {orders.filter((o) => o.status === 'DELIVERED' || o.status === 'CANCELLED').length}
-            </span>
-          </button>
-        </div>
-
-        {/* Lista de Pedidos da Aba Ativa */}
-        {filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '4rem 1rem', color: '#94a3b8' }}>
-            Nenhum pedido nesta etapa no momento.
+        {partners.length === 0 ? (
+          <div className={styles.emptyCard}>
+            <p className={styles.emptyTitle}>Nenhum restaurante parceiro vinculado a esta conta.</p>
+            <p className={styles.emptyText}>
+              Para visualizar a cozinha e despachar pedidos, faça login com a conta parceira de teste:
+            </p>
+            <div className={styles.credentialBox}>
+              <p><strong>E-mail:</strong> parceiro.restaurante@seed.celilac.dev</p>
+              <p><strong>Senha:</strong> Seed@123456</p>
+            </div>
+            <p className={styles.emptyText} style={{ marginTop: '1rem', fontSize: '0.85rem' }}>
+              Se você é um cliente celíaco fazendo pedidos, acesse <Link href="/orders" style={{ color: 'var(--color-primary, #059669)', textDecoration: 'underline' }}>Meus Pedidos</Link>.
+            </p>
           </div>
         ) : (
-          <div className={styles.ordersGrid}>
-            {filtered.map((order) => (
-              <div key={order.id} className={styles.orderCard}>
-                <div className={styles.cardTop}>
-                  <div>
-                    <div className={styles.orderId}>#{order.id.slice(0, 8)}</div>
-                    <div className={styles.orderTime}>
-                      {new Date(order.createdAt).toLocaleTimeString('pt-BR', {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+          <>
+            {/* Abas de Produção */}
+            <div className={styles.tabsBar}>
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === 'NEW' ? styles.tabBtnActive : ''}`}
+                onClick={() => setActiveTab('NEW')}
+              >
+                Novos Pedidos
+                <span className={styles.badgeCount}>
+                  {orders.filter((o) => o.status === 'PAID' || o.status === 'AWAITING_PAYMENT').length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === 'PREPARING' ? styles.tabBtnActive : ''}`}
+                onClick={() => setActiveTab('PREPARING')}
+              >
+                Em Preparo
+                <span className={styles.badgeCount}>
+                  {orders.filter((o) => o.status === 'CONFIRMED' || o.status === 'PREPARING').length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === 'READY' ? styles.tabBtnActive : ''}`}
+                onClick={() => setActiveTab('READY')}
+              >
+                Prontos / Despachados
+                <span className={styles.badgeCount}>
+                  {orders.filter((o) => o.status === 'READY_FOR_PICKUP' || o.status === 'OUT_FOR_DELIVERY').length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.tabBtn} ${activeTab === 'COMPLETED' ? styles.tabBtnActive : ''}`}
+                onClick={() => setActiveTab('COMPLETED')}
+              >
+                Histórico / Entregues
+                <span className={styles.badgeCount}>
+                  {orders.filter((o) => o.status === 'DELIVERED' || o.status === 'CANCELLED').length}
+                </span>
+              </button>
+            </div>
+
+            {/* Lista de Pedidos da Aba Ativa */}
+            {filtered.length === 0 ? (
+              <div className={styles.emptyTabMsg}>
+                Nenhum pedido nesta etapa no momento.
+              </div>
+            ) : (
+              <div className={styles.ordersGrid}>
+                {filtered.map((order) => (
+                  <div key={order.id} className={styles.orderCard}>
+                    <div className={styles.cardTop}>
+                      <div>
+                        <div className={styles.orderId}>#{order.id.slice(0, 8)}</div>
+                        <div className={styles.orderTime}>
+                          {new Date(order.createdAt).toLocaleTimeString('pt-BR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      </div>
+                      <span className={styles.statusBadge}>
+                        {order.status}
+                      </span>
                     </div>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '4px',
-                      background: 'rgba(255,255,255,0.08)',
-                      color: '#cbd5e1',
-                    }}
-                  >
-                    {order.status}
-                  </span>
-                </div>
 
                 <div className={styles.itemsBox}>
                   {order.items.map((it) => (
@@ -304,6 +311,8 @@ export default function PartnerOrdersPage() {
             ))}
           </div>
         )}
+        </>
+      )}
       </main>
     </div>
   );

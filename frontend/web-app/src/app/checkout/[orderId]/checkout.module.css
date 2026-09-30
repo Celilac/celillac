@@ -22,13 +22,13 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #fff;
+  color: var(--color-text, #f1f5f9);
   margin-bottom: 0.5rem;
 }
 
 .pageSubtitle {
   font-size: 0.95rem;
-  color: #94a3b8;
+  color: var(--color-text-muted, #94a3b8);
 }
 
 .grid {
@@ -48,7 +48,7 @@
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 1.75rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .cardTitle {
@@ -58,6 +58,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  color: var(--color-text, #f1f5f9);
 }
 
 .safetyBadge {
@@ -104,18 +105,18 @@
 
 .itemName {
   font-weight: 500;
-  color: #f1f5f9;
+  color: var(--color-text, #f1f5f9);
 }
 
 .itemQuantity {
   font-size: 0.85rem;
-  color: #94a3b8;
+  color: var(--color-text-muted, #94a3b8);
   margin-left: 0.5rem;
 }
 
 .itemPrice {
   font-weight: 600;
-  color: #cbd5e1;
+  color: var(--color-text, #cbd5e1);
 }
 
 .costBreakdown {
@@ -128,7 +129,7 @@
   display: flex;
   justify-content: space-between;
   font-size: 0.95rem;
-  color: #94a3b8;
+  color: var(--color-text-muted, #94a3b8);
   margin-bottom: 0.5rem;
 }
 
@@ -137,7 +138,7 @@
   justify-content: space-between;
   font-size: 1.25rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text, #f1f5f9);
   margin-top: 1rem;
   padding-top: 0.75rem;
   border-top: 1px solid var(--color-border);
@@ -157,9 +158,9 @@
   flex: 1;
   padding: 1rem;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 2px solid transparent;
-  color: #94a3b8;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  color: var(--color-text-muted, #94a3b8);
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -170,13 +171,14 @@
 }
 
 .methodBtn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
 }
 
 .methodBtnSelected {
   border-color: var(--color-emerald);
   background: var(--color-emerald-dim);
-  color: #fff;
+  color: var(--color-emerald);
 }
 
 .payButton {
@@ -220,7 +222,7 @@
   background: #fff;
   padding: 1rem;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   margin-bottom: 1.25rem;
 }
 
@@ -247,13 +249,17 @@
 .pixCodeInput {
   flex: 1;
   padding: 0.75rem;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--input-bg, var(--color-surface));
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  color: #cbd5e1;
+  color: var(--color-text, #cbd5e1);
   font-family: monospace;
   font-size: 0.8rem;
   outline: none;
+}
+
+.pixCodeInput:focus {
+  border-color: var(--color-emerald);
 }
 
 .copyBtn {
@@ -292,7 +298,7 @@
 }
 
 .paidText {
-  color: #94a3b8;
+  color: var(--color-text-muted, #94a3b8);
   margin-bottom: 2rem;
 }
 

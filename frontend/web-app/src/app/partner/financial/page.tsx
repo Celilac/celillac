@@ -162,22 +162,34 @@ function PartnerFinancialPageContent() {
 
             <Link
               href={`/partner/orders?partnerId=${selectedPartnerId}`}
-              style={{
-                padding: '0.6rem 1rem',
-                background: 'rgba(255, 255, 255, 0.08)',
-                color: '#fff',
-                borderRadius: '8px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                fontSize: '0.9rem',
-              }}
+              className={styles.ordersLink}
             >
               🍳 Ir para Pedidos
             </Link>
           </div>
         </div>
 
-        {/* Métricas Financeiras — Modelo iFood */}
+        {partners.length === 0 ? (
+          <div className={styles.card} style={{ textAlign: 'center', padding: '3.5rem 1.5rem', marginTop: '1rem' }}>
+            <p style={{ color: 'var(--color-text)', marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 700 }}>
+              Nenhum estabelecimento comercial vinculado a esta conta
+            </p>
+            <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem', fontSize: '1rem', maxWidth: '600px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
+              O Painel Financeiro e Repasses é exclusivo para estabelecimentos parceiros. Se você deseja testar este painel com a subconta e pedidos semeados, faça login com a conta do parceiro:
+            </p>
+            <div style={{ background: 'var(--color-elevated)', padding: '1.25rem 1.5rem', borderRadius: '12px', display: 'inline-block', marginBottom: '2rem', textAlign: 'left', border: '1px solid var(--color-border)' }}>
+              <div style={{ color: 'var(--color-text)', fontSize: '0.95rem' }}><strong>E-mail:</strong> parceiro.restaurante@seed.celilac.dev</div>
+              <div style={{ color: 'var(--color-text)', fontSize: '0.95rem', marginTop: '0.4rem' }}><strong>Senha:</strong> Seed@123456</div>
+            </div>
+            <div>
+              <Link href="/partner/register" className={styles.saveButton} style={{ display: 'inline-block', width: 'auto', padding: '0.85rem 2rem', textDecoration: 'none' }}>
+                Cadastrar Novo Estabelecimento
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Métricas Financeiras — Modelo iFood */}
         <div className={styles.metricsGrid}>
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>
@@ -356,6 +368,8 @@ function PartnerFinancialPageContent() {
             )}
           </div>
         </div>
+          </>
+        )}
       </main>
     </div>
   );

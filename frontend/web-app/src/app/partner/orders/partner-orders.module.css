@@ -3,7 +3,7 @@
 .container {
   min-height: 100vh;
   background-color: var(--color-bg);
-  color: #f1f5f9;
+  color: var(--color-text, #f1f5f9);
 }
 
 .mainContent {
@@ -27,7 +27,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #fff;
+  color: var(--color-text, #f1f5f9);
 }
 
 .selectPartnerWrapper {
@@ -43,11 +43,16 @@
 .partnerSelect {
   background: transparent;
   border: none;
-  color: #fff;
+  color: var(--color-text, #f1f5f9);
   font-weight: 600;
   outline: none;
   font-size: 0.95rem;
   cursor: pointer;
+}
+
+.partnerSelect option {
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .tabsBar {
@@ -64,7 +69,7 @@
   background: transparent;
   border: none;
   border-radius: 8px;
-  color: #94a3b8;
+  color: var(--color-text-muted, #94a3b8);
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -72,8 +77,8 @@
 }
 
 .tabBtn:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+  background: var(--color-border);
 }
 
 .tabBtnActive {
@@ -85,7 +90,8 @@
   display: inline-block;
   margin-left: 0.5rem;
   padding: 0.15rem 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-border);
+  color: var(--color-text);
   border-radius: 999px;
   font-size: 0.75rem;
 }
@@ -104,7 +110,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
 }
 
 .cardTop {
@@ -117,12 +123,12 @@
 .orderId {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text, #f1f5f9);
 }
 
 .orderTime {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--color-text-muted, #94a3b8);
 }
 
 .itemsBox {
@@ -131,7 +137,7 @@
   border-bottom: 1px solid var(--color-border);
   padding: 0.75rem 0;
   font-size: 0.9rem;
-  color: #cbd5e1;
+  color: var(--color-text, #cbd5e1);
 }
 
 .itemLine {
@@ -142,8 +148,9 @@
 
 .orderNotes {
   font-size: 0.85rem;
-  color: #fbbf24;
-  background: rgba(251, 191, 36, 0.1);
+  color: #b45309;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.3);
   padding: 0.5rem;
   border-radius: 6px;
   margin-bottom: 1rem;
@@ -161,7 +168,7 @@
   align-items: center;
   font-size: 1.1rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--color-text, #f1f5f9);
 }
 
 .actionButton {
@@ -196,4 +203,57 @@
 .actionDeliver {
   background: #10b981;
   color: #064e3b;
+}
+
+.statusBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  background: var(--color-border);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.emptyCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  max-width: 600px;
+  margin: 2rem auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.emptyTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 0.75rem;
+}
+
+.emptyText {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.credentialBox {
+  margin-top: 1.25rem;
+  background: var(--input-bg, var(--color-surface));
+  border: 1px dashed var(--color-primary, #059669);
+  border-radius: 8px;
+  padding: 1rem;
+  display: inline-block;
+  text-align: left;
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.emptyTabMsg {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--color-text-muted);
+  font-size: 1rem;
 }

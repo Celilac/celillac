@@ -3,7 +3,7 @@
 .container {
   min-height: 100vh;
   background-color: var(--color-bg);
-  color: #f1f5f9;
+  color: var(--color-text, #f1f5f9);
 }
 
 .mainContent {
@@ -27,7 +27,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #fff;
+  color: var(--color-text, #f1f5f9);
 }
 
 .selectPartnerWrapper {
@@ -43,11 +43,36 @@
 .partnerSelect {
   background: transparent;
   border: none;
-  color: #fff;
+  color: var(--color-text, #f1f5f9);
   font-weight: 600;
   outline: none;
   font-size: 0.95rem;
   cursor: pointer;
+}
+
+.partnerSelect option {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.ordersLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: all 0.15s ease;
+}
+
+.ordersLink:hover {
+  border-color: var(--color-border-hover);
+  background: var(--color-elevated);
 }
 
 .metricsGrid {
@@ -62,26 +87,27 @@
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .metricLabel {
   font-size: 0.9rem;
-  color: #94a3b8;
+  color: var(--color-text-muted, #94a3b8);
   margin-bottom: 0.5rem;
   display: flex;
   justify-content: space-between;
+  font-weight: 600;
 }
 
 .metricValue {
   font-size: 2rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--color-text, #f1f5f9);
 }
 
 .metricSubtitle {
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--color-text-subtle, #64748b);
   margin-top: 0.5rem;
 }
 
@@ -102,14 +128,14 @@
   border: 1px solid var(--color-border);
   border-radius: 16px;
   padding: 1.75rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .cardTitle {
   font-size: 1.25rem;
   font-weight: 700;
   margin-bottom: 1.25rem;
-  color: #fff;
+  color: var(--color-text, #f1f5f9);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -122,7 +148,7 @@
 .label {
   display: block;
   font-size: 0.85rem;
-  color: #cbd5e1;
+  color: var(--color-text, #1c2b33);
   margin-bottom: 0.4rem;
   font-weight: 600;
 }
@@ -131,18 +157,29 @@
 .select {
   width: 100%;
   padding: 0.75rem;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--input-bg, var(--color-surface));
   border: 1px solid var(--color-border);
   border-radius: 8px;
-  color: #fff;
+  color: var(--color-text, #1c2b33);
   font-size: 0.95rem;
+  font-family: inherit;
   outline: none;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input::placeholder {
+  color: var(--color-text-subtle, #94a3b8);
 }
 
 .input:focus,
 .select:focus {
   border-color: var(--color-emerald);
+  box-shadow: 0 0 0 2px var(--color-emerald-dim);
+}
+
+.select option {
+  background: var(--color-surface);
+  color: var(--color-text);
 }
 
 .saveButton {
@@ -191,7 +228,7 @@
 .table th {
   text-align: left;
   padding: 0.75rem;
-  color: #94a3b8;
+  color: var(--color-text-muted, #94a3b8);
   border-bottom: 1px solid var(--color-border);
   font-weight: 600;
 }
@@ -199,7 +236,7 @@
 .table td {
   padding: 0.85rem 0.75rem;
   border-bottom: 1px solid var(--color-border);
-  color: #cbd5e1;
+  color: var(--color-text, #1c2b33);
 }
 
 .table tr:last-child td {
