@@ -489,6 +489,7 @@ function CheckoutPageContent() {
                         onChange={handleExpiryChange}
                         className={styles.input}
                         maxLength={5}
+                        autoComplete="cc-exp"
                         required
                       />
                     </div>
@@ -501,6 +502,7 @@ function CheckoutPageContent() {
                         onChange={handleCvvChange}
                         className={styles.input}
                         maxLength={4}
+                        autoComplete="cc-csc"
                         required
                       />
                     </div>
@@ -533,7 +535,7 @@ function CheckoutPageContent() {
 
                   <button
                     type="submit"
-                    className={styles.payButton}
+                    className={styles.payCardSubmitButton}
                     disabled={processing}
                   >
                     {processing ? 'Processando…' : `🔒 Pagar R$ ${order.totalAmount.toFixed(2).replace('.', ',')} com Cartão`}

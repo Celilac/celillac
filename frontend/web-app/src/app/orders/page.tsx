@@ -141,7 +141,7 @@ export default function MyOrdersPage() {
                   <div className={styles.cardHeader}>
                     <div>
                       <div className={styles.orderId}>
-                        Pedido #{order.id.slice(0, 8)}
+                        Pedido #{order.id.slice(-6).toUpperCase()}
                       </div>
                       <div className={styles.orderDate}>
                         {new Date(order.createdAt).toLocaleDateString('pt-BR', {
@@ -164,7 +164,7 @@ export default function MyOrdersPage() {
                     ))}
                   </div>
 
-                  {order.cancelReason && (
+                  {order.status === 'CANCELLED' && order.cancelReason && (
                     <p style={{ fontSize: '0.85rem', color: 'var(--color-blocked)', margin: '0.5rem 0' }}>
                       <strong>Motivo do cancelamento:</strong> {order.cancelReason}
                     </p>
@@ -217,7 +217,7 @@ export default function MyOrdersPage() {
           <div className={styles.modalContent}>
             <h2 className={styles.modalTitle}>Cancelar Pedido</h2>
             <p className={styles.modalText}>
-              Tem certeza de que deseja cancelar o pedido #{cancellingOrder.id.slice(0, 8)}?
+              Tem certeza de que deseja cancelar o pedido #{cancellingOrder.id.slice(-6).toUpperCase()}?
             </p>
 
             {cancellingOrder.status === 'PAID' && (

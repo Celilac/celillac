@@ -113,38 +113,35 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
             )}
             <div className={styles.titleArea}>
               <h1 className={styles.title}>{partner.name}</h1>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <p className={styles.subtitle} style={{ margin: 0 }}>Perfil comercial homologado pelo CeLiLac</p>
-                <a
-                  href="#avaliacoes"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    color: 'var(--color-emerald, #059669)',
-                    textDecoration: 'none',
-                    padding: '0.2rem 0.65rem',
-                    background: 'rgba(16, 185, 129, 0.08)',
-                    border: '1px solid rgba(16, 185, 129, 0.25)',
-                    borderRadius: '999px',
-                    transition: 'all 0.15s ease',
-                  }}
-                  title="Ver avaliações da comunidade"
-                >
-                  💬 Ver avaliações ↓
-                </a>
-              </div>
+              <p className={styles.subtitle}>Perfil comercial homologado pelo CeLiLac</p>
             </div>
           </div>
-          <button 
-            type="button" 
-            className={`${styles.btn} ${styles.btnSecondary}`}
-            onClick={() => router.push('/public-partners')}
-          >
-            ⬅️ Voltar ao Guia
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <a
+              href="#avaliacoes"
+              className={`${styles.btn} ${styles.btnSecondary}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                textDecoration: 'none',
+                color: 'var(--color-emerald, #10B981)',
+                borderColor: 'rgba(16, 185, 129, 0.35)',
+                background: 'rgba(16, 185, 129, 0.08)',
+                fontWeight: 600,
+              }}
+              title="Ver avaliações da comunidade"
+            >
+              💬 Ver avaliações ↓
+            </a>
+            <button 
+              type="button" 
+              className={`${styles.btn} ${styles.btnSecondary}`}
+              onClick={() => router.push('/public-partners')}
+            >
+              ⬅️ Voltar ao Guia
+            </button>
+          </div>
         </div>
 
         {partner.operationalStatus === 'TEMPORARILY_CLOSED' && (

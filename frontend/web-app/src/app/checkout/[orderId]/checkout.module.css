@@ -375,18 +375,76 @@
 .input {
   width: 100%;
   padding: 0.85rem 1rem;
-  background: var(--input-bg, var(--color-surface));
+  background: var(--color-surface, #101c23);
   border: 1px solid var(--color-border);
   border-radius: 10px;
-  color: var(--color-text);
+  color: var(--color-text, #f1f5f9);
   font-size: 0.95rem;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  color-scheme: dark;
 }
 
 .input:focus {
-  border-color: var(--color-emerald);
-  box-shadow: 0 0 0 2px var(--color-emerald-dim);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+/* Chrome/Safari/Edge autofill override para evitar fundo branco em tema escuro */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover, 
+.input:-webkit-autofill:focus,
+.input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #101c23 inset !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  caret-color: #f1f5f9 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+:global(html[data-theme='light']) .input {
+  background: #ffffff !important;
+  border-color: #cbd5e1;
+  color: #0f172a !important;
+  color-scheme: light;
+}
+
+:global(html[data-theme='light']) .input:-webkit-autofill,
+:global(html[data-theme='light']) .input:-webkit-autofill:hover,
+:global(html[data-theme='light']) .input:-webkit-autofill:focus,
+:global(html[data-theme='light']) .input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
+}
+
+.payCardSubmitButton {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.payCardSubmitButton:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5);
+}
+
+.payCardSubmitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .cardInputWrapper .input {

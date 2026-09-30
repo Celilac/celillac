@@ -804,7 +804,11 @@ async function seedOrdersAndPayments(emailToId: Map<string, string>): Promise<vo
   await pool.query(
     `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
     [order1Id, celiacoId, partnerId, 'AWAITING_PAYMENT', 59.80, 0.00, 59.80, 'SAFE', 'Favor embalar separadamente para evitar contato.']
   );
   await pool.query(
@@ -837,11 +841,15 @@ async function seedOrdersAndPayments(emailToId: Map<string, string>): Promise<vo
   console.log(`  📦 [AWAITING_PAYMENT] Pedido Checkout PIX: ${order1Id} (Total: R$ 59,80)`);
 
   // 2. Pedido 2: Pago e em preparo na cozinha (PREPARING)
-  const order2Id = 'd0000001-0000-0000-0000-000000000002';
+  const order2Id = 'd0000002-0000-0000-0000-000000000002';
   await pool.query(
     `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
     [order2Id, celiacoId, partnerId, 'PREPARING', 35.00, 0.00, 35.00, 'SAFE', 'Para viagem imediata.']
   );
   await pool.query(
@@ -872,11 +880,15 @@ async function seedOrdersAndPayments(emailToId: Map<string, string>): Promise<vo
   console.log(`  🍳 [PREPARING] Pedido em Cozinha do Parceiro: ${order2Id} (Total: R$ 35,00)`);
 
   // 3. Pedido 3: Concluído e Entregue (DELIVERED)
-  const order3Id = 'd0000001-0000-0000-0000-000000000003';
+  const order3Id = 'd0000003-0000-0000-0000-000000000003';
   await pool.query(
     `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
     [order3Id, celiacoId, partnerId, 'DELIVERED', 94.80, 0.00, 94.80, 'SAFE', 'Entregar na portaria.']
   );
   await pool.query(
