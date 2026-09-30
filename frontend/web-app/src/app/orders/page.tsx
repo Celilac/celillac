@@ -177,12 +177,20 @@ export default function MyOrdersPage() {
 
                     <div className={styles.actionsGroup}>
                       {order.status === 'AWAITING_PAYMENT' && (
-                        <Link
-                          href={`/checkout/${order.id}`}
-                          className={styles.payActionBtn}
-                        >
-                          Pagar com PIX
-                        </Link>
+                        <>
+                          <Link
+                            href={`/checkout/${order.id}?method=PIX`}
+                            className={styles.payActionBtn}
+                          >
+                            ⚡ Pagar com PIX
+                          </Link>
+                          <Link
+                            href={`/checkout/${order.id}?method=CREDIT_CARD`}
+                            className={styles.payCardActionBtn}
+                          >
+                            💳 Pagar com Cartão
+                          </Link>
+                        </>
                       )}
 
                       {canCancel && (

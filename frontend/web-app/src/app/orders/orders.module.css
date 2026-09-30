@@ -157,26 +157,54 @@
 
 .actionsGroup {
   display: flex;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
 }
 
 .payActionBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.6rem 1.2rem;
+  gap: 0.35rem;
+  padding: 0.6rem 1.1rem;
   background: var(--color-emerald);
   color: #064e3b;
   font-weight: 700;
   border-radius: 8px;
   text-decoration: none;
-  font-size: 0.9rem;
-  transition: background 0.15s ease;
+  font-size: 0.88rem;
+  transition: background 0.15s ease, transform 0.15s ease;
   border: none;
+  white-space: nowrap;
 }
 
 .payActionBtn:hover {
   background: var(--color-emerald-hover);
+  transform: translateY(-1px);
+}
+
+.payCardActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.6rem 1.1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  font-weight: 700;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.payCardActionBtn:hover {
+  background: var(--color-border);
+  border-color: var(--color-border-hover);
+  transform: translateY(-1px);
 }
 
 .cancelActionBtn {

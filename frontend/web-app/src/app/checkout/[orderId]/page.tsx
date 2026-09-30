@@ -1,7 +1,7 @@
 'use client';
 // frontend/web-app/src/app/checkout/[orderId]/page.tsx
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
@@ -10,8 +10,10 @@ import { ordersApi, OrderDTO } from '@/api/orders';
 import { paymentsApi, PaymentDetailsDTO } from '@/api/payments';
 import styles from './checkout.module.css';
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const { orderId } = useParams() as { orderId: string };
+  const searchParams = useSearchParams();
+  const initialMethod = searchParams.get('method') === 'CREDIT_CARD' ? 'CREDIT_CARD' : 'PIX';
   const { token, isAuthenticated, isInitializing } = useAuth();
   const router = useRouter();
   const toast = useToast();
@@ -20,9 +22,18 @@ export default function CheckoutPage() {
   const [payment, setPayment] = useState<PaymentDetailsDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<'PIX' | 'CREDIT_CARD'>('PIX');
+  const [selectedMethod, setSelectedMethod] = useState<'PIX' | 'CREDIT_CARD'>(initialMethod);
   const [copied, setCopied] = useState(false);
   const [qrLoadFailed, setQrLoadFailed] = useState(false);
+
+  useEffect(() => {
+    const methodParam = searchParams.get('method');
+    if (methodParam === 'CREDIT_CARD') {
+      setSelectedMethod('CREDIT_CARD');
+    } else if (methodParam === 'PIX') {
+      setSelectedMethod('PIX');
+    }
+  }, [searchParams]);
 
   // Estados do Cartão
   const [cardType, setCardType] = useState<'CREDIT' | 'DEBIT'>('CREDIT');
@@ -538,5 +549,13 @@ export default function CheckoutPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<p className="profile-loading">Carregando checkout do pedido…</p>}>
+      <CheckoutPageContent />
+    </Suspense>
   );
 }
