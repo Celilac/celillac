@@ -52,6 +52,7 @@
 14. [Pedidos (Orders)](#14-pedidos-orders)
    - [POST /orders](#post-orders)
    - [GET /orders/me](#get-ordersme)
+   - [GET /orders/stream](#get-ordersstream)
    - [GET /orders/:id](#get-ordersid)
    - [GET /orders/partner/:partnerId](#get-orderspartnerpartnerid)
    - [POST /orders/:id/cancel](#post-ordersidcancel)
@@ -1862,6 +1863,59 @@ Promove o status do pedido no fluxo de preparação e entrega do parceiro.
     "updatedAt": "2026-09-30T10:20:00.000Z"
   }
 }
+```
+
+---
+
+### `GET /orders/stream` 🔒 *(Server-Sent Events — SSE)*
+Canal HTTP persistente e unidirecional para recebimento de notificações em tempo real. Notifica o parceiro comercial instantaneamente quando o webhook Asaas confirmar o pagamento de um pedido (`order:payment_confirmed`) ou quando houver transição de status (`order:status_updated`).
+
+**Autenticação:**
+- Suporta cabeçalho `Authorization: Bearer <token>`, cookie HttpOnly `token` ou query param `?token=<jwt>` (para navegadores com `EventSource` nativo).
+- Parâmetro opcional: `?partnerId=uuid-do-parceiro` (valida se o usuário autenticado é proprietário ou admin).
+
+**Headers da Resposta:**
+- `Content-Type: text/event-stream`
+- `Cache-Control: no-cache, no-transform`
+- `Connection: keep-alive`
+- `X-Accel-Buffering: no`
+
+**Eventos Emitidos:**
+1. Handshake inicial:
+```http
+event: connected
+data: {"clientId":"sse_user123_...","partnerId":"uuid-do-parceiro","timestamp":"2026-09-30T14:00:00.000Z"}
+```
+
+2. Pagamento Confirmado (`order:payment_confirmed`):
+```http
+event: order:payment_confirmed
+data: {
+  "orderId": "uuid-do-pedido",
+  "partnerId": "uuid-do-parceiro",
+  "consumerId": "uuid-do-consumidor",
+  "totalAmount": 59.80,
+  "status": "PAID",
+  "confirmedAt": "2026-09-30T14:00:00.000Z"
+}
+```
+
+3. Atualização de Ciclo de Vida (`order:status_updated`):
+```http
+event: order:status_updated
+data: {
+  "orderId": "uuid-do-pedido",
+  "partnerId": "uuid-do-parceiro",
+  "consumerId": "uuid-do-consumidor",
+  "totalAmount": 59.80,
+  "status": "PREPARING",
+  "confirmedAt": "2026-09-30T14:10:00.000Z"
+}
+```
+
+4. Heartbeat (a cada 25s):
+```http
+: keep-alive
 ```
 
 ---

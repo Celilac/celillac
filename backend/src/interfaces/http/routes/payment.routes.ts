@@ -12,6 +12,7 @@ import { AsaasPaymentGateway } from '../../../infrastructure/gateways/AsaasPayme
 import { CheckoutOrderUseCase } from '../../../application/payment/CheckoutOrderUseCase';
 import { SetupPartnerFinancialAccountUseCase } from '../../../application/payment/SetupPartnerFinancialAccountUseCase';
 import { HandleAsaasWebhookUseCase } from '../../../application/payment/HandleAsaasWebhookUseCase';
+import { sseOrderNotificationHub } from '../../../infrastructure/notifications/SseOrderNotificationHub';
 
 import { PaymentController } from '../controllers/payment/PaymentController';
 import { WebhookController } from '../controllers/payment/WebhookController';
@@ -54,7 +55,8 @@ const setupFinancialAccountUseCase = new SetupPartnerFinancialAccountUseCase(
 const handleAsaasWebhookUseCase = new HandleAsaasWebhookUseCase(
   paymentRepository,
   orderRepository,
-  auditLogRepository
+  auditLogRepository,
+  sseOrderNotificationHub
 );
 
 const paymentController = new PaymentController(

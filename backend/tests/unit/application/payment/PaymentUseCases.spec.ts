@@ -320,6 +320,59 @@ describe('Payment Application Use Cases Unit Tests', () => {
       expect(orderRepository.save).toHaveBeenCalledWith(order);
     });
 
+    it('deve disparar notifyPaymentConfirmed em tempo real no serviço de notificação ao confirmar pagamento', async () => {
+      const order = createTestOrder();
+      order.markAwaitingPayment();
+
+      const payment = Payment.create({
+        orderId: order.id,
+        consumerId,
+        partnerId,
+        method: PaymentMethod.PIX,
+        subtotalAmount: 50.0,
+        gatewayTransactionId: 'pay_asaas_101',
+      }).getValue();
+
+      paymentRepository.findByGatewayTransactionId.mockResolvedValue(payment);
+      orderRepository.findById.mockResolvedValue(order);
+
+      const mockNotificationService = {
+        notifyPaymentConfirmed: jest.fn(),
+        notifyOrderStatusChanged: jest.fn(),
+      };
+
+      const webhookUseCase = new HandleAsaasWebhookUseCase(
+        paymentRepository,
+        orderRepository,
+        undefined,
+        mockNotificationService
+      );
+
+      const result = await webhookUseCase.execute({
+        event: 'PAYMENT_RECEIVED',
+        payment: {
+          id: 'pay_asaas_101',
+          value: 60.0,
+          status: 'RECEIVED',
+          billingType: 'PIX',
+          confirmedDate: '2026-09-30T14:30:00.000Z',
+        },
+      });
+
+      expect(result.isSuccess).toBe(true);
+      expect(mockNotificationService.notifyPaymentConfirmed).toHaveBeenCalledTimes(1);
+      expect(mockNotificationService.notifyPaymentConfirmed).toHaveBeenCalledWith(
+        partnerId,
+        expect.objectContaining({
+          orderId: order.id,
+          partnerId,
+          consumerId,
+          status: OrderStatus.PAID,
+          confirmedAt: '2026-09-30T14:30:00.000Z',
+        })
+      );
+    });
+
     it('deve atualizar para REFUNDED ao receber evento PAYMENT_REFUNDED', async () => {
       const order = createTestOrder();
       order.markAsPaid();

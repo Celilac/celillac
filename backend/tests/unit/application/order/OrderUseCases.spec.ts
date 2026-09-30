@@ -242,6 +242,51 @@ describe('Order Lifecycle Use Cases (Cancel, Queries, Status Transitions)', () =
       expect(result.isFailure).toBe(true);
       expect(result.getError()).toContain('Acesso negado');
     });
+
+    it('deve disparar notifyOrderStatusChanged ao atualizar o status do pedido', async () => {
+      const order = createTestOrder();
+      order.markAsPaid();
+      orderRepository.findById.mockResolvedValue(order);
+      partnerRepository.findById.mockResolvedValue({
+        id: partnerId,
+        userId: partnerUserId,
+      } as any);
+
+      const mockNotificationService = {
+        notifyPaymentConfirmed: jest.fn(),
+        notifyOrderStatusChanged: jest.fn(),
+      };
+
+      const updateUseCase = new UpdateOrderStatusUseCase(
+        orderRepository,
+        partnerRepository,
+        mockNotificationService
+      );
+
+      const result = await updateUseCase.execute({
+        orderId: order.id,
+        userId: partnerUserId,
+        userRole: 'PARCEIRO',
+        action: 'CONFIRM',
+      });
+
+      expect(result.isSuccess).toBe(true);
+      expect(mockNotificationService.notifyOrderStatusChanged).toHaveBeenCalledTimes(2);
+      expect(mockNotificationService.notifyOrderStatusChanged).toHaveBeenCalledWith(
+        order.consumerId,
+        expect.objectContaining({
+          orderId: order.id,
+          status: 'CONFIRMED',
+        })
+      );
+      expect(mockNotificationService.notifyOrderStatusChanged).toHaveBeenCalledWith(
+        order.partnerId,
+        expect.objectContaining({
+          orderId: order.id,
+          status: 'CONFIRMED',
+        })
+      );
+    });
   });
 
   describe('Queries (GetOrder, ListConsumerOrders, ListPartnerOrders)', () => {

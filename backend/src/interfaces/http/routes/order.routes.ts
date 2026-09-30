@@ -18,6 +18,7 @@ import { GetOrderUseCase } from '../../../application/order/GetOrderUseCase';
 import { ListConsumerOrdersUseCase } from '../../../application/order/ListConsumerOrdersUseCase';
 import { ListPartnerOrdersUseCase } from '../../../application/order/ListPartnerOrdersUseCase';
 import { UpdateOrderStatusUseCase } from '../../../application/order/UpdateOrderStatusUseCase';
+import { sseOrderNotificationHub } from '../../../infrastructure/notifications/SseOrderNotificationHub';
 
 import { OrderController } from '../controllers/order/OrderController';
 import { authMiddleware } from '../middlewares/AuthMiddleware';
@@ -56,7 +57,11 @@ const cancelOrderUseCase = new CancelOrderUseCase(
 const getOrderUseCase = new GetOrderUseCase(orderRepository, partnerRepository);
 const listConsumerOrdersUseCase = new ListConsumerOrdersUseCase(orderRepository);
 const listPartnerOrdersUseCase = new ListPartnerOrdersUseCase(orderRepository, partnerRepository);
-const updateOrderStatusUseCase = new UpdateOrderStatusUseCase(orderRepository, partnerRepository);
+const updateOrderStatusUseCase = new UpdateOrderStatusUseCase(
+  orderRepository,
+  partnerRepository,
+  sseOrderNotificationHub
+);
 
 const orderController = new OrderController(
   createOrderUseCase,
@@ -70,6 +75,55 @@ const orderController = new OrderController(
 // Rotas de Pedidos (Orders)
 router.post('/', authMiddleware, (req, res) => orderController.createOrder(req, res));
 router.get('/me', authMiddleware, (req, res) => orderController.listMyOrders(req, res));
+
+// Rota de Notificações em Tempo Real (Server-Sent Events — SSE)
+router.get('/stream', authMiddleware, async (req, res) => {
+  const user = (req as any).user;
+  if (!user || !user.id) {
+    res.status(401).json({ error: 'Usuário não autenticado.' });
+    return;
+  }
+
+  // Identificar estabelecimentos do parceiro associados ao usuário
+  const userPartners = await partnerRepository.findAllByUserId(user.id);
+  const userPartnerIds = userPartners.map((p) => p.id);
+
+  // Se o parceiro especificou um partnerId na query, valida que pertence a ele (ou admin)
+  const requestedPartnerId = typeof req.query.partnerId === 'string' ? req.query.partnerId : undefined;
+  if (requestedPartnerId && user.role !== 'ADMIN' && !userPartnerIds.includes(requestedPartnerId)) {
+    res.status(403).json({ error: 'Acesso negado ao canal deste parceiro comercial.' });
+    return;
+  }
+
+  const targetPartnerId = requestedPartnerId || (userPartnerIds.length > 0 ? userPartnerIds[0] : undefined);
+
+  // Cabeçalhos HTTP obrigatórios para Server-Sent Events
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  res.flushHeaders?.();
+
+  const clientId = `sse_${user.id}_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  sseOrderNotificationHub.addClient({
+    id: clientId,
+    userId: user.id,
+    partnerId: targetPartnerId,
+    partnerIds: userPartnerIds,
+    userRole: user.role,
+    res,
+  });
+
+  // Mensagem inicial de conexão
+  res.write(`event: connected\ndata: ${JSON.stringify({ clientId, partnerId: targetPartnerId, timestamp: new Date().toISOString() })}\n\n`);
+
+  req.on('close', () => {
+    sseOrderNotificationHub.removeClient(clientId);
+  });
+});
+
 router.get('/:id', authMiddleware, (req, res) => orderController.getOrder(req, res));
 router.get('/partner/:partnerId', authMiddleware, (req, res) => orderController.listPartnerOrders(req, res));
 router.post('/:id/cancel', authMiddleware, (req, res) => orderController.cancelOrder(req, res));

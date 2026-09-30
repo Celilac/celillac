@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { ordersApi, OrderDTO } from '@/api/orders';
+import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import styles from './partner-orders.module.css';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -33,6 +34,34 @@ export default function PartnerOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'NEW' | 'PREPARING' | 'READY' | 'COMPLETED'>('NEW');
 
+  // Carregar pedidos do estabelecimento selecionado
+  const fetchPartnerOrders = useCallback(async () => {
+    if (!token || !selectedPartnerId) return;
+    try {
+      const data = await ordersApi.getPartnerOrders(selectedPartnerId, token);
+      setOrders(data);
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao carregar pedidos.', 'Erro');
+    }
+  }, [selectedPartnerId, token, toast]);
+
+  // Conexão SSE em tempo real para novos pedidos pagos e mudanças de status
+  const { isConnected } = useOrderNotifications({
+    partnerId: selectedPartnerId,
+    token,
+    enabled: Boolean(token && selectedPartnerId),
+    onPaymentConfirmed: (payload) => {
+      toast.info(
+        `Novo pedido pago recebido! #${payload.orderId.slice(0, 8)} • R$ ${Number(payload.totalAmount).toFixed(2)}`,
+        'Novo Pedido Pago! 🔔'
+      );
+      fetchPartnerOrders();
+    },
+    onStatusUpdated: () => {
+      fetchPartnerOrders();
+    },
+  });
+
   // Carregar estabelecimentos do parceiro
   useEffect(() => {
     if (isInitializing) return;
@@ -53,17 +82,6 @@ export default function PartnerOrdersPage() {
       })
       .finally(() => setLoading(false));
   }, [isAuthenticated, isInitializing, token, router, toast]);
-
-  // Carregar pedidos do estabelecimento selecionado
-  const fetchPartnerOrders = useCallback(async () => {
-    if (!token || !selectedPartnerId) return;
-    try {
-      const data = await ordersApi.getPartnerOrders(selectedPartnerId, token);
-      setOrders(data);
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao carregar pedidos.', 'Erro');
-    }
-  }, [selectedPartnerId, token, toast]);
 
   useEffect(() => {
     if (selectedPartnerId) {
@@ -116,9 +134,39 @@ export default function PartnerOrdersPage() {
 
       <main className={styles.mainContent}>
         <div className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>
-            🍳 Gestão de Pedidos
-          </h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+            <h1 className={styles.pageTitle} style={{ margin: 0 }}>
+              🍳 Gestão de Pedidos
+            </h1>
+
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '0.35rem 0.75rem',
+                borderRadius: '20px',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                backgroundColor: isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                color: isConnected ? '#10b981' : '#f87171',
+                border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              }}
+              title={isConnected ? 'Conectado em tempo real: novos pedidos pagos aparecem instantaneamente' : 'Conectando ao canal em tempo real...'}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: isConnected ? '#10b981' : '#f87171',
+                  boxShadow: isConnected ? '0 0 8px #10b981' : 'none',
+                }}
+              />
+              {isConnected ? 'Tempo Real Ativo' : 'Reconectando...'}
+            </div>
+          </div>
 
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             {partners.length > 0 && (

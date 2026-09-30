@@ -3,6 +3,7 @@ import { Result } from '../../domain/Result';
 import { IPaymentRepository } from '../../domain/payment/repositories/IPaymentRepository';
 import { IOrderRepository } from '../../domain/order/repositories/IOrderRepository';
 import { IAuditLogRepository } from '../../domain/audit/repositories/IAuditLogRepository';
+import { IOrderNotificationService } from '../../domain/order/services/IOrderNotificationService';
 import { AuditLog } from '../../domain/audit/AuditLog';
 import { SecurityLogger } from '../../infrastructure/logging/SecurityLogger';
 
@@ -23,7 +24,8 @@ export class HandleAsaasWebhookUseCase {
   constructor(
     private readonly paymentRepository: IPaymentRepository,
     private readonly orderRepository: IOrderRepository,
-    private readonly auditLogRepository?: IAuditLogRepository
+    private readonly auditLogRepository?: IAuditLogRepository,
+    private readonly notificationService?: IOrderNotificationService
   ) {}
 
   async execute(dto: AsaasWebhookEventDTO): Promise<Result<{ processed: boolean; reason?: string }>> {
@@ -82,6 +84,17 @@ export class HandleAsaasWebhookUseCase {
           if (logRes.isSuccess) {
             await this.auditLogRepository.save(logRes.getValue());
           }
+        }
+
+        if (this.notificationService && order) {
+          this.notificationService.notifyPaymentConfirmed(order.partnerId, {
+            orderId: order.id,
+            partnerId: order.partnerId,
+            consumerId: order.consumerId,
+            totalAmount: order.totalAmount,
+            status: order.status,
+            confirmedAt: (dto.payment.confirmedDate ? new Date(dto.payment.confirmedDate) : new Date()).toISOString(),
+          });
         }
 
         return Result.ok({ processed: true });
