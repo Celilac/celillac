@@ -24,7 +24,10 @@ export class LogoutUserController extends BaseController {
     const token = extracted.token;
 
     // A02: Roubo de Sessão — Limpa o cookie httpOnly
-    res.clearCookie('token', { path: '/' });
+    const host = req.headers.host || '';
+    const isCelilacDomain = host.includes('celilac.com.br');
+    const cookieDomain = process.env.COOKIE_DOMAIN || (isCelilacDomain ? '.celilac.com.br' : undefined);
+    res.clearCookie('token', { path: '/', domain: cookieDomain });
 
     const result = await this.logoutUserUseCase.execute({ token });
 
