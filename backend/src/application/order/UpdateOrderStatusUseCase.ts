@@ -3,6 +3,7 @@ import { Result } from '../../domain/Result';
 import { Order } from '../../domain/order/entities/Order';
 import { IOrderRepository } from '../../domain/order/repositories/IOrderRepository';
 import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
+import { IOrderNotificationService } from '../../domain/order/services/IOrderNotificationService';
 
 export type OrderStatusAction =
   | 'CONFIRM'
@@ -21,7 +22,8 @@ export interface UpdateOrderStatusDTO {
 export class UpdateOrderStatusUseCase {
   constructor(
     private readonly orderRepository: IOrderRepository,
-    private readonly partnerRepository: IPartnerRepository
+    private readonly partnerRepository: IPartnerRepository,
+    private readonly notificationService?: IOrderNotificationService
   ) {}
 
   async execute(dto: UpdateOrderStatusDTO): Promise<Result<Order>> {
@@ -64,6 +66,20 @@ export class UpdateOrderStatusUseCase {
     }
 
     await this.orderRepository.save(order);
+
+    if (this.notificationService) {
+      const payload = {
+        orderId: order.id,
+        partnerId: order.partnerId,
+        consumerId: order.consumerId,
+        totalAmount: order.totalAmount,
+        status: order.status,
+        confirmedAt: new Date().toISOString(),
+      };
+      this.notificationService.notifyOrderStatusChanged(order.consumerId, payload);
+      this.notificationService.notifyOrderStatusChanged(order.partnerId, payload);
+    }
+
     return Result.ok<Order>(order);
   }
 }

@@ -1,5 +1,15 @@
-// frontend/web-app/src/api/orders.ts
-import { apiClient } from './client';
+import { apiClient, getApiBaseUrl } from './client';
+
+export interface OrderNotificationDTO {
+  orderId: string;
+  partnerId: string;
+  consumerId: string;
+  totalAmount: number;
+  status: string;
+  confirmedAt: string;
+  itemsSummary?: string;
+  metadata?: Record<string, unknown>;
+}
 
 export interface OrderItemDTO {
   id: string;
@@ -70,4 +80,13 @@ export const ordersApi = {
     token?: string
   ) =>
     apiClient.patch<OrderDTO>(`/orders/${orderId}/status`, { action }, token),
+
+  getOrderStreamUrl: (options?: { partnerId?: string; token?: string }) => {
+    const baseUrl = getApiBaseUrl();
+    const params = new URLSearchParams();
+    if (options?.partnerId) params.append('partnerId', options.partnerId);
+    if (options?.token) params.append('token', options.token);
+    const queryString = params.toString();
+    return `${baseUrl}/orders/stream${queryString ? `?${queryString}` : ''}`;
+  },
 };
