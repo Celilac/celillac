@@ -87,12 +87,12 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
       <Header />
 
       <main className={styles.container}>
-        <div className={styles.header}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <div className={styles.header} style={{ marginBottom: '1rem', gap: '0.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             {partner.logoUrl && (
               <div style={{
-                width: '60px',
-                height: '60px',
+                width: '52px',
+                height: '52px',
                 borderRadius: '12px',
                 background: 'var(--color-elevated)',
                 border: '1px solid var(--color-border)',
@@ -111,24 +111,37 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                 />
               </div>
             )}
-            <div className={styles.titleArea}>
-              <h1 className={styles.title}>{partner.name}</h1>
-              <p className={styles.subtitle}>Perfil comercial homologado pelo CeLiLac</p>
+            <div className={styles.titleArea} style={{ gap: '0.2rem' }}>
+              <h1 className={styles.title} style={{ fontSize: '1.4rem', margin: 0 }}>{partner.name}</h1>
+              <p className={styles.subtitle} style={{ fontSize: '0.85rem', margin: 0 }}>Perfil comercial homologado pelo CeLiLac</p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            gap: '0.5rem',
+            width: '100%',
+            maxWidth: '380px',
+          }}>
             <a
               href="#avaliacoes"
-              className={`${styles.btn} ${styles.btnSecondary}`}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '0.35rem',
+                padding: '0.45rem 0.6rem',
+                borderRadius: '999px',
+                fontSize: '0.82rem',
+                fontWeight: 600,
                 textDecoration: 'none',
                 color: 'var(--color-emerald, #10B981)',
-                borderColor: 'rgba(16, 185, 129, 0.35)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
                 background: 'rgba(16, 185, 129, 0.08)',
-                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                textAlign: 'center',
+                transition: 'all 0.15s ease',
               }}
               title="Ver avaliações da comunidade"
             >
@@ -136,8 +149,24 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
             </a>
             <button 
               type="button" 
-              className={`${styles.btn} ${styles.btnSecondary}`}
               onClick={() => router.push('/public-partners')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.35rem',
+                padding: '0.45rem 0.6rem',
+                borderRadius: '999px',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                color: 'var(--color-text, #f1f5f9)',
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-surface, #101c23)',
+                whiteSpace: 'nowrap',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
             >
               ⬅️ Voltar ao Guia
             </button>
@@ -159,9 +188,9 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
         <div className={styles.dashboardLayout}>
           <section className={styles.mainPanel}>
             {/* Detalhes do parceiro com variáveis adaptativas de tema */}
-            <div className={styles.card} style={{ gap: '1rem' }}>
-              <div className={styles.partnerSectionHeader}>
-                <h2 className={styles.sectionTitle} style={{ margin: 0 }}>ℹ️ Sobre o Estabelecimento</h2>
+            <div className={styles.card} style={{ gap: '0.85rem', padding: '1.25rem' }}>
+              <div className={styles.partnerSectionHeader} style={{ marginBottom: 0 }}>
+                <h2 className={styles.sectionTitle} style={{ margin: 0, fontSize: '1.15rem' }}>ℹ️ Sobre o Estabelecimento</h2>
                 <div className={styles.partnerHeaderActions}>
                   <FavoriteButton partnerId={partner.id} />
                   <button
@@ -171,8 +200,8 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.25rem',
-                      padding: '0.4rem 0.75rem',
-                      fontSize: '0.8rem',
+                      padding: '0.35rem 0.65rem',
+                      fontSize: '0.78rem',
                       fontWeight: 600,
                       borderRadius: '0.75rem',
                       border: '1px solid var(--color-border)',
@@ -182,22 +211,18 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    🚩 Denunciar Estabelecimento
+                    🚩 Denunciar
                   </button>
                 </div>
               </div>
 
-              <p className={styles.partnerDescription} style={{ fontSize: 'var(--text-body)', lineHeight: '1.6', WebkitLineClamp: 'none', lineClamp: 'none' }}>
-                {partner.description || 'Este parceiro ainda não forneceu uma descrição detalhada.'}
-              </p>
-
-              <div className={styles.partnerInfoGrid}>
+              <div className={styles.partnerInfoGrid} style={{ fontSize: '0.88rem', margin: 0 }}>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>📍 Endereço:</strong> {partner.address}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🌆 Cidade:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não informada'}</p>
+                  <p style={{ margin: '0 0 0.35rem' }}><strong style={{ color: 'var(--color-text)' }}>📍 Endereço:</strong> {partner.address}</p>
+                  <p style={{ margin: 0 }}><strong style={{ color: 'var(--color-text)' }}>🌆 Cidade:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não informada'}</p>
                 </div>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}>
+                  <p style={{ margin: '0 0 0.35rem' }}>
                     <strong style={{ color: 'var(--color-text)' }}>📞 Contato:</strong>{' '}
                     <a
                       href={`https://wa.me/${partner.phone?.replace(/\D/g, '')}`}
@@ -209,21 +234,27 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                       {formatDisplayPhone(partner.phone)}
                     </a>
                   </p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🚗 Região Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
+                  <p style={{ margin: 0 }}><strong style={{ color: 'var(--color-text)' }}>🚗 Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
                 </div>
               </div>
 
-              {/* Mapa de Localização Interativo */}
-              <div style={{ marginTop: '1.25rem' }}>
+              {/* Mapa de Localização Interativo em Destaque Direto */}
+              <div style={{ marginTop: '0.25rem' }}>
                 <PartnerLocationMap
                   address={partner.address}
                   city={partner.city}
                   state={partner.state}
                   name={partner.name}
-                  height={240}
+                  height={210}
                   showDirectionsButton={true}
                 />
               </div>
+
+              {partner.description && (
+                <p className={styles.partnerDescription} style={{ fontSize: '0.88rem', lineHeight: '1.5', margin: '0.25rem 0 0', color: 'var(--color-text-muted)', WebkitLineClamp: 'none', lineClamp: 'none' }}>
+                  {partner.description}
+                </p>
+              )}
             </div>
 
             {/* Listagem de produtos ofertados */}
