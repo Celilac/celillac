@@ -109,7 +109,7 @@ export default function MyOrdersPage() {
           <h1 className={styles.pageTitle}>
             📦 Meus Pedidos
           </h1>
-          <Link href="/catalog" className={styles.payActionBtn}>
+          <Link href="/public-partners" className={styles.payActionBtn}>
             Fazer Novo Pedido
           </Link>
         </div>

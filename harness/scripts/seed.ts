@@ -98,6 +98,8 @@ const PRODUCTS: Array<{
   cross_contamination: string;
   analysis_status: string;
   partner_id?: string;
+  price?: number;
+  category?: string;
 }> = [
     // ── SAFE para celíacos ─────────────────────────────────────────────────────
     {
@@ -279,9 +281,11 @@ const PRODUCTS: Array<{
       brand: 'Bistro Sem Glúten Fit',
       ingredients: 'farinha de arroz, polvilho doce, água, fermento biológico, sal',
       has_gluten: false,
-      cross_contamination: '100% livre de contaminação por glúten.',
+      cross_contamination: '',
       analysis_status: 'ANALISADO',
       partner_id: 'c0000001-0000-0000-0000-000000000001', // Bistro Sem Gluten Fit
+      price: 29.90,
+      category: 'Padaria & Confeitaria',
     },
     {
       id: 'b0000008-0000-0000-0000-000000000002',
@@ -289,9 +293,11 @@ const PRODUCTS: Array<{
       brand: 'Bistro Sem Glúten Fit',
       ingredients: 'cenoura, farinha de arroz, açúcar, óleo, cacau em pó 50%',
       has_gluten: false,
-      cross_contamination: 'Livre de glúten e leite. Sem compartilhamento de maquinário.',
+      cross_contamination: '',
       analysis_status: 'ANALISADO',
       partner_id: 'c0000001-0000-0000-0000-000000000001', // Bistro Sem Gluten Fit
+      price: 35.00,
+      category: 'Padaria & Confeitaria',
     },
   ];
 
@@ -680,8 +686,8 @@ async function seedPartners(emailToId: Map<string, string>): Promise<void> {
 async function seedProducts(): Promise<void> {
   for (const product of PRODUCTS) {
     await pool.query(
-      `INSERT INTO products (id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO products (id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id, price, category)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        ON CONFLICT (id) DO UPDATE SET
          name                = EXCLUDED.name,
          brand               = EXCLUDED.brand,
@@ -690,6 +696,8 @@ async function seedProducts(): Promise<void> {
          cross_contamination = EXCLUDED.cross_contamination,
          analysis_status     = EXCLUDED.analysis_status,
          partner_id          = EXCLUDED.partner_id,
+         price               = EXCLUDED.price,
+         category            = EXCLUDED.category,
          updated_at          = CURRENT_TIMESTAMP`,
       [
         product.id,
@@ -700,6 +708,8 @@ async function seedProducts(): Promise<void> {
         product.cross_contamination,
         product.analysis_status,
         product.partner_id || null,
+        product.price || 0.00,
+        product.category || 'Geral',
       ],
     );
 
