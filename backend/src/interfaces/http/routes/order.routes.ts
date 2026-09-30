@@ -6,6 +6,11 @@ import { PgProductCatalogRepository } from '../../../infrastructure/database/cat
 import { PgPartnerRepository } from '../../../infrastructure/database/partner/PgPartnerRepository';
 import { PgFoodProfileRepository } from '../../../infrastructure/database/food-profile/PgFoodProfileRepository';
 
+import { PgPaymentRepository } from '../../../infrastructure/database/payment/PgPaymentRepository';
+import { PgPaymentRefundRepository } from '../../../infrastructure/database/payment/PgPaymentRefundRepository';
+import { AsaasPaymentGateway } from '../../../infrastructure/gateways/AsaasPaymentGateway';
+import { RefundPaymentUseCase } from '../../../application/payment/RefundPaymentUseCase';
+
 import { CreateOrderUseCase } from '../../../application/order/CreateOrderUseCase';
 import { CancelOrderUseCase } from '../../../application/order/CancelOrderUseCase';
 import { GetOrderUseCase } from '../../../application/order/GetOrderUseCase';
@@ -23,6 +28,15 @@ const orderRepository = new PgOrderRepository(pool);
 const productRepository = new PgProductCatalogRepository(pool);
 const partnerRepository = new PgPartnerRepository(pool);
 const foodProfileRepository = new PgFoodProfileRepository(pool);
+const paymentRepository = new PgPaymentRepository(pool);
+const paymentRefundRepository = new PgPaymentRefundRepository(pool);
+const paymentGateway = new AsaasPaymentGateway();
+
+const refundPaymentUseCase = new RefundPaymentUseCase(
+  paymentRepository,
+  paymentRefundRepository,
+  paymentGateway
+);
 
 const createOrderUseCase = new CreateOrderUseCase(
   orderRepository,
@@ -30,7 +44,12 @@ const createOrderUseCase = new CreateOrderUseCase(
   partnerRepository,
   foodProfileRepository
 );
-const cancelOrderUseCase = new CancelOrderUseCase(orderRepository, partnerRepository);
+const cancelOrderUseCase = new CancelOrderUseCase(
+  orderRepository,
+  partnerRepository,
+  paymentRepository,
+  refundPaymentUseCase
+);
 const getOrderUseCase = new GetOrderUseCase(orderRepository, partnerRepository);
 const listConsumerOrdersUseCase = new ListConsumerOrdersUseCase(orderRepository);
 const listPartnerOrdersUseCase = new ListPartnerOrdersUseCase(orderRepository, partnerRepository);

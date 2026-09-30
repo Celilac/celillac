@@ -16,8 +16,8 @@ export class PgPaymentRepository implements IPaymentRepository {
           id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id,
           method, status, gross_amount, net_partner_amount, platform_fee_amount,
           pix_qr_code, pix_copy_paste, pix_expires_at, paid_at, failure_reason,
-          created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`,
+          idempotency_key, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
         [
           payment.id,
           payment.orderId,
@@ -35,6 +35,7 @@ export class PgPaymentRepository implements IPaymentRepository {
           payment.pixExpiresAt || null,
           payment.paidAt || null,
           payment.failureReason || null,
+          payment.idempotencyKey || null,
           payment.createdAt,
           payment.updatedAt,
         ]
@@ -49,7 +50,8 @@ export class PgPaymentRepository implements IPaymentRepository {
           pix_expires_at = $6,
           paid_at = $7,
           failure_reason = $8,
-          updated_at = $9
+          idempotency_key = COALESCE($9, idempotency_key),
+          updated_at = $10
         WHERE id = $1`,
         [
           payment.id,
@@ -60,6 +62,7 @@ export class PgPaymentRepository implements IPaymentRepository {
           payment.pixExpiresAt || null,
           payment.paidAt || null,
           payment.failureReason || null,
+          payment.idempotencyKey || null,
           payment.updatedAt,
         ]
       );
@@ -84,6 +87,12 @@ export class PgPaymentRepository implements IPaymentRepository {
     return this.mapRowToPayment(res.rows[0]);
   }
 
+  async findByIdempotencyKey(idempotencyKey: string): Promise<Payment | null> {
+    const res = await this.pool.query('SELECT * FROM payments WHERE idempotency_key = $1 LIMIT 1', [idempotencyKey]);
+    if (res.rows.length === 0) return null;
+    return this.mapRowToPayment(res.rows[0]);
+  }
+
   private mapRowToPayment(row: any): Payment | null {
     const result = Payment.create(
       {
@@ -100,6 +109,7 @@ export class PgPaymentRepository implements IPaymentRepository {
         pixExpiresAt: row.pix_expires_at ? new Date(row.pix_expires_at) : undefined,
         paidAt: row.paid_at ? new Date(row.paid_at) : undefined,
         failureReason: row.failure_reason || undefined,
+        idempotencyKey: row.idempotency_key || undefined,
         createdAt: new Date(row.created_at),
         updatedAt: new Date(row.updated_at),
       },
@@ -109,3 +119,4 @@ export class PgPaymentRepository implements IPaymentRepository {
     return result.isSuccess ? result.getValue() : null;
   }
 }
+

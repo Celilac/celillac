@@ -6,4 +6,5 @@ export interface IPaymentRepository {
   findById(id: string): Promise<Payment | null>;
   findByOrderId(orderId: string): Promise<Payment | null>;
   findByGatewayTransactionId(gatewayTransactionId: string): Promise<Payment | null>;
+  findByIdempotencyKey(idempotencyKey: string): Promise<Payment | null>;
 }

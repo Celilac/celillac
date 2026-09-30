@@ -201,4 +201,52 @@ describe('CreateOrderUseCase Unit Tests', () => {
     expect(result.getError()).toContain('não pertence ao estabelecimento selecionado');
     expect(orderRepository.save).not.toHaveBeenCalled();
   });
+
+  describe('Validação Server-Side de Frete (deliveryFee)', () => {
+    beforeEach(() => {
+      partnerRepository.findById.mockResolvedValue(createMockPartner(true));
+      foodProfileRepository.findByUserId.mockResolvedValue(createMockProfile(false));
+      productRepository.findById.mockResolvedValue(createMockProduct('prod-1', 'Produto Seguro', false));
+    });
+
+    it('deve falhar se a taxa de entrega for negativa', async () => {
+      const result = await useCase.execute({
+        consumerId,
+        partnerId,
+        items: [{ productId: 'prod-1', quantity: 1 }],
+        deliveryFee: -15.00,
+      });
+
+      expect(result.isFailure).toBe(true);
+      expect(result.getError()).toContain('A taxa de entrega não pode ser negativa.');
+      expect(orderRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('deve falhar se a taxa de entrega for NaN ou não numérica', async () => {
+      const result = await useCase.execute({
+        consumerId,
+        partnerId,
+        items: [{ productId: 'prod-1', quantity: 1 }],
+        deliveryFee: NaN,
+      });
+
+      expect(result.isFailure).toBe(true);
+      expect(result.getError()).toContain('A taxa de entrega deve ser um valor numérico válido.');
+      expect(orderRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('deve falhar se a taxa de entrega exceder o teto máximo permitido de R$ 150,00', async () => {
+      const result = await useCase.execute({
+        consumerId,
+        partnerId,
+        items: [{ productId: 'prod-1', quantity: 1 }],
+        deliveryFee: 150.01,
+      });
+
+      expect(result.isFailure).toBe(true);
+      expect(result.getError()).toContain('A taxa de entrega excede o limite máximo permitido de R$ 150,00.');
+      expect(orderRepository.save).not.toHaveBeenCalled();
+    });
+  });
 });
+

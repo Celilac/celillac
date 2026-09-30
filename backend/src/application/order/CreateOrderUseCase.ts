@@ -139,12 +139,25 @@ export class CreateOrderUseCase {
       orderItems.push(itemResult.getValue());
     }
 
-    // 4. Instanciar agregado Order
+    // 4. Validação Server-Side da Taxa de Entrega (Prevenção de Adulteração de Frete)
+    const rawDeliveryFee = dto.deliveryFee ?? 0;
+    if (typeof rawDeliveryFee !== 'number' || isNaN(rawDeliveryFee) || !isFinite(rawDeliveryFee)) {
+      return Result.fail<CreateOrderOutputDTO>('A taxa de entrega deve ser um valor numérico válido.');
+    }
+    if (rawDeliveryFee < 0) {
+      return Result.fail<CreateOrderOutputDTO>('A taxa de entrega não pode ser negativa.');
+    }
+    if (rawDeliveryFee > 150.00) {
+      return Result.fail<CreateOrderOutputDTO>('A taxa de entrega excede o limite máximo permitido de R$ 150,00.');
+    }
+    const sanitizedDeliveryFee = Number(rawDeliveryFee.toFixed(2));
+
+    // 5. Instanciar agregado Order
     const orderResult = Order.create({
       consumerId: dto.consumerId,
       partnerId: dto.partnerId,
       items: orderItems,
-      deliveryFee: dto.deliveryFee ?? 0,
+      deliveryFee: sanitizedDeliveryFee,
       allergenCheckVerdict: overallVerdict,
       notes: dto.notes,
     });

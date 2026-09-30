@@ -20,6 +20,7 @@ export interface CheckoutOrderDTO {
   method: PaymentMethod;
   creditCardToken?: string;
   customerInfo?: CheckoutCustomerInfo;
+  idempotencyKey?: string;
 }
 
 export interface CheckoutOrderOutputDTO {
@@ -53,6 +54,47 @@ export class CheckoutOrderUseCase {
       return Result.fail<CheckoutOrderOutputDTO>('Acesso negado: este pedido não pertence a você.');
     }
 
+    // 1. Idempotência por chave explícita (Idempotency-Key)
+    if (dto.idempotencyKey) {
+      const existingByKey = await this.paymentRepository.findByIdempotencyKey(dto.idempotencyKey);
+      if (existingByKey) {
+        return Result.ok<CheckoutOrderOutputDTO>({
+          paymentId: existingByKey.id,
+          orderId: existingByKey.orderId,
+          method: existingByKey.method,
+          status: existingByKey.status,
+          grossAmount: existingByKey.grossAmount,
+          netPartnerAmount: existingByKey.netPartnerAmount,
+          platformFeeAmount: existingByKey.platformFeeAmount,
+          pixQrCode: existingByKey.pixQrCode,
+          pixCopyPaste: existingByKey.pixCopyPaste,
+          pixExpiresAt: existingByKey.pixExpiresAt,
+        });
+      }
+    }
+
+    // 2. Idempotência por estado de pedido já pago ou cobrança idêntica pendente
+    const existingForOrder = await this.paymentRepository.findByOrderId(order.id);
+    if (existingForOrder) {
+      if (
+        existingForOrder.status === PaymentStatus.PAID ||
+        (existingForOrder.status === PaymentStatus.PENDING && existingForOrder.method === dto.method)
+      ) {
+        return Result.ok<CheckoutOrderOutputDTO>({
+          paymentId: existingForOrder.id,
+          orderId: existingForOrder.orderId,
+          method: existingForOrder.method,
+          status: existingForOrder.status,
+          grossAmount: existingForOrder.grossAmount,
+          netPartnerAmount: existingForOrder.netPartnerAmount,
+          platformFeeAmount: existingForOrder.platformFeeAmount,
+          pixQrCode: existingForOrder.pixQrCode,
+          pixCopyPaste: existingForOrder.pixCopyPaste,
+          pixExpiresAt: existingForOrder.pixExpiresAt,
+        });
+      }
+    }
+
     if (order.status !== OrderStatus.CREATED && order.status !== OrderStatus.AWAITING_PAYMENT) {
       return Result.fail<CheckoutOrderOutputDTO>(
         `Não é possível realizar checkout de um pedido com status "${order.status}".`
@@ -80,6 +122,7 @@ export class CheckoutOrderUseCase {
         subtotalAmount: order.subtotalAmount,
         deliveryFee: order.deliveryFee,
         status: PaymentStatus.PENDING,
+        idempotencyKey: dto.idempotencyKey,
       }).getValue();
 
       const gatewayRes = await this.paymentGateway.createPixCharge({
@@ -115,6 +158,7 @@ export class CheckoutOrderUseCase {
         subtotalAmount: order.subtotalAmount,
         deliveryFee: order.deliveryFee,
         status: PaymentStatus.PENDING,
+        idempotencyKey: dto.idempotencyKey,
       }).getValue();
 
       const gatewayRes = await this.paymentGateway.createCreditCardCharge({

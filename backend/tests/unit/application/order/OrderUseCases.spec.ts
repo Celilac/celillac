@@ -9,6 +9,8 @@ import { IPartnerRepository } from '../../../../src/domain/partner/repositories/
 import { Order } from '../../../../src/domain/order/entities/Order';
 import { OrderItem } from '../../../../src/domain/order/entities/OrderItem';
 import { Partner, PartnerType, PartnerApprovalStatus, PartnerOperationalStatus } from '../../../../src/domain/partner/Partner';
+import { PaymentStatus } from '../../../../src/domain/payment/value-objects/PaymentStatus';
+import { Result } from '../../../../src/domain/Result';
 
 describe('Order Lifecycle Use Cases (Cancel, Queries, Status Transitions)', () => {
   let orderRepository: jest.Mocked<IOrderRepository>;
@@ -104,6 +106,85 @@ describe('Order Lifecycle Use Cases (Cancel, Queries, Status Transitions)', () =
 
       expect(result.isFailure).toBe(true);
       expect(result.getError()).toContain('Acesso negado: você só pode cancelar seus próprios pedidos');
+    });
+
+    it('deve disparar estorno automático via refundPaymentUseCase quando o pedido estiver pago', async () => {
+      const order = createTestOrder();
+      order.markAsPaid();
+      orderRepository.findById.mockResolvedValue(order);
+
+      const mockPayment: any = {
+        id: 'pay-123',
+        status: PaymentStatus.PAID,
+      };
+
+      const mockPaymentRepo: any = {
+        findByOrderId: jest.fn().mockResolvedValue(mockPayment),
+      };
+
+      const mockRefundUseCase: any = {
+        execute: jest.fn().mockResolvedValue(Result.ok({ id: 'ref-1' })),
+      };
+
+      const cancelUseCase = new CancelOrderUseCase(
+        orderRepository,
+        partnerRepository,
+        mockPaymentRepo,
+        mockRefundUseCase
+      );
+
+      const result = await cancelUseCase.execute({
+        orderId: order.id,
+        userId: consumerId,
+        userRole: 'CELIACO',
+        reason: 'Desisti antes do preparo',
+      });
+
+      expect(result.isSuccess).toBe(true);
+      expect(mockRefundUseCase.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          paymentId: 'pay-123',
+          reason: 'Desisti antes do preparo',
+        })
+      );
+      expect(orderRepository.save).toHaveBeenCalled();
+    });
+
+    it('deve falhar o cancelamento se o estorno no gateway falhar', async () => {
+      const order = createTestOrder();
+      order.markAsPaid();
+      orderRepository.findById.mockResolvedValue(order);
+
+      const mockPayment: any = {
+        id: 'pay-123',
+        status: PaymentStatus.PAID,
+      };
+
+      const mockPaymentRepo: any = {
+        findByOrderId: jest.fn().mockResolvedValue(mockPayment),
+      };
+
+      const mockRefundUseCase: any = {
+        execute: jest.fn().mockResolvedValue(Result.fail('Saldo insuficiente para estorno')),
+      };
+
+      const cancelUseCase = new CancelOrderUseCase(
+        orderRepository,
+        partnerRepository,
+        mockPaymentRepo,
+        mockRefundUseCase
+      );
+
+      const result = await cancelUseCase.execute({
+        orderId: order.id,
+        userId: consumerId,
+        userRole: 'CELIACO',
+        reason: 'Desisti',
+      });
+
+      expect(result.isFailure).toBe(true);
+      expect(result.getError()).toContain('Falha ao processar estorno automático no gateway');
+      expect(orderRepository.save).not.toHaveBeenCalled();
     });
   });
 

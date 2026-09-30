@@ -2,6 +2,9 @@
 import { Result } from '../../domain/Result';
 import { IOrderRepository } from '../../domain/order/repositories/IOrderRepository';
 import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
+import { IPaymentRepository } from '../../domain/payment/repositories/IPaymentRepository';
+import { RefundPaymentUseCase } from '../payment/RefundPaymentUseCase';
+import { PaymentStatus } from '../../domain/payment/value-objects/PaymentStatus';
 
 export interface CancelOrderDTO {
   orderId: string;
@@ -20,7 +23,9 @@ export interface CancelOrderOutputDTO {
 export class CancelOrderUseCase {
   constructor(
     private readonly orderRepository: IOrderRepository,
-    private readonly partnerRepository: IPartnerRepository
+    private readonly partnerRepository: IPartnerRepository,
+    private readonly paymentRepository?: IPaymentRepository,
+    private readonly refundPaymentUseCase?: RefundPaymentUseCase
   ) {}
 
   async execute(dto: CancelOrderDTO): Promise<Result<CancelOrderOutputDTO>> {
@@ -51,12 +56,31 @@ export class CancelOrderUseCase {
       return Result.fail<CancelOrderOutputDTO>(cancelResult.getError());
     }
 
+    const requiresRefund = cancelResult.getValue().requiresRefund;
+
+    // Disparo coordenado de estorno no gateway de pagamento quando elegível
+    if (requiresRefund && this.paymentRepository && this.refundPaymentUseCase) {
+      const payment = await this.paymentRepository.findByOrderId(order.id);
+      if (payment && payment.status === PaymentStatus.PAID) {
+        const refundResult = await this.refundPaymentUseCase.execute({
+          paymentId: payment.id,
+          reason: dto.reason || 'Cancelamento do pedido antes do início do preparo.',
+        });
+
+        if (refundResult.isFailure) {
+          return Result.fail<CancelOrderOutputDTO>(
+            `Falha ao processar estorno automático no gateway: ${refundResult.getError()}`
+          );
+        }
+      }
+    }
+
     await this.orderRepository.save(order);
 
     return Result.ok<CancelOrderOutputDTO>({
       orderId: order.id,
       status: order.status,
-      requiresRefund: cancelResult.getValue().requiresRefund,
+      requiresRefund,
       cancelReason: order.cancelReason || dto.reason,
     });
   }

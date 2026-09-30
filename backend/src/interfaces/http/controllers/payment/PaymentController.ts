@@ -32,12 +32,17 @@ export class PaymentController extends BaseController {
       if (!user) return this.unauthorized(res, 'Não autenticado.');
 
       const { orderId, method, creditCardToken, customerInfo } = req.body;
+      const idempotencyKey =
+        (req.headers ? ((req.headers['idempotency-key'] as string) || (req.headers['x-idempotency-key'] as string)) : undefined) ||
+        req.body.idempotencyKey;
+
       const result = await this.checkoutOrderUseCase.execute({
         orderId,
         consumerId: user.id,
         method,
         creditCardToken,
         customerInfo,
+        idempotencyKey,
       });
 
       if (result.isFailure) {

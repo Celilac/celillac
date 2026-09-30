@@ -19,6 +19,7 @@ export interface PaymentProps {
   pixExpiresAt?: Date;
   paidAt?: Date;
   failureReason?: string;
+  idempotencyKey?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -39,6 +40,7 @@ export interface CreatePaymentInputProps {
   pixExpiresAt?: Date;
   paidAt?: Date;
   failureReason?: string;
+  idempotencyKey?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -63,6 +65,7 @@ export class Payment extends Entity<PaymentProps> {
   get pixExpiresAt(): Date | undefined { return this.props.pixExpiresAt; }
   get paidAt(): Date | undefined { return this.props.paidAt; }
   get failureReason(): string | undefined { return this.props.failureReason; }
+  get idempotencyKey(): string | undefined { return this.props.idempotencyKey; }
   get createdAt(): Date { return this.props.createdAt; }
   get updatedAt(): Date { return this.props.updatedAt; }
 
@@ -103,6 +106,7 @@ export class Payment extends Entity<PaymentProps> {
         pixExpiresAt: props.pixExpiresAt,
         paidAt: props.paidAt,
         failureReason: props.failureReason,
+        idempotencyKey: props.idempotencyKey,
         createdAt: props.createdAt || new Date(),
         updatedAt: props.updatedAt || new Date(),
       },

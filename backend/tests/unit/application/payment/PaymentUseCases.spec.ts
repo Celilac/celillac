@@ -79,6 +79,7 @@ describe('Payment Application Use Cases Unit Tests', () => {
       findById: jest.fn(),
       findByOrderId: jest.fn(),
       findByGatewayTransactionId: jest.fn(),
+      findByIdempotencyKey: jest.fn(),
     };
 
     financialAccountRepository = {
@@ -210,6 +211,75 @@ describe('Payment Application Use Cases Unit Tests', () => {
       expect(result.isSuccess).toBe(true);
       expect(result.getValue().status).toBe(PaymentStatus.PAID);
       expect(order.status).toBe(OrderStatus.PAID);
+    });
+
+    it('deve retornar pagamento existente de forma idempotente quando idempotencyKey já existir', async () => {
+      const order = createTestOrder();
+      orderRepository.findById.mockResolvedValue(order);
+
+      const existingPayment = Payment.create({
+        orderId: order.id,
+        consumerId,
+        partnerId,
+        method: PaymentMethod.PIX,
+        subtotalAmount: 50.0,
+        idempotencyKey: 'idemp_key_abc_123',
+        status: PaymentStatus.PENDING,
+      }).getValue();
+
+      paymentRepository.findByIdempotencyKey.mockResolvedValue(existingPayment);
+
+      const useCase = new CheckoutOrderUseCase(
+        orderRepository,
+        paymentRepository,
+        financialAccountRepository,
+        paymentGateway
+      );
+
+      const result = await useCase.execute({
+        orderId: order.id,
+        consumerId,
+        method: PaymentMethod.PIX,
+        idempotencyKey: 'idemp_key_abc_123',
+      });
+
+      expect(result.isSuccess).toBe(true);
+      expect(result.getValue().paymentId).toBe(existingPayment.id);
+      expect(paymentGateway.createPixCharge).not.toHaveBeenCalled();
+    });
+
+    it('deve retornar pagamento existente de forma idempotente se o pedido já estiver PAID', async () => {
+      const order = createTestOrder();
+      order.markAsPaid();
+      orderRepository.findById.mockResolvedValue(order);
+
+      const paidPayment = Payment.create({
+        orderId: order.id,
+        consumerId,
+        partnerId,
+        method: PaymentMethod.PIX,
+        subtotalAmount: 50.0,
+        status: PaymentStatus.PAID,
+      }).getValue();
+
+      paymentRepository.findByOrderId.mockResolvedValue(paidPayment);
+
+      const useCase = new CheckoutOrderUseCase(
+        orderRepository,
+        paymentRepository,
+        financialAccountRepository,
+        paymentGateway
+      );
+
+      const result = await useCase.execute({
+        orderId: order.id,
+        consumerId,
+        method: PaymentMethod.PIX,
+      });
+
+      expect(result.isSuccess).toBe(true);
+      expect(result.getValue().paymentId).toBe(paidPayment.id);
+      expect(paymentGateway.createPixCharge).not.toHaveBeenCalled();
     });
   });
 
