@@ -111,20 +111,38 @@ export default function Home() {
 
       <main className="page-container">
         {/* ── Header ── */}
-        <div className="page-header" style={{ marginBottom: '2rem' }}>
-          <h1 className="page-title">Plataforma CeLiLac</h1>
-          <p className="page-subtitle">
+        <div className="page-header" style={{ marginBottom: '2.5rem', textAlign: 'center' }}>
+          <h1 className="page-title" style={{ textAlign: 'center' }}>Plataforma CeLiLac</h1>
+          <p
+            className="page-subtitle"
+            style={{
+              maxWidth: '640px',
+              margin: '0.75rem auto 0 auto',
+              textAlign: 'center',
+              lineHeight: 1.5,
+            }}
+          >
             Segurança alimentar transparente e confiável para celíacos e pessoas com restrições alimentares.
           </p>
-          <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              marginTop: '1.5rem',
+              display: 'flex',
+              gap: '0.75rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
             <Link
               href="/dashboard"
               className="btn btn-em"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '0.5rem',
-                padding: '0.7rem 1.5rem',
+                padding: '0.75rem 1.5rem',
                 fontSize: 'var(--text-body)',
                 textDecoration: 'none',
               }}
@@ -137,8 +155,9 @@ export default function Home() {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
+                justifyContent: 'center',
                 gap: '0.5rem',
-                padding: '0.7rem 1.25rem',
+                padding: '0.75rem 1.35rem',
                 fontSize: 'var(--text-body)',
                 textDecoration: 'none',
                 background: 'var(--color-surface)',

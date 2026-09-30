@@ -52,12 +52,12 @@ const ALLERGEN_LABELS: Record<string, string> = {
 // (ver DESIGN.md) — reforça que vermelho/laranja/amarelo/verde significam a
 // mesma coisa em toda a aplicação, seja no veredito de um produto ou na
 // severidade da própria restrição do usuário.
-const SEVERITY_BADGES: Record<string, { label: string; bg: string; color: string }> = {
-  FATAL: { label: '🔴 Fatal (Celíaco)', bg: 'var(--color-blocked-bg)', color: 'var(--color-blocked)' },
-  HIGH: { label: '🟠 Severidade Alta', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)' },
-  MEDIUM: { label: '🟡 Severidade Média', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)' },
-  LOW: { label: '🟢 Severidade Baixa', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)' },
-  LIFESTYLE: { label: '🟣 Estilo de Vida', bg: 'var(--color-status-suspended-bg)', color: 'var(--color-status-suspended)' },
+const SEVERITY_BADGES: Record<string, { label: string; bg: string; color: string; border: string }> = {
+  FATAL: { label: '🔴 Fatal (Celíaco)', bg: 'var(--color-blocked-bg)', color: 'var(--color-blocked)', border: 'var(--color-blocked-border)' },
+  HIGH: { label: '🟠 Risco Alto', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
+  MEDIUM: { label: '🟡 Risco Médio', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
+  LOW: { label: '🟢 Risco Baixo', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+  LIFESTYLE: { label: '🟣 Estilo de Vida', bg: 'var(--color-status-suspended-bg)', color: 'var(--color-status-suspended)', border: 'var(--color-status-suspended-border)' },
 };
 
 export default function DashboardPage() {
@@ -213,7 +213,7 @@ export default function DashboardPage() {
 
       setSearchResults(products);
 
-      // Preenche imediatamente a compatibilidade de TODOS os produtos calculados pelo backend
+      // Preenche imediatamente a compatibilidade de produtos já calculados
       const initialReports: Record<string, ReportWithName> = {};
       for (const prod of products) {
         if (prod.compatibilityReport) {
@@ -226,9 +226,13 @@ export default function DashboardPage() {
       }
       setReports(initialReports);
 
-      // Fallback: se porventura o backend não retornou o relatório em lote e for 1 produto
-      if (products.length === 1 && userRole === 'CELIACO' && !initialReports[products[0].id]) {
-        await checkProductCompatibility(products[0]);
+      // Opção B: Checagem automática e em paralelo para o perfil alimentar do usuário
+      if (userRole === 'CELIACO' && userId && token) {
+        products.forEach((prod) => {
+          if (!initialReports[prod.id]) {
+            checkProductCompatibility(prod);
+          }
+        });
       }
     } catch (err) {
       const message = err instanceof HttpError ? err.message : (err as Error).message ?? 'Erro desconhecido.';
@@ -499,11 +503,29 @@ export default function DashboardPage() {
             /* VISÃO CONSUMIDOR: Card 1 - Perfil Alimentar         */
             /* =================================================== */
             <section className={styles.card}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h2 className={styles.cardTitle} style={{ margin: 0 }}>🥗 Meu Perfil Alimentar</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '12px' }}>
+                <h2 className={styles.cardTitle} style={{ margin: 0, minWidth: 0, flex: 1 }}>🥗 Meu Perfil Alimentar</h2>
                 {mounted && isAuthenticated && (
-                  <Link href="/profile" className="btn btn-ghost" style={{ fontSize: 'var(--text-label)', padding: 'var(--space-2) var(--space-3)' }}>
-                    ⚙️ Editar Perfil
+                  <Link
+                    href="/profile"
+                    className="btn btn-ghost"
+                    style={{
+                      fontSize: '0.8rem',
+                      padding: '0.35rem 0.75rem',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      textDecoration: 'none',
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
+                    <span>Editar</span>
                   </Link>
                 )}
               </div>
@@ -525,19 +547,35 @@ export default function DashboardPage() {
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
+                            gap: '0.75rem',
                             padding: 'var(--space-3) var(--space-4)',
                             borderRadius: 'var(--radius-md)',
                             background: 'var(--color-elevated)',
-                            border: '1px solid var(--color-border)'
+                            border: '1px solid var(--color-border)',
                           }}>
-                            <span style={{ fontWeight: '600', fontSize: 'var(--text-body)' }}>{allergenLabel}</span>
                             <span style={{
-                              padding: 'var(--space-1) var(--space-3)',
+                              fontWeight: '600',
+                              fontSize: 'var(--text-body)',
+                              flex: 1,
+                              minWidth: 0,
+                              wordBreak: 'break-word',
+                            }}>
+                              {allergenLabel}
+                            </span>
+                            <span style={{
+                              padding: '0.3rem 0.75rem',
                               borderRadius: 'var(--radius-full)',
                               fontSize: 'var(--text-label)',
-                              fontWeight: 'bold',
+                              fontWeight: '600',
                               background: badgeInfo.bg,
-                              color: badgeInfo.color
+                              color: badgeInfo.color,
+                              border: `1px solid ${badgeInfo.border || 'transparent'}`,
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              lineHeight: 1.2,
                             }}>
                               {badgeInfo.label}
                             </span>
@@ -552,12 +590,16 @@ export default function DashboardPage() {
                       fontSize: 'var(--text-label)',
                       background: acceptsCrossContamination ? 'var(--color-warning-bg)' : 'var(--color-safe-bg)',
                       border: acceptsCrossContamination ? '1px solid var(--color-warning-border)' : '1px solid var(--color-safe-border)',
-                      color: acceptsCrossContamination ? 'var(--color-warning)' : 'var(--color-safe)'
+                      color: acceptsCrossContamination ? 'var(--color-warning)' : 'var(--color-safe)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      lineHeight: 1.4,
                     }}>
                       {acceptsCrossContamination ? (
-                        <span>⚠️ <strong>Contaminação Cruzada:</strong> Aceita risco de traços.</span>
+                        <span>⚠️ <strong style={{ color: 'var(--color-text)' }}>Contaminação Cruzada:</strong> Aceita risco de traços.</span>
                       ) : (
-                        <span>🛡️ <strong>Contaminação Cruzada:</strong> Bloqueada (Segurança Máxima).</span>
+                        <span>🛡️ <strong style={{ color: 'var(--color-text)' }}>Contaminação Cruzada:</strong> Bloqueada (Segurança Máxima).</span>
                       )}
                     </div>
                   </div>
@@ -736,23 +778,56 @@ export default function DashboardPage() {
                           </p>
                         )}
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-                          <button
-                            type="button"
-                            onClick={() => checkProductCompatibility(product)}
-                            disabled={loading || isCheckingThis}
-                            className="btn btn-em"
-                            style={{ fontSize: 'var(--text-label)', padding: 'var(--space-2) var(--space-4)' }}
-                          >
-                            {isCheckingThis
-                              ? '⏳ Analisando…'
-                              : productReport
-                              ? '🔄 Rechecar Compatibilidade'
-                              : '🧪 Checar Compatibilidade'}
-                          </button>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                            {productReport ? (
+                              <RiskBadge riskLevel={productReport.riskLevel} showDescription={true} />
+                            ) : isCheckingThis ? (
+                              <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                ⏳ Analisando compatibilidade…
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => checkProductCompatibility(product)}
+                                className="btn btn-em"
+                                style={{ fontSize: 'var(--text-label)', padding: 'var(--space-2) var(--space-4)' }}
+                              >
+                                🧪 Checar Compatibilidade
+                              </button>
+                            )}
+                          </div>
 
                           {productReport && (
-                            <RiskBadge riskLevel={productReport.riskLevel} showDescription={true} />
+                            <button
+                              type="button"
+                              onClick={() => checkProductCompatibility(product)}
+                              disabled={loading || isCheckingThis}
+                              title="Reavaliar compatibilidade"
+                              style={{
+                                background: 'transparent',
+                                border: '1px solid var(--color-border)',
+                                color: 'var(--color-text-muted)',
+                                fontSize: '0.75rem',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '3px 8px',
+                                borderRadius: 'var(--radius-full)',
+                                transition: 'all 0.15s ease',
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--color-emerald)';
+                                e.currentTarget.style.color = 'var(--color-emerald)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.borderColor = 'var(--color-border)';
+                                e.currentTarget.style.color = 'var(--color-text-muted)';
+                              }}
+                            >
+                              {isCheckingThis ? '⏳ Atualizando…' : '🔄 Reavaliar'}
+                            </button>
                           )}
                         </div>
 
@@ -916,7 +991,7 @@ export default function DashboardPage() {
               return (
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))',
                   gap: 'var(--space-6)',
                 }}>
                   {displayList.map((product) => {

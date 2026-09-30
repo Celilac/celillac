@@ -1,7 +1,7 @@
 # Pedidos (Orders)
 
 **Status:** ✅ Implementado
-**Entregue em:** 2026-09-30 (FEAT-094 - ver [CHANGELOG.md](../../CHANGELOG.md))
+**Entregue em:** 2026-09-30 (FEAT-095 - ver [CHANGELOG.md](../../CHANGELOG.md))
 **Contrato completo:** [`docs/API_CONTRACTS.md`](../API_CONTRACTS.md#14-pedidos-orders)
 **Regras de domínio:** [`docs/DOMAIN_MODEL.md`](../DOMAIN_MODEL.md#11-pedidos)
 

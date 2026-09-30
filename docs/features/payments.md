@@ -1,7 +1,7 @@
 # Pagamentos e Split Marketplace (Payments)
 
 **Status:** ✅ Implementado
-**Entregue em:** 2026-09-30 (FEAT-094 - ver [CHANGELOG.md](../../CHANGELOG.md))
+**Entregue em:** 2026-09-30 (FEAT-095 - ver [CHANGELOG.md](../../CHANGELOG.md))
 **Contrato completo:** [`docs/API_CONTRACTS.md`](../API_CONTRACTS.md#15-pagamentos-e-split-marketplace-payments)
 **Regras de domínio:** [`docs/DOMAIN_MODEL.md`](../DOMAIN_MODEL.md#12-pagamentos)
 
