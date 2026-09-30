@@ -10,6 +10,18 @@ import { partnerApi, PartnerSummary } from '@/api/partner';
 import { ordersApi, OrderDTO } from '@/api/orders';
 import styles from './partner-orders.module.css';
 
+const STATUS_LABELS: Record<string, string> = {
+  CREATED: 'Aguardando Pagamento',
+  AWAITING_PAYMENT: 'Aguardando Pagamento',
+  PAID: 'Pago • Novo',
+  CONFIRMED: 'Confirmado',
+  PREPARING: 'Em Preparo',
+  READY_FOR_PICKUP: 'Pronto p/ Retirada',
+  OUT_FOR_DELIVERY: 'Saiu para Entrega',
+  DELIVERED: 'Entregue',
+  CANCELLED: 'Cancelado',
+};
+
 export default function PartnerOrdersPage() {
   const { token, isAuthenticated, isInitializing } = useAuth();
   const router = useRouter();
@@ -73,7 +85,7 @@ export default function PartnerOrdersPage() {
   const filterOrders = () => {
     switch (activeTab) {
       case 'NEW':
-        return orders.filter((o) => o.status === 'PAID' || o.status === 'AWAITING_PAYMENT');
+        return orders.filter((o) => o.status === 'PAID' || o.status === 'AWAITING_PAYMENT' || o.status === 'CREATED');
       case 'PREPARING':
         return orders.filter((o) => o.status === 'CONFIRMED' || o.status === 'PREPARING');
       case 'READY':
@@ -227,7 +239,7 @@ export default function PartnerOrdersPage() {
                         </div>
                       </div>
                       <span className={styles.statusBadge}>
-                        {order.status}
+                        {STATUS_LABELS[order.status] || order.status}
                       </span>
                     </div>
 

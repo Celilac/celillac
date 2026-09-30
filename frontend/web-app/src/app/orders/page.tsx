@@ -68,6 +68,7 @@ export default function MyOrdersPage() {
 
   const getStatusBadge = (status: OrderDTO['status']) => {
     switch (status) {
+      case 'CREATED':
       case 'AWAITING_PAYMENT':
         return <span className={`${styles.statusBadge} ${styles.statusAwaitingPayment}`}>Aguardando Pagamento</span>;
       case 'PAID':
@@ -176,7 +177,7 @@ export default function MyOrdersPage() {
                     </div>
 
                     <div className={styles.actionsGroup}>
-                      {order.status === 'AWAITING_PAYMENT' && (
+                      {(order.status === 'CREATED' || order.status === 'AWAITING_PAYMENT') && (
                         <>
                           <Link
                             href={`/checkout/${order.id}?method=PIX`}
