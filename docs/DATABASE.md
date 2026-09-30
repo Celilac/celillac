@@ -259,6 +259,88 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `expires_at` | TIMESTAMP | NOT NULL |
 | *(índice)* | INDEX | `idx_blacklisted_tokens_expires_at` — otimiza queries de limpeza/expiração |
 
+### Tabela: `orders` (Pedidos do Consumidor aos Parceiros)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `consumer_id` | UUID | FK → users.id, NOT NULL |
+| `partner_id` | UUID | FK → partners.id, NOT NULL |
+| `status` | VARCHAR(50) | NOT NULL, DEFAULT `'CREATED'` (`CREATED`, `AWAITING_PAYMENT`, `PAID`, `CONFIRMED`, `PREPARING`, `READY_FOR_PICKUP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `CANCELLED`) |
+| `subtotal_amount` | NUMERIC(10,2) | NOT NULL |
+| `delivery_fee` | NUMERIC(10,2) | NOT NULL, DEFAULT 0.00 |
+| `total_amount` | NUMERIC(10,2) | NOT NULL |
+| `allergen_check_verdict`| VARCHAR(50) | NOT NULL, DEFAULT `'SAFE'` |
+| `notes` | TEXT | Instruções adicionais do consumidor |
+| `cancelled_at` | TIMESTAMP WITH TIME ZONE | Data de cancelamento (se houver) |
+| `cancel_reason` | TEXT | Justificativa do cancelamento |
+| `created_at` | TIMESTAMP WITH TIME ZONE | DEFAULT NOW() |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | DEFAULT NOW() |
+| *(índices)* | INDEX | `idx_orders_consumer_id`, `idx_orders_partner_id`, `idx_orders_status`, `idx_orders_created_at` |
+
+### Tabela: `order_items` (Itens de Pedidos)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `order_id` | UUID | FK → orders.id (ON DELETE CASCADE), NOT NULL |
+| `product_id` | UUID | FK → products.id, NOT NULL |
+| `product_name` | VARCHAR(255) | Snapshot do nome do produto no momento da compra |
+| `unit_price` | NUMERIC(10,2) | Snapshot do preço unitário do item |
+| `quantity` | INT | Quantidade comprada (> 0) |
+| `total_price` | NUMERIC(10,2) | Subtotal do item (`unit_price * quantity`) |
+| *(índice)* | INDEX | `idx_order_items_order_id` |
+
+### Tabela: `partner_financial_accounts` (Subcontas de Pagamento e Chaves PIX do Parceiro)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `partner_id` | UUID | FK → partners.id, UNIQUE, NOT NULL |
+| `gateway_subaccount_id` | VARCHAR(255) | Identificador da subconta no gateway Asaas |
+| `pix_key` | VARCHAR(150) | Chave PIX cadastrada para recebimento |
+| `pix_key_type` | VARCHAR(20) | `CNPJ`, `CPF`, `EMAIL`, `PHONE`, `RANDOM` |
+| `bank_code` | VARCHAR(10) | Código COMPE do banco (ex: 260) |
+| `agency_number` | VARCHAR(10) | Agência bancária |
+| `account_number` | VARCHAR(20) | Número da conta bancária |
+| `account_type` | VARCHAR(20) | `CHECKING`, `SAVINGS` |
+| `is_verified` | BOOLEAN | DEFAULT FALSE |
+| `created_at` | TIMESTAMP WITH TIME ZONE | DEFAULT NOW() |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | DEFAULT NOW() |
+| *(índices)* | INDEX | `idx_partner_financial_accounts_partner_id`, `idx_partner_financial_accounts_subaccount` |
+
+### Tabela: `payments` (Transações de Pagamento e Split)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `order_id` | UUID | FK → orders.id, NOT NULL |
+| `consumer_id` | UUID | FK → users.id, NOT NULL |
+| `partner_id` | UUID | FK → partners.id, NOT NULL |
+| `gateway` | VARCHAR(50) | DEFAULT `'ASAAS'` |
+| `gateway_transaction_id` | VARCHAR(255) | ID da cobrança gerada na Asaas |
+| `method` | VARCHAR(50) | `PIX`, `CREDIT_CARD` |
+| `status` | VARCHAR(50) | DEFAULT `'PENDING'` (`PENDING`, `AUTHORIZED`, `PAID`, `FAILED`, `REFUNDED`) |
+| `gross_amount` | NUMERIC(10,2) | Valor bruto total cobrado |
+| `net_partner_amount` | NUMERIC(10,2) | Valor líquido repassado ao parceiro comercial |
+| `platform_fee_amount` | NUMERIC(10,2) | Comissão de marketplace da plataforma CeLiLac (12%) |
+| `pix_qr_code` | TEXT | URL / Imagem base64 do QR Code PIX gerado |
+| `pix_copy_paste` | TEXT | Linha digitável / Payload Copia-e-Cola PIX (EMVCo) |
+| `pix_expires_at` | TIMESTAMP WITH TIME ZONE | Data e hora de expiração da chave dinâmica PIX |
+| `paid_at` | TIMESTAMP WITH TIME ZONE | Timestamp de confirmação do pagamento |
+| `failure_reason` | TEXT | Motivo de falha caso rejeitado |
+| `created_at` | TIMESTAMP WITH TIME ZONE | DEFAULT NOW() |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | DEFAULT NOW() |
+| *(índices)* | INDEX | `idx_payments_order_id`, `idx_payments_gateway_transaction_id`, `idx_payments_partner_id`, `idx_payments_consumer_id`, `idx_payments_status` |
+
+### Tabela: `payment_refunds` (Estornos e Reembolsos de Pagamento)
+| Coluna | Tipo | Restrições |
+|:-------|:-----|:-----------|
+| `id` | UUID | PK |
+| `payment_id` | UUID | FK → payments.id, NOT NULL |
+| `gateway_refund_id` | VARCHAR(255) | ID do estorno registrado no gateway Asaas |
+| `refund_amount` | NUMERIC(10,2) | Valor estornado |
+| `reason` | TEXT | Motivo do cancelamento / reembolso |
+| `status` | VARCHAR(50) | DEFAULT `'PENDING'` (`PENDING`, `COMPLETED`, `FAILED`) |
+| `created_at` | TIMESTAMP WITH TIME ZONE | DEFAULT NOW() |
+| *(índice)* | INDEX | `idx_payment_refunds_payment_id` |
+
 ---
 
 ## 5. Estratégia de Migrations

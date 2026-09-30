@@ -11,6 +11,8 @@ import { reviewsRoutes } from './interfaces/http/routes/reviews.routes';
 import { partnerRouter } from './interfaces/http/routes/partner.routes';
 import { favoriteRouter } from './interfaces/http/routes/favorite.routes';
 import { consumerRouter } from './interfaces/http/routes/consumer.routes';
+import orderRouter from './interfaces/http/routes/order.routes';
+import paymentRouter from './interfaces/http/routes/payment.routes';
 import { corsMiddleware, securityHeadersMiddleware } from './interfaces/http/middlewares/SecurityMiddleware';
 import { botBlockerMiddleware } from './interfaces/http/middlewares/BotBlockerMiddleware';
 import { createRateLimiter } from './interfaces/http/middlewares/RateLimitMiddleware';
@@ -67,6 +69,9 @@ app.use('/compatibility', compatibilityRouter);
 app.use('/catalog',      catalogRouter);
 app.use('/admin',        adminRouter);
 app.use('/reviews',      reviewsRoutes);
+app.use('/orders',       orderRouter);
+app.use('/payments',     paymentRouter);
+app.use('/',             paymentRouter);
 app.use('/',             partnerRouter);
 app.use('/',             favoriteRouter);
 

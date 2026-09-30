@@ -46,6 +46,22 @@
    - [POST /admin/reports](#post-adminreports)
    - [GET /admin/reports](#get-adminreports)
    - [PATCH /admin/reports/:id/status](#patch-adminreportsidstatus)
+13. [Moderação de Certificações e Laudos Técnicos](#13-moderação-de-certificações-e-laudos-técnicos)
+   - [GET /admin/certifications](#get-admincertifications)
+   - [PATCH /admin/certifications/:id/review](#patch-admincertificationsidreview)
+14. [Pedidos (Orders)](#14-pedidos-orders)
+   - [POST /orders](#post-orders)
+   - [GET /orders/me](#get-ordersme)
+   - [GET /orders/:id](#get-ordersid)
+   - [GET /orders/partner/:partnerId](#get-orderspartnerpartnerid)
+   - [POST /orders/:id/cancel](#post-ordersidcancel)
+   - [PATCH /orders/:id/status](#patch-ordersidstatus)
+15. [Pagamentos e Split Marketplace (Payments)](#15-pagamentos-e-split-marketplace-payments)
+   - [POST /payments/checkout](#post-paymentscheckout)
+   - [GET /payments/order/:orderId](#get-paymentsorderorderid)
+   - [POST /payments/partner/:partnerId/financial-account](#post-paymentspartnerpartneridfinancial-account)
+   - [GET /payments/partner/:partnerId/financial-account](#get-paymentspartnerpartneridfinancial-account)
+   - [POST /payments/webhook/asaas](#post-paymentswebhookasaas)
 
 ---
 
@@ -1649,6 +1665,346 @@ Homologa ou rejeita um selo ou laudo laboratorial, registrando auditoria imutáv
   "message": "Certificação homologada com sucesso."
 }
 ```
+
+---
+
+## 14. Pedidos (Orders)
+
+Módulo responsável pela orquestração do ciclo de vida dos pedidos comerciais realizados por celíacos e pessoas com restrições alimentares junto aos estabelecimentos cadastrados.
+
+### `POST /orders` 🔒 *(Restrito: Usuário Autenticado - Consumidor)*
+Cria um novo pedido com validação biológica compulsória de alérgenos via `AllergenEngine`.
+
+**Request Body:**
+```json
+{
+  "partnerId": "uuid-do-parceiro",
+  "items": [
+    {
+      "productId": "uuid-do-produto",
+      "quantity": 2
+    }
+  ],
+  "deliveryAddress": "Rua das Flores, 123, Apto 402, São Paulo - SP",
+  "notes": "Favor embalar separadamente para evitar contato."
+}
+```
+
+**Response `201 Created`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-do-pedido",
+    "orderNumber": "ORD-1727680000000-1234",
+    "consumerId": "uuid-do-consumidor",
+    "partnerId": "uuid-do-parceiro",
+    "status": "CREATED",
+    "subtotal": 59.80,
+    "deliveryFee": 0.00,
+    "total": 59.80,
+    "deliveryAddress": "Rua das Flores, 123, Apto 402, São Paulo - SP",
+    "notes": "Favor embalar separadamente para evitar contato.",
+    "items": [
+      {
+        "id": "uuid-do-item",
+        "productId": "uuid-do-produto",
+        "productName": "Pão Francês Artesanal Sem Glúten",
+        "unitPrice": 29.90,
+        "quantity": 2,
+        "subtotal": 59.80
+      }
+    ],
+    "createdAt": "2026-09-30T10:00:00.000Z"
+  }
+}
+```
+
+**Erros de Domínio Conhecidos:**
+- `400 Bad Request`: `FOOD_SAFETY_RISK_BLOCK` — Quando um ou mais produtos contêm alérgenos ou contaminação incompatíveis com o perfil do consumidor:
+```json
+{
+  "success": false,
+  "error": "Item Pão Francês Tradicional possui risco de segurança alimentar (BLOCKED) incompatível com seu perfil de saúde."
+}
+```
+- `400 Bad Request`: `EMPTY_CART` — O carrinho não contém nenhum item.
+- `400 Bad Request`: `CROSS_PARTNER_ITEMS_FORBIDDEN` — Tentativa de incluir produtos de parceiros distintos no mesmo pedido.
+
+---
+
+### `GET /orders/me` 🔒 *(Restrito: Consumidor)*
+Retorna o histórico cronológico de todos os pedidos realizados pelo consumidor autenticado.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-do-pedido",
+      "orderNumber": "ORD-1727680000000-1234",
+      "partnerId": "uuid-do-parceiro",
+      "status": "PAID",
+      "total": 59.80,
+      "itemsCount": 2,
+      "createdAt": "2026-09-30T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### `GET /orders/:id` 🔒 *(Restrito: Dono do Pedido ou Parceiro Destinatário)*
+Retorna os detalhes completos de um pedido específico.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-do-pedido",
+    "orderNumber": "ORD-1727680000000-1234",
+    "consumerId": "uuid-do-consumidor",
+    "partnerId": "uuid-do-parceiro",
+    "status": "PREPARING",
+    "subtotal": 59.80,
+    "deliveryFee": 0.00,
+    "total": 59.80,
+    "deliveryAddress": "Rua das Flores, 123",
+    "items": [
+      {
+        "id": "uuid-do-item",
+        "productId": "uuid-do-produto",
+        "productName": "Pão Francês Artesanal Sem Glúten",
+        "unitPrice": 29.90,
+        "quantity": 2,
+        "subtotal": 59.80
+      }
+    ],
+    "isRefundEligible": false,
+    "createdAt": "2026-09-30T10:00:00.000Z"
+  }
+}
+```
+
+---
+
+### `GET /orders/partner/:partnerId` 🔒 *(Restrito: Dono do Estabelecimento)*
+Lista todos os pedidos recebidos pelo estabelecimento parceiro especificado.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-do-pedido",
+      "orderNumber": "ORD-1727680000000-1234",
+      "consumerId": "uuid-do-consumidor",
+      "status": "PAID",
+      "total": 59.80,
+      "items": [...],
+      "createdAt": "2026-09-30T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### `POST /orders/:id/cancel` 🔒 *(Restrito: Consumidor ou Parceiro)*
+Cancela um pedido em andamento de acordo com a política de cancelamento e reembolso.
+
+**Request Body:**
+```json
+{
+  "reason": "Desisti da compra antes do início do preparo."
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-do-pedido",
+    "status": "CANCELLED",
+    "isRefundEligible": true,
+    "cancelledAt": "2026-09-30T10:15:00.000Z",
+    "cancelReason": "Desisti da compra antes do início do preparo."
+  },
+  "message": "Pedido cancelado com sucesso. Reembolso integral habilitado."
+}
+```
+
+---
+
+### `PATCH /orders/:id/status` 🔒 *(Restrito: Dono do Estabelecimento)*
+Promove o status do pedido no fluxo de preparação e entrega do parceiro.
+
+**Request Body:**
+```json
+{
+  "status": "PREPARING"
+}
+```
+*Transições válidas para parceiro:* `CONFIRMED`, `PREPARING`, `READY_FOR_PICKUP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `CANCELLED`.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-do-pedido",
+    "status": "PREPARING",
+    "updatedAt": "2026-09-30T10:20:00.000Z"
+  }
+}
+```
+
+---
+
+## 15. Pagamentos e Split Marketplace (Payments)
+
+Módulo integrado ao gateway Asaas para processamento de cobranças (PIX com QR Code dinâmico e Copia-e-Cola, Cartão de Crédito), split automatizado de 12% da plataforma CeLiLac (padrão iFood) e liquidação em subcontas parceiras.
+
+### `POST /payments/checkout` 🔒 *(Restrito: Consumidor)*
+Gera a cobrança do pedido com split e retorna o QR Code PIX e chave Copia-e-Cola.
+
+**Request Body:**
+```json
+{
+  "orderId": "uuid-do-pedido",
+  "method": "PIX"
+}
+```
+
+**Response `201 Created` / `200 OK` (Idempotente):**
+```json
+{
+  "success": true,
+  "data": {
+    "paymentId": "uuid-do-pagamento",
+    "orderId": "uuid-do-pedido",
+    "status": "PENDING",
+    "method": "PIX",
+    "grossAmount": 59.80,
+    "platformFee": 7.18,
+    "netPartnerAmount": 50.63,
+    "pixQrCodeUrl": "https://api.asaas.com/qr/payload123",
+    "pixCopyPaste": "00020126580014br.gov.bcb.pix0136uuid-chave-pix520400005303986540559.805802BR5915CELILAC PAGAMENTOS6009SAO PAULO62070503***6304ABCD",
+    "expiresAt": "2026-09-30T11:00:00.000Z"
+  }
+}
+```
+
+---
+
+### `GET /payments/order/:orderId` 🔒 *(Restrito: Usuário Autenticado)*
+Consulta o estado de pagamento de um pedido em tempo real (usado para polling no checkout).
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-do-pagamento",
+    "orderId": "uuid-do-pedido",
+    "status": "PAID",
+    "method": "PIX",
+    "grossAmount": 59.80,
+    "paidAt": "2026-09-30T10:05:00.000Z"
+  }
+}
+```
+
+---
+
+### `POST /payments/partner/:partnerId/financial-account` 🔒 *(Restrito: Dono do Estabelecimento)*
+Configura a subconta financeira e a chave PIX do parceiro para recebimento dos repasses do marketplace.
+
+**Request Body:**
+```json
+{
+  "pixKey": "12.345.678/0001-90",
+  "pixKeyType": "CNPJ",
+  "bankCode": "260",
+  "agencyNumber": "0001",
+  "accountNumber": "1234567-8",
+  "accountType": "CHECKING"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-da-subconta",
+    "partnerId": "uuid-do-parceiro",
+    "gatewaySubaccountId": "sub_asaas_12345",
+    "pixKey": "12.345.678/0001-90",
+    "pixKeyType": "CNPJ",
+    "isVerified": true,
+    "createdAt": "2026-09-30T09:00:00.000Z"
+  },
+  "message": "Subconta financeira configurada com sucesso."
+}
+```
+
+---
+
+### `GET /payments/partner/:partnerId/financial-account` 🔒 *(Restrito: Dono do Estabelecimento)*
+Consulta os dados cadastrados da conta bancária e subconta de repasses do parceiro.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-da-subconta",
+    "partnerId": "uuid-do-parceiro",
+    "gatewaySubaccountId": "sub_asaas_12345",
+    "pixKey": "12.345.678/0001-90",
+    "pixKeyType": "CNPJ",
+    "bankCode": "260",
+    "isVerified": true
+  }
+}
+```
+
+---
+
+### `POST /payments/webhook/asaas` *(Endpoint Público com Validação de Assinatura)*
+Endpoint que recebe notificações assíncronas de cobranças e estornos da Asaas.
+
+**Eventos Processados:**
+- `PAYMENT_RECEIVED` ou `PAYMENT_CONFIRMED`: Transiciona o pagamento para `PAID` e promove o pedido correspondente para `PAID`.
+- `PAYMENT_REFUNDED`: Transiciona o pagamento para `REFUNDED` e registra estorno em `payment_refunds`.
+
+**Request Body Exemplo:**
+```json
+{
+  "event": "PAYMENT_RECEIVED",
+  "payment": {
+    "id": "pay_123456789",
+    "status": "RECEIVED",
+    "value": 59.80,
+    "netValue": 50.63,
+    "paymentDate": "2026-09-30"
+  }
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "received": true
+}
+```
+
 
 
 

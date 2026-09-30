@@ -1,0 +1,505 @@
+/* frontend/web-app/src/app/checkout/[orderId]/checkout.module.css */
+
+.container {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text, #f1f5f9);
+}
+
+.mainContent {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+}
+
+.pageHeader {
+  margin-bottom: 2rem;
+}
+
+.pageTitle {
+  font-size: 1.875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-text, #f1f5f9);
+  margin-bottom: 0.5rem;
+}
+
+.pageSubtitle {
+  font-size: 0.95rem;
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .cardTitle {
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .cardTitle {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.6rem;
+  }
+
+  .safetyBadge {
+    align-self: center;
+  }
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--color-text, #f1f5f9);
+}
+
+.safetyBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+  gap: 0.45rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.safetyBadgeSafe {
+  background: var(--color-safe-bg);
+  border: 1px solid var(--color-safe-border);
+  color: var(--color-safe);
+}
+
+.safetyBadgeWarning {
+  background: var(--color-warning-bg);
+  border: 1px solid var(--color-warning-border);
+  color: var(--color-warning);
+}
+
+.itemList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+}
+
+.itemRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.itemRow:last-child {
+  border-bottom: none;
+}
+
+.itemName {
+  font-weight: 500;
+  color: var(--color-text, #f1f5f9);
+}
+
+.itemQuantity {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #94a3b8);
+  margin-left: 0.5rem;
+}
+
+.itemPrice {
+  font-weight: 600;
+  color: var(--color-text, #cbd5e1);
+}
+
+.costBreakdown {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--color-border);
+}
+
+.costRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  color: var(--color-text-muted, #94a3b8);
+  margin-bottom: 0.5rem;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text, #f1f5f9);
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.totalPrice {
+  color: var(--color-emerald);
+}
+
+.methodSelector {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.methodBtn {
+  flex: 1;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  color: var(--color-text-muted, #94a3b8);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.methodBtn:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.methodBtnSelected {
+  border-color: var(--color-emerald);
+  background: var(--color-emerald-dim);
+  color: var(--color-emerald);
+}
+
+.payButton {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--color-emerald);
+  color: #064e3b;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px var(--color-emerald-glow);
+  transition: transform 0.15s ease, background 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.payButton:hover {
+  background: var(--color-emerald-hover);
+  transform: translateY(-1px);
+}
+
+.payButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.pixContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.pixQrWrapper {
+  background: #fff;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  margin-bottom: 1.25rem;
+}
+
+.pixTimer {
+  font-size: 0.85rem;
+  color: var(--color-warning);
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.copyPasteBox {
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.copyInputWrapper {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.pixCodeInput {
+  flex: 1;
+  padding: 0.75rem;
+  background: var(--input-bg, var(--color-surface));
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text, #cbd5e1);
+  font-family: monospace;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.pixCodeInput:focus {
+  border-color: var(--color-emerald);
+}
+
+.copyBtn {
+  padding: 0.75rem 1rem;
+  background: var(--color-emerald);
+  color: #064e3b;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.paidState {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.paidIcon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.paidTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-safe);
+  margin-bottom: 0.5rem;
+}
+
+.paidText {
+  color: var(--color-text-muted, #94a3b8);
+  margin-bottom: 2rem;
+}
+
+.trackOrderBtn {
+  display: inline-block;
+  padding: 0.9rem 1.75rem;
+  background: var(--color-emerald);
+  color: #064e3b;
+  font-weight: 700;
+  border-radius: 10px;
+  text-decoration: none;
+}
+
+/* Formulário de Cartão de Crédito / Débito */
+.cardForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.cardInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background: var(--color-surface, #101c23);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  color: var(--color-text, #f1f5f9);
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  color-scheme: dark;
+}
+
+.input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+/* Chrome/Safari/Edge autofill override para evitar fundo branco em tema escuro */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover, 
+.input:-webkit-autofill:focus,
+.input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #101c23 inset !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  caret-color: #f1f5f9 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+:global(html[data-theme='light']) .input {
+  background: #ffffff !important;
+  border-color: #cbd5e1;
+  color: #0f172a !important;
+  color-scheme: light;
+}
+
+:global(html[data-theme='light']) .input:-webkit-autofill,
+:global(html[data-theme='light']) .input:-webkit-autofill:hover,
+:global(html[data-theme='light']) .input:-webkit-autofill:focus,
+:global(html[data-theme='light']) .input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  caret-color: #0f172a !important;
+}
+
+.payCardSubmitButton {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.payCardSubmitButton:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5);
+}
+
+.payCardSubmitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cardInputWrapper .input {
+  padding-right: 5rem;
+}
+
+.brandBadge {
+  position: absolute;
+  right: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background: var(--color-border);
+  color: var(--color-text);
+  pointer-events: none;
+}
+
+.typeSelector {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.typePill {
+  flex: 1;
+  padding: 0.6rem;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.typePill:hover {
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.typePillActive {
+  background: var(--color-emerald-dim);
+  border-color: var(--color-emerald);
+  color: var(--color-emerald);
+}
+
+.securityNote {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  text-align: center;
+}

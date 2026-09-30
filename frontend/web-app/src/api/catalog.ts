@@ -86,6 +86,9 @@ export interface ProductSummary {
   hasGluten:                   boolean;
   crossContamination:          string;
   analysisStatus:              string;
+  partnerId?:                  string;
+  price?:                      number;
+  category?:                   string;
   imageUrl?:                   string;
   shortDescription?:           string;
   netContent?:                 number;
@@ -107,9 +110,6 @@ export interface ProductSummary {
 }
 
 export interface ProductDetails extends ProductSummary {
-  partnerId?: string;
-  price?: number;
-  category?: string;
   compatibilityReport?: {
     isCompatible: boolean;
     riskLevel: any;

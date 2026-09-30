@@ -44,6 +44,15 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/catalog',
+        destination: '/public-partners',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

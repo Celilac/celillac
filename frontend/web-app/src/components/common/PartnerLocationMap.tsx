@@ -65,9 +65,9 @@ export default function PartnerLocationMap({
       style={{
         borderRadius: '12px',
         overflow: 'hidden',
-        border: '1px solid var(--color-border, #E2E8F0)',
-        backgroundColor: 'var(--color-card-bg, #FFFFFF)',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+        border: '1px solid var(--color-border, rgba(255, 255, 255, 0.08))',
+        backgroundColor: 'var(--color-surface, #101C23)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
       }}
     >
       <div
@@ -75,7 +75,7 @@ export default function PartnerLocationMap({
           width: '100%',
           height: typeof height === 'number' ? `${height}px` : height,
           position: 'relative',
-          backgroundColor: '#E5E7EB',
+          backgroundColor: '#091115',
         }}
       >
         <iframe
@@ -96,13 +96,15 @@ export default function PartnerLocationMap({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.75rem',
             padding: '0.75rem 1rem',
-            backgroundColor: 'var(--color-card-bg, #FFFFFF)',
-            borderTop: '1px solid var(--color-border, #E2E8F0)',
+            backgroundColor: 'var(--color-surface, #101C23)',
+            borderTop: '1px solid var(--color-border, rgba(255, 255, 255, 0.08))',
             fontSize: '0.85rem',
           }}
         >
-          <span style={{ color: 'var(--color-text-muted, #64748B)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ color: 'var(--color-text-muted, #94A3B8)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
             <span>🗺️</span> <strong>Localização Georreferenciada</strong>
           </span>
 
@@ -113,18 +115,21 @@ export default function PartnerLocationMap({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '6px',
-              padding: '0.4rem 0.85rem',
-              borderRadius: '6px',
-              backgroundColor: 'var(--color-accent, #2563EB)',
+              padding: '0.5rem 0.95rem',
+              borderRadius: '8px',
+              backgroundColor: '#2563EB',
               color: '#FFFFFF',
               fontWeight: 600,
               fontSize: '0.825rem',
               textDecoration: 'none',
-              transition: 'opacity 0.2s',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.35)',
+              transition: 'opacity 0.2s, transform 0.15s ease',
             }}
           >
-            <span>🧭</span> Abrir no Google Maps / Como Chegar ↗
+            <span>🧭</span> Abrir no Google Maps ↗
           </a>
         </div>
       )}

@@ -1,0 +1,259 @@
+/* frontend/web-app/src/app/partner/orders/partner-orders.module.css */
+
+.container {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text, #f1f5f9);
+}
+
+.mainContent {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pageTitle {
+  font-size: 1.875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-text, #f1f5f9);
+}
+
+.selectPartnerWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+}
+
+.partnerSelect {
+  background: transparent;
+  border: none;
+  color: var(--color-text, #f1f5f9);
+  font-weight: 600;
+  outline: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.partnerSelect option {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.tabsBar {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 2rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.tabBtn {
+  padding: 0.65rem 1.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: var(--color-text-muted, #94a3b8);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.tabBtn:hover {
+  color: var(--color-text);
+  background: var(--color-border);
+}
+
+.tabBtnActive {
+  background: var(--color-emerald-dim);
+  color: var(--color-emerald);
+}
+
+.badgeCount {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  background: var(--color-border);
+  color: var(--color-text);
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
+
+.ordersGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.orderCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.orderId {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text, #f1f5f9);
+}
+
+.orderTime {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.itemsBox {
+  margin: 1rem 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.75rem 0;
+  font-size: 0.9rem;
+  color: var(--color-text, #cbd5e1);
+}
+
+.itemLine {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.orderNotes {
+  font-size: 0.85rem;
+  color: #b45309;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.cardBottom {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.amountLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text, #f1f5f9);
+}
+
+.actionButton {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.actionConfirm {
+  background: var(--color-emerald);
+  color: #064e3b;
+}
+
+.actionConfirm:hover {
+  background: var(--color-emerald-hover);
+}
+
+.actionPrepare {
+  background: #f59e0b;
+  color: #451a03;
+}
+
+.actionReady {
+  background: #3b82f6;
+  color: #eff6ff;
+}
+
+.actionDeliver {
+  background: #10b981;
+  color: #064e3b;
+}
+
+.statusBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  background: var(--color-border);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.emptyCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  text-align: center;
+  max-width: 600px;
+  margin: 2rem auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.emptyTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 0.75rem;
+}
+
+.emptyText {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.credentialBox {
+  margin-top: 1.25rem;
+  background: var(--input-bg, var(--color-surface));
+  border: 1px dashed var(--color-primary, #059669);
+  border-radius: 8px;
+  padding: 1rem;
+  display: inline-block;
+  text-align: left;
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.emptyTabMsg {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: var(--color-text-muted);
+  font-size: 1rem;
+}

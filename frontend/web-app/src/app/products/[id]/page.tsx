@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { catalogApi, ProductDetails } from '@/api/catalog';
 import { compatibilityApi, CompatibilityResponse } from '@/api/compatibility';
+import { ordersApi } from '@/api/orders';
 import { apiClient } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
@@ -35,6 +36,8 @@ export default function ProductDetailsPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [quantity, setQuantity] = useState<number>(1);
+  const [submittingOrder, setSubmittingOrder] = useState<boolean>(false);
 
   useEffect(() => {
     if (isAuthenticated && token) {
@@ -122,6 +125,51 @@ export default function ProductDetailsPage({ params }: PageProps) {
       </div>
     );
   }
+
+  const handleBuyNow = async () => {
+    if (!isAuthenticated || !token) {
+      router.push(`/auth/login?redirect=/products/${productId}`);
+      return;
+    }
+
+    if (!product?.partnerId) {
+      toast.error('Este produto não possui estabelecimento parceiro cadastrado para envio.');
+      return;
+    }
+
+    try {
+      setSubmittingOrder(true);
+      const res = await ordersApi.createOrder(
+        {
+          partnerId: product.partnerId,
+          items: [{ productId: product.id, quantity }],
+        },
+        token
+      );
+
+      const targetOrderId = (res as any).orderId || res.id;
+      toast.success('Pedido iniciado com sucesso! Redirecionando para o pagamento...');
+      router.push(`/checkout/${targetOrderId}`);
+    } catch (err: any) {
+      toast.error(
+        err?.message || 'Não foi possível iniciar o pedido deste produto. Verifique sua conexão ou tente novamente.',
+        'Erro ao Fazer Pedido'
+      );
+    } finally {
+      setSubmittingOrder(false);
+    }
+  };
+
+  const isCeliaco = userRole === 'CELIACO';
+  const isPurchaseBlocked =
+    isCeliaco &&
+    compatibility !== null &&
+    (!compatibility.isCompatible ||
+      compatibility.riskLevel === 'BLOCKED' ||
+      compatibility.riskLevel === 'DANGER');
+
+  const unitPrice = typeof product.price === 'number' && product.price > 0 ? product.price : 0;
+  const subtotal = unitPrice * quantity;
 
   const handleOpenReport = async () => {
     if (!isAuthenticated || !token) {
@@ -309,6 +357,116 @@ export default function ProductDetailsPage({ params }: PageProps) {
               </Link>
             </div>
           ) : null}
+
+          {/* Card de Preço, Quantidade e Ação de Compra com Trava Biológica */}
+          <div className={styles.purchaseCard}>
+            <div className={styles.purchaseHeader}>
+              <div className={styles.purchasePriceGroup}>
+                <span className={styles.purchasePriceLabel}>Preço do Item</span>
+                <span className={styles.purchasePriceValue}>
+                  {unitPrice > 0 ? (
+                    `R$ ${unitPrice.toFixed(2).replace('.', ',')}`
+                  ) : (
+                    <span style={{ fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>Sob Consulta</span>
+                  )}
+                </span>
+              </div>
+
+              {!isPurchaseBlocked && product.partnerId && (
+                <div className={styles.quantityGroup}>
+                  <span className={styles.quantityLabel}>Quantidade:</span>
+                  <div className={styles.quantityControls}>
+                    <button
+                      type="button"
+                      className={styles.quantityBtn}
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={quantity <= 1 || submittingOrder}
+                      aria-label="Diminuir quantidade"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      className={styles.quantityInput}
+                      value={quantity}
+                      min={1}
+                      max={50}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val) && val >= 1 && val <= 50) {
+                          setQuantity(val);
+                        }
+                      }}
+                      disabled={submittingOrder}
+                    />
+                    <button
+                      type="button"
+                      className={styles.quantityBtn}
+                      onClick={() => setQuantity((q) => Math.min(50, q + 1))}
+                      disabled={quantity >= 50 || submittingOrder}
+                      aria-label="Aumentar quantidade"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Condições de Compra / Trava Biológica */}
+            {isPurchaseBlocked ? (
+              <div>
+                <button type="button" className={styles.btnOrderBlocked} disabled>
+                  ⛔ Compra Bloqueada por Incompatibilidade Alimentar
+                </button>
+                <div className={styles.biologicalLockNotice}>
+                  <strong>🛡️ Trava de Segurança Biológica CeLiLac:</strong> Para resguardar sua saúde contra reações alérgicas graves e contaminação cruzada, o sistema impede a realização de pedidos de produtos avaliados como não seguros para o seu perfil.
+                </div>
+              </div>
+            ) : !product.partnerId ? (
+              <div className={styles.catalogOnlyNotice}>
+                ℹ️ <strong>Produto Informativo:</strong> Este item foi cadastrado no catálogo geral para consulta de rótulo e ingredientes. Para realizar pedidos com entrega segura, explore os estabelecimentos homologados em <Link href="/public-partners" style={{ color: 'var(--color-emerald)', fontWeight: 600 }}>Descobrir Locais</Link>.
+              </div>
+            ) : !isAuthenticated ? (
+              <div className={styles.purchaseFooter}>
+                <div className={styles.subtotalInfo}>
+                  Faça login para adicionar ao seu pedido e pagar via PIX ou Cartão.
+                </div>
+                <Link
+                  href={`/auth/login?redirect=/products/${productId}`}
+                  className={styles.btnOrderNow}
+                  style={{ textDecoration: 'none' }}
+                >
+                  🔐 Entrar para Comprar
+                </Link>
+              </div>
+            ) : userRole === 'PARCEIRO' || userRole === 'ADMIN' ? (
+              <div className={styles.catalogOnlyNotice} style={{ borderLeft: '4px solid var(--color-brand-gold)' }}>
+                🏢 <strong>Visão de Gestão:</strong> Pedidos com entrega e pagamento são realizados exclusivamente por consumidores. Como parceiro ou moderador, utilize este painel para verificar a apresentação do produto.
+              </div>
+            ) : (
+              <div className={styles.purchaseFooter}>
+                <div className={styles.subtotalInfo}>
+                  Subtotal ({quantity} {quantity === 1 ? 'item' : 'itens'}):
+                  <span className={styles.subtotalAmount}>
+                    R$ {subtotal.toFixed(2).replace('.', ',')}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.btnOrderNow}
+                  onClick={handleBuyNow}
+                  disabled={submittingOrder}
+                >
+                  {submittingOrder ? (
+                    <>⏳ Processando Pedido...</>
+                  ) : (
+                    <>🛒 Fazer Pedido / Comprar Agora</>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Ficha Técnica / Detalhes */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
