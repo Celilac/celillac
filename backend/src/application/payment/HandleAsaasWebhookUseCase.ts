@@ -2,6 +2,9 @@
 import { Result } from '../../domain/Result';
 import { IPaymentRepository } from '../../domain/payment/repositories/IPaymentRepository';
 import { IOrderRepository } from '../../domain/order/repositories/IOrderRepository';
+import { IAuditLogRepository } from '../../domain/audit/repositories/IAuditLogRepository';
+import { AuditLog } from '../../domain/audit/AuditLog';
+import { SecurityLogger } from '../../infrastructure/logging/SecurityLogger';
 
 export interface AsaasWebhookEventDTO {
   event: string;
@@ -19,7 +22,8 @@ export interface AsaasWebhookEventDTO {
 export class HandleAsaasWebhookUseCase {
   constructor(
     private readonly paymentRepository: IPaymentRepository,
-    private readonly orderRepository: IOrderRepository
+    private readonly orderRepository: IOrderRepository,
+    private readonly auditLogRepository?: IAuditLogRepository
   ) {}
 
   async execute(dto: AsaasWebhookEventDTO): Promise<Result<{ processed: boolean; reason?: string }>> {
@@ -54,6 +58,32 @@ export class HandleAsaasWebhookUseCase {
           await this.orderRepository.save(order);
         }
         await this.paymentRepository.save(payment);
+
+        SecurityLogger.logPaymentProcessed({
+          orderId: payment.orderId,
+          paymentId: payment.id,
+          status: payment.status,
+          gatewayTransactionId: transactionId,
+        });
+
+        if (this.auditLogRepository) {
+          const logRes = AuditLog.create({
+            entityType: 'PAYMENT',
+            entityId: payment.id,
+            action: 'PAYMENT_PROCESSED',
+            changes: {
+              event: dto.event,
+              orderId: payment.orderId,
+              amount: payment.grossAmount,
+              gatewayTransactionId: transactionId,
+            },
+            reason: 'Confirmação de pagamento recebida via webhook Asaas',
+          });
+          if (logRes.isSuccess) {
+            await this.auditLogRepository.save(logRes.getValue());
+          }
+        }
+
         return Result.ok({ processed: true });
       }
 
@@ -64,6 +94,32 @@ export class HandleAsaasWebhookUseCase {
           await this.orderRepository.save(order);
         }
         await this.paymentRepository.save(payment);
+
+        SecurityLogger.logPaymentRefunded({
+          orderId: payment.orderId,
+          paymentId: payment.id,
+          refundAmount: payment.grossAmount,
+          reason: 'Estorno confirmado via webhook Asaas.',
+        });
+
+        if (this.auditLogRepository) {
+          const logRes = AuditLog.create({
+            entityType: 'PAYMENT',
+            entityId: payment.id,
+            action: 'PAYMENT_REFUNDED',
+            changes: {
+              event: dto.event,
+              orderId: payment.orderId,
+              amount: payment.grossAmount,
+              gatewayTransactionId: transactionId,
+            },
+            reason: 'Estorno de pagamento confirmado via webhook Asaas',
+          });
+          if (logRes.isSuccess) {
+            await this.auditLogRepository.save(logRes.getValue());
+          }
+        }
+
         return Result.ok({ processed: true });
       }
 

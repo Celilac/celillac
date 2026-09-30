@@ -5,6 +5,9 @@ import { IPaymentRefundRepository } from '../../domain/payment/repositories/IPay
 import { IPaymentGateway } from '../../domain/payment/services/IPaymentGateway';
 import { PaymentRefund } from '../../domain/payment/entities/PaymentRefund';
 import { PaymentStatus } from '../../domain/payment/value-objects/PaymentStatus';
+import { IAuditLogRepository } from '../../domain/audit/repositories/IAuditLogRepository';
+import { AuditLog } from '../../domain/audit/AuditLog';
+import { SecurityLogger } from '../../infrastructure/logging/SecurityLogger';
 
 export interface RefundPaymentDTO {
   paymentId: string;
@@ -16,7 +19,8 @@ export class RefundPaymentUseCase {
   constructor(
     private readonly paymentRepository: IPaymentRepository,
     private readonly refundRepository: IPaymentRefundRepository,
-    private readonly paymentGateway: IPaymentGateway
+    private readonly paymentGateway: IPaymentGateway,
+    private readonly auditLogRepository?: IAuditLogRepository
   ) {}
 
   async execute(dto: RefundPaymentDTO): Promise<Result<PaymentRefund>> {
@@ -58,6 +62,31 @@ export class RefundPaymentUseCase {
 
     await this.refundRepository.save(refund);
     await this.paymentRepository.save(payment);
+
+    SecurityLogger.logPaymentRefunded({
+      orderId: payment.orderId,
+      paymentId: payment.id,
+      refundAmount,
+      reason: dto.reason,
+    });
+
+    if (this.auditLogRepository) {
+      const logRes = AuditLog.create({
+        entityType: 'PAYMENT',
+        entityId: payment.id,
+        action: 'PAYMENT_REFUNDED',
+        changes: {
+          orderId: payment.orderId,
+          refundId: refund.id,
+          gatewayRefundId: refund.gatewayRefundId,
+          refundAmount,
+        },
+        reason: dto.reason,
+      });
+      if (logRes.isSuccess) {
+        await this.auditLogRepository.save(logRes.getValue());
+      }
+    }
 
     return Result.ok<PaymentRefund>(refund);
   }

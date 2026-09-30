@@ -8,6 +8,7 @@ import { PgFoodProfileRepository } from '../../../infrastructure/database/food-p
 
 import { PgPaymentRepository } from '../../../infrastructure/database/payment/PgPaymentRepository';
 import { PgPaymentRefundRepository } from '../../../infrastructure/database/payment/PgPaymentRefundRepository';
+import { PgAuditLogRepository } from '../../../infrastructure/database/audit/PgAuditLogRepository';
 import { AsaasPaymentGateway } from '../../../infrastructure/gateways/AsaasPaymentGateway';
 import { RefundPaymentUseCase } from '../../../application/payment/RefundPaymentUseCase';
 
@@ -30,12 +31,14 @@ const partnerRepository = new PgPartnerRepository(pool);
 const foodProfileRepository = new PgFoodProfileRepository(pool);
 const paymentRepository = new PgPaymentRepository(pool);
 const paymentRefundRepository = new PgPaymentRefundRepository(pool);
+const auditLogRepository = new PgAuditLogRepository(pool);
 const paymentGateway = new AsaasPaymentGateway();
 
 const refundPaymentUseCase = new RefundPaymentUseCase(
   paymentRepository,
   paymentRefundRepository,
-  paymentGateway
+  paymentGateway,
+  auditLogRepository
 );
 
 const createOrderUseCase = new CreateOrderUseCase(

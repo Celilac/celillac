@@ -6,6 +6,7 @@ import { PgPaymentRepository } from '../../../infrastructure/database/payment/Pg
 import { PgPartnerFinancialAccountRepository } from '../../../infrastructure/database/payment/PgPartnerFinancialAccountRepository';
 import { PgOrderRepository } from '../../../infrastructure/database/order/PgOrderRepository';
 import { PgPartnerRepository } from '../../../infrastructure/database/partner/PgPartnerRepository';
+import { PgAuditLogRepository } from '../../../infrastructure/database/audit/PgAuditLogRepository';
 import { AsaasPaymentGateway } from '../../../infrastructure/gateways/AsaasPaymentGateway';
 
 import { CheckoutOrderUseCase } from '../../../application/payment/CheckoutOrderUseCase';
@@ -32,24 +33,28 @@ const paymentRepository = new PgPaymentRepository(pool);
 const financialAccountRepository = new PgPartnerFinancialAccountRepository(pool);
 const orderRepository = new PgOrderRepository(pool);
 const partnerRepository = new PgPartnerRepository(pool);
+const auditLogRepository = new PgAuditLogRepository(pool);
 const paymentGateway = new AsaasPaymentGateway();
 
 const checkoutOrderUseCase = new CheckoutOrderUseCase(
   orderRepository,
   paymentRepository,
   financialAccountRepository,
-  paymentGateway
+  paymentGateway,
+  auditLogRepository
 );
 
 const setupFinancialAccountUseCase = new SetupPartnerFinancialAccountUseCase(
   partnerRepository,
   financialAccountRepository,
-  paymentGateway
+  paymentGateway,
+  auditLogRepository
 );
 
 const handleAsaasWebhookUseCase = new HandleAsaasWebhookUseCase(
   paymentRepository,
-  orderRepository
+  orderRepository,
+  auditLogRepository
 );
 
 const paymentController = new PaymentController(

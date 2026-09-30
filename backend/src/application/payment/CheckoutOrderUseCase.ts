@@ -7,6 +7,8 @@ import { IPaymentGateway } from '../../domain/payment/services/IPaymentGateway';
 import { PaymentMethod, PaymentStatus } from '../../domain/payment/value-objects/PaymentStatus';
 import { Payment } from '../../domain/payment/entities/Payment';
 import { OrderStatus } from '../../domain/order/value-objects/OrderStatus';
+import { IAuditLogRepository } from '../../domain/audit/repositories/IAuditLogRepository';
+import { AuditLog } from '../../domain/audit/AuditLog';
 
 export interface CheckoutCustomerInfo {
   name: string;
@@ -41,7 +43,8 @@ export class CheckoutOrderUseCase {
     private readonly orderRepository: IOrderRepository,
     private readonly paymentRepository: IPaymentRepository,
     private readonly financialAccountRepository: IPartnerFinancialAccountRepository,
-    private readonly paymentGateway: IPaymentGateway
+    private readonly paymentGateway: IPaymentGateway,
+    private readonly auditLogRepository?: IAuditLogRepository
   ) {}
 
   async execute(dto: CheckoutOrderDTO): Promise<Result<CheckoutOrderOutputDTO>> {
@@ -195,6 +198,27 @@ export class CheckoutOrderUseCase {
 
     await this.paymentRepository.save(payment);
     await this.orderRepository.save(order);
+
+    if (this.auditLogRepository) {
+      const logResult = AuditLog.create({
+        entityType: 'PAYMENT',
+        entityId: payment.id,
+        action: 'PAYMENT_CHECKOUT_ATTEMPT',
+        actorId: dto.consumerId,
+        actorRole: 'CONSUMER',
+        changes: {
+          orderId: order.id,
+          method: payment.method,
+          status: payment.status,
+          grossAmount: payment.grossAmount,
+          idempotencyKey: payment.idempotencyKey,
+        },
+        reason: 'Tentativa de checkout iniciada pelo consumidor',
+      });
+      if (logResult.isSuccess) {
+        await this.auditLogRepository.save(logResult.getValue());
+      }
+    }
 
     return Result.ok<CheckoutOrderOutputDTO>({
       paymentId: payment.id,

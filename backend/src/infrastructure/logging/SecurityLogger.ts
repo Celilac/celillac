@@ -1,5 +1,6 @@
 // backend/src/infrastructure/logging/SecurityLogger.ts
 import crypto from 'crypto';
+import { DataMasker } from '../security/DataMasker';
 
 export type SecurityLogLevel = 'INFO' | 'WARN' | 'ERROR' | 'CRITICAL';
 
@@ -10,7 +11,11 @@ export type SecurityEventType =
   | 'SECURITY_ACCESS_FORBIDDEN'
   | 'SECURITY_RATE_LIMIT_TRIGGERED'
   | 'SECURITY_BOT_BLOCKED'
-  | 'SECURITY_MALICIOUS_UPLOAD_BLOCKED';
+  | 'SECURITY_MALICIOUS_UPLOAD_BLOCKED'
+  | 'PAYMENT_CHECKOUT_ATTEMPT'
+  | 'PAYMENT_PROCESSED'
+  | 'PAYMENT_REFUNDED'
+  | 'PARTNER_FINANCIAL_ACCOUNT_CONFIGURED';
 
 export interface SecurityLogPayload {
   timestamp: string;
@@ -30,15 +35,11 @@ export interface SecurityLogPayload {
  *
  * Gera logs estruturados em JSON de linha única para ingestão em ferramentas
  * de SIEM e APM (Datadog, ElasticSearch, CloudWatch, Loki).
- * Mascara dados sensíveis (e-mails via hash SHA-256 / anonimização) para cumprir LGPD/PII.
+ * Mascara dados sensíveis (e-mails, CPFs, cartões via DataMasker) para cumprir LGPD/PII e PCI-DSS.
  */
 export class SecurityLogger {
   private static anonymizeEmail(email?: string): string | undefined {
-    if (!email) return undefined;
-    const [user, domain] = email.split('@');
-    if (!domain) return '***';
-    const maskedUser = user.length > 2 ? `${user.substring(0, 2)}***` : '***';
-    return `${maskedUser}@${domain}`;
+    return DataMasker.maskEmail(email);
   }
 
   private static hashEmail(email?: string): string | undefined {
@@ -47,7 +48,12 @@ export class SecurityLogger {
   }
 
   static writeLog(payload: SecurityLogPayload): void {
-    const formatted = JSON.stringify(payload);
+    const sanitizedDetails = payload.details ? DataMasker.maskSensitiveData(payload.details) : undefined;
+    const sanitizedPayload: SecurityLogPayload = {
+      ...payload,
+      details: sanitizedDetails,
+    };
+    const formatted = JSON.stringify(sanitizedPayload);
     if (payload.level === 'ERROR' || payload.level === 'CRITICAL') {
       console.error(`[AppSec]: ${formatted}`);
     } else {
@@ -146,4 +152,101 @@ export class SecurityLogger {
       reason,
     });
   }
+
+  static logPaymentCheckoutAttempt(data: {
+    ip: string;
+    actorId: string;
+    orderId: string;
+    amount: number;
+    paymentMethod: string;
+    idempotencyKey?: string;
+  }): void {
+    this.writeLog({
+      timestamp: new Date().toISOString(),
+      level: 'INFO',
+      event: 'PAYMENT_CHECKOUT_ATTEMPT',
+      ip: data.ip,
+      actorId: data.actorId,
+      targetId: data.orderId,
+      path: '/payments/checkout',
+      details: {
+        amount: data.amount,
+        paymentMethod: data.paymentMethod,
+        idempotencyKey: data.idempotencyKey,
+      },
+      reason: 'Início de processamento de checkout de pedido.',
+    });
+  }
+
+  static logPaymentProcessed(data: {
+    ip?: string;
+    orderId: string;
+    paymentId: string;
+    status: string;
+    gatewayTransactionId?: string;
+  }): void {
+    this.writeLog({
+      timestamp: new Date().toISOString(),
+      level: 'INFO',
+      event: 'PAYMENT_PROCESSED',
+      ip: data.ip || '127.0.0.1',
+      targetId: data.paymentId,
+      path: '/payments/webhook/asaas',
+      details: {
+        orderId: data.orderId,
+        status: data.status,
+        gatewayTransactionId: data.gatewayTransactionId,
+      },
+      reason: `Pagamento processado com status: ${data.status}`,
+    });
+  }
+
+  static logPaymentRefunded(data: {
+    ip?: string;
+    actorId?: string;
+    orderId?: string;
+    paymentId: string;
+    refundAmount: number;
+    reason?: string;
+  }): void {
+    this.writeLog({
+      timestamp: new Date().toISOString(),
+      level: 'WARN',
+      event: 'PAYMENT_REFUNDED',
+      ip: data.ip || '127.0.0.1',
+      actorId: data.actorId,
+      targetId: data.paymentId,
+      details: {
+        orderId: data.orderId,
+        refundAmount: data.refundAmount,
+      },
+      reason: data.reason || 'Estorno financeiro processado.',
+    });
+  }
+
+  static logPartnerFinancialAccountConfigured(data: {
+    ip: string;
+    actorId: string;
+    partnerId: string;
+    pixKeyType: string;
+    pixKey: string;
+    bankCode?: string;
+  }): void {
+    this.writeLog({
+      timestamp: new Date().toISOString(),
+      level: 'INFO',
+      event: 'PARTNER_FINANCIAL_ACCOUNT_CONFIGURED',
+      ip: data.ip,
+      actorId: data.actorId,
+      targetId: data.partnerId,
+      path: '/payments/partner/financial-account',
+      details: {
+        pixKeyType: data.pixKeyType,
+        pixKey: data.pixKey,
+        bankCode: data.bankCode,
+      },
+      reason: 'Configuração ou atualização de dados bancários/PIX para split Asaas.',
+    });
+  }
 }
+

@@ -10,6 +10,7 @@ import { IPartnerFinancialAccountRepository } from '../../../../src/domain/payme
 import { IPaymentRefundRepository } from '../../../../src/domain/payment/repositories/IPaymentRefundRepository';
 import { IPartnerRepository } from '../../../../src/domain/partner/repositories/IPartnerRepository';
 import { IPaymentGateway } from '../../../../src/domain/payment/services/IPaymentGateway';
+import { IAuditLogRepository } from '../../../../src/domain/audit/repositories/IAuditLogRepository';
 
 import { Order } from '../../../../src/domain/order/entities/Order';
 import { OrderItem } from '../../../../src/domain/order/entities/OrderItem';
@@ -386,6 +387,147 @@ describe('Payment Application Use Cases Unit Tests', () => {
       });
       expect(payment.status).toBe(PaymentStatus.REFUNDED);
       expect(refundRepository.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('Auditoria de Eventos Financeiros (AuditLogRepository)', () => {
+    let mockAuditRepo: jest.Mocked<IAuditLogRepository>;
+
+    beforeEach(() => {
+      mockAuditRepo = {
+        save: jest.fn().mockResolvedValue(undefined),
+        findByEntity: jest.fn().mockResolvedValue([]),
+      };
+    });
+
+    it('deve registrar PAYMENT_CHECKOUT_ATTEMPT no audit_logs durante o checkout', async () => {
+      const order = createTestOrder('order-audit-1');
+      orderRepository.findById.mockResolvedValue(order);
+      paymentRepository.findByIdempotencyKey.mockResolvedValue(null);
+      paymentRepository.findByOrderId.mockResolvedValue(null);
+      financialAccountRepository.findByPartnerId.mockResolvedValue(null);
+      paymentGateway.createPixCharge.mockResolvedValue(
+        Result.ok({
+          transactionId: 'pay_asaas_audit',
+          pixQrCode: 'base64...',
+          pixCopyPaste: 'pix-code...',
+          expiresAt: new Date(),
+        })
+      );
+
+      const useCase = new CheckoutOrderUseCase(
+        orderRepository,
+        paymentRepository,
+        financialAccountRepository,
+        paymentGateway,
+        mockAuditRepo
+      );
+
+      const result = await useCase.execute({
+        orderId: 'order-audit-1',
+        consumerId,
+        method: PaymentMethod.PIX,
+      });
+
+      expect(result.isSuccess).toBe(true);
+      expect(mockAuditRepo.save).toHaveBeenCalledTimes(1);
+      const savedLog = mockAuditRepo.save.mock.calls[0][0];
+      expect(savedLog.action).toBe('PAYMENT_CHECKOUT_ATTEMPT');
+      expect(savedLog.entityType).toBe('PAYMENT');
+      expect(savedLog.actorId).toBe(consumerId);
+    });
+
+    it('deve registrar PARTNER_FINANCIAL_ACCOUNT_CONFIGURED mascarando a chave PIX', async () => {
+      partnerRepository.findById.mockResolvedValue(mockPartner);
+      financialAccountRepository.findByPartnerId.mockResolvedValue(null);
+      paymentGateway.createSubaccount.mockResolvedValue(Result.ok({ subaccountId: 'sub_123' }));
+
+      const useCase = new SetupPartnerFinancialAccountUseCase(
+        partnerRepository,
+        financialAccountRepository,
+        paymentGateway,
+        mockAuditRepo
+      );
+
+      const result = await useCase.execute({
+        partnerId,
+        userId: partnerUserId,
+        userRole: 'PARTNER',
+        pixKey: '12345678901',
+        pixKeyType: 'CPF' as any,
+        bankCode: '033',
+      });
+
+      expect(result.isSuccess).toBe(true);
+      expect(mockAuditRepo.save).toHaveBeenCalledTimes(1);
+      const savedLog = mockAuditRepo.save.mock.calls[0][0];
+      expect(savedLog.action).toBe('PARTNER_FINANCIAL_ACCOUNT_CONFIGURED');
+      expect(savedLog.changes.pixKey).toBe('123******01');
+    });
+
+    it('deve registrar PAYMENT_PROCESSED no webhook de confirmação', async () => {
+      const payment = Payment.create({
+        orderId: 'order-audit-2',
+        consumerId,
+        partnerId,
+        method: PaymentMethod.PIX,
+        subtotalAmount: 50.0,
+        gatewayTransactionId: 'pay_asaas_processed',
+        status: PaymentStatus.PENDING,
+      }).getValue();
+
+      paymentRepository.findByGatewayTransactionId.mockResolvedValue(payment);
+      orderRepository.findById.mockResolvedValue(createTestOrder('order-audit-2'));
+
+      const useCase = new HandleAsaasWebhookUseCase(paymentRepository, orderRepository, mockAuditRepo);
+
+      const result = await useCase.execute({
+        event: 'PAYMENT_RECEIVED',
+        payment: {
+          id: 'pay_asaas_processed',
+          value: 50.0,
+          status: 'RECEIVED',
+          billingType: 'PIX',
+        },
+      });
+
+      expect(result.isSuccess).toBe(true);
+      expect(mockAuditRepo.save).toHaveBeenCalledTimes(1);
+      const savedLog = mockAuditRepo.save.mock.calls[0][0];
+      expect(savedLog.action).toBe('PAYMENT_PROCESSED');
+    });
+
+    it('deve registrar PAYMENT_REFUNDED no RefundPaymentUseCase', async () => {
+      const payment = Payment.create({
+        orderId: 'order-audit-3',
+        consumerId,
+        partnerId,
+        method: PaymentMethod.PIX,
+        subtotalAmount: 75.0,
+        gatewayTransactionId: 'pay_asaas_ref',
+        status: PaymentStatus.PAID,
+      }).getValue();
+
+      paymentRepository.findById.mockResolvedValue(payment);
+      paymentGateway.refundCharge.mockResolvedValue(Result.ok({ gatewayRefundId: 'ref_123' }));
+
+      const useCase = new RefundPaymentUseCase(
+        paymentRepository,
+        refundRepository,
+        paymentGateway,
+        mockAuditRepo
+      );
+
+      const result = await useCase.execute({
+        paymentId: payment.id,
+        reason: 'Restrição detectada tardiamente',
+      });
+
+      expect(result.isSuccess).toBe(true);
+      expect(mockAuditRepo.save).toHaveBeenCalledTimes(1);
+      const savedLog = mockAuditRepo.save.mock.calls[0][0];
+      expect(savedLog.action).toBe('PAYMENT_REFUNDED');
+      expect(savedLog.reason).toBe('Restrição detectada tardiamente');
     });
   });
 });
