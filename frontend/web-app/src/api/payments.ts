@@ -28,6 +28,7 @@ export interface CheckoutInput {
     email: string;
     cpfCnpj: string;
   };
+  forceNew?: boolean;
 }
 
 export interface PartnerFinancialAccountDTO {

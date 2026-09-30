@@ -67,7 +67,24 @@ export class AsaasPaymentGateway implements IPaymentGateway {
     if (!this.apiKey || process.env.NODE_ENV === 'test') {
       const expiresAt = new Date();
       expiresAt.setMinutes(expiresAt.getMinutes() + 30);
-      const pixCopyPaste = `00020126580014br.gov.bcb.pix0136${input.orderId}520400005303986540${input.grossAmount}5802BR5913CELILAC6009SAOPAULO62070503***6304ABCD`;
+      const formattedAmount = input.grossAmount.toFixed(2);
+      const rawPayload = `00020126580014br.gov.bcb.pix0136${input.orderId}520400005303986540${formattedAmount}5802BR5913CELILAC LTDA6009SAO PAULO62070503***6304`;
+      
+      // Cálculo do CRC16-CCITT (Polinômio 0x1021) conforme padrão Bacen EMV-Co
+      let crc = 0xffff;
+      for (let i = 0; i < rawPayload.length; i++) {
+        crc ^= rawPayload.charCodeAt(i) << 8;
+        for (let j = 0; j < 8; j++) {
+          if ((crc & 0x8000) !== 0) {
+            crc = ((crc << 1) ^ 0x1021) & 0xffff;
+          } else {
+            crc = (crc << 1) & 0xffff;
+          }
+        }
+      }
+      const crcHex = crc.toString(16).toUpperCase().padStart(4, '0');
+      const pixCopyPaste = `${rawPayload}${crcHex}`;
+
       return Result.ok<CreatePixChargeOutput>({
         transactionId: `pay_asaas_${Date.now()}`,
         pixQrCode: `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(pixCopyPaste)}`,

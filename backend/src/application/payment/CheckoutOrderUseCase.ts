@@ -23,6 +23,7 @@ export interface CheckoutOrderDTO {
   creditCardToken?: string;
   customerInfo?: CheckoutCustomerInfo;
   idempotencyKey?: string;
+  forceNew?: boolean;
 }
 
 export interface CheckoutOrderOutputDTO {
@@ -58,7 +59,7 @@ export class CheckoutOrderUseCase {
     }
 
     // 1. Idempotência por chave explícita (Idempotency-Key)
-    if (dto.idempotencyKey) {
+    if (dto.idempotencyKey && !dto.forceNew) {
       const existingByKey = await this.paymentRepository.findByIdempotencyKey(dto.idempotencyKey);
       if (existingByKey) {
         return Result.ok<CheckoutOrderOutputDTO>({
@@ -79,9 +80,25 @@ export class CheckoutOrderUseCase {
     // 2. Idempotência por estado de pedido já pago ou cobrança idêntica pendente
     const existingForOrder = await this.paymentRepository.findByOrderId(order.id);
     if (existingForOrder) {
+      if (existingForOrder.status === PaymentStatus.PAID) {
+        return Result.ok<CheckoutOrderOutputDTO>({
+          paymentId: existingForOrder.id,
+          orderId: existingForOrder.orderId,
+          method: existingForOrder.method,
+          status: existingForOrder.status,
+          grossAmount: existingForOrder.grossAmount,
+          netPartnerAmount: existingForOrder.netPartnerAmount,
+          platformFeeAmount: existingForOrder.platformFeeAmount,
+          pixQrCode: existingForOrder.pixQrCode,
+          pixCopyPaste: existingForOrder.pixCopyPaste,
+          pixExpiresAt: existingForOrder.pixExpiresAt,
+        });
+      }
+
       if (
-        existingForOrder.status === PaymentStatus.PAID ||
-        (existingForOrder.status === PaymentStatus.PENDING && existingForOrder.method === dto.method)
+        !dto.forceNew &&
+        existingForOrder.status === PaymentStatus.PENDING &&
+        existingForOrder.method === dto.method
       ) {
         return Result.ok<CheckoutOrderOutputDTO>({
           paymentId: existingForOrder.id,
@@ -117,16 +134,18 @@ export class CheckoutOrderUseCase {
     let paymentResult: Result<Payment>;
 
     if (dto.method === PaymentMethod.PIX) {
-      const payment = Payment.create({
-        orderId: order.id,
-        consumerId: order.consumerId,
-        partnerId: order.partnerId,
-        method: PaymentMethod.PIX,
-        subtotalAmount: order.subtotalAmount,
-        deliveryFee: order.deliveryFee,
-        status: PaymentStatus.PENDING,
-        idempotencyKey: dto.idempotencyKey,
-      }).getValue();
+      const payment = (dto.forceNew && existingForOrder && existingForOrder.status === PaymentStatus.PENDING)
+        ? existingForOrder
+        : Payment.create({
+            orderId: order.id,
+            consumerId: order.consumerId,
+            partnerId: order.partnerId,
+            method: PaymentMethod.PIX,
+            subtotalAmount: order.subtotalAmount,
+            deliveryFee: order.deliveryFee,
+            status: PaymentStatus.PENDING,
+            idempotencyKey: dto.idempotencyKey,
+          }).getValue();
 
       const gatewayRes = await this.paymentGateway.createPixCharge({
         orderId: order.id,

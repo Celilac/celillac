@@ -141,7 +141,7 @@ function CheckoutPageContent() {
     return () => clearInterval(interval);
   }, [token, orderId, payment, order?.status, toast]);
 
-  const handleGeneratePix = async () => {
+  const handleGeneratePix = async (forceNew = false) => {
     if (!token || !order) return;
     setProcessing(true);
 
@@ -150,12 +150,17 @@ function CheckoutPageContent() {
         {
           orderId: order.id,
           method: 'PIX',
+          forceNew,
         },
         token
       );
 
       setPayment(paymentResult);
-      toast.success('Código PIX gerado! Efetue o pagamento no seu banco.', 'PIX Gerado');
+      setQrLoadFailed(false);
+      toast.success(
+        forceNew ? 'Novo QR Code PIX gerado com sucesso!' : 'Código PIX gerado! Efetue o pagamento no seu banco.',
+        'PIX Gerado'
+      );
     } catch (err: any) {
       toast.error(err.message || 'Falha ao gerar cobrança PIX.', 'Erro');
     } finally {
@@ -409,6 +414,16 @@ function CheckoutPageContent() {
                     <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: 1.4 }}>
                       Abra o app do seu banco, escolha a opção "PIX Copia e Cola" ou aponte a câmera para o QR Code.
                     </p>
+
+                    <button
+                      type="button"
+                      className={styles.regeneratePixBtn}
+                      onClick={() => handleGeneratePix(true)}
+                      disabled={processing}
+                      title="Clique aqui para atualizar ou gerar um novo QR Code caso tenha expirado ou falhado na leitura"
+                    >
+                      {processing ? 'Atualizando…' : '🔄 Gerar Novamente o QR Code'}
+                    </button>
                   </div>
                 ) : (
                   <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
@@ -418,7 +433,7 @@ function CheckoutPageContent() {
                     <button
                       type="button"
                       className={styles.payButton}
-                      onClick={handleGeneratePix}
+                      onClick={() => handleGeneratePix(false)}
                       disabled={processing}
                     >
                       {processing ? 'Gerando…' : `⚡ Gerar Código PIX (R$ ${order.totalAmount.toFixed(2).replace('.', ',')})`}
