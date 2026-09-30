@@ -819,7 +819,7 @@ async function seedOrdersAndPayments(emailToId: Map<string, string>): Promise<vo
       59.80,
       50.63,
       7.18,
-      'https://api.asaas.com/qr/seed_payload_001',
+      'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=00020126580014br.gov.bcb.pix0136bistro-pix-seed-key520400005303986540559.805802BR5915CELILAC%20PAGAMENTOS6009SAO%20PAULO62070503***6304ABCD',
       '00020126580014br.gov.bcb.pix0136bistro-pix-seed-key520400005303986540559.805802BR5915CELILAC PAGAMENTOS6009SAO PAULO62070503***6304ABCD',
       new Date(Date.now() + 24 * 3600 * 1000)
     ]

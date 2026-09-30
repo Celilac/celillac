@@ -67,10 +67,11 @@ export class AsaasPaymentGateway implements IPaymentGateway {
     if (!this.apiKey || process.env.NODE_ENV === 'test') {
       const expiresAt = new Date();
       expiresAt.setMinutes(expiresAt.getMinutes() + 30);
+      const pixCopyPaste = `00020126580014br.gov.bcb.pix0136${input.orderId}520400005303986540${input.grossAmount}5802BR5913CELILAC6009SAOPAULO62070503***6304ABCD`;
       return Result.ok<CreatePixChargeOutput>({
         transactionId: `pay_asaas_${Date.now()}`,
-        pixQrCode: `https://celilac.dev/mock-pix-qr/${input.orderId}`,
-        pixCopyPaste: `00020126580014br.gov.bcb.pix0136${input.orderId}520400005303986540${input.grossAmount}5802BR5913CELILAC6009SAOPAULO62070503***6304ABCD`,
+        pixQrCode: `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(pixCopyPaste)}`,
+        pixCopyPaste,
         expiresAt,
       });
     }

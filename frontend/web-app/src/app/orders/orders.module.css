@@ -63,7 +63,9 @@
 .cardHeader {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   margin-bottom: 1rem;
   border-bottom: 1px solid var(--color-border);
   padding-bottom: 0.85rem;
@@ -82,12 +84,18 @@
 }
 
 .statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.35rem 0.75rem;
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.25;
 }
 
 .statusAwaitingPayment {
@@ -284,4 +292,33 @@
 
 .modalConfirmBtn:hover {
   opacity: 0.9;
+}
+
+@media (max-width: 640px) {
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .statusBadge {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .cardFooter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .actionsGroup {
+    flex-direction: column;
+  }
+
+  .actionsGroup > * {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
 }

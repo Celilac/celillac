@@ -153,7 +153,7 @@ export default function MyOrdersPage() {
                         })}
                       </div>
                     </div>
-                    <div>{getStatusBadge(order.status)}</div>
+                    {getStatusBadge(order.status)}
                   </div>
 
                   <div className={styles.itemsSummary}>
