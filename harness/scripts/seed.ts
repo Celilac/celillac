@@ -481,6 +481,107 @@ async function createCertificationsTableIfNotExists(): Promise<void> {
   console.log('  ✅ Tabela product_certifications garantida.');
 }
 
+async function createOrdersAndPaymentsTablesIfNotExists(): Promise<void> {
+  // Orders & Items (Migration 025)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id UUID PRIMARY KEY,
+      consumer_id UUID NOT NULL REFERENCES users(id),
+      partner_id UUID NOT NULL REFERENCES partners(id),
+      status VARCHAR(50) NOT NULL DEFAULT 'CREATED',
+      subtotal_amount NUMERIC(10,2) NOT NULL,
+      delivery_fee NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+      total_amount NUMERIC(10,2) NOT NULL,
+      allergen_check_verdict VARCHAR(50) NOT NULL DEFAULT 'SAFE',
+      notes TEXT,
+      cancelled_at TIMESTAMP WITH TIME ZONE,
+      cancel_reason TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_consumer_id ON orders(consumer_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_partner_id ON orders(partner_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC)`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS order_items (
+      id UUID PRIMARY KEY,
+      order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      product_id UUID NOT NULL REFERENCES products(id),
+      product_name VARCHAR(255) NOT NULL,
+      unit_price NUMERIC(10,2) NOT NULL,
+      quantity INT NOT NULL,
+      total_price NUMERIC(10,2) NOT NULL
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)`);
+
+  // Financial Accounts & Payments (Migration 026)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS partner_financial_accounts (
+      id UUID PRIMARY KEY,
+      partner_id UUID NOT NULL UNIQUE REFERENCES partners(id),
+      gateway_subaccount_id VARCHAR(255),
+      pix_key VARCHAR(150) NOT NULL,
+      pix_key_type VARCHAR(20) NOT NULL,
+      bank_code VARCHAR(10),
+      agency_number VARCHAR(10),
+      account_number VARCHAR(20),
+      account_type VARCHAR(20),
+      is_verified BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_partner_financial_accounts_partner_id ON partner_financial_accounts(partner_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_partner_financial_accounts_subaccount ON partner_financial_accounts(gateway_subaccount_id)`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS payments (
+      id UUID PRIMARY KEY,
+      order_id UUID NOT NULL REFERENCES orders(id),
+      consumer_id UUID NOT NULL REFERENCES users(id),
+      partner_id UUID NOT NULL REFERENCES partners(id),
+      gateway VARCHAR(50) NOT NULL DEFAULT 'ASAAS',
+      gateway_transaction_id VARCHAR(255),
+      method VARCHAR(50) NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+      gross_amount NUMERIC(10,2) NOT NULL,
+      net_partner_amount NUMERIC(10,2) NOT NULL,
+      platform_fee_amount NUMERIC(10,2) NOT NULL,
+      pix_qr_code TEXT,
+      pix_copy_paste TEXT,
+      pix_expires_at TIMESTAMP WITH TIME ZONE,
+      paid_at TIMESTAMP WITH TIME ZONE,
+      failure_reason TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_gateway_transaction_id ON payments(gateway_transaction_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_partner_id ON payments(partner_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_consumer_id ON payments(consumer_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS payment_refunds (
+      id UUID PRIMARY KEY,
+      payment_id UUID NOT NULL REFERENCES payments(id),
+      gateway_refund_id VARCHAR(255),
+      refund_amount NUMERIC(10,2) NOT NULL,
+      reason TEXT NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payment_refunds_payment_id ON payment_refunds(payment_id)`);
+
+  console.log('  ✅ Tabelas orders, order_items, partner_financial_accounts e payments garantidas.');
+}
+
 async function seedUsers(): Promise<Map<string, string>> {
   const emailToId = new Map<string, string>();
   const SALT_ROUNDS = 10;
@@ -646,6 +747,162 @@ async function seedProductCertifications(): Promise<void> {
   }
 }
 
+async function seedPartnerFinancialAccounts(): Promise<void> {
+  const partnerId = 'c0000001-0000-0000-0000-000000000001'; // Bistro Sem Gluten Fit
+  await pool.query(
+    `INSERT INTO partner_financial_accounts (
+       id, partner_id, gateway_subaccount_id, pix_key, pix_key_type,
+       bank_code, agency_number, account_number, account_type, is_verified
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     ON CONFLICT (partner_id) DO UPDATE SET
+       gateway_subaccount_id = EXCLUDED.gateway_subaccount_id,
+       pix_key               = EXCLUDED.pix_key,
+       pix_key_type          = EXCLUDED.pix_key_type,
+       bank_code             = EXCLUDED.bank_code,
+       agency_number         = EXCLUDED.agency_number,
+       account_number        = EXCLUDED.account_number,
+       account_type          = EXCLUDED.account_type,
+       is_verified           = EXCLUDED.is_verified,
+       updated_at            = CURRENT_TIMESTAMP`,
+    [
+      'fa000001-0000-0000-0000-000000000001',
+      partnerId,
+      'sub_asaas_bistro_fit_001',
+      '12.345.678/0001-95',
+      'CNPJ',
+      '260',
+      '0001',
+      '1234567-8',
+      'CHECKING',
+      true,
+    ]
+  );
+  console.log('  🏦 Subconta financeira configurada para Bistro Sem Gluten Fit (Chave PIX: 12.345.678/0001-95)');
+}
+
+async function seedOrdersAndPayments(emailToId: Map<string, string>): Promise<void> {
+  const celiacoId = emailToId.get('celiaco.classico@seed.celilac.dev');
+  if (!celiacoId) return;
+
+  const partnerId = 'c0000001-0000-0000-0000-000000000001'; // Bistro Sem Gluten Fit
+  const breadId = 'b0000008-0000-0000-0000-000000000001';
+  const cakeId = 'b0000008-0000-0000-0000-000000000002';
+
+  // 1. Pedido 1: Em aberto para teste de Checkout PIX (AWAITING_PAYMENT)
+  const order1Id = 'd0000001-0000-0000-0000-000000000001';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [order1Id, celiacoId, partnerId, 'AWAITING_PAYMENT', 59.80, 0.00, 59.80, 'SAFE', 'Favor embalar separadamente para evitar contato.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000001', order1Id, breadId, 'Pão Francês Artesanal Sem Glúten', 29.90, 2, 59.80]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount, pix_qr_code, pix_copy_paste, pix_expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000001',
+      order1Id,
+      celiacoId,
+      partnerId,
+      'ASAAS',
+      'pay_seed_asaas_001',
+      'PIX',
+      'PENDING',
+      59.80,
+      50.63,
+      7.18,
+      'https://api.asaas.com/qr/seed_payload_001',
+      '00020126580014br.gov.bcb.pix0136bistro-pix-seed-key520400005303986540559.805802BR5915CELILAC PAGAMENTOS6009SAO PAULO62070503***6304ABCD',
+      new Date(Date.now() + 24 * 3600 * 1000)
+    ]
+  );
+  console.log(`  📦 [AWAITING_PAYMENT] Pedido Checkout PIX: ${order1Id} (Total: R$ 59,80)`);
+
+  // 2. Pedido 2: Pago e em preparo na cozinha (PREPARING)
+  const order2Id = 'd0000001-0000-0000-0000-000000000002';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [order2Id, celiacoId, partnerId, 'PREPARING', 35.00, 0.00, 35.00, 'SAFE', 'Para viagem imediata.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000002', order2Id, cakeId, 'Bolo de Cenoura com Chocolate Sem Leite', 35.00, 1, 35.00]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount, paid_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000002',
+      order2Id,
+      celiacoId,
+      partnerId,
+      'ASAAS',
+      'pay_seed_asaas_002',
+      'PIX',
+      'PAID',
+      35.00,
+      28.81,
+      4.20,
+      new Date()
+    ]
+  );
+  console.log(`  🍳 [PREPARING] Pedido em Cozinha do Parceiro: ${order2Id} (Total: R$ 35,00)`);
+
+  // 3. Pedido 3: Concluído e Entregue (DELIVERED)
+  const order3Id = 'd0000001-0000-0000-0000-000000000003';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [order3Id, celiacoId, partnerId, 'DELIVERED', 94.80, 0.00, 94.80, 'SAFE', 'Entregar na portaria.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000003', order3Id, breadId, 'Pão Francês Artesanal Sem Glúten', 29.90, 2, 59.80]
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000004', order3Id, cakeId, 'Bolo de Cenoura com Chocolate Sem Leite', 35.00, 1, 35.00]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount, paid_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000003',
+      order3Id,
+      celiacoId,
+      partnerId,
+      'ASAAS',
+      'pay_seed_asaas_003',
+      'PIX',
+      'PAID',
+      94.80,
+      81.43,
+      11.38,
+      new Date(Date.now() - 3600 * 1000 * 24)
+    ]
+  );
+  console.log(`  🛵 [DELIVERED] Pedido Concluído e Entregue: ${order3Id} (Total: R$ 94,80)`);
+}
+
 // ─── Entry point ────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -658,10 +915,11 @@ async function main(): Promise<void> {
     await pool.query('SELECT 1');
     console.log('📡 Conexão com PostgreSQL estabelecida.\n');
 
-    // 1. Garantir tabelas products e certifications
+    // 1. Garantir tabelas products, certifications, orders e payments
     console.log('📦 Verificando tabelas…');
     await createProductsTableIfNotExists();
     await createCertificationsTableIfNotExists();
+    await createOrdersAndPaymentsTablesIfNotExists();
     console.log('');
 
     // 2. Usuários
@@ -689,25 +947,47 @@ async function main(): Promise<void> {
     await seedProductCertifications();
     console.log('');
 
+    // 7. Subcontas Financeiras e Chaves PIX
+    console.log('💳 Configurando subcontas financeiras e chaves PIX…');
+    await seedPartnerFinancialAccounts();
+    console.log('');
+
+    // 8. Pedidos e Pagamentos (Casos de teste do Checkout e Split)
+    console.log('📦 Inserindo pedidos e pagamentos de teste…');
+    await seedOrdersAndPayments(emailToId);
+    console.log('');
+
     // Resumo final
     const { rows: userCount } = await pool.query('SELECT COUNT(*) FROM users');
     const { rows: profileCount } = await pool.query('SELECT COUNT(*) FROM food_profiles');
     const { rows: partnerCount } = await pool.query('SELECT COUNT(*) FROM partners');
     const { rows: productCount } = await pool.query('SELECT COUNT(*) FROM products');
     const { rows: certCount } = await pool.query('SELECT COUNT(*) FROM product_certifications');
+    const { rows: orderCount } = await pool.query('SELECT COUNT(*) FROM orders');
+    const { rows: paymentCount } = await pool.query('SELECT COUNT(*) FROM payments');
+    const { rows: financialAccountCount } = await pool.query('SELECT COUNT(*) FROM partner_financial_accounts');
 
     console.log('═'.repeat(55));
     console.log('✅ Seed concluído com sucesso!');
-    console.log(`   👤 Usuários:       ${userCount[0].count}`);
-    console.log(`   🥗 Perfis:         ${profileCount[0].count}`);
-    console.log(`   🏢 Parceiros:      ${partnerCount[0].count}`);
-    console.log(`   🏪 Produtos:       ${productCount[0].count}`);
-    console.log(`   🏅 Certificações:  ${certCount[0].count}`);
+    console.log(`   👤 Usuários:            ${userCount[0].count}`);
+    console.log(`   🥗 Perfis:              ${profileCount[0].count}`);
+    console.log(`   🏢 Parceiros:           ${partnerCount[0].count}`);
+    console.log(`   🏪 Produtos:            ${productCount[0].count}`);
+    console.log(`   🏅 Certificações:       ${certCount[0].count}`);
+    console.log(`   📦 Pedidos:             ${orderCount[0].count}`);
+    console.log(`   💳 Pagamentos:          ${paymentCount[0].count}`);
+    console.log(`   🏦 Subcontas PIX:       ${financialAccountCount[0].count}`);
     console.log('');
     console.log('📋 Credenciais de teste:');
     for (const user of USERS) {
       console.log(`   ${user.email.padEnd(45)} senha: Seed@123456`);
     }
+    console.log('');
+    console.log('🚀 URLs de Teste Rápido (Web App em http://localhost:3001):');
+    console.log('   🛒 Checkout PIX em Aberto: /checkout/d0000001-0000-0000-0000-000000000001');
+    console.log('   📦 Meus Pedidos (Celíaco): /orders');
+    console.log('   🍳 Fila de Pedidos (Cozinha do Parceiro): /partner/orders');
+    console.log('   💰 Extrato & Split 12% (Financeiro do Parceiro): /partner/financial');
     console.log('═'.repeat(55));
   } catch (err) {
     console.error('❌ Erro no seed:', err);
