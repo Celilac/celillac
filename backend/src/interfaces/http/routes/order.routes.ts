@@ -152,6 +152,7 @@ router.get('/partner/:partnerId', authMiddleware, (req, res) => orderController.
 router.post('/:id/cancel', authMiddleware, (req, res) => orderController.cancelOrder(req, res));
 router.patch('/:id/status', authMiddleware, (req, res) => orderController.updateStatus(req, res));
 router.post('/:id/report-non-payment', authMiddleware, (req, res) => orderController.reportNonPayment(req, res));
+router.post('/:id/report-problem', authMiddleware, (req, res) => orderController.reportNonPayment(req, res));
 router.post('/test-notification', (req, res) => {
   sseOrderNotificationHub.broadcastTestNotification(req.body || {});
   res.json({ success: true, message: 'Notificação de teste transmitida com sucesso!' });

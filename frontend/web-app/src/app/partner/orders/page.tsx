@@ -7,9 +7,67 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
 import { partnerApi, PartnerSummary } from '@/api/partner';
-import { ordersApi, OrderDTO } from '@/api/orders';
+import { ordersApi, OrderDTO, OrderProblemReason } from '@/api/orders';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import styles from './partner-orders.module.css';
+
+const PROBLEM_OPTIONS: Array<{
+  reason: OrderProblemReason;
+  icon: string;
+  title: string;
+  desc: string;
+  isSevere: boolean;
+}> = [
+  {
+    reason: 'CLIENT_ABSENT',
+    icon: '🏃',
+    title: 'Cliente ausente / Não atende entregador',
+    desc: 'Entregador aguardou no local e não conseguiu contato por telefone ou interfone.',
+    isSevere: true,
+  },
+  {
+    reason: 'CLIENT_REFUSED_PAYMENT',
+    icon: '💳',
+    title: 'Cliente recusou o pagamento na entrega',
+    desc: 'Cliente se negou a realizar o pagamento na maquininha ou em dinheiro.',
+    isSevere: true,
+  },
+  {
+    reason: 'ADDRESS_UNREACHABLE',
+    icon: '📍',
+    title: 'Endereço incorreto, incompleto ou inacessível',
+    desc: 'Endereço inexistente, sem número, fora da rota ou sem acesso de segurança.',
+    isSevere: false,
+  },
+  {
+    reason: 'FRAUDULENT_ORDER',
+    icon: '🎭',
+    title: 'Suspeita de trote ou pedido fraudulento',
+    desc: 'Telefone inválido, dados falsos ou comportamento suspeito do cliente.',
+    isSevere: true,
+  },
+  {
+    reason: 'CLIENT_REQUESTED_CANCELLATION',
+    icon: '✋',
+    title: 'Cliente solicitou o cancelamento',
+    desc: 'O cliente entrou em contato com a loja pedindo expressamente o cancelamento.',
+    isSevere: false,
+  },
+  {
+    reason: 'OUT_OF_STOCK',
+    icon: '🍳',
+    title: 'Item ou ingrediente esgotado na cozinha',
+    desc: 'A cozinha não possui insumos seguros disponíveis para atender ao pedido.',
+    isSevere: false,
+  },
+  {
+    reason: 'OTHER',
+    icon: '💬',
+    title: 'Outro problema com o cliente ou entrega',
+    desc: 'Outra ocorrência não listada acima (detalhar no campo abaixo).',
+    isSevere: false,
+  },
+];
 
 const STATUS_LABELS: Record<string, string> = {
   CREATED: 'Aguardando Pagamento',
@@ -39,9 +97,9 @@ function PartnerOrdersContent() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'NEW' | 'PREPARING' | 'READY' | 'COMPLETED'>('NEW');
 
-  // Estado do Modal de Denúncia / Não Pagamento
+  // Estado do Modal de Reportar Problema / Cancelamento
   const [reportingOrder, setReportingOrder] = useState<OrderDTO | null>(null);
-  const [reportReason, setReportReason] = useState<'CLIENT_REFUSED_PAYMENT' | 'CLIENT_ABSENT' | 'FRAUDULENT_ORDER'>('CLIENT_REFUSED_PAYMENT');
+  const [reportReason, setReportReason] = useState<OrderProblemReason>('CLIENT_ABSENT');
   const [reportDetails, setReportDetails] = useState<string>('');
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
@@ -204,13 +262,13 @@ function PartnerOrdersContent() {
 
   const handleOpenReportModal = (order: OrderDTO) => {
     setReportingOrder(order);
-    setReportReason('CLIENT_REFUSED_PAYMENT');
+    setReportReason('CLIENT_ABSENT');
     setReportDetails('');
   };
 
   const handleCloseReportModal = () => {
     setReportingOrder(null);
-    setReportReason('CLIENT_REFUSED_PAYMENT');
+    setReportReason('CLIENT_ABSENT');
     setReportDetails('');
   };
 
@@ -218,21 +276,26 @@ function PartnerOrdersContent() {
     e.preventDefault();
     if (!token || !reportingOrder) return;
 
+    if (reportReason === 'OTHER' && !reportDetails.trim()) {
+      toast.error('Por favor, descreva os detalhes do ocorrido para a opção "Outro".', 'Atenção');
+      return;
+    }
+
     setIsSubmittingReport(true);
     try {
-      await ordersApi.reportNonPayment(
+      await ordersApi.reportProblem(
         reportingOrder.id,
-        { reason: reportReason, details: reportDetails },
+        { reason: reportReason, details: reportDetails.trim() || undefined },
         token
       );
       toast.success(
-        'Denúncia registrada com sucesso. O pedido foi cancelado e a comissão da plataforma foi isentada.',
-        'Sucesso'
+        'Ocorrência registrada com sucesso. O pedido foi cancelado e a comissão da plataforma foi isentada.',
+        'Pedido Cancelado'
       );
       handleCloseReportModal();
       fetchPartnerOrders();
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao registrar denúncia.', 'Erro');
+      toast.error(err.message || 'Erro ao registrar ocorrência.', 'Erro');
     } finally {
       setIsSubmittingReport(false);
     }
@@ -660,20 +723,16 @@ function PartnerOrdersContent() {
                           </button>
                         )}
 
-                        {/* Denúncia de Não Pagamento / Cliente Ausente para pedidos na entrega que já foram aceitos/despachados */}
-                        {isDelivery &&
-                          order.status !== 'CREATED' &&
-                          order.status !== 'AWAITING_PAYMENT' &&
-                          order.status !== 'DELIVERED' &&
-                          order.status !== 'CANCELLED' && (
-                            <button
-                              type="button"
-                              className={styles.btnReportNonPayment}
-                              onClick={() => handleOpenReportModal(order)}
-                              title="Reportar cliente ausente ou recusa de pagamento na entrega"
-                            >
-                              🚨 Reportar Não Pagamento
-                            </button>
+                        {/* Reportar Problema com o Pedido / Cliente (Referência iFood) */}
+                        {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
+                          <button
+                            type="button"
+                            className={styles.btnReportNonPayment}
+                            onClick={() => handleOpenReportModal(order)}
+                            title="Reportar ocorrência ou problema com este pedido ou cliente"
+                          >
+                            🚨 Reportar Problema
+                          </button>
                         )}
                       </div>
                     </div>
@@ -684,56 +743,101 @@ function PartnerOrdersContent() {
           </>
         )}
 
-        {/* Modal de Denúncia / Não Pagamento */}
+        {/* Modal de Reportar Problema / Ocorrência com Pedido (Referência iFood) */}
         {reportingOrder && (
           <div className={styles.modalOverlay} onClick={handleCloseReportModal}>
             <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
               <div className={styles.modalHeader}>
                 <h2 className={styles.modalTitle}>
-                  🚨 Denunciar Não Pagamento / Fraude
+                  🚨 Reportar Problema com o Pedido
                 </h2>
                 <button
                   type="button"
                   className={styles.modalClose}
                   onClick={handleCloseReportModal}
+                  aria-label="Fechar"
                 >
                   ✕
                 </button>
               </div>
 
-              <div className={styles.modalWarning}>
-                <strong>Atenção:</strong> Ao reportar esta ocorrência, o pedido <code>#{reportingOrder.id.slice(0, 8)}</code> será cancelado imediatamente. A comissão de intermediação da plataforma (12%) será <strong>estornada e zerada</strong> para o seu restaurante e o cliente perderá o direito de realizar novos pedidos com pagamento na entrega.
+              {/* Resumo do Pedido Afetado */}
+              <div className={styles.modalOrderSummary}>
+                <span>
+                  Pedido: <strong>#{reportingOrder.id.slice(0, 8)}</strong>
+                </span>
+                <span>
+                  Total: <strong>R$ {Number(reportingOrder.totalAmount).toFixed(2).replace('.', ',')}</strong>
+                </span>
+                <span>
+                  Forma:{' '}
+                  <strong>
+                    {reportingOrder.paymentMethod === 'CARD_ON_DELIVERY'
+                      ? 'Maquininha na Entrega'
+                      : reportingOrder.paymentMethod === 'CASH_ON_DELIVERY'
+                      ? 'Dinheiro na Entrega'
+                      : 'Pagamento Online'}
+                  </strong>
+                </span>
               </div>
 
               <form onSubmit={handleSubmitReport}>
                 <div className={styles.modalFormGroup}>
-                  <label className={styles.modalLabel}>Motivo da Ocorrência:</label>
-                  <select
-                    className={styles.modalSelect}
-                    value={reportReason}
-                    onChange={(e) => setReportReason(e.target.value as 'CLIENT_REFUSED_PAYMENT' | 'CLIENT_ABSENT' | 'FRAUDULENT_ORDER')}
-                  >
-                    <option value="CLIENT_REFUSED_PAYMENT">
-                      Cliente se recusou a pagar na entrega
-                    </option>
-                    <option value="CLIENT_ABSENT">
-                      Cliente ausente / Não atendeu o entregador
-                    </option>
-                    <option value="FRAUDULENT_ORDER">
-                      Pedido suspeito de trote ou fraude
-                    </option>
-                  </select>
+                  <label className={styles.modalLabel}>Selecione o motivo da ocorrência:</label>
+                  <div className={styles.problemOptionsList}>
+                    {PROBLEM_OPTIONS.map((opt) => {
+                      const isSelected = reportReason === opt.reason;
+                      return (
+                        <div
+                          key={opt.reason}
+                          className={`${styles.problemOptionCard} ${isSelected ? styles.problemOptionCardSelected : ''}`}
+                          onClick={() => setReportReason(opt.reason)}
+                        >
+                          <span className={styles.problemOptionIcon}>{opt.icon}</span>
+                          <div className={styles.problemOptionInfo}>
+                            <span className={styles.problemOptionTitle}>{opt.title}</span>
+                            <span className={styles.problemOptionDesc}>{opt.desc}</span>
+                          </div>
+                          <input
+                            type="radio"
+                            name="problemReason"
+                            className={styles.problemOptionRadio}
+                            checked={isSelected}
+                            onChange={() => setReportReason(opt.reason)}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className={styles.modalFormGroup}>
-                  <label className={styles.modalLabel}>Detalhes do Ocorrido (opcional):</label>
+                  <label className={styles.modalLabel}>
+                    Observações e detalhes do ocorrido {reportReason === 'OTHER' ? '(obrigatório)' : '(opcional)'}:
+                  </label>
                   <textarea
                     className={styles.modalTextarea}
-                    rows={3}
-                    placeholder="Ex: Entregador aguardou 20 minutos no local, cliente visualizou as mensagens mas recusou o pagamento..."
+                    rows={2}
+                    placeholder={
+                      reportReason === 'CLIENT_ABSENT'
+                        ? 'Ex: Entregador aguardou 15 min no endereço, tentou ligar 3 vezes e ninguém atendeu...'
+                        : reportReason === 'CLIENT_REFUSED_PAYMENT'
+                        ? 'Ex: Cliente se recusou a pagar com a maquininha ao receber a entrega...'
+                        : reportReason === 'ADDRESS_UNREACHABLE'
+                        ? 'Ex: Número não existe na rua informada e cliente não responde mensagens...'
+                        : 'Descreva informações adicionais que auxiliem na ocorrência...'
+                    }
                     value={reportDetails}
                     onChange={(e) => setReportDetails(e.target.value)}
+                    required={reportReason === 'OTHER'}
                   />
+                </div>
+
+                <div className={styles.modalWarning}>
+                  <strong>Impacto do Cancelamento:</strong> O pedido será cancelado imediatamente e a comissão de intermediação da plataforma (12%) será <strong>estornada e zerada</strong> para seu estabelecimento.
+                  {PROBLEM_OPTIONS.find((o) => o.reason === reportReason)?.isSevere && (
+                    <span> Por se tratar de infração de pagamento ou ausência do cliente, a conta do consumidor será prevenida de novos pedidos presenciais.</span>
+                  )}
                 </div>
 
                 <div className={styles.modalFooter}>
@@ -743,14 +847,14 @@ function PartnerOrdersContent() {
                     onClick={handleCloseReportModal}
                     disabled={isSubmittingReport}
                   >
-                    Cancelar
+                    Voltar
                   </button>
                   <button
                     type="submit"
                     className={styles.btnDangerConfirm}
                     disabled={isSubmittingReport}
                   >
-                    {isSubmittingReport ? 'Processando...' : 'Confirmar Denúncia e Cancelar'}
+                    {isSubmittingReport ? 'Processando...' : '🚨 Confirmar e Cancelar Pedido'}
                   </button>
                 </div>
               </form>
