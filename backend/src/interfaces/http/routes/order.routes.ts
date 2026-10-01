@@ -113,7 +113,13 @@ router.get('/stream', authMiddleware, async (req, res) => {
 
   const targetPartnerId = requestedPartnerId || (userPartnerIds.length > 0 ? userPartnerIds[0] : undefined);
 
-  // Cabeçalhos HTTP obrigatórios para Server-Sent Events
+  // Configuração de socket e cabeçalhos HTTP obrigatórios para Server-Sent Events (SSE)
+  if (req.socket) {
+    req.socket.setTimeout(0);
+    req.socket.setNoDelay(true);
+    req.socket.setKeepAlive(true);
+  }
+
   res.writeHead(200, {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache, no-transform',
@@ -132,8 +138,9 @@ router.get('/stream', authMiddleware, async (req, res) => {
     res,
   });
 
-  // Mensagem inicial de conexão
+  // Mensagem inicial de conexão imediata
   res.write(`event: connected\ndata: ${JSON.stringify({ clientId, partnerId: targetPartnerId, timestamp: new Date().toISOString() })}\n\n`);
+  (res as any).flush?.();
 
   req.on('close', () => {
     sseOrderNotificationHub.removeClient(clientId);

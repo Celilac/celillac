@@ -69,6 +69,9 @@ function PartnerOrdersContent() {
     onStatusUpdated: () => {
       fetchPartnerOrders();
     },
+    onPollSync: () => {
+      fetchPartnerOrders();
+    },
   });
 
   // Carregar estabelecimentos do parceiro
@@ -295,19 +298,17 @@ function PartnerOrdersContent() {
             </h1>
 
             <div
+              className={styles.statusPill}
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '20px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                backgroundColor: isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                color: isConnected ? '#10b981' : '#f87171',
-                border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                backgroundColor: isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                color: isConnected ? '#10b981' : '#f59e0b',
+                border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
               }}
-              title={isConnected ? 'Conectado em tempo real: novos pedidos pagos aparecem instantaneamente' : 'Conectando ao canal em tempo real...'}
+              title={
+                isConnected
+                  ? 'Conectado em tempo real: novos pedidos pagos aparecem instantaneamente'
+                  : 'Canal em tempo real conectando... Sincronização automática ativa.'
+              }
             >
               <span
                 style={{
@@ -315,15 +316,15 @@ function PartnerOrdersContent() {
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  backgroundColor: isConnected ? '#10b981' : '#f87171',
-                  boxShadow: isConnected ? '0 0 8px #10b981' : 'none',
+                  backgroundColor: isConnected ? '#10b981' : '#f59e0b',
+                  boxShadow: isConnected ? '0 0 8px #10b981' : '0 0 6px #f59e0b',
                 }}
               />
-              {isConnected ? 'Tempo Real Ativo' : 'Reconectando...'}
+              {isConnected ? 'Tempo Real Ativo' : 'Sincronização Ativa'}
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className={styles.headerActions}>
             {partners.length > 0 && (
               <div className={styles.selectPartnerWrapper}>
                 <label style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Local:</label>
@@ -343,16 +344,7 @@ function PartnerOrdersContent() {
 
             <Link
               href={`/partner/financial?partnerId=${selectedPartnerId}`}
-              style={{
-                padding: '0.6rem 1rem',
-                background: 'var(--color-emerald-dim)',
-                color: 'var(--color-emerald)',
-                border: '1px solid var(--color-emerald)',
-                borderRadius: '8px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                fontSize: '0.9rem',
-              }}
+              className={styles.financialButton}
             >
               💰 Painel Financeiro & PIX
             </Link>
@@ -382,7 +374,8 @@ function PartnerOrdersContent() {
                 className={`${styles.tabBtn} ${activeTab === 'NEW' ? styles.tabBtnActive : ''}`}
                 onClick={() => setActiveTab('NEW')}
               >
-                Novos Pedidos
+                <span className={styles.tabLabelDesktop}>Novos Pedidos</span>
+                <span className={styles.tabLabelMobile}>Novos</span>
                 <span className={styles.badgeCount}>
                   {orders.filter((o) => o.status === 'PAID' || o.status === 'AWAITING_PAYMENT' || o.status === 'CREATED').length}
                 </span>
@@ -393,7 +386,8 @@ function PartnerOrdersContent() {
                 className={`${styles.tabBtn} ${activeTab === 'PREPARING' ? styles.tabBtnActive : ''}`}
                 onClick={() => setActiveTab('PREPARING')}
               >
-                Em Preparo
+                <span className={styles.tabLabelDesktop}>Em Preparo</span>
+                <span className={styles.tabLabelMobile}>Preparo</span>
                 <span className={styles.badgeCount}>
                   {orders.filter((o) => o.status === 'CONFIRMED' || o.status === 'PREPARING').length}
                 </span>
@@ -404,7 +398,8 @@ function PartnerOrdersContent() {
                 className={`${styles.tabBtn} ${activeTab === 'READY' ? styles.tabBtnActive : ''}`}
                 onClick={() => setActiveTab('READY')}
               >
-                Prontos / Despachados
+                <span className={styles.tabLabelDesktop}>Prontos / Despachados</span>
+                <span className={styles.tabLabelMobile}>Prontos</span>
                 <span className={styles.badgeCount}>
                   {orders.filter((o) => o.status === 'READY_FOR_PICKUP' || o.status === 'OUT_FOR_DELIVERY').length}
                 </span>
@@ -415,7 +410,8 @@ function PartnerOrdersContent() {
                 className={`${styles.tabBtn} ${activeTab === 'COMPLETED' ? styles.tabBtnActive : ''}`}
                 onClick={() => setActiveTab('COMPLETED')}
               >
-                Histórico / Entregues
+                <span className={styles.tabLabelDesktop}>Histórico / Entregues</span>
+                <span className={styles.tabLabelMobile}>Histórico</span>
                 <span className={styles.badgeCount}>
                   {orders.filter((o) => o.status === 'DELIVERED' || o.status === 'CANCELLED').length}
                 </span>

@@ -55,6 +55,52 @@
   color: var(--color-text);
 }
 
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.financialButton {
+  padding: 0.6rem 1rem;
+  background: var(--color-emerald-dim);
+  color: var(--color-emerald);
+  border: 1px solid var(--color-emerald);
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.financialButton:hover {
+  background: var(--color-emerald);
+  color: #ffffff;
+}
+
+.tabLabelDesktop {
+  display: inline;
+}
+
+.tabLabelMobile {
+  display: none;
+}
+
 .tabsBar {
   display: flex;
   gap: 0.5rem;
@@ -683,26 +729,58 @@
     font-size: 1.4rem;
   }
 
+  .headerActions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
   .selectPartnerWrapper {
     width: 100%;
     justify-content: space-between;
   }
 
+  .financialButton {
+    width: 100%;
+    justify-content: center;
+    padding: 0.65rem;
+  }
+
+  .tabLabelDesktop {
+    display: none;
+  }
+
+  .tabLabelMobile {
+    display: inline;
+  }
+
   .tabsBar {
-    gap: 0.35rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.25rem;
     margin-bottom: 1.25rem;
-    padding-bottom: 0.4rem;
+    padding-bottom: 0.35rem;
+    overflow-x: visible;
   }
 
   .tabBtn {
-    padding: 0.5rem 0.8rem;
-    font-size: 0.82rem;
+    padding: 0.5rem 0.2rem;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.2;
   }
 
   .badgeCount {
-    margin-left: 0.35rem;
-    padding: 0.1rem 0.4rem;
-    font-size: 0.7rem;
+    margin-left: 0;
+    padding: 0.1rem 0.35rem;
+    font-size: 0.68rem;
   }
 
   .ordersGrid {

@@ -100,7 +100,15 @@ services:
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=myresolver"
       - "traefik.http.routers.backend.middlewares=security-headers,security-buffering,security-inflight,backend-ratelimit"
+      - "traefik.http.routers.backend.priority=10"
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      # Router dedicado para Server-Sent Events (SSE) sem buffering para fluxo em tempo real
+      - "traefik.http.routers.backend-sse.rule=Host(`api.celilac.com.br`) && PathPrefix(`/orders/stream`)"
+      - "traefik.http.routers.backend-sse.entrypoints=websecure"
+      - "traefik.http.routers.backend-sse.tls.certresolver=myresolver"
+      - "traefik.http.routers.backend-sse.middlewares=security-headers"
+      - "traefik.http.routers.backend-sse.service=backend"
+      - "traefik.http.routers.backend-sse.priority=100"
       # Middlewares de Proteção e Anti-DDoS do Traefik
       - "traefik.http.middlewares.security-buffering.buffering.maxRequestBodyBytes=26214400"
       - "traefik.http.middlewares.security-buffering.buffering.memRequestBodyBytes=2097152"
