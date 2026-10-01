@@ -191,6 +191,87 @@ function PartnerOrdersContent() {
 
   const filtered = filterOrders();
 
+  const renderStatusBadge = (order: OrderDTO) => {
+    const isDelivery = order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY';
+
+    if (order.status === 'CREATED' || order.status === 'AWAITING_PAYMENT') {
+      if (isDelivery) {
+        return (
+          <span className={`${styles.statusBadge} ${styles.badgePendingAccept}`}>
+            🔔 Aguardando Aceite
+          </span>
+        );
+      }
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeAwaitingPayment}`}>
+          ⏳ Aguardando Pagamento
+        </span>
+      );
+    }
+
+    if (order.status === 'PAID') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeNewPaid}`}>
+          ✨ Novo • Pago
+        </span>
+      );
+    }
+
+    if (order.status === 'CONFIRMED') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeConfirmed}`}>
+          ✔️ Confirmado
+        </span>
+      );
+    }
+
+    if (order.status === 'PREPARING') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgePreparing}`}>
+          🔥 Em Preparo
+        </span>
+      );
+    }
+
+    if (order.status === 'READY_FOR_PICKUP') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeReady}`}>
+          📦 Pronto p/ Retirada
+        </span>
+      );
+    }
+
+    if (order.status === 'OUT_FOR_DELIVERY') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeDelivery}`}>
+          🛵 Saiu para Entrega
+        </span>
+      );
+    }
+
+    if (order.status === 'DELIVERED') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeDelivered}`}>
+          🏁 Entregue
+        </span>
+      );
+    }
+
+    if (order.status === 'CANCELLED') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeCancelled}`}>
+          ✕ Cancelado
+        </span>
+      );
+    }
+
+    return (
+      <span className={`${styles.statusBadge} ${styles.badgeDefault}`}>
+        {STATUS_LABELS[order.status] || order.status}
+      </span>
+    );
+  };
+
   if (loading || isInitializing) {
     return (
       <div className={styles.container}>
@@ -303,7 +384,7 @@ function PartnerOrdersContent() {
               >
                 Novos Pedidos
                 <span className={styles.badgeCount}>
-                  {orders.filter((o) => o.status === 'PAID' || o.status === 'AWAITING_PAYMENT').length}
+                  {orders.filter((o) => o.status === 'PAID' || o.status === 'AWAITING_PAYMENT' || o.status === 'CREATED').length}
                 </span>
               </button>
 
@@ -357,47 +438,63 @@ function PartnerOrdersContent() {
                       id={`order-${order.id}`}
                       className={`${styles.orderCard} ${targetOrderId === order.id ? styles.highlightCard : ''}`}
                     >
-                      <div className={styles.cardTop}>
-                        <div>
-                          <div className={styles.orderId}>#{order.id.slice(0, 8)}</div>
-                          <div className={styles.orderTime}>
+                      {/* Top Header: ID, Data/Hora e Badge de Status */}
+                      <div className={styles.cardHeader}>
+                        <div className={styles.orderMeta}>
+                          <span className={styles.orderId}>#{order.id.slice(0, 8)}</span>
+                          <span className={styles.orderTimeDot}>•</span>
+                          <span className={styles.orderTime}>
                             {new Date(order.createdAt).toLocaleTimeString('pt-BR', {
                               hour: '2-digit',
                               minute: '2-digit',
                             })}
-                          </div>
-                          {order.paymentMethod && (
-                            <div style={{ marginTop: '0.4rem' }}>
-                              {order.paymentMethod === 'CASH_ON_DELIVERY' ? (
-                                <span className={`${styles.paymentBadge} ${styles.paymentBadgeDelivery}`}>
-                                  💵 Dinheiro na Entrega {order.changeFor ? `• Troco p/ R$ ${Number(order.changeFor).toFixed(2).replace('.', ',')}` : '• Sem troco'}
-                                </span>
-                              ) : order.paymentMethod === 'CARD_ON_DELIVERY' ? (
-                                <span className={`${styles.paymentBadge} ${styles.paymentBadgeDelivery}`}>
-                                  💳 Maquininha na Entrega
-                                </span>
-                              ) : (
-                                <span className={`${styles.paymentBadge} ${styles.paymentBadgeOnline}`}>
-                                  🛡️ Pagamento Online
-                                </span>
-                              )}
-                            </div>
-                          )}
+                          </span>
                         </div>
-                        <span className={styles.statusBadge}>
-                          {((order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY') && (order.status === 'CREATED' || order.status === 'AWAITING_PAYMENT'))
-                            ? 'Novo • Na Entrega'
-                            : STATUS_LABELS[order.status] || order.status}
-                        </span>
+                        {renderStatusBadge(order)}
+                      </div>
+
+                      {/* Banner de Forma de Pagamento em Largura Total */}
+                      <div className={styles.paymentSection}>
+                        {order.paymentMethod === 'CARD_ON_DELIVERY' ? (
+                          <div className={`${styles.paymentBanner} ${styles.paymentBannerCard}`}>
+                            <div className={styles.paymentBannerMain}>
+                              <span className={styles.paymentIcon}>💳</span>
+                              <span className={styles.paymentTitle}>Maquininha na Entrega</span>
+                            </div>
+                            <span className={styles.paymentSubtitle}>Cartão Débito / Crédito</span>
+                          </div>
+                        ) : order.paymentMethod === 'CASH_ON_DELIVERY' ? (
+                          <div className={`${styles.paymentBanner} ${styles.paymentBannerCash}`}>
+                            <div className={styles.paymentBannerMain}>
+                              <span className={styles.paymentIcon}>💵</span>
+                              <span className={styles.paymentTitle}>Dinheiro na Entrega</span>
+                            </div>
+                            <span className={styles.paymentSubtitle}>
+                              {order.changeFor ? `Troco p/ R$ ${Number(order.changeFor).toFixed(2).replace('.', ',')}` : 'Sem troco'}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className={`${styles.paymentBanner} ${styles.paymentBannerOnline}`}>
+                            <div className={styles.paymentBannerMain}>
+                              <span className={styles.paymentIcon}>🛡️</span>
+                              <span className={styles.paymentTitle}>Pagamento Online</span>
+                            </div>
+                            <span className={styles.paymentSubtitle}>
+                              {order.status === 'PAID' ? 'Pago via App' : 'Aguardando Pagamento'}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <div className={styles.itemsBox}>
                         {order.items.map((it) => (
                           <div key={it.id} className={styles.itemLine}>
-                            <span>
+                            <span className={styles.itemName}>
                               {it.quantity}x {it.productName}
                             </span>
-                            <span>R$ {it.totalPrice.toFixed(2).replace('.', ',')}</span>
+                            <span className={styles.itemPrice}>
+                              R$ {it.totalPrice.toFixed(2).replace('.', ',')}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -470,16 +567,20 @@ function PartnerOrdersContent() {
                           </button>
                         )}
 
-                        {/* Denúncia de Não Pagamento / Cliente Ausente para pedidos na entrega */}
-                        {isDelivery && order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
-                          <button
-                            type="button"
-                            className={styles.btnReportNonPayment}
-                            onClick={() => handleOpenReportModal(order)}
-                            title="Reportar cliente ausente ou recusa de pagamento na entrega"
-                          >
-                            🚨 Reportar Não Pagamento
-                          </button>
+                        {/* Denúncia de Não Pagamento / Cliente Ausente para pedidos na entrega que já foram aceitos/despachados */}
+                        {isDelivery &&
+                          order.status !== 'CREATED' &&
+                          order.status !== 'AWAITING_PAYMENT' &&
+                          order.status !== 'DELIVERED' &&
+                          order.status !== 'CANCELLED' && (
+                            <button
+                              type="button"
+                              className={styles.btnReportNonPayment}
+                              onClick={() => handleOpenReportModal(order)}
+                              title="Reportar cliente ausente ou recusa de pagamento na entrega"
+                            >
+                              🚨 Reportar Não Pagamento
+                            </button>
                         )}
                       </div>
                     </div>
