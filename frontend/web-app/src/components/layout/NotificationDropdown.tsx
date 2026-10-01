@@ -63,9 +63,20 @@ export function NotificationDropdown({ isOpen, onClose }: NotificationDropdownPr
     };
 
     const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        onClose();
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // Se o clique foi dentro de QUALQUER container de dropdown ou botão de sino, não fecha
+      if (
+        target.closest?.(`.${styles.dropdownContainer}`) ||
+        target.closest?.('#btn-notifications') ||
+        target.closest?.('#btn-notifications-mobile') ||
+        target.closest?.('.notification-bell-btn')
+      ) {
+        return;
       }
+
+      onClose();
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -84,9 +95,38 @@ export function NotificationDropdown({ isOpen, onClose }: NotificationDropdownPr
   const handleNotificationClick = (notif: AppNotification) => {
     markAsRead(notif.id);
     onClose();
-    if (notif.targetUrl) {
-      router.push(notif.targetUrl);
+
+    // Determina a rota base adequada
+    let target = notif.targetUrl;
+    if (!target) {
+      target = notif.type === 'NEW_ORDER' ? '/partner/orders' : '/orders';
     }
+
+    // Garante que o parâmetro orderId esteja presente na URL
+    if (notif.orderId && !target.includes('orderId=')) {
+      const sep = target.includes('?') ? '&' : '?';
+      target = `${target}${sep}orderId=${encodeURIComponent(notif.orderId)}`;
+    }
+
+    // Se já estiver na mesma página de destino, força scroll e destaque imediatamente
+    if (typeof window !== 'undefined') {
+      const targetPath = target.split('?')[0];
+      if (window.location.pathname === targetPath && notif.orderId) {
+        const el = document.getElementById(`order-${notif.orderId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.style.transition = 'all 0.3s ease';
+          el.style.borderColor = 'var(--color-primary, #059669)';
+          el.style.boxShadow = '0 0 0 4px rgba(5, 150, 105, 0.45)';
+          setTimeout(() => {
+            el.style.borderColor = '';
+            el.style.boxShadow = '';
+          }, 3500);
+        }
+      }
+    }
+
+    router.push(target);
   };
 
   return (
@@ -117,7 +157,17 @@ export function NotificationDropdown({ isOpen, onClose }: NotificationDropdownPr
             <div
               key={notif.id}
               className={`${styles.notificationItem} ${!notif.read ? styles.notificationItemUnread : ''}`}
-              onClick={() => handleNotificationClick(notif)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleNotificationClick(notif);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleNotificationClick(notif);
+                }
+              }}
               role="button"
               tabIndex={0}
             >

@@ -201,7 +201,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             orderId: payload.orderId,
             title: '🍳 Novo Pedido Recebido!',
             message: `Pedido #${shortId} no valor de R$ ${formattedTotal} está pronto para preparo.`,
-            targetUrl: '/partner/orders',
+            targetUrl: `/partner/orders?orderId=${payload.orderId}`,
             type: 'NEW_ORDER',
           });
 
@@ -261,7 +261,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
               orderId: payload.orderId,
               title,
               message,
-              targetUrl: '/orders',
+              targetUrl: `/orders?orderId=${payload.orderId}`,
               type,
             });
 
@@ -274,7 +274,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 orderId: payload.orderId,
                 title: '💵 Novo Pedido na Entrega!',
                 message: `Pedido #${shortId} (R$ ${formattedTotal}) confirmado para pagamento na entrega.`,
-                targetUrl: '/partner/orders',
+                targetUrl: `/partner/orders?orderId=${payload.orderId}`,
                 type: 'NEW_ORDER',
               });
               toast.info(`Novo pedido na entrega recebido! #${shortId}`, 'Novo Pedido! 🔔');
@@ -283,7 +283,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                 orderId: payload.orderId,
                 title: '⚠️ Pedido Cancelado',
                 message: `O pedido #${shortId} foi cancelado.`,
-                targetUrl: '/partner/orders',
+                targetUrl: `/partner/orders?orderId=${payload.orderId}`,
                 type: 'CANCELLED',
               });
             }

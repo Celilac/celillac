@@ -1,7 +1,7 @@
 'use client';
 // frontend/web-app/src/app/partner/orders/page.tsx
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
@@ -23,10 +23,13 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Cancelado',
 };
 
-export default function PartnerOrdersPage() {
+function PartnerOrdersContent() {
   const { token, isAuthenticated, isInitializing } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
+
+  const targetOrderId = searchParams ? searchParams.get('orderId') : null;
 
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
@@ -98,6 +101,31 @@ export default function PartnerOrdersPage() {
       fetchPartnerOrders();
     }
   }, [selectedPartnerId, fetchPartnerOrders]);
+
+  // Se houver um targetOrderId na query, descobre a aba correta e efetua scroll até o card
+  useEffect(() => {
+    if (!targetOrderId || orders.length === 0) return;
+    const target = orders.find((o) => o.id === targetOrderId);
+    if (target) {
+      if (target.status === 'CREATED' || target.status === 'AWAITING_PAYMENT' || target.status === 'PAID') {
+        setActiveTab('NEW');
+      } else if (target.status === 'CONFIRMED' || target.status === 'PREPARING') {
+        setActiveTab('PREPARING');
+      } else if (target.status === 'READY_FOR_PICKUP' || target.status === 'OUT_FOR_DELIVERY') {
+        setActiveTab('READY');
+      } else {
+        setActiveTab('COMPLETED');
+      }
+
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`order-${targetOrderId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [orders, targetOrderId]);
 
   const handleAction = async (orderId: string, action: any) => {
     if (!token) return;
@@ -324,7 +352,11 @@ export default function PartnerOrdersPage() {
                   const isDelivery = order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY';
 
                   return (
-                    <div key={order.id} className={styles.orderCard}>
+                    <div
+                      key={order.id}
+                      id={`order-${order.id}`}
+                      className={`${styles.orderCard} ${targetOrderId === order.id ? styles.highlightCard : ''}`}
+                    >
                       <div className={styles.cardTop}>
                         <div>
                           <div className={styles.orderId}>#{order.id.slice(0, 8)}</div>
@@ -533,5 +565,13 @@ export default function PartnerOrdersPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function PartnerOrdersPage() {
+  return (
+    <Suspense fallback={<p className="profile-loading" style={{ textAlign: 'center', padding: '3rem' }}>Carregando pedidos da cozinha…</p>}>
+      <PartnerOrdersContent />
+    </Suspense>
   );
 }
