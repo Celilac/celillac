@@ -103,7 +103,7 @@ export default function PublicPartnersListPage() {
             }}
             id="tab-filter-products"
           >
-            📦 Produtos Ofertados ({products.length})
+            📦 Produtos <span className={styles.tabExtraLabel}>Ofertados </span>({products.length})
           </button>
         </div>
 

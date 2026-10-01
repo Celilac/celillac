@@ -217,6 +217,11 @@ input, select, textarea { font-family: inherit; }
 
 .topbar-actions { display: flex; align-items: center; gap: var(--space-1); }
 
+/* Backdrop do menu mobile (invisível em telas desktop) */
+.topbar-backdrop {
+  display: none;
+}
+
 /* Nav links — texto simples, sem borda/pílula: a topbar é um agrupamento de
    destinos equivalentes, não uma fileira de botões concorrendo por atenção.
    O estado ativo usa esmeralda (cor de ação/seleção atual), nunca dois no
@@ -328,6 +333,27 @@ input, select, textarea { font-family: inherit; }
     display: none !important;
   }
 
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-backdrop {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.45);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 40;
+    cursor: pointer;
+    animation: fadeIn 0.15s ease-out;
+  }
+
   .topbar-nav-toggle { display: inline-flex; }
 
   .topbar-actions {
@@ -340,9 +366,15 @@ input, select, textarea { font-family: inherit; }
     padding: var(--space-3);
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+    z-index: 50;
   }
-  .topbar-actions.topbar-actions--open { display: flex; }
+  .topbar-actions.topbar-actions--open {
+    display: flex;
+    animation: slideDownMenu 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
   .topbar-actions .btn,
   .topbar-actions .nav-link,
   .topbar-actions .nav-icon-btn,
@@ -991,8 +1023,9 @@ input, select, textarea { font-family: inherit; }
 /* ═══════════════════════════════════════
    ANIMAÇÕES
 ═══════════════════════════════════════ */
-@keyframes fadeIn      { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUp     { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn        { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp       { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideDownMenu { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
 .animate-fade  { animation: fadeIn 0.4s ease both; }
 .animate-slide { animation: slideUp 0.4s ease both; }
@@ -1001,7 +1034,9 @@ input, select, textarea { font-family: inherit; }
    deslocamento/tempo — nunca um "kill" global que apagaria também o feedback
    de foco e transição de tema. */
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade, .animate-slide {
+  .animate-fade, .animate-slide,
+  .topbar-actions.topbar-actions--open,
+  .topbar-backdrop {
     animation: none;
   }
   .btn:hover,

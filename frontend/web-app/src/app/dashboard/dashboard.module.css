@@ -480,4 +480,50 @@
   color: #475569;
 }
 
+/* Botão Editar Perfil Alimentar — contraste alto com branco puro no tema escuro */
+.editProfileBtn {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.editProfileBtn svg {
+  stroke: #ffffff !important;
+}
+
+.editProfileBtn:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: #ffffff;
+  transform: translateY(-1px);
+}
+
+:global(html[data-theme='light']) .editProfileBtn {
+  color: var(--color-brand-navy) !important;
+  background: transparent;
+  border-color: var(--color-border);
+}
+
+:global(html[data-theme='light']) .editProfileBtn svg {
+  stroke: var(--color-brand-navy) !important;
+}
+
+:global(html[data-theme='light']) .editProfileBtn:hover {
+  color: var(--color-brand-navy) !important;
+  background: rgba(36, 65, 81, 0.08);
+  border-color: var(--color-brand-navy);
+}
+
 

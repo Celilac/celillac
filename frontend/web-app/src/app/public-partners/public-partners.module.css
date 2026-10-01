@@ -383,7 +383,7 @@
    ========================================================================== */
 
 .tabsContainer {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -391,8 +391,9 @@
   padding: 4px;
   gap: 4px;
   margin-bottom: var(--space-6);
-  max-width: 100%;
-  overflow-x: auto;
+  width: 100%;
+  max-width: 560px;
+  box-sizing: border-box;
 }
 
 :global(html[data-theme='light']) .tabsContainer {
@@ -401,19 +402,26 @@
 }
 
 .tabBtn {
-  padding: 0.65rem 1.25rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.65rem 1rem;
   border-radius: var(--radius-md);
   border: none;
   background: transparent;
   color: var(--color-text-muted);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.tabExtraLabel {
+  display: inline;
 }
 
 .tabBtn:hover {
@@ -435,6 +443,24 @@
 :global(html[data-theme='light']) .tabBtnActive {
   background: #059669 !important;
   color: #ffffff !important;
+}
+
+@media (max-width: 640px) {
+  .tabsContainer {
+    max-width: 100%;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .tabBtn {
+    padding: 0.55rem 0.2rem;
+    font-size: clamp(0.74rem, 3.2vw, 0.85rem);
+    gap: 0.25rem;
+  }
+
+  .tabExtraLabel {
+    display: none;
+  }
 }
 
 /* ==========================================================================

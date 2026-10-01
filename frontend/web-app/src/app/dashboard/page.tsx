@@ -508,18 +508,8 @@ export default function DashboardPage() {
                 {mounted && isAuthenticated && (
                   <Link
                     href="/profile"
-                    className="btn btn-ghost"
-                    style={{
-                      fontSize: '0.8rem',
-                      padding: '0.35rem 0.75rem',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      textDecoration: 'none',
-                      lineHeight: 1.2,
-                    }}
+                    className={styles.editProfileBtn}
+                    id="dashboard-edit-profile-btn"
                   >
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 20h9" />

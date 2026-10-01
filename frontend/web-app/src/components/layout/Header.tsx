@@ -1,6 +1,6 @@
 'use client';
 // frontend/web-app/src/components/layout/Header.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -22,12 +22,61 @@ export function Header() {
   const [adminDrawerOpen, setAdminDrawerOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<{ avatarUrl?: string; fullName?: string; email?: string; role?: string } | null>(null);
 
+  const navRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+
   const navLinkClass = (href: string) => `nav-link${pathname === href ? ' is-active' : ''}`;
 
   useEffect(() => {
     setMounted(true);
     router.prefetch('/auth/login');
   }, [router]);
+
+  // Fecha o menu móvel automaticamente ao navegar
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  // Fecha o menu móvel ao clicar fora, redimensionar para desktop ou pressionar ESC
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (
+        navRef.current &&
+        !navRef.current.contains(target) &&
+        toggleRef.current &&
+        !toggleRef.current.contains(target)
+      ) {
+        setMenuOpen(false);
+      }
+    };
+
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     if (isAuthenticated && token && userId) {
@@ -62,6 +111,7 @@ export function Header() {
           </button>
 
           <button
+            ref={toggleRef}
             type="button"
             className="topbar-nav-toggle"
             onClick={() => setMenuOpen((open) => !open)}
@@ -74,6 +124,7 @@ export function Header() {
         </div>
 
         <nav
+          ref={navRef}
           id="topbar-nav"
           className={`topbar-actions${menuOpen ? ' topbar-actions--open' : ''}`}
         >
@@ -187,6 +238,14 @@ export function Header() {
           )}
         </nav>
       </header>
+
+      {mounted && menuOpen && (
+        <div
+          className="topbar-backdrop"
+          onClick={() => setMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
       {mounted && userInfo?.role === 'ADMIN' && (
         <AdminDrawer
