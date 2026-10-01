@@ -96,6 +96,7 @@
   font-size: 0.75rem;
 }
 
+/* Grid e Cards de Pedidos */
 .ordersGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -154,7 +155,7 @@
   font-size: 0.75rem;
 }
 
-/* Status Badges */
+/* Status Badges Semânticos (Sem quebra de linha) */
 .statusBadge {
   display: inline-flex;
   align-items: center;
@@ -166,8 +167,6 @@
   white-space: nowrap;
   flex-shrink: 0;
   line-height: 1.2;
-  letter-spacing: 0.02em;
-  transition: all 0.2s ease;
 }
 
 .badgePendingAccept {
@@ -230,62 +229,18 @@
   border: 1px solid var(--color-border);
 }
 
-/* Light Theme Badges Contrast */
-:global(html[data-theme='light']) .badgePendingAccept {
-  background: #FEF3C7;
-  color: #92400E;
-  border-color: #FCD34D;
-}
+/* Contraste Alto no Tema Claro */
+:global(html[data-theme='light']) .badgePendingAccept { background: #FEF3C7; color: #92400E; border-color: #FCD34D; }
+:global(html[data-theme='light']) .badgeNewPaid { background: #DCFCE7; color: #15803D; border-color: #86EFAC; }
+:global(html[data-theme='light']) .badgeAwaitingPayment { background: #F1F5F9; color: #475569; border-color: #CBD5E1; }
+:global(html[data-theme='light']) .badgeConfirmed { background: #CCFBF1; color: #0F766E; border-color: #5EEAD4; }
+:global(html[data-theme='light']) .badgePreparing { background: #FFEDD5; color: #C2410C; border-color: #FDBA74; }
+:global(html[data-theme='light']) .badgeReady { background: #DBEAFE; color: #1E40AF; border-color: #93C5FD; }
+:global(html[data-theme='light']) .badgeDelivery { background: #E0E7FF; color: #3730A3; border-color: #A5B4FC; }
+:global(html[data-theme='light']) .badgeDelivered { background: #F0FDF4; color: #15803D; border-color: #BBF7D0; }
+:global(html[data-theme='light']) .badgeCancelled { background: #FEF2F2; color: #B91C1C; border-color: #FCA5A5; }
 
-:global(html[data-theme='light']) .badgeNewPaid {
-  background: #DCFCE7;
-  color: #15803D;
-  border-color: #86EFAC;
-}
-
-:global(html[data-theme='light']) .badgeAwaitingPayment {
-  background: #F1F5F9;
-  color: #475569;
-  border-color: #CBD5E1;
-}
-
-:global(html[data-theme='light']) .badgeConfirmed {
-  background: #CCFBF1;
-  color: #0F766E;
-  border-color: #5EEAD4;
-}
-
-:global(html[data-theme='light']) .badgePreparing {
-  background: #FFEDD5;
-  color: #C2410C;
-  border-color: #FDBA74;
-}
-
-:global(html[data-theme='light']) .badgeReady {
-  background: #DBEAFE;
-  color: #1E40AF;
-  border-color: #93C5FD;
-}
-
-:global(html[data-theme='light']) .badgeDelivery {
-  background: #E0E7FF;
-  color: #3730A3;
-  border-color: #A5B4FC;
-}
-
-:global(html[data-theme='light']) .badgeDelivered {
-  background: #F0FDF4;
-  color: #15803D;
-  border-color: #BBF7D0;
-}
-
-:global(html[data-theme='light']) .badgeCancelled {
-  background: #FEF2F2;
-  color: #B91C1C;
-  border-color: #FCA5A5;
-}
-
-/* Payment Method Banner (Full Width) */
+/* Banner de Forma de Pagamento (Largura Total) */
 .paymentSection {
   margin-bottom: 0.85rem;
 }
@@ -298,7 +253,6 @@
   padding: 0.55rem 0.85rem;
   border-radius: 10px;
   font-size: 0.82rem;
-  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .paymentBannerMain {
@@ -343,37 +297,15 @@
   color: #60a5fa;
 }
 
-/* Light Theme overrides for payment banners */
-:global(html[data-theme='light']) .paymentBannerCard {
-  background: #FFFBEB;
-  border-color: #FDE68A;
-  color: #B45309;
-}
+/* Contraste Alto no Tema Claro para Forma de Pagamento */
+:global(html[data-theme='light']) .paymentBannerCard { background: #FFFBEB; border-color: #FDE68A; color: #B45309; }
+:global(html[data-theme='light']) .paymentBannerCard .paymentSubtitle { color: #78350F; }
+:global(html[data-theme='light']) .paymentBannerCash { background: #ECFDF5; border-color: #A7F3D0; color: #047857; }
+:global(html[data-theme='light']) .paymentBannerCash .paymentSubtitle { color: #065F46; }
+:global(html[data-theme='light']) .paymentBannerOnline { background: #EFF6FF; border-color: #BFDBFE; color: #1D4ED8; }
+:global(html[data-theme='light']) .paymentBannerOnline .paymentSubtitle { color: #1E40AF; }
 
-:global(html[data-theme='light']) .paymentBannerCard .paymentSubtitle {
-  color: #78350F;
-}
-
-:global(html[data-theme='light']) .paymentBannerCash {
-  background: #ECFDF5;
-  border-color: #A7F3D0;
-  color: #047857;
-}
-
-:global(html[data-theme='light']) .paymentBannerCash .paymentSubtitle {
-  color: #065F46;
-}
-
-:global(html[data-theme='light']) .paymentBannerOnline {
-  background: #EFF6FF;
-  border-color: #BFDBFE;
-  color: #1D4ED8;
-}
-
-:global(html[data-theme='light']) .paymentBannerOnline .paymentSubtitle {
-  color: #1E40AF;
-}
-
+/* Itens do Pedido */
 .itemsBox {
   margin: 0.75rem 0;
   border-top: 1px solid var(--color-border);
@@ -409,6 +341,7 @@
   color: var(--color-text-muted);
 }
 
+/* Observações do Cliente */
 .orderNotes {
   font-size: 0.85rem;
   color: #92400e;
@@ -426,6 +359,7 @@
   border: 1px solid rgba(251, 191, 36, 0.25);
 }
 
+/* Rodapé do Card e Ações */
 .cardBottom {
   display: flex;
   flex-direction: column;
@@ -502,6 +436,7 @@
   transform: translateY(-1px);
 }
 
+/* Empty States */
 .emptyCard {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -731,9 +666,7 @@
   }
 }
 
-/* ═══════════════════════════════════════
-   RESPONSIVIDADE MOBILE (<= 640px)
-═══════════════════════════════════════ */
+/* Responsividade Mobile (<= 640px) */
 @media (max-width: 640px) {
   .mainContent {
     padding: 1.25rem 0.85rem 4rem;
@@ -813,4 +746,3 @@
     font-size: 0.9rem;
   }
 }
-
