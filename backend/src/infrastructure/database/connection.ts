@@ -15,13 +15,44 @@ export const pool = new Pool({
 });
 
 /**
+ * Executa uma instrução SQL DDL de forma tolerante a falhas.
+ * Se falhar (ex: coluna/constraint já existente), registra aviso e não aborta a inicialização.
+ */
+async function executeSafeDdl(client: any, sql: string, description: string): Promise<void> {
+  try {
+    await client.query(sql);
+  } catch (err: any) {
+    console.warn(`[Database Sync] Aviso ao executar "${description}": ${err?.message || err}`);
+  }
+}
+
+/**
+ * Conecta ao pool com retry exponencial para suportar o tempo de inicialização do PostgreSQL em ambientes Docker/VPS.
+ */
+async function acquireClientWithRetry(maxRetries = 5, delayMs = 2000): Promise<any> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const client = await pool.connect();
+      return client;
+    } catch (err: any) {
+      console.warn(`[Database] Tentativa ${attempt}/${maxRetries} de conexão falhou: ${err?.message}. Aguardando ${delayMs}ms...`);
+      if (attempt === maxRetries) {
+        throw err;
+      }
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
+/**
  * Testa a conexão com o banco ao inicializar e sincroniza o esquema essencial.
- * Garante que todas as tabelas e colunas do sistema existam de forma resiliente.
+ * Garante que todas as tabelas e colunas do sistema existam de forma resiliente e idempotente.
  */
 export async function testDatabaseConnection(): Promise<void> {
-  const client = await pool.connect();
+  const client = await acquireClientWithRetry();
   try {
-    await client.query(`
+    // 1. Tabela users e colunas derivadas
+    await executeSafeDdl(client, `
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         email VARCHAR(255) UNIQUE NOT NULL,
@@ -36,7 +67,6 @@ export async function testDatabaseConnection(): Promise<void> {
         is_email_verified BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
       ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);
       ALTER TABLE users ADD COLUMN IF NOT EXISTS birth_date DATE;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50);
@@ -45,10 +75,12 @@ export async function testDatabaseConnection(): Promise<void> {
       ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_evaluation_status VARCHAR(50) DEFAULT 'PENDING_EVALUATION';
       ALTER TABLE users ADD COLUMN IF NOT EXISTS is_email_verified BOOLEAN DEFAULT false;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp_phone VARCHAR(20);
-
       CREATE INDEX IF NOT EXISTS idx_users_account_status ON users(account_status);
       CREATE INDEX IF NOT EXISTS idx_users_profile_evaluation ON users(profile_evaluation_status);
+    `, 'Tabela users e colunas adicionais');
 
+    // 2. Perfis alimentares e tokens revogados
+    await executeSafeDdl(client, `
       CREATE TABLE IF NOT EXISTS food_profiles (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -56,7 +88,6 @@ export async function testDatabaseConnection(): Promise<void> {
         accepts_cross_contamination BOOLEAN DEFAULT false,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
       CREATE UNIQUE INDEX IF NOT EXISTS food_profiles_user_id_idx ON food_profiles (user_id);
 
       CREATE TABLE IF NOT EXISTS blacklisted_tokens (
@@ -64,7 +95,10 @@ export async function testDatabaseConnection(): Promise<void> {
         expires_at TIMESTAMP NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+    `, 'Tabelas food_profiles e blacklisted_tokens');
 
+    // 3. Verificação de e-mail e redefinição de senha
+    await executeSafeDdl(client, `
       CREATE TABLE IF NOT EXISTS email_verifications (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -73,7 +107,6 @@ export async function testDatabaseConnection(): Promise<void> {
         is_used BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
       CREATE INDEX IF NOT EXISTS idx_email_verifications_user_code ON email_verifications(user_id, code);
       CREATE INDEX IF NOT EXISTS idx_email_verifications_expires ON email_verifications(expires_at);
 
@@ -85,10 +118,12 @@ export async function testDatabaseConnection(): Promise<void> {
         is_used BOOLEAN DEFAULT false,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
       CREATE INDEX IF NOT EXISTS idx_password_resets_user_code ON password_resets(user_id, code);
       CREATE INDEX IF NOT EXISTS idx_password_resets_expires ON password_resets(expires_at);
+    `, 'Tabelas email_verifications e password_resets');
 
+    // 4. Consumidores e Parceiros
+    await executeSafeDdl(client, `
       CREATE TABLE IF NOT EXISTS consumers (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
@@ -102,7 +137,6 @@ export async function testDatabaseConnection(): Promise<void> {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
       ALTER TABLE consumers ADD COLUMN IF NOT EXISTS status_changed_at TIMESTAMP;
       ALTER TABLE consumers ADD COLUMN IF NOT EXISTS status_changed_by UUID;
       ALTER TABLE consumers ADD COLUMN IF NOT EXISTS status_change_reason TEXT;
@@ -127,10 +161,32 @@ export async function testDatabaseConnection(): Promise<void> {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
       ALTER TABLE partners ADD COLUMN IF NOT EXISTS logo_url TEXT;
       ALTER TABLE partners ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+    `, 'Tabelas consumers e partners');
 
+    // 5. Categorias de Produtos
+    await executeSafeDdl(client, `
+      CREATE TABLE IF NOT EXISTS product_categories (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(100) NOT NULL,
+        normalized_name VARCHAR(100) NOT NULL,
+        partner_id UUID REFERENCES partners(id) ON DELETE SET NULL,
+        created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'PENDING_APPROVAL',
+        visibility VARCHAR(50) NOT NULL DEFAULT 'RESTRICTED',
+        rejection_reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_product_categories_partner_id ON product_categories(partner_id);
+      CREATE INDEX IF NOT EXISTS idx_product_categories_status ON product_categories(status);
+      CREATE INDEX IF NOT EXISTS idx_product_categories_visibility ON product_categories(visibility);
+      CREATE INDEX IF NOT EXISTS idx_product_categories_normalized_name ON product_categories(normalized_name);
+    `, 'Tabela product_categories');
+
+    // 6. Produtos e Imagens
+    await executeSafeDdl(client, `
       CREATE TABLE IF NOT EXISTS products (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         partner_id UUID REFERENCES partners(id) ON DELETE SET NULL,
@@ -147,7 +203,6 @@ export async function testDatabaseConnection(): Promise<void> {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
       ALTER TABLE products ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS short_description TEXT;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS net_content NUMERIC(10, 2);
@@ -158,6 +213,15 @@ export async function testDatabaseConnection(): Promise<void> {
       ALTER TABLE products ADD COLUMN IF NOT EXISTS may_contain_traces TEXT DEFAULT '';
       ALTER TABLE products ADD COLUMN IF NOT EXISTS composition_notes TEXT;
       ALTER TABLE products ADD COLUMN IF NOT EXISTS publication_status VARCHAR(50) DEFAULT 'PUBLISHED';
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES product_categories(id) ON DELETE SET NULL;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS declared_allergens JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS cross_contamination_details JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS dietary_features TEXT[] DEFAULT ARRAY[]::TEXT[];
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS information_origin VARCHAR(50) DEFAULT 'PARTNER_DECLARED';
+      ALTER TABLE products ADD COLUMN IF NOT EXISTS nutritional_info JSONB DEFAULT NULL;
+
+      CREATE INDEX IF NOT EXISTS idx_products_dietary_features ON products USING GIN(dietary_features);
+      CREATE INDEX IF NOT EXISTS idx_products_information_origin ON products(information_origin);
 
       CREATE TABLE IF NOT EXISTS product_images (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -170,21 +234,13 @@ export async function testDatabaseConnection(): Promise<void> {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
       CREATE INDEX IF NOT EXISTS idx_product_images_product_id ON product_images(product_id);
       CREATE INDEX IF NOT EXISTS idx_product_images_type ON product_images(image_type);
       CREATE INDEX IF NOT EXISTS idx_product_images_order ON product_images(product_id, display_order);
+    `, 'Tabela products e product_images');
 
-      -- Fase 3: Matriz de Alérgenos Declarados, Risco de Ambiente, Estilos de Vida e Certificações
-      ALTER TABLE products ADD COLUMN IF NOT EXISTS declared_allergens JSONB DEFAULT '{}'::jsonb;
-      ALTER TABLE products ADD COLUMN IF NOT EXISTS cross_contamination_details JSONB DEFAULT '{}'::jsonb;
-      ALTER TABLE products ADD COLUMN IF NOT EXISTS dietary_features TEXT[] DEFAULT ARRAY[]::TEXT[];
-      ALTER TABLE products ADD COLUMN IF NOT EXISTS information_origin VARCHAR(50) DEFAULT 'PARTNER_DECLARED';
-      ALTER TABLE products ADD COLUMN IF NOT EXISTS nutritional_info JSONB DEFAULT NULL;
-
-      CREATE INDEX IF NOT EXISTS idx_products_dietary_features ON products USING GIN(dietary_features);
-      CREATE INDEX IF NOT EXISTS idx_products_information_origin ON products(information_origin);
-
+    // 7. Certificações de Produtos
+    await executeSafeDdl(client, `
       CREATE TABLE IF NOT EXISTS product_certifications (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
@@ -198,64 +254,65 @@ export async function testDatabaseConnection(): Promise<void> {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
-
       CREATE INDEX IF NOT EXISTS idx_product_certifications_product_id ON product_certifications(product_id);
       CREATE INDEX IF NOT EXISTS idx_product_certifications_status ON product_certifications(verification_status);
+    `, 'Tabela product_certifications');
 
-      CREATE TABLE IF NOT EXISTS product_reports (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        reporter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        product_id UUID REFERENCES products(id) ON DELETE CASCADE,
-        partner_id UUID REFERENCES partners(id) ON DELETE CASCADE,
-        reason VARCHAR(100) NOT NULL,
-        details TEXT,
-        is_food_safety_risk BOOLEAN DEFAULT false,
-        status VARCHAR(50) DEFAULT 'PENDING',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        CONSTRAINT check_product_or_partner_report CHECK (product_id IS NOT NULL OR partner_id IS NOT NULL)
+    // 8. Pedidos e Itens (Migration 025)
+    await executeSafeDdl(client, `
+      CREATE TABLE IF NOT EXISTS orders (
+        id UUID PRIMARY KEY,
+        consumer_id UUID NOT NULL REFERENCES users(id),
+        partner_id UUID NOT NULL REFERENCES partners(id),
+        status VARCHAR(50) NOT NULL DEFAULT 'CREATED',
+        subtotal_amount NUMERIC(10,2) NOT NULL,
+        delivery_fee NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+        total_amount NUMERIC(10,2) NOT NULL,
+        allergen_check_verdict VARCHAR(50) NOT NULL DEFAULT 'SAFE',
+        notes TEXT,
+        cancelled_at TIMESTAMP WITH TIME ZONE,
+        cancel_reason TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
 
-      ALTER TABLE product_reports ADD COLUMN IF NOT EXISTS partner_id UUID REFERENCES partners(id) ON DELETE CASCADE;
-      CREATE INDEX IF NOT EXISTS idx_product_reports_partner ON product_reports(partner_id);
-      CREATE INDEX IF NOT EXISTS idx_product_reports_product ON product_reports(product_id);
-      CREATE INDEX IF NOT EXISTS idx_product_reports_food_safety ON product_reports(is_food_safety_risk);
+      CREATE INDEX IF NOT EXISTS idx_orders_consumer_id ON orders(consumer_id);
+      CREATE INDEX IF NOT EXISTS idx_orders_partner_id ON orders(partner_id);
+      CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+      CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
 
-      CREATE TABLE IF NOT EXISTS product_categories (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name VARCHAR(100) NOT NULL,
-        normalized_name VARCHAR(100) NOT NULL,
-        partner_id UUID REFERENCES partners(id) ON DELETE SET NULL,
-        created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-        status VARCHAR(50) NOT NULL DEFAULT 'PENDING_APPROVAL',
-        visibility VARCHAR(50) NOT NULL DEFAULT 'RESTRICTED',
-        rejection_reason TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      CREATE TABLE IF NOT EXISTS order_items (
+        id UUID PRIMARY KEY,
+        order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+        product_id UUID NOT NULL REFERENCES products(id),
+        product_name VARCHAR(255) NOT NULL,
+        unit_price NUMERIC(10,2) NOT NULL,
+        quantity INT NOT NULL,
+        total_price NUMERIC(10,2) NOT NULL
       );
 
-      CREATE INDEX IF NOT EXISTS idx_product_categories_partner_id ON product_categories(partner_id);
-      CREATE INDEX IF NOT EXISTS idx_product_categories_status ON product_categories(status);
-      CREATE INDEX IF NOT EXISTS idx_product_categories_visibility ON product_categories(visibility);
-      CREATE INDEX IF NOT EXISTS idx_product_categories_normalized_name ON product_categories(normalized_name);
+      CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
+    `, 'Tabelas orders e order_items');
 
-      ALTER TABLE products ADD COLUMN IF NOT EXISTS category_id UUID REFERENCES product_categories(id) ON DELETE SET NULL;
-
-      CREATE TABLE IF NOT EXISTS audit_logs (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        entity_type VARCHAR(50) NOT NULL,
-        entity_id UUID NOT NULL,
-        action VARCHAR(50) NOT NULL,
-        actor_id UUID,
-        actor_role VARCHAR(50),
-        changes JSONB NOT NULL DEFAULT '{}'::jsonb,
-        reason TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    // 9. Pagamentos, Subcontas e Reembolsos (Migrations 026 e 027)
+    await executeSafeDdl(client, `
+      CREATE TABLE IF NOT EXISTS partner_financial_accounts (
+        id UUID PRIMARY KEY,
+        partner_id UUID NOT NULL UNIQUE REFERENCES partners(id),
+        gateway_subaccount_id VARCHAR(255),
+        pix_key VARCHAR(150) NOT NULL,
+        pix_key_type VARCHAR(20) NOT NULL,
+        bank_code VARCHAR(10),
+        agency_number VARCHAR(10),
+        account_number VARCHAR(20),
+        account_type VARCHAR(20),
+        is_verified BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
 
-      CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
-      CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON audit_logs(actor_id);
-      CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
+      CREATE INDEX IF NOT EXISTS idx_partner_financial_accounts_partner_id ON partner_financial_accounts(partner_id);
+      CREATE INDEX IF NOT EXISTS idx_partner_financial_accounts_subaccount ON partner_financial_accounts(gateway_subaccount_id);
 
       CREATE TABLE IF NOT EXISTS payments (
         id UUID PRIMARY KEY,
@@ -275,12 +332,18 @@ export async function testDatabaseConnection(): Promise<void> {
         paid_at TIMESTAMP WITH TIME ZONE,
         failure_reason TEXT,
         idempotency_key VARCHAR(100),
+        change_for NUMERIC(10, 2),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
 
       ALTER TABLE payments ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(100);
+      ALTER TABLE payments ADD COLUMN IF NOT EXISTS change_for NUMERIC(10, 2);
       CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_idempotency_key ON payments(idempotency_key) WHERE idempotency_key IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id);
+      CREATE INDEX IF NOT EXISTS idx_payments_partner_id ON payments(partner_id);
+      CREATE INDEX IF NOT EXISTS idx_payments_consumer_id ON payments(consumer_id);
+      CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
 
       CREATE TABLE IF NOT EXISTS payment_refunds (
         id UUID PRIMARY KEY,
@@ -293,8 +356,61 @@ export async function testDatabaseConnection(): Promise<void> {
       );
 
       CREATE INDEX IF NOT EXISTS idx_payment_refunds_payment_id ON payment_refunds(payment_id);
+    `, 'Tabelas partner_financial_accounts, payments e payment_refunds');
 
-      -- Seed de categorias padrão se a tabela estiver vazia
+    // 10. Denúncias e Auditoria (Migrations 014, 017 e 028)
+    await executeSafeDdl(client, `
+      CREATE TABLE IF NOT EXISTS product_reports (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        reporter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        product_id UUID REFERENCES products(id) ON DELETE CASCADE,
+        partner_id UUID REFERENCES partners(id) ON DELETE CASCADE,
+        reason VARCHAR(100) NOT NULL,
+        details TEXT,
+        is_food_safety_risk BOOLEAN DEFAULT false,
+        status VARCHAR(50) DEFAULT 'PENDING',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      ALTER TABLE product_reports ALTER COLUMN product_id DROP NOT NULL;
+      ALTER TABLE product_reports ADD COLUMN IF NOT EXISTS partner_id UUID REFERENCES partners(id) ON DELETE CASCADE;
+      ALTER TABLE product_reports ADD COLUMN IF NOT EXISTS target_user_id UUID REFERENCES users(id) ON DELETE SET NULL;
+      ALTER TABLE product_reports ADD COLUMN IF NOT EXISTS order_id UUID REFERENCES orders(id) ON DELETE SET NULL;
+      ALTER TABLE product_reports DROP CONSTRAINT IF EXISTS check_product_or_partner_report;
+      ALTER TABLE product_reports DROP CONSTRAINT IF EXISTS check_report_target;
+      ALTER TABLE product_reports ADD CONSTRAINT check_report_target CHECK (
+        product_id IS NOT NULL OR partner_id IS NOT NULL OR target_user_id IS NOT NULL OR order_id IS NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_product_reports_partner ON product_reports(partner_id);
+      CREATE INDEX IF NOT EXISTS idx_product_reports_product ON product_reports(product_id);
+      CREATE INDEX IF NOT EXISTS idx_product_reports_target_user_id ON product_reports(target_user_id);
+      CREATE INDEX IF NOT EXISTS idx_product_reports_order_id ON product_reports(order_id);
+      CREATE INDEX IF NOT EXISTS idx_product_reports_food_safety ON product_reports(is_food_safety_risk);
+
+      ALTER TABLE consumers ADD COLUMN IF NOT EXISTS can_pay_on_delivery BOOLEAN NOT NULL DEFAULT TRUE;
+      CREATE INDEX IF NOT EXISTS idx_consumers_can_pay_on_delivery ON consumers(can_pay_on_delivery);
+    `, 'Tabela product_reports com suporte polimórfico e delivery payment');
+
+    // 11. Logs de Auditoria
+    await executeSafeDdl(client, `
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        entity_type VARCHAR(50) NOT NULL,
+        entity_id UUID NOT NULL,
+        action VARCHAR(50) NOT NULL,
+        actor_id UUID,
+        actor_role VARCHAR(50),
+        changes JSONB NOT NULL DEFAULT '{}'::jsonb,
+        reason TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON audit_logs(actor_id);
+      CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
+    `, 'Tabela audit_logs');
+    // 12. Seed de Categorias Globais
+    await executeSafeDdl(client, `
       INSERT INTO product_categories (name, normalized_name, status, visibility)
       SELECT name, normalized_name, 'APPROVED', 'GLOBAL'
       FROM (VALUES 
@@ -310,8 +426,9 @@ export async function testDatabaseConnection(): Promise<void> {
         ('Outros', 'OUTROS')
       ) AS default_cats(name, normalized_name)
       WHERE NOT EXISTS (SELECT 1 FROM product_categories LIMIT 1);
-    `);
-    console.log('[Database]: Conexão e sincronização de esquema com PostgreSQL estabelecida com sucesso.');
+    `, 'Seed de categorias padrão');
+
+    console.log('[Database]: Conexão e sincronização de esquema com PostgreSQL concluídas com sucesso.');
   } finally {
     client.release();
   }

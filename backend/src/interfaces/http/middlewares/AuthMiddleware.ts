@@ -12,7 +12,22 @@ export interface DecodedToken {
 const blacklistRepository = new PgBlacklistTokenRepository(pool);
 
 export function extractAuthToken(req: Request): { token?: string; error?: string } {
-  // 1. Prioriza Cookie HttpOnly (A02: Roubo de Sessão)
+  // 1. Authorization: Bearer <token> (credencial explícita enviada pelo cliente HTTP)
+  const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const parts = authHeader.split(' ');
+    if (parts.length === 2 && /^Bearer$/i.test(parts[0])) {
+      return { token: parts[1] };
+    }
+    return { error: 'Token de autenticação malformado.' };
+  }
+
+  // 2. Query parameter token (suporte a Server-Sent Events / EventSource nativo do browser)
+  if (req.query && typeof req.query.token === 'string' && req.query.token.trim().length > 0) {
+    return { token: req.query.token.trim() };
+  }
+
+  // 3. Cookie HttpOnly (A02: Roubo de Sessão — credencial implícita)
   if (req.cookies && req.cookies.token) {
     return { token: req.cookies.token };
   }
@@ -27,23 +42,7 @@ export function extractAuthToken(req: Request): { token?: string; error?: string
     }
   }
 
-  // 2. Query parameter token (suporte a Server-Sent Events / EventSource nativo do browser)
-  if (req.query && typeof req.query.token === 'string' && req.query.token.trim().length > 0) {
-    return { token: req.query.token.trim() };
-  }
-
-  // 3. Fallback transparente para Authorization: Bearer <token>
-  const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return { error: 'Token de autenticação não fornecido.' };
-  }
-
-  const parts = authHeader.split(' ');
-  if (parts.length !== 2 || !/^Bearer$/i.test(parts[0])) {
-    return { error: 'Token de autenticação malformado.' };
-  }
-
-  return { token: parts[1] };
+  return { error: 'Token de autenticação não fornecido.' };
 }
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
