@@ -4,6 +4,7 @@ import { IPaymentRepository } from '../../domain/payment/repositories/IPaymentRe
 import { IOrderRepository } from '../../domain/order/repositories/IOrderRepository';
 import { IAuditLogRepository } from '../../domain/audit/repositories/IAuditLogRepository';
 import { IOrderNotificationService } from '../../domain/order/services/IOrderNotificationService';
+import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
 import { AuditLog } from '../../domain/audit/AuditLog';
 import { SecurityLogger } from '../../infrastructure/logging/SecurityLogger';
 
@@ -25,7 +26,8 @@ export class HandleAsaasWebhookUseCase {
     private readonly paymentRepository: IPaymentRepository,
     private readonly orderRepository: IOrderRepository,
     private readonly auditLogRepository?: IAuditLogRepository,
-    private readonly notificationService?: IOrderNotificationService
+    private readonly notificationService?: IOrderNotificationService,
+    private readonly partnerRepository?: IPartnerRepository
   ) {}
 
   async execute(dto: AsaasWebhookEventDTO): Promise<Result<{ processed: boolean; reason?: string }>> {
@@ -87,9 +89,19 @@ export class HandleAsaasWebhookUseCase {
         }
 
         if (this.notificationService && order) {
+          let partnerName: string | undefined;
+          if (this.partnerRepository) {
+            try {
+              const partner = await this.partnerRepository.findById(order.partnerId);
+              partnerName = partner?.name;
+            } catch {
+              // silencia erro na busca de parceiro
+            }
+          }
           this.notificationService.notifyPaymentConfirmed(order.partnerId, {
             orderId: order.id,
             partnerId: order.partnerId,
+            partnerName,
             consumerId: order.consumerId,
             totalAmount: order.totalAmount,
             status: order.status,

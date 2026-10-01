@@ -295,10 +295,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
   padding: 0.55rem 0.85rem;
   border-radius: 10px;
   font-size: 0.82rem;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .paymentBannerMain {
@@ -306,23 +309,28 @@
   align-items: center;
   gap: 0.45rem;
   font-weight: 700;
+  min-width: 0;
 }
 
 .paymentIcon {
   font-size: 1rem;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .paymentTitle {
   font-weight: 700;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .paymentSubtitle {
   font-size: 0.76rem;
-  font-weight: 500;
-  white-space: nowrap;
+  font-weight: 600;
+  white-space: normal;
   text-align: right;
+  margin-left: auto;
+  word-break: break-word;
+  opacity: 0.9;
 }
 
 .paymentBannerCard {
@@ -823,4 +831,70 @@
     padding: 0.75rem;
     font-size: 0.9rem;
   }
+}
+
+/* Alerta de Pedidos em Outros Estabelecimentos */
+.multiPartnerAlert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(234, 88, 12, 0.15));
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.multiPartnerAlertContent {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.92rem;
+  color: #f59e0b;
+  font-weight: 500;
+}
+
+:global(html[data-theme='light']) .multiPartnerAlert {
+  background: #FFFBEB;
+  border-color: #FCD34D;
+}
+
+:global(html[data-theme='light']) .multiPartnerAlertContent {
+  color: #92400E;
+}
+
+.multiPartnerAlertIcon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.multiPartnerAlertActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.switchPartnerBtn {
+  background: #f59e0b;
+  color: #111827;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.switchPartnerBtn:hover {
+  background: #d97706;
+  color: #ffffff;
+  transform: translateY(-1px);
 }

@@ -46,7 +46,8 @@ const checkoutOrderUseCase = new CheckoutOrderUseCase(
   paymentGateway,
   consumerRepository,
   sseOrderNotificationHub,
-  auditLogRepository
+  auditLogRepository,
+  partnerRepository
 );
 
 const setupFinancialAccountUseCase = new SetupPartnerFinancialAccountUseCase(
@@ -60,7 +61,8 @@ const handleAsaasWebhookUseCase = new HandleAsaasWebhookUseCase(
   paymentRepository,
   orderRepository,
   auditLogRepository,
-  sseOrderNotificationHub
+  sseOrderNotificationHub,
+  partnerRepository
 );
 
 const paymentController = new PaymentController(

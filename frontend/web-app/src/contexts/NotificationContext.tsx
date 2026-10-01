@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { ordersApi, OrderNotificationDTO } from '@/api/orders';
+import { partnerApi } from '@/api/partner';
 import { useToast } from '@/hooks/useToast';
 
 export interface AppNotification {
@@ -167,6 +168,83 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
 
+  // Sincronizar pedidos pendentes de aceite para parceiros comerciais na inicialização
+  useEffect(() => {
+    if (!isAuthenticated || !token || typeof window === 'undefined') return;
+
+    let isMounted = true;
+
+    async function syncPartnerPendingOrders() {
+      try {
+        const userPartners = await partnerApi.listUserPartners(token!);
+        if (!userPartners || userPartners.length === 0 || !isMounted) return;
+
+        for (const partner of userPartners) {
+          try {
+            const partnerOrders = await ordersApi.getPartnerOrders(partner.id, token!);
+            if (!isMounted || !Array.isArray(partnerOrders)) continue;
+
+            const pendingOrders = partnerOrders.filter(
+              (o) =>
+                o.status === 'AWAITING_PAYMENT' ||
+                o.status === 'CREATED' ||
+                o.status === 'PAID'
+            );
+
+            if (pendingOrders.length > 0) {
+              setNotifications((prev) => {
+                let updated = false;
+                const next = [...prev];
+
+                for (const order of pendingOrders) {
+                  const alreadyExists = next.some(
+                    (n) => n.orderId === order.id && n.type === 'NEW_ORDER'
+                  );
+                  if (!alreadyExists) {
+                    const shortId = order.id.slice(0, 8);
+                    const formattedTotal = Number(order.totalAmount).toFixed(2).replace('.', ',');
+                    next.unshift({
+                      id: `sync_order_${order.id}`,
+                      orderId: order.id,
+                      title: `🍳 Novo Pedido em ${partner.name}!`,
+                      message: `Pedido #${shortId} (R$ ${formattedTotal}) aguarda aceite em ${partner.name}.`,
+                      timestamp: new Date().toISOString(),
+                      read: false,
+                      targetUrl: `/partner/orders?partnerId=${partner.id}&orderId=${order.id}`,
+                      type: 'NEW_ORDER',
+                    });
+                    updated = true;
+                  }
+                }
+
+                if (updated) {
+                  const trimmed = next.slice(0, MAX_NOTIFICATIONS);
+                  if (storageKey && typeof window !== 'undefined') {
+                    try {
+                      localStorage.setItem(storageKey, JSON.stringify(trimmed));
+                    } catch {}
+                  }
+                  return trimmed;
+                }
+                return prev;
+              });
+            }
+          } catch {
+            // Silencia erro para estabelecimentos individuais
+          }
+        }
+      } catch {
+        // Usuário pode ser apenas consumidor, sem parceiros
+      }
+    }
+
+    syncPartnerPendingOrders();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated, token, storageKey]);
+
   // Conexão SSE Global em Tempo Real
   useEffect(() => {
     if (!isAuthenticated || !token || typeof window === 'undefined') {
@@ -196,16 +274,20 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           const payload: OrderNotificationDTO = JSON.parse(e.data);
           const shortId = payload.orderId.slice(0, 8);
           const formattedTotal = Number(payload.totalAmount).toFixed(2).replace('.', ',');
+          const partnerLocation = payload.partnerName ? ` em ${payload.partnerName}` : '';
+          const targetUrl = payload.partnerId
+            ? `/partner/orders?partnerId=${payload.partnerId}&orderId=${payload.orderId}`
+            : `/partner/orders?orderId=${payload.orderId}`;
 
           addNotification({
             orderId: payload.orderId,
-            title: '🍳 Novo Pedido Recebido!',
-            message: `Pedido #${shortId} no valor de R$ ${formattedTotal} está pronto para preparo.`,
-            targetUrl: `/partner/orders?orderId=${payload.orderId}`,
+            title: `🍳 Novo Pedido Recebido${partnerLocation}!`,
+            message: `Pedido #${shortId} no valor de R$ ${formattedTotal} recebido${partnerLocation}.`,
+            targetUrl,
             type: 'NEW_ORDER',
           });
 
-          toast.info(`Novo pedido recebido! #${shortId} • R$ ${formattedTotal}`, 'Novo Pedido! 🔔');
+          toast.info(`Novo pedido recebido${partnerLocation}! #${shortId} • R$ ${formattedTotal}`, 'Novo Pedido! 🔔');
         } catch (err) {
           console.error('[NotificationContext] Erro ao parsear order:payment_confirmed:', err);
         }
@@ -268,22 +350,27 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             toast.info(message, `${title} 🔔`);
           } else {
             // Notificação para o Parceiro (ex: novo pedido com pagamento na entrega ou cancelamento)
-            if (payload.status === 'CONFIRMED') {
+            const partnerLocation = payload.partnerName ? ` em ${payload.partnerName}` : '';
+            const targetUrl = payload.partnerId
+              ? `/partner/orders?partnerId=${payload.partnerId}&orderId=${payload.orderId}`
+              : `/partner/orders?orderId=${payload.orderId}`;
+
+            if (payload.status === 'CONFIRMED' || payload.status === 'AWAITING_PAYMENT') {
               const formattedTotal = Number(payload.totalAmount).toFixed(2).replace('.', ',');
               addNotification({
                 orderId: payload.orderId,
-                title: '💵 Novo Pedido na Entrega!',
-                message: `Pedido #${shortId} (R$ ${formattedTotal}) confirmado para pagamento na entrega.`,
-                targetUrl: `/partner/orders?orderId=${payload.orderId}`,
+                title: `💵 Novo Pedido na Entrega${partnerLocation}!`,
+                message: `Pedido #${shortId} (R$ ${formattedTotal}) confirmado para pagamento na entrega${partnerLocation}.`,
+                targetUrl,
                 type: 'NEW_ORDER',
               });
-              toast.info(`Novo pedido na entrega recebido! #${shortId}`, 'Novo Pedido! 🔔');
+              toast.info(`Novo pedido na entrega recebido${partnerLocation}! #${shortId}`, 'Novo Pedido! 🔔');
             } else if (payload.status === 'CANCELLED') {
               addNotification({
                 orderId: payload.orderId,
                 title: '⚠️ Pedido Cancelado',
-                message: `O pedido #${shortId} foi cancelado.`,
-                targetUrl: `/partner/orders?orderId=${payload.orderId}`,
+                message: `O pedido #${shortId} foi cancelado${partnerLocation}.`,
+                targetUrl,
                 type: 'CANCELLED',
               });
             }

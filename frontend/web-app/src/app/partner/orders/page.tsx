@@ -30,9 +30,11 @@ function PartnerOrdersContent() {
   const toast = useToast();
 
   const targetOrderId = searchParams ? searchParams.get('orderId') : null;
+  const targetPartnerId = searchParams ? searchParams.get('partnerId') : null;
 
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
+  const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
   const [orders, setOrders] = useState<OrderDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'NEW' | 'PREPARING' | 'READY' | 'COMPLETED'>('NEW');
@@ -43,12 +45,40 @@ function PartnerOrdersContent() {
   const [reportDetails, setReportDetails] = useState<string>('');
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
+  // Buscar contagem de pedidos pendentes em todos os estabelecimentos do usuário
+  const fetchAllPendingCounts = useCallback(async (partnerList: PartnerSummary[]) => {
+    if (!token || partnerList.length === 0) return;
+    try {
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        partnerList.map(async (p) => {
+          try {
+            const partnerOrders = await ordersApi.getPartnerOrders(p.id, token);
+            const pending = partnerOrders.filter(
+              (o) => o.status === 'AWAITING_PAYMENT' || o.status === 'CREATED' || o.status === 'PAID'
+            ).length;
+            counts[p.id] = pending;
+          } catch {
+            counts[p.id] = 0;
+          }
+        })
+      );
+      setPendingCounts(counts);
+    } catch {
+      // Silencia falha em contagens globais
+    }
+  }, [token]);
+
   // Carregar pedidos do estabelecimento selecionado
   const fetchPartnerOrders = useCallback(async () => {
     if (!token || !selectedPartnerId) return;
     try {
       const data = await ordersApi.getPartnerOrders(selectedPartnerId, token);
       setOrders(data);
+      const currentPending = data.filter(
+        (o) => o.status === 'AWAITING_PAYMENT' || o.status === 'CREATED' || o.status === 'PAID'
+      ).length;
+      setPendingCounts((prev) => ({ ...prev, [selectedPartnerId]: currentPending }));
     } catch (err: any) {
       toast.error(err.message || 'Erro ao carregar pedidos.', 'Erro');
     }
@@ -60,17 +90,31 @@ function PartnerOrdersContent() {
     token,
     enabled: Boolean(token && selectedPartnerId),
     onPaymentConfirmed: (payload) => {
-      toast.info(
-        `Novo pedido pago recebido! #${payload.orderId.slice(0, 8)} • R$ ${Number(payload.totalAmount).toFixed(2)}`,
-        'Novo Pedido Pago! 🔔'
-      );
-      fetchPartnerOrders();
+      const isForCurrent = !payload.partnerId || payload.partnerId === selectedPartnerId;
+      const targetPartner = partners.find((p) => p.id === payload.partnerId);
+      const locName = targetPartner?.name || payload.partnerName;
+
+      if (isForCurrent) {
+        toast.info(
+          `Novo pedido recebido! #${payload.orderId.slice(0, 8)} • R$ ${Number(payload.totalAmount).toFixed(2)}`,
+          'Novo Pedido! 🔔'
+        );
+        fetchPartnerOrders();
+      } else {
+        toast.info(
+          `Novo pedido em ${locName || 'outro estabelecimento'}! #${payload.orderId.slice(0, 8)}`,
+          'Novo Pedido! 🔔'
+        );
+      }
+      fetchAllPendingCounts(partners);
     },
     onStatusUpdated: () => {
       fetchPartnerOrders();
+      fetchAllPendingCounts(partners);
     },
     onPollSync: () => {
       fetchPartnerOrders();
+      fetchAllPendingCounts(partners);
     },
   });
 
@@ -83,21 +127,38 @@ function PartnerOrdersContent() {
     }
 
     partnerApi.listUserPartners(token)
-      .then((data) => {
+      .then(async (data) => {
         setPartners(data);
         if (data.length > 0) {
           const urlParamId = typeof window !== 'undefined'
             ? new URLSearchParams(window.location.search).get('partnerId')
             : null;
           const found = urlParamId && data.some((p) => p.id === urlParamId);
-          setSelectedPartnerId(found ? (urlParamId as string) : data[0].id);
+
+          if (found) {
+            setSelectedPartnerId(urlParamId as string);
+          } else {
+            // Verifica se algum parceiro tem novos pedidos pendentes para priorizá-lo
+            setSelectedPartnerId(data[0].id);
+          }
+          fetchAllPendingCounts(data);
         }
       })
       .catch((err) => {
         toast.error(err.message || 'Erro ao carregar parceiros.', 'Erro');
       })
       .finally(() => setLoading(false));
-  }, [isAuthenticated, isInitializing, token, router, toast]);
+  }, [isAuthenticated, isInitializing, token, router, toast, fetchAllPendingCounts]);
+
+  // Sincronizar reativamente caso a URL mude o partnerId (ex: clique no sino ou toast)
+  useEffect(() => {
+    if (targetPartnerId && partners.length > 0) {
+      const exists = partners.some((p) => p.id === targetPartnerId);
+      if (exists && targetPartnerId !== selectedPartnerId) {
+        setSelectedPartnerId(targetPartnerId);
+      }
+    }
+  }, [targetPartnerId, partners, selectedPartnerId]);
 
   useEffect(() => {
     if (selectedPartnerId) {
@@ -333,11 +394,14 @@ function PartnerOrdersContent() {
                   value={selectedPartnerId}
                   onChange={(e) => setSelectedPartnerId(e.target.value)}
                 >
-                  {partners.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
+                  {partners.map((p) => {
+                    const count = pendingCounts[p.id] || 0;
+                    return (
+                      <option key={p.id} value={p.id}>
+                        {p.name}{count > 0 ? ` 🔔 (${count} ${count === 1 ? 'novo' : 'novos'})` : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             )}
@@ -367,6 +431,39 @@ function PartnerOrdersContent() {
           </div>
         ) : (
           <>
+            {/* Alerta de Pedidos em Outros Estabelecimentos */}
+            {partners.filter((p) => p.id !== selectedPartnerId && (pendingCounts[p.id] || 0) > 0).length > 0 && (
+              <div className={styles.multiPartnerAlert}>
+                <div className={styles.multiPartnerAlertContent}>
+                  <span className={styles.multiPartnerAlertIcon}>🔔</span>
+                  <span>
+                    Atenção: Você possui{' '}
+                    <strong>
+                      {partners
+                        .filter((p) => p.id !== selectedPartnerId && (pendingCounts[p.id] || 0) > 0)
+                        .reduce((acc, p) => acc + (pendingCounts[p.id] || 0), 0)}{' '}
+                      pedido(s) pendente(s)
+                    </strong>{' '}
+                    aguardando aceite em outro estabelecimento:
+                  </span>
+                </div>
+                <div className={styles.multiPartnerAlertActions}>
+                  {partners
+                    .filter((p) => p.id !== selectedPartnerId && (pendingCounts[p.id] || 0) > 0)
+                    .map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className={styles.switchPartnerBtn}
+                        onClick={() => setSelectedPartnerId(p.id)}
+                      >
+                        Ver {p.name} ({pendingCounts[p.id]}) →
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+
             {/* Abas de Produção */}
             <div className={styles.tabsBar}>
               <button
