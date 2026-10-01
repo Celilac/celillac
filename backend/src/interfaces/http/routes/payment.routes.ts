@@ -7,6 +7,7 @@ import { PgPartnerFinancialAccountRepository } from '../../../infrastructure/dat
 import { PgOrderRepository } from '../../../infrastructure/database/order/PgOrderRepository';
 import { PgPartnerRepository } from '../../../infrastructure/database/partner/PgPartnerRepository';
 import { PgAuditLogRepository } from '../../../infrastructure/database/audit/PgAuditLogRepository';
+import { PgConsumerRepository } from '../../../infrastructure/database/consumer/PgConsumerRepository';
 import { AsaasPaymentGateway } from '../../../infrastructure/gateways/AsaasPaymentGateway';
 
 import { CheckoutOrderUseCase } from '../../../application/payment/CheckoutOrderUseCase';
@@ -35,6 +36,7 @@ const financialAccountRepository = new PgPartnerFinancialAccountRepository(pool)
 const orderRepository = new PgOrderRepository(pool);
 const partnerRepository = new PgPartnerRepository(pool);
 const auditLogRepository = new PgAuditLogRepository(pool);
+const consumerRepository = new PgConsumerRepository(pool);
 const paymentGateway = new AsaasPaymentGateway();
 
 const checkoutOrderUseCase = new CheckoutOrderUseCase(
@@ -42,6 +44,8 @@ const checkoutOrderUseCase = new CheckoutOrderUseCase(
   paymentRepository,
   financialAccountRepository,
   paymentGateway,
+  consumerRepository,
+  sseOrderNotificationHub,
   auditLogRepository
 );
 

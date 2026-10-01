@@ -34,6 +34,12 @@ export default function PartnerOrdersPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'NEW' | 'PREPARING' | 'READY' | 'COMPLETED'>('NEW');
 
+  // Estado do Modal de Denúncia / Não Pagamento
+  const [reportingOrder, setReportingOrder] = useState<OrderDTO | null>(null);
+  const [reportReason, setReportReason] = useState<'CLIENT_REFUSED_PAYMENT' | 'CLIENT_ABSENT' | 'FRAUDULENT_ORDER'>('CLIENT_REFUSED_PAYMENT');
+  const [reportDetails, setReportDetails] = useState<string>('');
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
   // Carregar pedidos do estabelecimento selecionado
   const fetchPartnerOrders = useCallback(async () => {
     if (!token || !selectedPartnerId) return;
@@ -97,6 +103,42 @@ export default function PartnerOrdersPage() {
       fetchPartnerOrders();
     } catch (err: any) {
       toast.error(err.message || 'Erro ao atualizar pedido.', 'Erro');
+    }
+  };
+
+  const handleOpenReportModal = (order: OrderDTO) => {
+    setReportingOrder(order);
+    setReportReason('CLIENT_REFUSED_PAYMENT');
+    setReportDetails('');
+  };
+
+  const handleCloseReportModal = () => {
+    setReportingOrder(null);
+    setReportReason('CLIENT_REFUSED_PAYMENT');
+    setReportDetails('');
+  };
+
+  const handleSubmitReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !reportingOrder) return;
+
+    setIsSubmittingReport(true);
+    try {
+      await ordersApi.reportNonPayment(
+        reportingOrder.id,
+        { reason: reportReason, details: reportDetails },
+        token
+      );
+      toast.success(
+        'Denúncia registrada com sucesso. O pedido foi cancelado e a comissão da plataforma foi isentada.',
+        'Sucesso'
+      );
+      handleCloseReportModal();
+      fetchPartnerOrders();
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao registrar denúncia.', 'Erro');
+    } finally {
+      setIsSubmittingReport(false);
     }
   };
 
@@ -274,105 +316,212 @@ export default function PartnerOrdersPage() {
               </div>
             ) : (
               <div className={styles.ordersGrid}>
-                {filtered.map((order) => (
-                  <div key={order.id} className={styles.orderCard}>
-                    <div className={styles.cardTop}>
-                      <div>
-                        <div className={styles.orderId}>#{order.id.slice(0, 8)}</div>
-                        <div className={styles.orderTime}>
-                          {new Date(order.createdAt).toLocaleTimeString('pt-BR', {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
+                {filtered.map((order) => {
+                  const isDelivery = order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY';
+
+                  return (
+                    <div key={order.id} className={styles.orderCard}>
+                      <div className={styles.cardTop}>
+                        <div>
+                          <div className={styles.orderId}>#{order.id.slice(0, 8)}</div>
+                          <div className={styles.orderTime}>
+                            {new Date(order.createdAt).toLocaleTimeString('pt-BR', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
+                          {order.paymentMethod && (
+                            <div style={{ marginTop: '0.4rem' }}>
+                              {order.paymentMethod === 'CASH_ON_DELIVERY' ? (
+                                <span className={`${styles.paymentBadge} ${styles.paymentBadgeDelivery}`}>
+                                  💵 Dinheiro na Entrega {order.changeFor ? `• Troco p/ R$ ${Number(order.changeFor).toFixed(2).replace('.', ',')}` : '• Sem troco'}
+                                </span>
+                              ) : order.paymentMethod === 'CARD_ON_DELIVERY' ? (
+                                <span className={`${styles.paymentBadge} ${styles.paymentBadgeDelivery}`}>
+                                  💳 Maquininha na Entrega
+                                </span>
+                              ) : (
+                                <span className={`${styles.paymentBadge} ${styles.paymentBadgeOnline}`}>
+                                  🛡️ Pagamento Online
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
+                        <span className={styles.statusBadge}>
+                          {STATUS_LABELS[order.status] || order.status}
+                        </span>
                       </div>
-                      <span className={styles.statusBadge}>
-                        {STATUS_LABELS[order.status] || order.status}
-                      </span>
+
+                      <div className={styles.itemsBox}>
+                        {order.items.map((it) => (
+                          <div key={it.id} className={styles.itemLine}>
+                            <span>
+                              {it.quantity}x {it.productName}
+                            </span>
+                            <span>R$ {it.totalPrice.toFixed(2).replace('.', ',')}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {order.notes && (
+                        <div className={styles.orderNotes}>
+                          📝 {order.notes}
+                        </div>
+                      )}
+
+                      <div className={styles.cardBottom}>
+                        <div className={styles.amountLine}>
+                          <span>Total</span>
+                          <span style={{ color: 'var(--color-emerald)' }}>
+                            R$ {order.totalAmount.toFixed(2).replace('.', ',')}
+                          </span>
+                        </div>
+
+                        {/* Ações por Status */}
+                        {order.status === 'PAID' && (
+                          <button
+                            type="button"
+                            className={`${styles.actionButton} ${styles.actionConfirm}`}
+                            onClick={() => handleAction(order.id, 'CONFIRM')}
+                          >
+                            ✅ Aceitar Pedido
+                          </button>
+                        )}
+
+                        {order.status === 'CONFIRMED' && (
+                          <button
+                            type="button"
+                            className={`${styles.actionButton} ${styles.actionPrepare}`}
+                            onClick={() => handleAction(order.id, 'START_PREPARING')}
+                          >
+                            🔥 Iniciar Preparo
+                          </button>
+                        )}
+
+                        {order.status === 'PREPARING' && (
+                          <button
+                            type="button"
+                            className={`${styles.actionButton} ${styles.actionReady}`}
+                            onClick={() => handleAction(order.id, 'READY_FOR_PICKUP')}
+                          >
+                            📦 Marcar como Pronto
+                          </button>
+                        )}
+
+                        {order.status === 'READY_FOR_PICKUP' && (
+                          <button
+                            type="button"
+                            className={`${styles.actionButton} ${styles.actionReady}`}
+                            onClick={() => handleAction(order.id, 'OUT_FOR_DELIVERY')}
+                          >
+                            🛵 Despachar para Entrega
+                          </button>
+                        )}
+
+                        {order.status === 'OUT_FOR_DELIVERY' && (
+                          <button
+                            type="button"
+                            className={`${styles.actionButton} ${styles.actionDeliver}`}
+                            onClick={() => handleAction(order.id, 'DELIVER')}
+                          >
+                            🏁 Concluir Entrega
+                          </button>
+                        )}
+
+                        {/* Denúncia de Não Pagamento / Cliente Ausente para pedidos na entrega */}
+                        {isDelivery && order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
+                          <button
+                            type="button"
+                            className={styles.btnReportNonPayment}
+                            onClick={() => handleOpenReportModal(order)}
+                            title="Reportar cliente ausente ou recusa de pagamento na entrega"
+                          >
+                            🚨 Reportar Não Pagamento
+                          </button>
+                        )}
+                      </div>
                     </div>
-
-                <div className={styles.itemsBox}>
-                  {order.items.map((it) => (
-                    <div key={it.id} className={styles.itemLine}>
-                      <span>
-                        {it.quantity}x {it.productName}
-                      </span>
-                      <span>R$ {it.totalPrice.toFixed(2).replace('.', ',')}</span>
-                    </div>
-                  ))}
-                </div>
-
-                {order.notes && (
-                  <div className={styles.orderNotes}>
-                    📝 {order.notes}
-                  </div>
-                )}
-
-                <div className={styles.cardBottom}>
-                  <div className={styles.amountLine}>
-                    <span>Total</span>
-                    <span style={{ color: 'var(--color-emerald)' }}>
-                      R$ {order.totalAmount.toFixed(2).replace('.', ',')}
-                    </span>
-                  </div>
-
-                  {/* Ações por Status */}
-                  {order.status === 'PAID' && (
-                    <button
-                      type="button"
-                      className={`${styles.actionButton} ${styles.actionConfirm}`}
-                      onClick={() => handleAction(order.id, 'CONFIRM')}
-                    >
-                      ✅ Aceitar Pedido
-                    </button>
-                  )}
-
-                  {order.status === 'CONFIRMED' && (
-                    <button
-                      type="button"
-                      className={`${styles.actionButton} ${styles.actionPrepare}`}
-                      onClick={() => handleAction(order.id, 'START_PREPARING')}
-                    >
-                      🔥 Iniciar Preparo
-                    </button>
-                  )}
-
-                  {order.status === 'PREPARING' && (
-                    <button
-                      type="button"
-                      className={`${styles.actionButton} ${styles.actionReady}`}
-                      onClick={() => handleAction(order.id, 'READY_FOR_PICKUP')}
-                    >
-                      📦 Marcar como Pronto
-                    </button>
-                  )}
-
-                  {order.status === 'READY_FOR_PICKUP' && (
-                    <button
-                      type="button"
-                      className={`${styles.actionButton} ${styles.actionReady}`}
-                      onClick={() => handleAction(order.id, 'OUT_FOR_DELIVERY')}
-                    >
-                      🛵 Despachar para Entrega
-                    </button>
-                  )}
-
-                  {order.status === 'OUT_FOR_DELIVERY' && (
-                    <button
-                      type="button"
-                      className={`${styles.actionButton} ${styles.actionDeliver}`}
-                      onClick={() => handleAction(order.id, 'DELIVER')}
-                    >
-                      🏁 Concluir Entrega
-                    </button>
-                  )}
-                </div>
+                  );
+                })}
               </div>
-            ))}
+            )}
+          </>
+        )}
+
+        {/* Modal de Denúncia / Não Pagamento */}
+        {reportingOrder && (
+          <div className={styles.modalOverlay} onClick={handleCloseReportModal}>
+            <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h2 className={styles.modalTitle}>
+                  🚨 Denunciar Não Pagamento / Fraude
+                </h2>
+                <button
+                  type="button"
+                  className={styles.modalClose}
+                  onClick={handleCloseReportModal}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className={styles.modalWarning}>
+                <strong>Atenção:</strong> Ao reportar esta ocorrência, o pedido <code>#{reportingOrder.id.slice(0, 8)}</code> será cancelado imediatamente. A comissão de intermediação da plataforma (12%) será <strong>estornada e zerada</strong> para o seu restaurante e o cliente perderá o direito de realizar novos pedidos com pagamento na entrega.
+              </div>
+
+              <form onSubmit={handleSubmitReport}>
+                <div className={styles.modalFormGroup}>
+                  <label className={styles.modalLabel}>Motivo da Ocorrência:</label>
+                  <select
+                    className={styles.modalSelect}
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value as 'CLIENT_REFUSED_PAYMENT' | 'CLIENT_ABSENT' | 'FRAUDULENT_ORDER')}
+                  >
+                    <option value="CLIENT_REFUSED_PAYMENT">
+                      Cliente se recusou a pagar na entrega
+                    </option>
+                    <option value="CLIENT_ABSENT">
+                      Cliente ausente / Não atendeu o entregador
+                    </option>
+                    <option value="FRAUDULENT_ORDER">
+                      Pedido suspeito de trote ou fraude
+                    </option>
+                  </select>
+                </div>
+
+                <div className={styles.modalFormGroup}>
+                  <label className={styles.modalLabel}>Detalhes do Ocorrido (opcional):</label>
+                  <textarea
+                    className={styles.modalTextarea}
+                    rows={3}
+                    placeholder="Ex: Entregador aguardou 20 minutos no local, cliente visualizou as mensagens mas recusou o pagamento..."
+                    value={reportDetails}
+                    onChange={(e) => setReportDetails(e.target.value)}
+                  />
+                </div>
+
+                <div className={styles.modalFooter}>
+                  <button
+                    type="button"
+                    className={styles.btnCancel}
+                    onClick={handleCloseReportModal}
+                    disabled={isSubmittingReport}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className={styles.btnDangerConfirm}
+                    disabled={isSubmittingReport}
+                  >
+                    {isSubmittingReport ? 'Processando...' : 'Confirmar Denúncia e Cancelar'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
-        </>
-      )}
       </main>
     </div>
   );

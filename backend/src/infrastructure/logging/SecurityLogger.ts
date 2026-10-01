@@ -15,7 +15,8 @@ export type SecurityEventType =
   | 'PAYMENT_CHECKOUT_ATTEMPT'
   | 'PAYMENT_PROCESSED'
   | 'PAYMENT_REFUNDED'
-  | 'PARTNER_FINANCIAL_ACCOUNT_CONFIGURED';
+  | 'PARTNER_FINANCIAL_ACCOUNT_CONFIGURED'
+  | 'ORDER_PAYMENT_REFUSED_ON_DELIVERY';
 
 export interface SecurityLogPayload {
   timestamp: string;
@@ -246,6 +247,40 @@ export class SecurityLogger {
         bankCode: data.bankCode,
       },
       reason: 'Configuração ou atualização de dados bancários/PIX para split Asaas.',
+    });
+  }
+
+  static logOrderPaymentRefusedOnDelivery(data: {
+    ip?: string;
+    userAgent?: string;
+    actorId: string;
+    targetId: string;
+    orderId: string;
+    partnerId: string;
+    reportId: string;
+    reason: string;
+    details?: string;
+    platformFeeWaived: boolean;
+    consumerBlocked: boolean;
+  }): void {
+    this.writeLog({
+      timestamp: new Date().toISOString(),
+      level: 'WARN',
+      event: 'ORDER_PAYMENT_REFUSED_ON_DELIVERY',
+      ip: data.ip || '127.0.0.1',
+      userAgent: data.userAgent,
+      actorId: data.actorId,
+      targetId: data.targetId,
+      details: {
+        orderId: data.orderId,
+        partnerId: data.partnerId,
+        reportId: data.reportId,
+        reason: data.reason,
+        details: data.details,
+        platformFeeWaived: data.platformFeeWaived,
+        consumerBlocked: data.consumerBlocked,
+      },
+      reason: data.details || data.reason,
     });
   }
 }

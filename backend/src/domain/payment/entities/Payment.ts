@@ -20,6 +20,7 @@ export interface PaymentProps {
   paidAt?: Date;
   failureReason?: string;
   idempotencyKey?: string;
+  changeFor?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +42,7 @@ export interface CreatePaymentInputProps {
   paidAt?: Date;
   failureReason?: string;
   idempotencyKey?: string;
+  changeFor?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -66,6 +68,7 @@ export class Payment extends Entity<PaymentProps> {
   get paidAt(): Date | undefined { return this.props.paidAt; }
   get failureReason(): string | undefined { return this.props.failureReason; }
   get idempotencyKey(): string | undefined { return this.props.idempotencyKey; }
+  get changeFor(): number | undefined { return this.props.changeFor; }
   get createdAt(): Date { return this.props.createdAt; }
   get updatedAt(): Date { return this.props.updatedAt; }
 
@@ -107,6 +110,7 @@ export class Payment extends Entity<PaymentProps> {
         paidAt: props.paidAt,
         failureReason: props.failureReason,
         idempotencyKey: props.idempotencyKey,
+        changeFor: props.changeFor ? Number(props.changeFor) : undefined,
         createdAt: props.createdAt || new Date(),
         updatedAt: props.updatedAt || new Date(),
       },
@@ -114,6 +118,10 @@ export class Payment extends Entity<PaymentProps> {
     );
 
     return Result.ok<Payment>(payment);
+  }
+
+  public static reconstitute(props: PaymentProps, id: string): Payment {
+    return new Payment(props, id);
   }
 
   public setGatewayTransactionId(id: string): void {
@@ -158,5 +166,15 @@ export class Payment extends Entity<PaymentProps> {
     this.props.status = PaymentStatus.REFUNDED;
     this.props.updatedAt = new Date();
     return Result.ok<void>(undefined);
+  }
+
+  /**
+   * Zera a cobrança de taxa de intermediação CeLiLac quando a entrega
+   * falha por ausência ou recusa de pagamento do cliente.
+   */
+  public waivePlatformFee(): void {
+    this.props.platformFeeAmount = 0;
+    this.props.netPartnerAmount = this.props.grossAmount;
+    this.props.updatedAt = new Date();
   }
 }

@@ -10,6 +10,8 @@ interface ReportRow {
   reporter_id: string;
   product_id: string | null;
   partner_id: string | null;
+  target_user_id: string | null;
+  order_id: string | null;
   reason: string;
   details: string | null;
   is_food_safety_risk: boolean;
@@ -23,13 +25,15 @@ export class PgReportRepository implements IReportRepository {
 
   async save(report: Report): Promise<void> {
     await this.pool.query(
-      `INSERT INTO product_reports (id, reporter_id, product_id, partner_id, reason, details, is_food_safety_risk, status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      `INSERT INTO product_reports (id, reporter_id, product_id, partner_id, target_user_id, order_id, reason, details, is_food_safety_risk, status, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
       [
         report.id,
         report.reporterId,
         report.productId || null,
         report.partnerId || null,
+        report.targetUserId || null,
+        report.orderId || null,
         report.reason,
         report.details || null,
         report.isFoodSafetyRisk,
@@ -90,6 +94,8 @@ export class PgReportRepository implements IReportRepository {
         reporterId: row.reporter_id,
         productId: row.product_id || undefined,
         partnerId: row.partner_id || undefined,
+        targetUserId: row.target_user_id || undefined,
+        orderId: row.order_id || undefined,
         reason: row.reason as ReportReason,
         details: row.details || undefined,
         isFoodSafetyRisk: row.is_food_safety_risk,

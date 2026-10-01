@@ -18,6 +18,8 @@ import { OrderStatus } from '../../../../src/domain/order/value-objects/OrderSta
 import { Payment } from '../../../../src/domain/payment/entities/Payment';
 import { PartnerFinancialAccount } from '../../../../src/domain/payment/entities/PartnerFinancialAccount';
 import { PaymentMethod, PaymentStatus } from '../../../../src/domain/payment/value-objects/PaymentStatus';
+import { Consumer } from '../../../../src/domain/consumer/Consumer';
+import { IConsumerRepository } from '../../../../src/domain/consumer/repositories/IConsumerRepository';
 import { Partner, PartnerType, PartnerApprovalStatus, PartnerOperationalStatus } from '../../../../src/domain/partner/Partner';
 import { Result } from '../../../../src/domain/Result';
 
@@ -281,6 +283,92 @@ describe('Payment Application Use Cases Unit Tests', () => {
       expect(result.isSuccess).toBe(true);
       expect(result.getValue().paymentId).toBe(paidPayment.id);
       expect(paymentGateway.createPixCharge).not.toHaveBeenCalled();
+    });
+
+    it('deve processar checkout com CARD_ON_DELIVERY confirmando o pedido sem chamar gateway Asaas', async () => {
+      const order = createTestOrder();
+      orderRepository.findById.mockResolvedValue(order);
+
+      const useCase = new CheckoutOrderUseCase(
+        orderRepository,
+        paymentRepository,
+        financialAccountRepository,
+        paymentGateway
+      );
+
+      const result = await useCase.execute({
+        orderId: order.id,
+        consumerId,
+        method: PaymentMethod.CARD_ON_DELIVERY,
+      });
+
+      expect(result.isSuccess).toBe(true);
+      const checkout = result.getValue();
+      expect(checkout.method).toBe(PaymentMethod.CARD_ON_DELIVERY);
+      expect(checkout.status).toBe(PaymentStatus.PENDING);
+      expect(checkout.grossAmount).toBe(60.0);
+      expect(checkout.platformFeeAmount).toBe(6.0); // 12%
+      expect(paymentGateway.createCreditCardCharge).not.toHaveBeenCalled();
+      expect(paymentGateway.createPixCharge).not.toHaveBeenCalled();
+      expect(order.status).toBe(OrderStatus.CONFIRMED);
+    });
+
+    it('deve processar checkout com CASH_ON_DELIVERY validando troco para valor maior', async () => {
+      const order = createTestOrder();
+      orderRepository.findById.mockResolvedValue(order);
+
+      const useCase = new CheckoutOrderUseCase(
+        orderRepository,
+        paymentRepository,
+        financialAccountRepository,
+        paymentGateway
+      );
+
+      const result = await useCase.execute({
+        orderId: order.id,
+        consumerId,
+        method: PaymentMethod.CASH_ON_DELIVERY,
+        changeFor: 100.0,
+      });
+
+      expect(result.isSuccess).toBe(true);
+      const checkout = result.getValue();
+      expect(checkout.method).toBe(PaymentMethod.CASH_ON_DELIVERY);
+      expect(checkout.changeFor).toBe(100.0);
+      expect(order.status).toBe(OrderStatus.CONFIRMED);
+    });
+
+    it('deve bloquear checkout na entrega se o consumidor estiver proibido de pagar na entrega', async () => {
+      const order = createTestOrder();
+      orderRepository.findById.mockResolvedValue(order);
+
+      const blockedConsumer = Consumer.create({
+        userId: consumerId,
+        canPayOnDelivery: false,
+      }).getValue();
+
+      const mockConsumerRepo: jest.Mocked<IConsumerRepository> = {
+        findByUserId: jest.fn().mockResolvedValue(blockedConsumer),
+        findById: jest.fn().mockResolvedValue(blockedConsumer),
+        save: jest.fn().mockResolvedValue(undefined),
+      };
+
+      const useCase = new CheckoutOrderUseCase(
+        orderRepository,
+        paymentRepository,
+        financialAccountRepository,
+        paymentGateway,
+        mockConsumerRepo
+      );
+
+      const result = await useCase.execute({
+        orderId: order.id,
+        consumerId,
+        method: PaymentMethod.CARD_ON_DELIVERY,
+      });
+
+      expect(result.isFailure).toBe(true);
+      expect(result.getError()).toContain('Opção de pagamento na entrega indisponível');
     });
   });
 

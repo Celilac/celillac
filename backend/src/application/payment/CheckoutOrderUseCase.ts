@@ -1,14 +1,15 @@
-// backend/src/application/payment/CheckoutOrderUseCase.ts
 import { Result } from '../../domain/Result';
 import { IOrderRepository } from '../../domain/order/repositories/IOrderRepository';
 import { IPaymentRepository } from '../../domain/payment/repositories/IPaymentRepository';
 import { IPartnerFinancialAccountRepository } from '../../domain/payment/repositories/IPartnerFinancialAccountRepository';
 import { IPaymentGateway } from '../../domain/payment/services/IPaymentGateway';
-import { PaymentMethod, PaymentStatus } from '../../domain/payment/value-objects/PaymentStatus';
+import { PaymentMethod, PaymentStatus, isDeliveryPayment } from '../../domain/payment/value-objects/PaymentStatus';
 import { Payment } from '../../domain/payment/entities/Payment';
 import { OrderStatus } from '../../domain/order/value-objects/OrderStatus';
 import { IAuditLogRepository } from '../../domain/audit/repositories/IAuditLogRepository';
 import { AuditLog } from '../../domain/audit/AuditLog';
+import { IConsumerRepository } from '../../domain/consumer/repositories/IConsumerRepository';
+import { IOrderNotificationService } from '../../domain/order/services/IOrderNotificationService';
 
 export interface CheckoutCustomerInfo {
   name: string;
@@ -24,6 +25,7 @@ export interface CheckoutOrderDTO {
   customerInfo?: CheckoutCustomerInfo;
   idempotencyKey?: string;
   forceNew?: boolean;
+  changeFor?: number;
 }
 
 export interface CheckoutOrderOutputDTO {
@@ -34,19 +36,35 @@ export interface CheckoutOrderOutputDTO {
   grossAmount: number;
   netPartnerAmount: number;
   platformFeeAmount: number;
+  changeFor?: number;
   pixQrCode?: string;
   pixCopyPaste?: string;
   pixExpiresAt?: Date;
 }
 
 export class CheckoutOrderUseCase {
+  private readonly consumerRepository?: IConsumerRepository;
+  private readonly notificationService?: IOrderNotificationService;
+  private readonly auditLogRepository?: IAuditLogRepository;
+
   constructor(
     private readonly orderRepository: IOrderRepository,
     private readonly paymentRepository: IPaymentRepository,
     private readonly financialAccountRepository: IPartnerFinancialAccountRepository,
     private readonly paymentGateway: IPaymentGateway,
-    private readonly auditLogRepository?: IAuditLogRepository
-  ) {}
+    consumerRepoOrAudit?: IConsumerRepository | IAuditLogRepository,
+    notificationService?: IOrderNotificationService,
+    auditLogRepository?: IAuditLogRepository
+  ) {
+    if (consumerRepoOrAudit && 'findByUserId' in consumerRepoOrAudit) {
+      this.consumerRepository = consumerRepoOrAudit as IConsumerRepository;
+      this.notificationService = notificationService;
+      this.auditLogRepository = auditLogRepository;
+    } else if (consumerRepoOrAudit) {
+      this.auditLogRepository = consumerRepoOrAudit as IAuditLogRepository;
+      this.notificationService = notificationService;
+    }
+  }
 
   async execute(dto: CheckoutOrderDTO): Promise<Result<CheckoutOrderOutputDTO>> {
     const order = await this.orderRepository.findById(dto.orderId);
@@ -70,6 +88,7 @@ export class CheckoutOrderUseCase {
           grossAmount: existingByKey.grossAmount,
           netPartnerAmount: existingByKey.netPartnerAmount,
           platformFeeAmount: existingByKey.platformFeeAmount,
+          changeFor: existingByKey.changeFor,
           pixQrCode: existingByKey.pixQrCode,
           pixCopyPaste: existingByKey.pixCopyPaste,
           pixExpiresAt: existingByKey.pixExpiresAt,
@@ -89,6 +108,7 @@ export class CheckoutOrderUseCase {
           grossAmount: existingForOrder.grossAmount,
           netPartnerAmount: existingForOrder.netPartnerAmount,
           platformFeeAmount: existingForOrder.platformFeeAmount,
+          changeFor: existingForOrder.changeFor,
           pixQrCode: existingForOrder.pixQrCode,
           pixCopyPaste: existingForOrder.pixCopyPaste,
           pixExpiresAt: existingForOrder.pixExpiresAt,
@@ -108,6 +128,7 @@ export class CheckoutOrderUseCase {
           grossAmount: existingForOrder.grossAmount,
           netPartnerAmount: existingForOrder.netPartnerAmount,
           platformFeeAmount: existingForOrder.platformFeeAmount,
+          changeFor: existingForOrder.changeFor,
           pixQrCode: existingForOrder.pixQrCode,
           pixCopyPaste: existingForOrder.pixCopyPaste,
           pixExpiresAt: existingForOrder.pixExpiresAt,
@@ -118,6 +139,12 @@ export class CheckoutOrderUseCase {
     if (order.status !== OrderStatus.CREATED && order.status !== OrderStatus.AWAITING_PAYMENT) {
       return Result.fail<CheckoutOrderOutputDTO>(
         `Não é possível realizar checkout de um pedido com status "${order.status}".`
+      );
+    }
+
+    if (order.subtotalAmount <= 0 || order.totalAmount <= 0) {
+      return Result.fail<CheckoutOrderOutputDTO>(
+        'O valor total do pedido deve ser maior que zero para realizar o checkout.'
       );
     }
 
@@ -134,18 +161,25 @@ export class CheckoutOrderUseCase {
     let paymentResult: Result<Payment>;
 
     if (dto.method === PaymentMethod.PIX) {
-      const payment = (dto.forceNew && existingForOrder && existingForOrder.status === PaymentStatus.PENDING)
-        ? existingForOrder
-        : Payment.create({
-            orderId: order.id,
-            consumerId: order.consumerId,
-            partnerId: order.partnerId,
-            method: PaymentMethod.PIX,
-            subtotalAmount: order.subtotalAmount,
-            deliveryFee: order.deliveryFee,
-            status: PaymentStatus.PENDING,
-            idempotencyKey: dto.idempotencyKey,
-          }).getValue();
+      let payment: Payment;
+      if (dto.forceNew && existingForOrder && existingForOrder.status === PaymentStatus.PENDING) {
+        payment = existingForOrder;
+      } else {
+        const createRes = Payment.create({
+          orderId: order.id,
+          consumerId: order.consumerId,
+          partnerId: order.partnerId,
+          method: PaymentMethod.PIX,
+          subtotalAmount: order.subtotalAmount,
+          deliveryFee: order.deliveryFee,
+          status: PaymentStatus.PENDING,
+          idempotencyKey: dto.idempotencyKey,
+        });
+        if (createRes.isFailure) {
+          return Result.fail<CheckoutOrderOutputDTO>(createRes.getError());
+        }
+        payment = createRes.getValue();
+      }
 
       const gatewayRes = await this.paymentGateway.createPixCharge({
         orderId: order.id,
@@ -172,7 +206,7 @@ export class CheckoutOrderUseCase {
         return Result.fail<CheckoutOrderOutputDTO>('Token do cartão de crédito é obrigatório para pagamento com cartão.');
       }
 
-      const payment = Payment.create({
+      const createRes = Payment.create({
         orderId: order.id,
         consumerId: order.consumerId,
         partnerId: order.partnerId,
@@ -181,7 +215,11 @@ export class CheckoutOrderUseCase {
         deliveryFee: order.deliveryFee,
         status: PaymentStatus.PENDING,
         idempotencyKey: dto.idempotencyKey,
-      }).getValue();
+      });
+      if (createRes.isFailure) {
+        return Result.fail<CheckoutOrderOutputDTO>(createRes.getError());
+      }
+      const payment = createRes.getValue();
 
       const gatewayRes = await this.paymentGateway.createCreditCardCharge({
         orderId: order.id,
@@ -209,6 +247,51 @@ export class CheckoutOrderUseCase {
       }
 
       paymentResult = Result.ok(payment);
+    } else if (isDeliveryPayment(dto.method)) {
+      if (this.consumerRepository) {
+        const consumer = await this.consumerRepository.findByUserId(dto.consumerId);
+        if (consumer && !consumer.canPayOnDelivery) {
+          return Result.fail<CheckoutOrderOutputDTO>(
+            'Opção de pagamento na entrega indisponível para esta conta devido a ocorrências anteriores. Por favor, utilize pagamento online (PIX ou Cartão).'
+          );
+        }
+      }
+
+      if (dto.method === PaymentMethod.CASH_ON_DELIVERY && dto.changeFor !== undefined && dto.changeFor !== null) {
+        if (dto.changeFor < order.totalAmount) {
+          return Result.fail<CheckoutOrderOutputDTO>(
+            'O valor informado para troco deve ser maior ou igual ao total do pedido.'
+          );
+        }
+      }
+
+      let payment: Payment;
+      if (dto.forceNew && existingForOrder && existingForOrder.status === PaymentStatus.PENDING) {
+        payment = existingForOrder;
+      } else {
+        const createRes = Payment.create({
+          orderId: order.id,
+          consumerId: order.consumerId,
+          partnerId: order.partnerId,
+          gateway: 'DELIVERY',
+          method: dto.method,
+          subtotalAmount: order.subtotalAmount,
+          deliveryFee: order.deliveryFee,
+          status: PaymentStatus.PENDING,
+          idempotencyKey: dto.idempotencyKey,
+          changeFor: dto.changeFor,
+        });
+        if (createRes.isFailure) {
+          return Result.fail<CheckoutOrderOutputDTO>(createRes.getError());
+        }
+        payment = createRes.getValue();
+      }
+
+      const confirmRes = order.confirmDeliveryOrder();
+      if (confirmRes.isFailure) {
+        return Result.fail<CheckoutOrderOutputDTO>(confirmRes.getError());
+      }
+      paymentResult = Result.ok(payment);
     } else {
       return Result.fail<CheckoutOrderOutputDTO>('Método de pagamento não suportado.');
     }
@@ -217,6 +300,23 @@ export class CheckoutOrderUseCase {
 
     await this.paymentRepository.save(payment);
     await this.orderRepository.save(order);
+
+    if (this.notificationService && isDeliveryPayment(payment.method)) {
+      const payload = {
+        orderId: order.id,
+        partnerId: order.partnerId,
+        consumerId: order.consumerId,
+        totalAmount: order.totalAmount,
+        status: order.status,
+        confirmedAt: new Date().toISOString(),
+        metadata: {
+          paymentMethod: payment.method,
+          changeFor: payment.changeFor,
+        },
+      };
+      this.notificationService.notifyOrderStatusChanged(order.partnerId, payload);
+      this.notificationService.notifyOrderStatusChanged(order.consumerId, payload);
+    }
 
     if (this.auditLogRepository) {
       const logResult = AuditLog.create({
@@ -247,6 +347,7 @@ export class CheckoutOrderUseCase {
       grossAmount: payment.grossAmount,
       netPartnerAmount: payment.netPartnerAmount,
       platformFeeAmount: payment.platformFeeAmount,
+      changeFor: payment.changeFor,
       pixQrCode: payment.pixQrCode,
       pixCopyPaste: payment.pixCopyPaste,
       pixExpiresAt: payment.pixExpiresAt,

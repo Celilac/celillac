@@ -11,6 +11,12 @@ export enum PaymentStatus {
 export enum PaymentMethod {
   PIX = 'PIX',
   CREDIT_CARD = 'CREDIT_CARD',
+  CASH_ON_DELIVERY = 'CASH_ON_DELIVERY',
+  CARD_ON_DELIVERY = 'CARD_ON_DELIVERY',
+}
+
+export function isDeliveryPayment(method: PaymentMethod | string): boolean {
+  return method === PaymentMethod.CASH_ON_DELIVERY || method === PaymentMethod.CARD_ON_DELIVERY;
 }
 
 export interface SplitCalculationResult {

@@ -128,6 +128,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 📜 Auditoria & Rastreabilidade do Domínio | ✅ Implementado | [`docs/features/audit.md`](docs/features/audit.md) |
 | 📱 App Mobile (Flutter) | ✅ Implementado | [`docs/features/mobile-app.md`](docs/features/mobile-app.md) |
 | 🛡️ Segurança, Anti-Bot & Anti-DDoS | ✅ Implementado | [`docs/features/security-hardening.md`](docs/features/security-hardening.md) |
+| 💵 Pagamento na Entrega & Proteção Contra Fraude | ✅ Implementado | [`docs/features/delivery-payment-and-fraud-protection.md`](docs/features/delivery-payment-and-fraud-protection.md) |
 
 ---
 

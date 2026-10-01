@@ -14,6 +14,8 @@ export interface OrderProps {
   totalAmount: number;
   allergenCheckVerdict: 'SAFE' | 'WARNING';
   notes?: string;
+  paymentMethod?: string;
+  changeFor?: number;
   cancelledAt?: Date;
   cancelReason?: string;
   createdAt: Date;
@@ -27,6 +29,8 @@ export interface CreateOrderInputProps {
   deliveryFee?: number;
   allergenCheckVerdict: 'SAFE' | 'WARNING';
   notes?: string;
+  paymentMethod?: string;
+  changeFor?: number;
   status?: OrderStatus;
   createdAt?: Date;
   updatedAt?: Date;
@@ -73,6 +77,14 @@ export class Order extends Entity<OrderProps> {
 
   get notes(): string | undefined {
     return this.props.notes;
+  }
+
+  get paymentMethod(): string | undefined {
+    return this.props.paymentMethod;
+  }
+
+  get changeFor(): number | undefined {
+    return this.props.changeFor;
   }
 
   get cancelledAt(): Date | undefined {
@@ -125,6 +137,8 @@ export class Order extends Entity<OrderProps> {
         totalAmount,
         allergenCheckVerdict: props.allergenCheckVerdict,
         notes: props.notes,
+        paymentMethod: props.paymentMethod,
+        changeFor: props.changeFor ? Number(props.changeFor) : undefined,
         cancelledAt: props.cancelledAt,
         cancelReason: props.cancelReason,
         createdAt: props.createdAt || new Date(),
@@ -157,13 +171,17 @@ export class Order extends Entity<OrderProps> {
     return Result.ok<void>(undefined);
   }
 
-  public confirm(): Result<void> {
-    if (this.props.status !== OrderStatus.PAID) {
+  public confirm(isDeliveryPayment: boolean = false): Result<void> {
+    if (this.props.status !== OrderStatus.PAID && !isDeliveryPayment) {
       return Result.fail<void>('Apenas pedidos com pagamento confirmado podem ser aceitos pelo parceiro.');
     }
     this.props.status = OrderStatus.CONFIRMED;
     this.props.updatedAt = new Date();
     return Result.ok<void>(undefined);
+  }
+
+  public confirmDeliveryOrder(): Result<void> {
+    return this.confirm(true);
   }
 
   public startPreparing(): Result<void> {

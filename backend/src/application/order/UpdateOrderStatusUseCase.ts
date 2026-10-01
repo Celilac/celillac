@@ -4,6 +4,8 @@ import { Order } from '../../domain/order/entities/Order';
 import { IOrderRepository } from '../../domain/order/repositories/IOrderRepository';
 import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
 import { IOrderNotificationService } from '../../domain/order/services/IOrderNotificationService';
+import { IPaymentRepository } from '../../domain/payment/repositories/IPaymentRepository';
+import { isDeliveryPayment, PaymentStatus } from '../../domain/payment/value-objects/PaymentStatus';
 
 export type OrderStatusAction =
   | 'CONFIRM'
@@ -23,7 +25,8 @@ export class UpdateOrderStatusUseCase {
   constructor(
     private readonly orderRepository: IOrderRepository,
     private readonly partnerRepository: IPartnerRepository,
-    private readonly notificationService?: IOrderNotificationService
+    private readonly notificationService?: IOrderNotificationService,
+    private readonly paymentRepository?: IPaymentRepository
   ) {}
 
   async execute(dto: UpdateOrderStatusDTO): Promise<Result<Order>> {
@@ -66,6 +69,19 @@ export class UpdateOrderStatusUseCase {
     }
 
     await this.orderRepository.save(order);
+
+    if (dto.action === 'DELIVER' && this.paymentRepository) {
+      try {
+        const payment = await this.paymentRepository.findByOrderId(order.id);
+        if (payment && isDeliveryPayment(payment.method) && payment.status === PaymentStatus.PENDING) {
+          payment.markAsPaid();
+          await this.paymentRepository.save(payment);
+        }
+      } catch (err) {
+        // Log ou falha silenciosa para não impedir a finalização da entrega
+        console.error('[UpdateOrderStatusUseCase] Erro ao marcar pagamento na entrega como pago:', err);
+      }
+    }
 
     if (this.notificationService) {
       const payload = {

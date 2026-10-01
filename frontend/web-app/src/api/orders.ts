@@ -40,6 +40,8 @@ export interface OrderDTO {
   totalAmount: number;
   allergenCheckVerdict: 'SAFE' | 'WARNING';
   notes?: string;
+  paymentMethod?: string;
+  changeFor?: number;
   items: OrderItemDTO[];
   cancelledAt?: string;
   cancelReason?: string;
@@ -52,6 +54,19 @@ export interface CreateOrderInput {
   items: Array<{ productId: string; quantity: number }>;
   deliveryFee?: number;
   notes?: string;
+}
+
+export interface ReportNonPaymentInput {
+  reason: 'CLIENT_REFUSED_PAYMENT' | 'CLIENT_ABSENT' | 'FRAUDULENT_ORDER';
+  details?: string;
+}
+
+export interface ReportNonPaymentOutput {
+  reportId: string;
+  orderId: string;
+  orderStatus: string;
+  consumerBlockedFromDeliveryPayment: boolean;
+  platformFeeWaived: boolean;
 }
 
 export const ordersApi = {
@@ -71,6 +86,13 @@ export const ordersApi = {
     apiClient.post<{ orderId: string; status: string; requiresRefund: boolean; cancelReason: string }>(
       `/orders/${orderId}/cancel`,
       { reason },
+      token
+    ),
+
+  reportNonPayment: (orderId: string, data: ReportNonPaymentInput, token?: string) =>
+    apiClient.post<ReportNonPaymentOutput>(
+      `/orders/${orderId}/report-non-payment`,
+      data,
       token
     ),
 

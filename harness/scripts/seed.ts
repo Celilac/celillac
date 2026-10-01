@@ -110,6 +110,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 18.90,
+      category: 'Mercearia & Grãos',
       partner_id: 'c0000001-0000-0000-0000-000000000002', // Mercado Natural & Cia
     },
     {
@@ -120,6 +122,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 12.50,
+      category: 'Mercearia & Grãos',
       partner_id: 'c0000001-0000-0000-0000-000000000002', // Mercado Natural & Cia
     },
     {
@@ -130,6 +134,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 42.00,
+      category: 'Óleos & Condimentos',
     },
     // ── WARNING — traços leves ─────────────────────────────────────────────────
     {
@@ -140,6 +146,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Pode conter traços de leite e amêndoas.',
       analysis_status: 'ANALISADO',
+      price: 16.90,
+      category: 'Doces & Sobremesas',
     },
     {
       id: 'b0000002-0000-0000-0000-000000000002',
@@ -149,6 +157,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Produzido em fábrica que processa castanhas e amendoim.',
       analysis_status: 'ANALISADO',
+      price: 24.50,
+      category: 'Cereais & Matinais',
     },
     {
       id: 'b0000002-0000-0000-0000-000000000003',
@@ -158,6 +168,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Produzido em fábrica que processa leite e soja.',
       analysis_status: 'ANALISADO',
+      price: 26.90,
+      category: 'Mercearia & Grãos',
       partner_id: 'c0000001-0000-0000-0000-000000000002', // Mercado Natural & Cia
     },
     // ── DANGER — alérgeno de alta severidade ──────────────────────────────────
@@ -169,6 +181,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 19.90,
+      category: 'Padaria & Confeitaria',
     },
     {
       id: 'b0000003-0000-0000-0000-000000000002',
@@ -178,6 +192,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 14.90,
+      category: 'Massas',
     },
     {
       id: 'b0000003-0000-0000-0000-000000000003',
@@ -187,6 +203,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 8.50,
+      category: 'Laticínios',
     },
     {
       id: 'b0000003-0000-0000-0000-000000000004',
@@ -196,6 +214,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Livre de glúten. Contém derivados de leite.',
       analysis_status: 'ANALISADO',
+      price: 32.00,
+      category: 'Pratos Prontos',
     },
     // ── BLOCKED — FATAL para celíacos ─────────────────────────────────────────
     {
@@ -206,6 +226,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: 'Contém glúten. Produzido em linha compartilhada.',
       analysis_status: 'ANALISADO',
+      price: 11.90,
+      category: 'Snacks & Biscoitos',
     },
     {
       id: 'b0000004-0000-0000-0000-000000000002',
@@ -215,6 +237,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: 'Contém glúten e soja.',
       analysis_status: 'ANALISADO',
+      price: 15.00,
+      category: 'Óleos & Condimentos',
     },
     // ── CASO CRÍTICO: has_gluten=false mas traços de glúten → BLOCKED para celíacos
     {
@@ -225,6 +249,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Pode conter traços de glúten de trigo.',
       analysis_status: 'ANALISADO',
+      price: 13.50,
+      category: 'Mercearia & Grãos',
     },
     {
       id: 'b0000004-0000-0000-0000-000000000004',
@@ -234,6 +260,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: 'Contém cevada e glúten.',
       analysis_status: 'ANALISADO',
+      price: 21.00,
+      category: 'Mercearia & Grãos',
     },
     {
       id: 'b0000004-0000-0000-0000-000000000005',
@@ -243,6 +271,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'ALÉRGICOS: Embalado no mesmo maquinário que processa trigo. Pode conter traços de glúten.',
       analysis_status: 'ANALISADO',
+      price: 23.00,
+      category: 'Mercearia & Grãos',
     },
     // ── PENDENTE — sem ingredientes declarados → BLOCKED por precaução ─────────
     {
@@ -253,6 +283,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: '',
       analysis_status: 'PENDENTE_DE_ANALISE',
+      price: 35.00,
+      category: 'Geral',
     },
     // ── Frutas do mar (para APLV + shellfish) ─────────────────────────────────
     {
@@ -263,6 +295,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: 'Contém camarão, glúten. Processado com outros frutos do mar.',
       analysis_status: 'ANALISADO',
+      price: 49.90,
+      category: 'Congelados',
     },
     // ── Produto com castanhas (para NUTS HIGH) ─────────────────────────────────
     {
@@ -273,6 +307,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Processado em ambiente com amendoim.',
       analysis_status: 'ANALISADO',
+      price: 38.00,
+      category: 'Snacks & Biscoitos',
     },
     // ── Produto de Parceiro 100% Seguro (Bistro Sem Glúten) ───────────────────
     {

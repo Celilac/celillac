@@ -153,6 +153,19 @@ export default function MyOrdersPage() {
                           minute: '2-digit',
                         })}
                       </div>
+                      {order.paymentMethod && (
+                        <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                          {order.paymentMethod === 'CASH_ON_DELIVERY' ? (
+                            <span>💵 Dinheiro na entrega {order.changeFor ? `(Troco p/ R$ ${Number(order.changeFor).toFixed(2).replace('.', ',')})` : '(Sem troco)'}</span>
+                          ) : order.paymentMethod === 'CARD_ON_DELIVERY' ? (
+                            <span>💳 Maquininha na entrega</span>
+                          ) : order.paymentMethod === 'PIX' ? (
+                            <span>⚡ PIX</span>
+                          ) : (
+                            <span>💳 Cartão de Crédito</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     {getStatusBadge(order.status)}
                   </div>
