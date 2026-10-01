@@ -1,4 +1,4 @@
-# CeLiLac 🛡️
+# CeLiLac
 
 > **Plataforma de Segurança Alimentar para Celíacos**
 > Detecta alérgenos em produtos — incluindo traços de contaminação cruzada — e avisa antes de você consumir.
