@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/useToast';
 export interface AppNotification {
   id: string;
   orderId: string;
+  partnerId?: string;
   title: string;
   message: string;
   timestamp: string;
@@ -206,6 +207,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                     next.unshift({
                       id: `sync_order_${order.id}`,
                       orderId: order.id,
+                      partnerId: partner.id,
                       title: `🍳 Novo Pedido em ${partner.name}!`,
                       message: `Pedido #${shortId} (R$ ${formattedTotal}) aguarda aceite em ${partner.name}.`,
                       timestamp: new Date().toISOString(),
@@ -281,6 +283,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
           addNotification({
             orderId: payload.orderId,
+            partnerId: payload.partnerId,
             title: `🍳 Novo Pedido Recebido${partnerLocation}!`,
             message: `Pedido #${shortId} no valor de R$ ${formattedTotal} recebido${partnerLocation}.`,
             targetUrl,
@@ -359,6 +362,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
               const formattedTotal = Number(payload.totalAmount).toFixed(2).replace('.', ',');
               addNotification({
                 orderId: payload.orderId,
+                partnerId: payload.partnerId,
                 title: `💵 Novo Pedido na Entrega${partnerLocation}!`,
                 message: `Pedido #${shortId} (R$ ${formattedTotal}) confirmado para pagamento na entrega${partnerLocation}.`,
                 targetUrl,
@@ -368,6 +372,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
             } else if (payload.status === 'CANCELLED') {
               addNotification({
                 orderId: payload.orderId,
+                partnerId: payload.partnerId,
                 title: '⚠️ Pedido Cancelado',
                 message: `O pedido #${shortId} foi cancelado${partnerLocation}.`,
                 targetUrl,

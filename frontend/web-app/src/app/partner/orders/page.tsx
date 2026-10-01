@@ -176,6 +176,23 @@ function PartnerOrdersContent() {
     },
   });
 
+  // Ouvir evento disparado pelo dropdown de notificações para troca imediata
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleSwitch = (e: any) => {
+      const detail = e.detail;
+      if (detail?.partnerId && detail.partnerId !== selectedPartnerId) {
+        setSelectedPartnerId(detail.partnerId);
+      }
+    };
+
+    window.addEventListener('celilac:switch-partner-order', handleSwitch);
+    return () => {
+      window.removeEventListener('celilac:switch-partner-order', handleSwitch);
+    };
+  }, [selectedPartnerId]);
+
   // Carregar estabelecimentos do parceiro
   useEffect(() => {
     if (isInitializing) return;
@@ -188,18 +205,51 @@ function PartnerOrdersContent() {
       .then(async (data) => {
         setPartners(data);
         if (data.length > 0) {
-          const urlParamId = typeof window !== 'undefined'
-            ? new URLSearchParams(window.location.search).get('partnerId')
-            : null;
-          const found = urlParamId && data.some((p) => p.id === urlParamId);
+          const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+          const urlPartnerId = urlParams ? urlParams.get('partnerId') : null;
+          const urlOrderId = urlParams ? urlParams.get('orderId') : null;
+          const found = urlPartnerId && data.some((p) => p.id === urlPartnerId);
 
           if (found) {
-            setSelectedPartnerId(urlParamId as string);
+            setSelectedPartnerId(urlPartnerId as string);
+            fetchAllPendingCounts(data);
+          } else if (urlOrderId) {
+            // Se veio apenas orderId na URL, descobre em qual estabelecimento o pedido reside
+            let matchingPartnerId = data[0].id;
+            for (const p of data) {
+              try {
+                const pOrders = await ordersApi.getPartnerOrders(p.id, token);
+                if (pOrders.some((o) => o.id === urlOrderId)) {
+                  matchingPartnerId = p.id;
+                  break;
+                }
+              } catch {}
+            }
+            setSelectedPartnerId(matchingPartnerId);
+            fetchAllPendingCounts(data);
           } else {
-            // Verifica se algum parceiro tem novos pedidos pendentes para priorizá-lo
-            setSelectedPartnerId(data[0].id);
+            // Se não veio parâmetro na URL, seleciona preferencialmente o restaurante com pedidos pendentes
+            let bestPartnerId = data[0].id;
+            try {
+              const counts: Record<string, number> = {};
+              for (const p of data) {
+                try {
+                  const pOrders = await ordersApi.getPartnerOrders(p.id, token);
+                  const pending = pOrders.filter(
+                    (o) => o.status === 'AWAITING_PAYMENT' || o.status === 'CREATED' || o.status === 'PAID'
+                  ).length;
+                  counts[p.id] = pending;
+                  if (pending > 0 && bestPartnerId === data[0].id) {
+                    bestPartnerId = p.id;
+                  }
+                } catch {
+                  counts[p.id] = 0;
+                }
+              }
+              setPendingCounts(counts);
+            } catch {}
+            setSelectedPartnerId(bestPartnerId);
           }
-          fetchAllPendingCounts(data);
         }
       })
       .catch((err) => {
@@ -217,6 +267,34 @@ function PartnerOrdersContent() {
       }
     }
   }, [targetPartnerId, partners, selectedPartnerId]);
+
+  // Se houver um targetOrderId mas o pedido não estiver no estabelecimento atual,
+  // varre todos os estabelecimentos do usuário para encontrar e selecionar o correto automaticamente!
+  useEffect(() => {
+    if (!targetOrderId || !token || partners.length === 0) return;
+
+    if (orders.some((o) => o.id === targetOrderId)) return;
+
+    let isMounted = true;
+    (async () => {
+      for (const p of partners) {
+        if (p.id === selectedPartnerId) continue;
+        try {
+          const pOrders = await ordersApi.getPartnerOrders(p.id, token);
+          if (pOrders.some((o) => o.id === targetOrderId)) {
+            if (isMounted) {
+              setSelectedPartnerId(p.id);
+            }
+            break;
+          }
+        } catch {}
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [targetOrderId, token, partners, selectedPartnerId, orders]);
 
   useEffect(() => {
     if (selectedPartnerId) {
