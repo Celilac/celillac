@@ -353,7 +353,9 @@ export default function PartnerOrdersPage() {
                           )}
                         </div>
                         <span className={styles.statusBadge}>
-                          {STATUS_LABELS[order.status] || order.status}
+                          {((order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY') && (order.status === 'CREATED' || order.status === 'AWAITING_PAYMENT'))
+                            ? 'Novo • Na Entrega'
+                            : STATUS_LABELS[order.status] || order.status}
                         </span>
                       </div>
 
@@ -383,7 +385,10 @@ export default function PartnerOrdersPage() {
                         </div>
 
                         {/* Ações por Status */}
-                        {order.status === 'PAID' && (
+                        {(order.status === 'PAID' || (
+                          (order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY') &&
+                          (order.status === 'CREATED' || order.status === 'AWAITING_PAYMENT')
+                        )) && (
                           <button
                             type="button"
                             className={`${styles.actionButton} ${styles.actionConfirm}`}

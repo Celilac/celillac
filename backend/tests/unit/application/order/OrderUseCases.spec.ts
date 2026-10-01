@@ -287,6 +287,40 @@ describe('Order Lifecycle Use Cases (Cancel, Queries, Status Transitions)', () =
         })
       );
     });
+
+    it('deve permitir parceiro confirmar pedido com pagamento na entrega em status AWAITING_PAYMENT', async () => {
+      const order = createTestOrder();
+      order.markAwaitingPayment();
+      orderRepository.findById.mockResolvedValue(order);
+
+      const mockPaymentRepo = {
+        save: jest.fn(),
+        findById: jest.fn(),
+        findByOrderId: jest.fn().mockResolvedValue({
+          method: 'CASH_ON_DELIVERY',
+          status: 'PENDING',
+        }),
+        findByTransactionId: jest.fn(),
+        findByIdempotencyKey: jest.fn(),
+      } as any;
+
+      const updateUseCase = new UpdateOrderStatusUseCase(
+        orderRepository,
+        partnerRepository,
+        undefined,
+        mockPaymentRepo
+      );
+
+      const confirmRes = await updateUseCase.execute({
+        orderId: order.id,
+        userId: partnerUserId,
+        userRole: 'PARCEIRO',
+        action: 'CONFIRM',
+      });
+
+      expect(confirmRes.isSuccess).toBe(true);
+      expect(confirmRes.getValue().status).toBe('CONFIRMED');
+    });
   });
 
   describe('Queries (GetOrder, ListConsumerOrders, ListPartnerOrders)', () => {

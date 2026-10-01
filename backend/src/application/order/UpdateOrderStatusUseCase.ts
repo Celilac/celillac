@@ -45,9 +45,12 @@ export class UpdateOrderStatusUseCase {
     let transitionResult: Result<void>;
 
     switch (dto.action) {
-      case 'CONFIRM':
-        transitionResult = order.confirm();
+      case 'CONFIRM': {
+        const payment = this.paymentRepository ? await this.paymentRepository.findByOrderId(order.id) : null;
+        const isDelivery = payment ? isDeliveryPayment(payment.method) : false;
+        transitionResult = order.confirm(isDelivery);
         break;
+      }
       case 'START_PREPARING':
         transitionResult = order.startPreparing();
         break;

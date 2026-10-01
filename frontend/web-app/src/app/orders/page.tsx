@@ -66,10 +66,14 @@ export default function MyOrdersPage() {
     }
   };
 
-  const getStatusBadge = (status: OrderDTO['status']) => {
-    switch (status) {
+  const getStatusBadge = (order: OrderDTO) => {
+    const isDelivery = order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY';
+    switch (order.status) {
       case 'CREATED':
       case 'AWAITING_PAYMENT':
+        if (isDelivery) {
+          return <span className={`${styles.statusBadge} ${styles.statusPaid}`}>Aguardando Aceite do Restaurante</span>;
+        }
         return <span className={`${styles.statusBadge} ${styles.statusAwaitingPayment}`}>Aguardando Pagamento</span>;
       case 'PAID':
         return <span className={`${styles.statusBadge} ${styles.statusPaid}`}>Pago • Aguardando Aceite</span>;
@@ -86,7 +90,7 @@ export default function MyOrdersPage() {
       case 'CANCELLED':
         return <span className={`${styles.statusBadge} ${styles.statusCancelled}`}>Cancelado</span>;
       default:
-        return <span className={styles.statusBadge}>{status}</span>;
+        return <span className={styles.statusBadge}>{order.status}</span>;
     }
   };
 
@@ -167,7 +171,7 @@ export default function MyOrdersPage() {
                         </div>
                       )}
                     </div>
-                    {getStatusBadge(order.status)}
+                    {getStatusBadge(order)}
                   </div>
 
                   <div className={styles.itemsSummary}>
