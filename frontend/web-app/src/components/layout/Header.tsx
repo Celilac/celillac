@@ -115,11 +115,44 @@ export function Header() {
             {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
           </button>
 
+          {mounted && isAuthenticated && (
+            <div className="notification-bell-container notification-bell-mobile">
+              <button
+                type="button"
+                className="nav-icon-btn notification-bell-btn"
+                id="btn-notifications-mobile"
+                onClick={() => setNotificationsOpen((prev) => {
+                  if (!prev) setMenuOpen(false);
+                  return !prev;
+                })}
+                aria-label={`Notificações${unreadCount > 0 ? ` (${unreadCount} não lidas)` : ''}`}
+                aria-expanded={notificationsOpen}
+                title="Notificações"
+              >
+                <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BellIcon />
+                  {unreadCount > 0 && (
+                    <span className="notification-red-dot" aria-hidden="true">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+              </button>
+              <NotificationDropdown
+                isOpen={notificationsOpen}
+                onClose={() => setNotificationsOpen(false)}
+              />
+            </div>
+          )}
+
           <button
             ref={toggleRef}
             type="button"
             className="topbar-nav-toggle"
-            onClick={() => setMenuOpen((open) => !open)}
+            onClick={() => setMenuOpen((open) => {
+              if (!open) setNotificationsOpen(false);
+              return !open;
+            })}
             aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
             aria-expanded={menuOpen}
             aria-controls="topbar-nav"
@@ -226,7 +259,7 @@ export function Header() {
           )}
 
           {mounted && isAuthenticated && (
-            <div className="notification-bell-container">
+            <div className="notification-bell-container notification-bell-desktop">
               <button
                 type="button"
                 className="nav-icon-btn notification-bell-btn"
@@ -239,12 +272,11 @@ export function Header() {
                 <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                   <BellIcon />
                   {unreadCount > 0 && (
-                    <span className="notification-badge" aria-hidden="true">
-                      {unreadCount > 99 ? '99+' : unreadCount}
+                    <span className="notification-red-dot" aria-hidden="true">
+                      {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
                 </div>
-                <span className="notification-btn-label">Notificações</span>
               </button>
               <NotificationDropdown
                 isOpen={notificationsOpen}

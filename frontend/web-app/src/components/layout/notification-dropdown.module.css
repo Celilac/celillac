@@ -214,13 +214,16 @@
   background: #ef4444;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 767px) {
   .dropdownContainer {
     position: fixed;
-    top: 60px;
-    left: 10px;
-    right: 10px;
+    top: 66px;
+    left: 12px;
+    right: 12px;
     width: auto;
-    max-width: none;
+    max-width: 420px;
+    margin-left: auto;
+    max-height: calc(100vh - 84px);
+    z-index: 9999;
   }
 }
