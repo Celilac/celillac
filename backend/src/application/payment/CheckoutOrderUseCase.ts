@@ -142,6 +142,12 @@ export class CheckoutOrderUseCase {
       );
     }
 
+    if (order.subtotalAmount <= 0 || order.totalAmount <= 0) {
+      return Result.fail<CheckoutOrderOutputDTO>(
+        'O valor total do pedido deve ser maior que zero para realizar o checkout.'
+      );
+    }
+
     // Buscar dados financeiros do parceiro para o split
     const partnerAccount = await this.financialAccountRepository.findByPartnerId(order.partnerId);
     const partnerSubaccountId = partnerAccount?.gatewaySubaccountId || `subacc_partner_${order.partnerId.substring(0, 8)}`;
@@ -155,18 +161,25 @@ export class CheckoutOrderUseCase {
     let paymentResult: Result<Payment>;
 
     if (dto.method === PaymentMethod.PIX) {
-      const payment = (dto.forceNew && existingForOrder && existingForOrder.status === PaymentStatus.PENDING)
-        ? existingForOrder
-        : Payment.create({
-            orderId: order.id,
-            consumerId: order.consumerId,
-            partnerId: order.partnerId,
-            method: PaymentMethod.PIX,
-            subtotalAmount: order.subtotalAmount,
-            deliveryFee: order.deliveryFee,
-            status: PaymentStatus.PENDING,
-            idempotencyKey: dto.idempotencyKey,
-          }).getValue();
+      let payment: Payment;
+      if (dto.forceNew && existingForOrder && existingForOrder.status === PaymentStatus.PENDING) {
+        payment = existingForOrder;
+      } else {
+        const createRes = Payment.create({
+          orderId: order.id,
+          consumerId: order.consumerId,
+          partnerId: order.partnerId,
+          method: PaymentMethod.PIX,
+          subtotalAmount: order.subtotalAmount,
+          deliveryFee: order.deliveryFee,
+          status: PaymentStatus.PENDING,
+          idempotencyKey: dto.idempotencyKey,
+        });
+        if (createRes.isFailure) {
+          return Result.fail<CheckoutOrderOutputDTO>(createRes.getError());
+        }
+        payment = createRes.getValue();
+      }
 
       const gatewayRes = await this.paymentGateway.createPixCharge({
         orderId: order.id,
@@ -193,7 +206,7 @@ export class CheckoutOrderUseCase {
         return Result.fail<CheckoutOrderOutputDTO>('Token do cartão de crédito é obrigatório para pagamento com cartão.');
       }
 
-      const payment = Payment.create({
+      const createRes = Payment.create({
         orderId: order.id,
         consumerId: order.consumerId,
         partnerId: order.partnerId,
@@ -202,7 +215,11 @@ export class CheckoutOrderUseCase {
         deliveryFee: order.deliveryFee,
         status: PaymentStatus.PENDING,
         idempotencyKey: dto.idempotencyKey,
-      }).getValue();
+      });
+      if (createRes.isFailure) {
+        return Result.fail<CheckoutOrderOutputDTO>(createRes.getError());
+      }
+      const payment = createRes.getValue();
 
       const gatewayRes = await this.paymentGateway.createCreditCardCharge({
         orderId: order.id,
@@ -248,20 +265,27 @@ export class CheckoutOrderUseCase {
         }
       }
 
-      const payment = (dto.forceNew && existingForOrder && existingForOrder.status === PaymentStatus.PENDING)
-        ? existingForOrder
-        : Payment.create({
-            orderId: order.id,
-            consumerId: order.consumerId,
-            partnerId: order.partnerId,
-            gateway: 'DELIVERY',
-            method: dto.method,
-            subtotalAmount: order.subtotalAmount,
-            deliveryFee: order.deliveryFee,
-            status: PaymentStatus.PENDING,
-            idempotencyKey: dto.idempotencyKey,
-            changeFor: dto.changeFor,
-          }).getValue();
+      let payment: Payment;
+      if (dto.forceNew && existingForOrder && existingForOrder.status === PaymentStatus.PENDING) {
+        payment = existingForOrder;
+      } else {
+        const createRes = Payment.create({
+          orderId: order.id,
+          consumerId: order.consumerId,
+          partnerId: order.partnerId,
+          gateway: 'DELIVERY',
+          method: dto.method,
+          subtotalAmount: order.subtotalAmount,
+          deliveryFee: order.deliveryFee,
+          status: PaymentStatus.PENDING,
+          idempotencyKey: dto.idempotencyKey,
+          changeFor: dto.changeFor,
+        });
+        if (createRes.isFailure) {
+          return Result.fail<CheckoutOrderOutputDTO>(createRes.getError());
+        }
+        payment = createRes.getValue();
+      }
 
       const confirmRes = order.confirmDeliveryOrder();
       if (confirmRes.isFailure) {

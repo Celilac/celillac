@@ -153,6 +153,10 @@ function CheckoutPageContent() {
 
   const handleGeneratePix = async (forceNew = false) => {
     if (!token || !order) return;
+    if (order.totalAmount <= 0) {
+      toast.error('O valor do pedido deve ser maior que zero para gerar o PIX.', 'Valor Inválido');
+      return;
+    }
     setProcessing(true);
 
     try {
@@ -181,6 +185,10 @@ function CheckoutPageContent() {
   const handlePayWithCard = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token || !order) return;
+    if (order.totalAmount <= 0) {
+      toast.error('O valor do pedido deve ser maior que zero para processar pagamento com cartão.', 'Valor Inválido');
+      return;
+    }
 
     const cleanCard = cardNumber.replace(/\D/g, '');
     if (cleanCard.length < 13) {
@@ -233,6 +241,10 @@ function CheckoutPageContent() {
 
   const handleCheckoutDelivery = async () => {
     if (!token || !order) return;
+    if (order.totalAmount <= 0) {
+      toast.error('O valor do pedido deve ser maior que zero para confirmar o pedido na entrega.', 'Valor Inválido');
+      return;
+    }
     setProcessing(true);
     setDeliveryBlockedReason(null);
 
@@ -693,16 +705,22 @@ function CheckoutPageContent() {
                         </div>
                       )}
 
-                      <button
-                        type="button"
-                        className={styles.payButton}
-                        onClick={handleCheckoutDelivery}
-                        disabled={processing}
-                      >
-                        {processing
-                          ? 'Confirmando pedido…'
-                          : `🛵 Confirmar Pedido na Entrega (R$ ${order.totalAmount.toFixed(2).replace('.', ',')})`}
-                      </button>
+                      {order.totalAmount <= 0 ? (
+                        <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#fca5a5', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center' }}>
+                          ⚠️ Este pedido possui valor R$ 0,00 e não pode ser finalizado.
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className={styles.payButton}
+                          onClick={handleCheckoutDelivery}
+                          disabled={processing || order.totalAmount <= 0}
+                        >
+                          {processing
+                            ? 'Confirmando pedido…'
+                            : `🛵 Confirmar Pedido na Entrega (R$ ${order.totalAmount.toFixed(2).replace('.', ',')})`}
+                        </button>
+                      )}
 
                       <div className={styles.securityNote}>
                         🛡️ Ao confirmar, o estabelecimento iniciará o preparo imediatamente. Pagamento no ato da entrega.
