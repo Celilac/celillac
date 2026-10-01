@@ -172,16 +172,22 @@ export class Order extends Entity<OrderProps> {
   }
 
   public confirm(isDeliveryPayment: boolean = false): Result<void> {
-    if (this.props.status !== OrderStatus.PAID && !isDeliveryPayment) {
-      return Result.fail<void>('Apenas pedidos com pagamento confirmado podem ser aceitos pelo parceiro.');
+    if (isDeliveryPayment) {
+      if (
+        this.props.status !== OrderStatus.CREATED &&
+        this.props.status !== OrderStatus.AWAITING_PAYMENT &&
+        this.props.status !== OrderStatus.PAID
+      ) {
+        return Result.fail<void>(`Não é possível confirmar um pedido no status ${this.props.status}`);
+      }
+    } else {
+      if (this.props.status !== OrderStatus.PAID) {
+        return Result.fail<void>('Apenas pedidos com pagamento confirmado podem ser aceitos pelo parceiro.');
+      }
     }
     this.props.status = OrderStatus.CONFIRMED;
     this.props.updatedAt = new Date();
     return Result.ok<void>(undefined);
-  }
-
-  public confirmDeliveryOrder(): Result<void> {
-    return this.confirm(true);
   }
 
   public startPreparing(): Result<void> {

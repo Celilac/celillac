@@ -287,9 +287,8 @@ export class CheckoutOrderUseCase {
         payment = createRes.getValue();
       }
 
-      const confirmRes = order.confirmDeliveryOrder();
-      if (confirmRes.isFailure) {
-        return Result.fail<CheckoutOrderOutputDTO>(confirmRes.getError());
+      if (order.status === OrderStatus.CREATED) {
+        order.markAwaitingPayment();
       }
       paymentResult = Result.ok(payment);
     } else {
@@ -314,8 +313,7 @@ export class CheckoutOrderUseCase {
           changeFor: payment.changeFor,
         },
       };
-      this.notificationService.notifyOrderStatusChanged(order.partnerId, payload);
-      this.notificationService.notifyOrderStatusChanged(order.consumerId, payload);
+      this.notificationService.notifyPaymentConfirmed(order.partnerId, payload);
     }
 
     if (this.auditLogRepository) {

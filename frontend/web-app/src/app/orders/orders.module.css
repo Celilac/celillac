@@ -364,3 +364,19 @@
     justify-content: center;
   }
 }
+
+.highlightCard {
+  border-color: var(--color-primary, #059669) !important;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 8px 30px rgba(5, 150, 105, 0.25) !important;
+  animation: pulseCardHighlight 2.5s ease-in-out infinite;
+}
+
+@keyframes pulseCardHighlight {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 8px 30px rgba(5, 150, 105, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(5, 150, 105, 0.65), 0 12px 36px rgba(5, 150, 105, 0.4);
+  }
+}
+

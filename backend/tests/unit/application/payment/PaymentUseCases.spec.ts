@@ -310,7 +310,7 @@ describe('Payment Application Use Cases Unit Tests', () => {
       expect(checkout.platformFeeAmount).toBe(6.0); // 12%
       expect(paymentGateway.createCreditCardCharge).not.toHaveBeenCalled();
       expect(paymentGateway.createPixCharge).not.toHaveBeenCalled();
-      expect(order.status).toBe(OrderStatus.CONFIRMED);
+      expect(order.status).toBe(OrderStatus.AWAITING_PAYMENT);
     });
 
     it('deve processar checkout com CASH_ON_DELIVERY validando troco para valor maior', async () => {
@@ -335,7 +335,7 @@ describe('Payment Application Use Cases Unit Tests', () => {
       const checkout = result.getValue();
       expect(checkout.method).toBe(PaymentMethod.CASH_ON_DELIVERY);
       expect(checkout.changeFor).toBe(100.0);
-      expect(order.status).toBe(OrderStatus.CONFIRMED);
+      expect(order.status).toBe(OrderStatus.AWAITING_PAYMENT);
     });
 
     it('deve bloquear checkout na entrega se o consumidor estiver proibido de pagar na entrega', async () => {

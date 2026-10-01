@@ -277,6 +277,81 @@ input, select, textarea { font-family: inherit; }
 }
 .nav-logout-btn:hover { background: rgba(255,255,255,0.05); color: var(--color-text-muted); }
 
+/* Notificações no Header */
+.notification-bell-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.notification-bell-desktop {
+  display: inline-flex;
+}
+
+.notification-bell-mobile {
+  display: none;
+}
+
+.notification-bell-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  background: var(--color-surface, transparent);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.notification-bell-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-border-hover, var(--color-emerald));
+  color: var(--color-emerald);
+}
+
+/* Bolinha vermelha pulsante indicando notificações não lidas */
+.notification-red-dot {
+  position: absolute;
+  top: -3px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background-color: #ef4444;
+  color: #ffffff;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: 2px solid var(--color-surface, #ffffff);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.7);
+  animation: pulseRedDot 2s infinite ease-in-out;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@keyframes pulseRedDot {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 14px rgba(239, 68, 68, 0.95);
+  }
+}
+
+.notification-btn-label {
+  display: none;
+}
+
 /* Menu mobile — abaixo de 768px a navegação vira um painel empilhado
    por trás de um botão hambúrguer, com alvos de toque ≥44px. */
 .topbar-mobile-controls {
@@ -385,6 +460,13 @@ input, select, textarea { font-family: inherit; }
     min-height: 44px;
     border-radius: var(--radius-md);
     padding: var(--space-3) var(--space-4);
+  }
+  /* O sino fica fora do menu lateral, diretamente no topbar ao lado do botão hambúrguer */
+  .notification-bell-desktop {
+    display: none !important;
+  }
+  .notification-bell-mobile {
+    display: inline-flex !important;
   }
 }
 

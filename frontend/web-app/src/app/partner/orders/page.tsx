@@ -1,7 +1,7 @@
 'use client';
 // frontend/web-app/src/app/partner/orders/page.tsx
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
@@ -23,10 +23,13 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Cancelado',
 };
 
-export default function PartnerOrdersPage() {
+function PartnerOrdersContent() {
   const { token, isAuthenticated, isInitializing } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
+
+  const targetOrderId = searchParams ? searchParams.get('orderId') : null;
 
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
@@ -80,7 +83,11 @@ export default function PartnerOrdersPage() {
       .then((data) => {
         setPartners(data);
         if (data.length > 0) {
-          setSelectedPartnerId(data[0].id);
+          const urlParamId = typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('partnerId')
+            : null;
+          const found = urlParamId && data.some((p) => p.id === urlParamId);
+          setSelectedPartnerId(found ? (urlParamId as string) : data[0].id);
         }
       })
       .catch((err) => {
@@ -94,6 +101,31 @@ export default function PartnerOrdersPage() {
       fetchPartnerOrders();
     }
   }, [selectedPartnerId, fetchPartnerOrders]);
+
+  // Se houver um targetOrderId na query, descobre a aba correta e efetua scroll até o card
+  useEffect(() => {
+    if (!targetOrderId || orders.length === 0) return;
+    const target = orders.find((o) => o.id === targetOrderId);
+    if (target) {
+      if (target.status === 'CREATED' || target.status === 'AWAITING_PAYMENT' || target.status === 'PAID') {
+        setActiveTab('NEW');
+      } else if (target.status === 'CONFIRMED' || target.status === 'PREPARING') {
+        setActiveTab('PREPARING');
+      } else if (target.status === 'READY_FOR_PICKUP' || target.status === 'OUT_FOR_DELIVERY') {
+        setActiveTab('READY');
+      } else {
+        setActiveTab('COMPLETED');
+      }
+
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`order-${targetOrderId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [orders, targetOrderId]);
 
   const handleAction = async (orderId: string, action: any) => {
     if (!token) return;
@@ -158,6 +190,87 @@ export default function PartnerOrdersPage() {
   };
 
   const filtered = filterOrders();
+
+  const renderStatusBadge = (order: OrderDTO) => {
+    const isDelivery = order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY';
+
+    if (order.status === 'CREATED' || order.status === 'AWAITING_PAYMENT') {
+      if (isDelivery) {
+        return (
+          <span className={`${styles.statusBadge} ${styles.badgePendingAccept}`}>
+            🔔 Aguardando Aceite
+          </span>
+        );
+      }
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeAwaitingPayment}`}>
+          ⏳ Aguardando Pagamento
+        </span>
+      );
+    }
+
+    if (order.status === 'PAID') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeNewPaid}`}>
+          ✨ Novo • Pago
+        </span>
+      );
+    }
+
+    if (order.status === 'CONFIRMED') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeConfirmed}`}>
+          ✔️ Confirmado
+        </span>
+      );
+    }
+
+    if (order.status === 'PREPARING') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgePreparing}`}>
+          🔥 Em Preparo
+        </span>
+      );
+    }
+
+    if (order.status === 'READY_FOR_PICKUP') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeReady}`}>
+          📦 Pronto p/ Retirada
+        </span>
+      );
+    }
+
+    if (order.status === 'OUT_FOR_DELIVERY') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeDelivery}`}>
+          🛵 Saiu para Entrega
+        </span>
+      );
+    }
+
+    if (order.status === 'DELIVERED') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeDelivered}`}>
+          🏁 Entregue
+        </span>
+      );
+    }
+
+    if (order.status === 'CANCELLED') {
+      return (
+        <span className={`${styles.statusBadge} ${styles.badgeCancelled}`}>
+          ✕ Cancelado
+        </span>
+      );
+    }
+
+    return (
+      <span className={`${styles.statusBadge} ${styles.badgeDefault}`}>
+        {STATUS_LABELS[order.status] || order.status}
+      </span>
+    );
+  };
 
   if (loading || isInitializing) {
     return (
@@ -271,7 +384,7 @@ export default function PartnerOrdersPage() {
               >
                 Novos Pedidos
                 <span className={styles.badgeCount}>
-                  {orders.filter((o) => o.status === 'PAID' || o.status === 'AWAITING_PAYMENT').length}
+                  {orders.filter((o) => o.status === 'PAID' || o.status === 'AWAITING_PAYMENT' || o.status === 'CREATED').length}
                 </span>
               </button>
 
@@ -320,46 +433,68 @@ export default function PartnerOrdersPage() {
                   const isDelivery = order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY';
 
                   return (
-                    <div key={order.id} className={styles.orderCard}>
-                      <div className={styles.cardTop}>
-                        <div>
-                          <div className={styles.orderId}>#{order.id.slice(0, 8)}</div>
-                          <div className={styles.orderTime}>
+                    <div
+                      key={order.id}
+                      id={`order-${order.id}`}
+                      className={`${styles.orderCard} ${targetOrderId === order.id ? styles.highlightCard : ''}`}
+                    >
+                      {/* Top Header: ID, Data/Hora e Badge de Status */}
+                      <div className={styles.cardHeader}>
+                        <div className={styles.orderMeta}>
+                          <span className={styles.orderId}>#{order.id.slice(0, 8)}</span>
+                          <span className={styles.orderTimeDot}>•</span>
+                          <span className={styles.orderTime}>
                             {new Date(order.createdAt).toLocaleTimeString('pt-BR', {
                               hour: '2-digit',
                               minute: '2-digit',
                             })}
-                          </div>
-                          {order.paymentMethod && (
-                            <div style={{ marginTop: '0.4rem' }}>
-                              {order.paymentMethod === 'CASH_ON_DELIVERY' ? (
-                                <span className={`${styles.paymentBadge} ${styles.paymentBadgeDelivery}`}>
-                                  💵 Dinheiro na Entrega {order.changeFor ? `• Troco p/ R$ ${Number(order.changeFor).toFixed(2).replace('.', ',')}` : '• Sem troco'}
-                                </span>
-                              ) : order.paymentMethod === 'CARD_ON_DELIVERY' ? (
-                                <span className={`${styles.paymentBadge} ${styles.paymentBadgeDelivery}`}>
-                                  💳 Maquininha na Entrega
-                                </span>
-                              ) : (
-                                <span className={`${styles.paymentBadge} ${styles.paymentBadgeOnline}`}>
-                                  🛡️ Pagamento Online
-                                </span>
-                              )}
-                            </div>
-                          )}
+                          </span>
                         </div>
-                        <span className={styles.statusBadge}>
-                          {STATUS_LABELS[order.status] || order.status}
-                        </span>
+                        {renderStatusBadge(order)}
+                      </div>
+
+                      {/* Banner de Forma de Pagamento em Largura Total */}
+                      <div className={styles.paymentSection}>
+                        {order.paymentMethod === 'CARD_ON_DELIVERY' ? (
+                          <div className={`${styles.paymentBanner} ${styles.paymentBannerCard}`}>
+                            <div className={styles.paymentBannerMain}>
+                              <span className={styles.paymentIcon}>💳</span>
+                              <span className={styles.paymentTitle}>Maquininha na Entrega</span>
+                            </div>
+                            <span className={styles.paymentSubtitle}>Cartão Débito / Crédito</span>
+                          </div>
+                        ) : order.paymentMethod === 'CASH_ON_DELIVERY' ? (
+                          <div className={`${styles.paymentBanner} ${styles.paymentBannerCash}`}>
+                            <div className={styles.paymentBannerMain}>
+                              <span className={styles.paymentIcon}>💵</span>
+                              <span className={styles.paymentTitle}>Dinheiro na Entrega</span>
+                            </div>
+                            <span className={styles.paymentSubtitle}>
+                              {order.changeFor ? `Troco p/ R$ ${Number(order.changeFor).toFixed(2).replace('.', ',')}` : 'Sem troco'}
+                            </span>
+                          </div>
+                        ) : (
+                          <div className={`${styles.paymentBanner} ${styles.paymentBannerOnline}`}>
+                            <div className={styles.paymentBannerMain}>
+                              <span className={styles.paymentIcon}>🛡️</span>
+                              <span className={styles.paymentTitle}>Pagamento Online</span>
+                            </div>
+                            <span className={styles.paymentSubtitle}>
+                              {order.status === 'PAID' ? 'Pago via App' : 'Aguardando Pagamento'}
+                            </span>
+                          </div>
+                        )}
                       </div>
 
                       <div className={styles.itemsBox}>
                         {order.items.map((it) => (
                           <div key={it.id} className={styles.itemLine}>
-                            <span>
+                            <span className={styles.itemName}>
                               {it.quantity}x {it.productName}
                             </span>
-                            <span>R$ {it.totalPrice.toFixed(2).replace('.', ',')}</span>
+                            <span className={styles.itemPrice}>
+                              R$ {it.totalPrice.toFixed(2).replace('.', ',')}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -379,7 +514,10 @@ export default function PartnerOrdersPage() {
                         </div>
 
                         {/* Ações por Status */}
-                        {order.status === 'PAID' && (
+                        {(order.status === 'PAID' || (
+                          (order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY') &&
+                          (order.status === 'CREATED' || order.status === 'AWAITING_PAYMENT')
+                        )) && (
                           <button
                             type="button"
                             className={`${styles.actionButton} ${styles.actionConfirm}`}
@@ -429,16 +567,20 @@ export default function PartnerOrdersPage() {
                           </button>
                         )}
 
-                        {/* Denúncia de Não Pagamento / Cliente Ausente para pedidos na entrega */}
-                        {isDelivery && order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
-                          <button
-                            type="button"
-                            className={styles.btnReportNonPayment}
-                            onClick={() => handleOpenReportModal(order)}
-                            title="Reportar cliente ausente ou recusa de pagamento na entrega"
-                          >
-                            🚨 Reportar Não Pagamento
-                          </button>
+                        {/* Denúncia de Não Pagamento / Cliente Ausente para pedidos na entrega que já foram aceitos/despachados */}
+                        {isDelivery &&
+                          order.status !== 'CREATED' &&
+                          order.status !== 'AWAITING_PAYMENT' &&
+                          order.status !== 'DELIVERED' &&
+                          order.status !== 'CANCELLED' && (
+                            <button
+                              type="button"
+                              className={styles.btnReportNonPayment}
+                              onClick={() => handleOpenReportModal(order)}
+                              title="Reportar cliente ausente ou recusa de pagamento na entrega"
+                            >
+                              🚨 Reportar Não Pagamento
+                            </button>
                         )}
                       </div>
                     </div>
@@ -524,5 +666,13 @@ export default function PartnerOrdersPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function PartnerOrdersPage() {
+  return (
+    <Suspense fallback={<p className="profile-loading" style={{ textAlign: 'center', padding: '3rem' }}>Carregando pedidos da cozinha…</p>}>
+      <PartnerOrdersContent />
+    </Suspense>
   );
 }

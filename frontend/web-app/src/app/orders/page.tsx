@@ -1,7 +1,7 @@
 'use client';
 // frontend/web-app/src/app/orders/page.tsx
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
@@ -9,10 +9,13 @@ import { Header } from '@/components/layout/Header';
 import { ordersApi, OrderDTO } from '@/api/orders';
 import styles from './orders.module.css';
 
-export default function MyOrdersPage() {
+function MyOrdersContent() {
   const { token, isAuthenticated, isInitializing } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
+
+  const targetOrderId = searchParams ? searchParams.get('orderId') : null;
 
   const [orders, setOrders] = useState<OrderDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +46,18 @@ export default function MyOrdersPage() {
     fetchOrders();
   }, [isAuthenticated, isInitializing, router, fetchOrders]);
 
+  // Se houver um targetOrderId na query, efetua scroll automático e suave até o card correspondente
+  useEffect(() => {
+    if (!targetOrderId || orders.length === 0) return;
+    const timer = setTimeout(() => {
+      const el = document.getElementById(`order-${targetOrderId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [orders, targetOrderId]);
+
   const handleConfirmCancel = async () => {
     if (!token || !cancellingOrder) return;
     setSubmittingCancel(true);
@@ -66,10 +81,14 @@ export default function MyOrdersPage() {
     }
   };
 
-  const getStatusBadge = (status: OrderDTO['status']) => {
-    switch (status) {
+  const getStatusBadge = (order: OrderDTO) => {
+    const isDelivery = order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY';
+    switch (order.status) {
       case 'CREATED':
       case 'AWAITING_PAYMENT':
+        if (isDelivery) {
+          return <span className={`${styles.statusBadge} ${styles.statusPaid}`}>Aguardando Aceite do Restaurante</span>;
+        }
         return <span className={`${styles.statusBadge} ${styles.statusAwaitingPayment}`}>Aguardando Pagamento</span>;
       case 'PAID':
         return <span className={`${styles.statusBadge} ${styles.statusPaid}`}>Pago • Aguardando Aceite</span>;
@@ -86,7 +105,7 @@ export default function MyOrdersPage() {
       case 'CANCELLED':
         return <span className={`${styles.statusBadge} ${styles.statusCancelled}`}>Cancelado</span>;
       default:
-        return <span className={styles.statusBadge}>{status}</span>;
+        return <span className={styles.statusBadge}>{order.status}</span>;
     }
   };
 
@@ -138,7 +157,11 @@ export default function MyOrdersPage() {
                 order.status === 'PAID';
 
               return (
-                <div key={order.id} className={styles.orderCard}>
+                <div
+                  key={order.id}
+                  id={`order-${order.id}`}
+                  className={`${styles.orderCard} ${targetOrderId === order.id ? styles.highlightCard : ''}`}
+                >
                   <div className={styles.cardHeader}>
                     <div>
                       <div className={styles.orderId}>
@@ -167,7 +190,7 @@ export default function MyOrdersPage() {
                         </div>
                       )}
                     </div>
-                    {getStatusBadge(order.status)}
+                    {getStatusBadge(order)}
                   </div>
 
                   <div className={styles.itemsSummary}>
@@ -273,5 +296,13 @@ export default function MyOrdersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function MyOrdersPage() {
+  return (
+    <Suspense fallback={<p className="profile-loading" style={{ textAlign: 'center', padding: '3rem' }}>Carregando pedidos…</p>}>
+      <MyOrdersContent />
+    </Suspense>
   );
 }
