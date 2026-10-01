@@ -8,17 +8,21 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { UserAvatar } from '@/components/common/UserAvatar';
 import { apiClient, HttpError } from '@/api/client';
-import { HomeIcon, DashboardIcon, BuildingIcon, BriefcaseIcon, ShieldIcon, UsersIcon, LogoutIcon, SunIcon, MoonIcon, MenuIcon, CloseIcon } from './icons';
+import { HomeIcon, DashboardIcon, BuildingIcon, BriefcaseIcon, ShieldIcon, UsersIcon, LogoutIcon, SunIcon, MoonIcon, MenuIcon, CloseIcon, BellIcon } from './icons';
 import { AdminDrawer } from './AdminDrawer';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { NotificationDropdown } from './NotificationDropdown';
 
 export function Header() {
   const { token, userId, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { unreadCount } = useNotifications();
   const router = useRouter();
   const pathname = usePathname();
 
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [adminDrawerOpen, setAdminDrawerOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<{ avatarUrl?: string; fullName?: string; email?: string; role?: string } | null>(null);
 
@@ -32,9 +36,10 @@ export function Header() {
     router.prefetch('/auth/login');
   }, [router]);
 
-  // Fecha o menu móvel automaticamente ao navegar
+  // Fecha o menu móvel e notificações automaticamente ao navegar
   useEffect(() => {
     setMenuOpen(false);
+    setNotificationsOpen(false);
   }, [pathname]);
 
   // Fecha o menu móvel ao clicar fora, redimensionar para desktop ou pressionar ESC
@@ -158,9 +163,24 @@ export function Header() {
           </Link>
 
           {mounted && isAuthenticated && (userInfo?.role === 'PARCEIRO' || userInfo?.role === 'ADMIN') && (
-            <Link href="/partner" className={navLinkClass('/partner')} onClick={() => setMenuOpen(false)}>
-              <BriefcaseIcon /> Meus Estabelecimentos
-            </Link>
+            <>
+              <Link href="/partner" className={navLinkClass('/partner')} onClick={() => setMenuOpen(false)}>
+                <BriefcaseIcon /> Meus Estabelecimentos
+              </Link>
+              <Link
+                href="/partner/orders"
+                className={navLinkClass('/partner/orders')}
+                onClick={() => setMenuOpen(false)}
+                id="header-kitchen-orders-btn"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>🍳</span> Pedidos da Cozinha
+              </Link>
+            </>
           )}
 
           {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
@@ -203,6 +223,34 @@ export function Header() {
               <UserAvatar avatarUrl={userInfo?.avatarUrl} fullName={userInfo?.fullName} email={userInfo?.email} size={28} />
               <span>Perfil</span>
             </Link>
+          )}
+
+          {mounted && isAuthenticated && (
+            <div className="notification-bell-container">
+              <button
+                type="button"
+                className="nav-icon-btn notification-bell-btn"
+                id="btn-notifications"
+                onClick={() => setNotificationsOpen((prev) => !prev)}
+                aria-label={`Notificações${unreadCount > 0 ? ` (${unreadCount} não lidas)` : ''}`}
+                aria-expanded={notificationsOpen}
+                title="Notificações"
+              >
+                <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BellIcon />
+                  {unreadCount > 0 && (
+                    <span className="notification-badge" aria-hidden="true">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+                <span className="notification-btn-label">Notificações</span>
+              </button>
+              <NotificationDropdown
+                isOpen={notificationsOpen}
+                onClose={() => setNotificationsOpen(false)}
+              />
+            </div>
           )}
 
           {mounted && isAuthenticated && (

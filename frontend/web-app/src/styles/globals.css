@@ -277,6 +277,63 @@ input, select, textarea { font-family: inherit; }
 }
 .nav-logout-btn:hover { background: rgba(255,255,255,0.05); color: var(--color-text-muted); }
 
+/* Notificações no Header */
+.notification-bell-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.notification-bell-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  color: var(--color-text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.notification-bell-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: #ef4444;
+  color: #ffffff;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 0 0 2px var(--color-surface);
+  animation: pulseBadge 2.5s infinite ease-in-out;
+}
+
+@keyframes pulseBadge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+
+.notification-btn-label {
+  display: none;
+}
+
 /* Menu mobile — abaixo de 768px a navegação vira um painel empilhado
    por trás de um botão hambúrguer, com alvos de toque ≥44px. */
 .topbar-mobile-controls {
@@ -385,6 +442,22 @@ input, select, textarea { font-family: inherit; }
     min-height: 44px;
     border-radius: var(--radius-md);
     padding: var(--space-3) var(--space-4);
+  }
+  .topbar-actions .notification-bell-container {
+    width: 100%;
+  }
+  .topbar-actions .notification-bell-btn {
+    width: 100%;
+    justify-content: flex-start;
+    gap: var(--space-2);
+    min-height: 44px;
+    padding: var(--space-3) var(--space-4);
+  }
+  .topbar-actions .notification-btn-label {
+    display: inline;
+    font-size: var(--text-body);
+    font-weight: 600;
+    color: var(--color-text-subtle);
   }
 }
 

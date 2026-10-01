@@ -14,6 +14,7 @@ import { catalogApi, ProductSummary } from '@/api/catalog';
 import { compatibilityApi, CompatibilityResponse } from '@/api/compatibility';
 import { foodProfileApi } from '@/api/food-profile';
 import { partnerApi, PartnerSummary } from '@/api/partner';
+import { ordersApi } from '@/api/orders';
 import { apiClient, HttpError } from '@/api/client';
 import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
@@ -81,6 +82,7 @@ export default function DashboardPage() {
   // Estados específicos para perfil PARCEIRO
   const [userPartners, setUserPartners] = useState<PartnerSummary[]>([]);
   const [partnerProducts, setPartnerProducts] = useState<ProductSummary[]>([]);
+  const [partnerPendingOrdersCount, setPartnerPendingOrdersCount] = useState<number>(0);
   const [loadingPartnerData, setLoadingPartnerData] = useState(false);
   const [isCreateProductModalOpen, setIsCreateProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductSummary | null>(null);
@@ -132,8 +134,10 @@ export default function DashboardPage() {
             .then(async (partners) => {
               setUserPartners(partners || []);
               if (partners && partners.length > 0) {
-                // Carrega produtos de todos os estabelecimentos do parceiro
+                // Carrega produtos e conta pedidos pendentes de ação na cozinha
                 const allPartnerProds: ProductSummary[] = [];
+                let pendingCount = 0;
+
                 for (const p of partners) {
                   try {
                     const res = await catalogApi.listByPartner(p.id, token);
@@ -141,10 +145,22 @@ export default function DashboardPage() {
                       allPartnerProds.push(...res.data);
                     }
                   } catch {}
+
+                  try {
+                    const ords = await ordersApi.getPartnerOrders(p.id, token);
+                    if (ords && ords.length > 0) {
+                      const pending = ords.filter((o) =>
+                        o.status === 'PAID' || o.status === 'CONFIRMED' || o.status === 'PREPARING'
+                      );
+                      pendingCount += pending.length;
+                    }
+                  } catch {}
                 }
                 setPartnerProducts(allPartnerProds);
+                setPartnerPendingOrdersCount(pendingCount);
               } else {
                 setPartnerProducts([]);
+                setPartnerPendingOrdersCount(0);
               }
             })
             .catch(() => {})
@@ -325,6 +341,96 @@ export default function DashboardPage() {
             <Link href="/profile" className="btn btn-em" style={{ whiteSpace: 'nowrap', padding: 'var(--space-3) var(--space-6)', textDecoration: 'none' }}>
               Configurar Agora
             </Link>
+          </div>
+        )}
+
+        {/* Banner de Destaque: Cozinha & Pedidos em Aberto (Visão Parceiro) */}
+        {mounted && userRole === 'PARCEIRO' && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.05) 100%)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--space-5) var(--space-6)',
+            marginBottom: 'var(--space-6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1.5rem',
+            flexWrap: 'wrap',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', minWidth: '260px', flex: 1 }}>
+              <div style={{
+                width: '54px',
+                height: '54px',
+                borderRadius: '16px',
+                background: 'var(--color-emerald)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.75rem',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.35)',
+                flexShrink: 0,
+              }}>
+                🍳
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                    Cozinha & Pedidos em Aberto
+                  </h2>
+                  {partnerPendingOrdersCount > 0 ? (
+                    <span style={{
+                      background: '#ef4444',
+                      color: '#fff',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      padding: '2px 9px',
+                      borderRadius: '9999px',
+                      animation: 'pulseBadge 2s infinite',
+                    }}>
+                      {partnerPendingOrdersCount} {partnerPendingOrdersCount === 1 ? 'pedido aguardando' : 'pedidos aguardando'}
+                    </span>
+                  ) : (
+                    <span style={{
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      color: 'var(--color-emerald)',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '9999px',
+                      border: '1px solid rgba(16, 185, 129, 0.25)',
+                    }}>
+                      Cozinha em dia
+                    </span>
+                  )}
+                </div>
+                <p style={{ margin: '4px 0 0 0', fontSize: 'var(--text-body)', color: 'var(--color-text-muted)' }}>
+                  Aceite novos pedidos pagos, inicie o preparo e despache para entrega com segurança alimentar.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <Link
+                href="/partner/orders"
+                className="btn btn-em"
+                id="dashboard-kitchen-orders-btn"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '0.75rem 1.4rem',
+                  fontSize: '0.95rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)',
+                }}
+              >
+                <span>🍳 Ver Pedidos da Cozinha</span>
+                <span>➔</span>
+              </Link>
+            </div>
           </div>
         )}
 

@@ -80,7 +80,11 @@ export default function PartnerOrdersPage() {
       .then((data) => {
         setPartners(data);
         if (data.length > 0) {
-          setSelectedPartnerId(data[0].id);
+          const urlParamId = typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('partnerId')
+            : null;
+          const found = urlParamId && data.some((p) => p.id === urlParamId);
+          setSelectedPartnerId(found ? (urlParamId as string) : data[0].id);
         }
       })
       .catch((err) => {
