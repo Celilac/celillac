@@ -128,6 +128,28 @@ export class SseOrderNotificationHub implements IOrderNotificationService {
   }
 
   /**
+   * Transmite notificação para todos os clientes conectados (útil para testes em desenvolvimento e seed).
+   */
+  public broadcastTestNotification(payload: Partial<OrderNotificationDTO>): void {
+    const defaultPayload: OrderNotificationDTO = {
+      orderId: payload.orderId || 'd0000004-0000-0000-0000-000000000004',
+      consumerId: payload.consumerId || '3af9bf93-4d25-4b84-89ca-7fe17d20e94e',
+      partnerId: payload.partnerId || 'c0000001-0000-0000-0000-000000000001',
+      status: payload.status || 'CONFIRMED',
+      totalAmount: payload.totalAmount ?? 35.0,
+      confirmedAt: payload.confirmedAt || new Date().toISOString(),
+    };
+    const message = this.formatSseMessage('order:status_updated', defaultPayload);
+    for (const client of this.clients.values()) {
+      try {
+        client.res.write(message);
+      } catch {
+        this.removeClient(client.id);
+      }
+    }
+  }
+
+  /**
    * Envia comentário de heartbeat para todas as conexões ativas.
    */
   private broadcastKeepAlive(): void {

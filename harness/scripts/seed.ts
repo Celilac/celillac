@@ -959,6 +959,126 @@ async function seedOrdersAndPayments(emailToId: Map<string, string>): Promise<vo
     ]
   );
   console.log(`  🛵 [DELIVERED] Pedido Concluído e Entregue: ${order3Id} (Total: R$ 94,80)`);
+
+  // 4. Pedido 4: Pagamento na Entrega (Maquininha) — Aguardando Aceite do Restaurante (AWAITING_PAYMENT)
+  const order4Id = 'd0000004-0000-0000-0000-000000000004';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
+    [order4Id, celiacoId, partnerId, 'AWAITING_PAYMENT', 35.00, 0.00, 35.00, 'SAFE', 'Pagamento com maquininha na entrega (cartão de crédito/débito). Favor enviar talheres descartáveis.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000005', order4Id, cakeId, 'Bolo de Cenoura com Chocolate Sem Leite', 35.00, 1, 35.00]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000004',
+      order4Id,
+      celiacoId,
+      partnerId,
+      'OFFLINE',
+      'pay_offline_delivery_card_004',
+      'CARD_ON_DELIVERY',
+      'PENDING',
+      35.00,
+      30.80,
+      4.20
+    ]
+  );
+  console.log(`  💳 [AWAITING_PAYMENT • MAQUININHA NA ENTREGA] Pedido Aguardando Aceite do Restaurante: ${order4Id} (Total: R$ 35,00)`);
+
+  // 5. Pedido 5: Pagamento na Entrega (Dinheiro c/ Troco) — Aceito e Em Preparo (CONFIRMED)
+  const order5Id = 'd0000005-0000-0000-0000-000000000005';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
+    [order5Id, celiacoId, partnerId, 'CONFIRMED', 29.90, 5.10, 35.00, 'SAFE', 'Pagamento em dinheiro na entrega. Levar troco para R$ 50,00.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000006', order5Id, breadId, 'Pão Francês Artesanal Sem Glúten', 29.90, 1, 29.90]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000005',
+      order5Id,
+      celiacoId,
+      partnerId,
+      'OFFLINE',
+      'pay_offline_delivery_cash_005',
+      'CASH_ON_DELIVERY',
+      'PENDING',
+      35.00,
+      31.41,
+      3.59
+    ]
+  );
+  console.log(`  💵 [CONFIRMED • DINHEIRO NA ENTREGA] Pedido Aceito pelo Restaurante: ${order5Id} (Total: R$ 35,00 - Troco p/ R$ 50)`);
+
+  // 6. Pedido 6: Pagamento na Entrega (Maquininha) — Em Rota de Entrega (OUT_FOR_DELIVERY)
+  const order6Id = 'd0000006-0000-0000-0000-000000000006';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
+    [order6Id, celiacoId, partnerId, 'OUT_FOR_DELIVERY', 94.80, 0.00, 94.80, 'SAFE', 'Entregar na portaria. Pagamento na maquininha na entrega.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000007', order6Id, breadId, 'Pão Francês Artesanal Sem Glúten', 29.90, 2, 59.80]
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000008', order6Id, cakeId, 'Bolo de Cenoura com Chocolate Sem Leite', 35.00, 1, 35.00]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000006',
+      order6Id,
+      celiacoId,
+      partnerId,
+      'OFFLINE',
+      'pay_offline_delivery_card_006',
+      'CARD_ON_DELIVERY',
+      'PENDING',
+      94.80,
+      83.42,
+      11.38
+    ]
+  );
+  console.log(`  🛵 [OUT_FOR_DELIVERY • NA ENTREGA] Pedido a Caminho da Entrega: ${order6Id} (Total: R$ 94,80)`);
 }
 
 // ─── Entry point ────────────────────────────────────────────────────────────
@@ -1010,9 +1130,32 @@ async function main(): Promise<void> {
     await seedPartnerFinancialAccounts();
     console.log('');
 
-    // 8. Pedidos e Pagamentos (Casos de teste do Checkout e Split)
+    // 8. Pedidos e Pagamentos (Casos de teste do Checkout, Split, Pagamento na Entrega e Notificações)
     console.log('📦 Inserindo pedidos e pagamentos de teste…');
     await seedOrdersAndPayments(emailToId);
+    console.log('');
+
+    // 9. Disparo de Notificação em Tempo Real (se backend estiver online)
+    console.log('🔔 Verificando hub de notificações em tempo real…');
+    try {
+      const backendPort = process.env.PORT ?? '3000';
+      const notifyRes = await fetch(`http://localhost:${backendPort}/orders/test-notification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: 'd0000004-0000-0000-0000-000000000004',
+          consumerId: emailToId.get('celiaco.classico@seed.celilac.dev'),
+          partnerId: 'c0000001-0000-0000-0000-000000000001',
+          status: 'CONFIRMED',
+          totalAmount: 35.0,
+        }),
+      });
+      if (notifyRes.ok) {
+        console.log('  🔔 Notificação SSE de teste transmitida com sucesso para o backend!');
+      }
+    } catch {
+      console.log('  ℹ️  Backend offline ou em porta diferente (notificação SSE em tempo real ignorada).');
+    }
     console.log('');
 
     // Resumo final
@@ -1046,6 +1189,20 @@ async function main(): Promise<void> {
     console.log('   📦 Meus Pedidos (Celíaco): /orders');
     console.log('   🍳 Fila de Pedidos (Cozinha do Parceiro): /partner/orders');
     console.log('   💰 Extrato & Split 12% (Financeiro do Parceiro): /partner/financial');
+    console.log('');
+    console.log('🔔 Cenários de Teste de Notificação e Pagamento na Entrega:');
+    console.log('   💳 1. Pedido #000004 (Maquininha na Entrega - Aguardando Aceite):');
+    console.log('         - Acesse como parceiro em /partner/orders (aba "Novos")');
+    console.log('         - Clique em "✅ Aceitar Pedido"');
+    console.log('         - No perfil do consumidor em /orders, o sino toca e exibe "✅ Pedido Aceito!"');
+    console.log('   💵 2. Pedido #000005 (Dinheiro na Entrega - Aceito / Troco p/ R$ 50):');
+    console.log('         - Acesse como parceiro em /partner/orders (aba "Em Preparo")');
+    console.log('         - Avance para "Pronto" ou "Saiu para Entrega"');
+    console.log('         - O sino do consumidor recebe "📦 Pedido Pronto!" / "🛵 Saiu para Entrega!"');
+    console.log('   🚨 3. Pedido #000006 (Na Entrega em Rota - Denúncia de Não Pagamento):');
+    console.log('         - Acesse como parceiro em /partner/orders (aba "Em Rota")');
+    console.log('         - Clique em "🚨 Reportar Não Pagamento" caso o cliente se recuse a pagar');
+    console.log('         - O pedido é cancelado, a taxa da plataforma é estornada e o cliente tem compras na entrega bloqueadas');
     console.log('═'.repeat(55));
   } catch (err) {
     console.error('❌ Erro no seed:', err);

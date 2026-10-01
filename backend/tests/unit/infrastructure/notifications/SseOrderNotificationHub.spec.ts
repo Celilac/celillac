@@ -162,4 +162,33 @@ describe('SseOrderNotificationHub', () => {
     // O cliente deve ter sido expurgado
     expect(hub.getClientsCount()).toBe(0);
   });
+
+  it('deve transmitir notificação para todos os clientes conectados em broadcastTestNotification', () => {
+    const writer1 = createMockWriter();
+    const writer2 = createMockWriter();
+
+    hub.addClient({
+      id: 'conn_1',
+      userId: 'user_1',
+      res: writer1,
+    });
+
+    hub.addClient({
+      id: 'conn_2',
+      userId: 'user_2',
+      res: writer2,
+    });
+
+    hub.broadcastTestNotification({
+      orderId: 'order_test_broadcast',
+      status: 'CONFIRMED',
+      totalAmount: 35.0,
+    });
+
+    expect(writer1.write).toHaveBeenCalledTimes(1);
+    expect(writer2.write).toHaveBeenCalledTimes(1);
+    expect(writer1.write.mock.calls[0][0]).toContain('event: order:status_updated\n');
+    expect(writer1.write.mock.calls[0][0]).toContain('"orderId":"order_test_broadcast"');
+    expect(writer1.write.mock.calls[0][0]).toContain('"status":"CONFIRMED"');
+  });
 });
