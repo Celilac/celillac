@@ -1,6 +1,6 @@
 'use client';
 // frontend/web-app/src/components/layout/Header.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -8,19 +8,26 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { UserAvatar } from '@/components/common/UserAvatar';
 import { apiClient, HttpError } from '@/api/client';
-import { HomeIcon, DashboardIcon, BuildingIcon, BriefcaseIcon, ShieldIcon, UsersIcon, LogoutIcon, SunIcon, MoonIcon, MenuIcon, CloseIcon } from './icons';
+import { HomeIcon, DashboardIcon, BuildingIcon, BriefcaseIcon, ShieldIcon, UsersIcon, LogoutIcon, SunIcon, MoonIcon, MenuIcon, CloseIcon, BellIcon } from './icons';
 import { AdminDrawer } from './AdminDrawer';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { NotificationDropdown } from './NotificationDropdown';
 
 export function Header() {
   const { token, userId, isAuthenticated, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { unreadCount } = useNotifications();
   const router = useRouter();
   const pathname = usePathname();
 
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [adminDrawerOpen, setAdminDrawerOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<{ avatarUrl?: string; fullName?: string; email?: string; role?: string } | null>(null);
+
+  const navRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
   const navLinkClass = (href: string) => `nav-link${pathname === href ? ' is-active' : ''}`;
 
@@ -28,6 +35,53 @@ export function Header() {
     setMounted(true);
     router.prefetch('/auth/login');
   }, [router]);
+
+  // Fecha o menu móvel e notificações automaticamente ao navegar
+  useEffect(() => {
+    setMenuOpen(false);
+    setNotificationsOpen(false);
+  }, [pathname]);
+
+  // Fecha o menu móvel ao clicar fora, redimensionar para desktop ou pressionar ESC
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (
+        navRef.current &&
+        !navRef.current.contains(target) &&
+        toggleRef.current &&
+        !toggleRef.current.contains(target)
+      ) {
+        setMenuOpen(false);
+      }
+    };
+
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     if (isAuthenticated && token && userId) {
@@ -61,10 +115,44 @@ export function Header() {
             {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
           </button>
 
+          {mounted && isAuthenticated && (
+            <div className="notification-bell-container notification-bell-mobile">
+              <button
+                type="button"
+                className="nav-icon-btn notification-bell-btn"
+                id="btn-notifications-mobile"
+                onClick={() => setNotificationsOpen((prev) => {
+                  if (!prev) setMenuOpen(false);
+                  return !prev;
+                })}
+                aria-label={`Notificações${unreadCount > 0 ? ` (${unreadCount} não lidas)` : ''}`}
+                aria-expanded={notificationsOpen}
+                title="Notificações"
+              >
+                <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BellIcon />
+                  {unreadCount > 0 && (
+                    <span className="notification-red-dot" aria-hidden="true">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+              </button>
+              <NotificationDropdown
+                isOpen={notificationsOpen}
+                onClose={() => setNotificationsOpen(false)}
+              />
+            </div>
+          )}
+
           <button
+            ref={toggleRef}
             type="button"
             className="topbar-nav-toggle"
-            onClick={() => setMenuOpen((open) => !open)}
+            onClick={() => setMenuOpen((open) => {
+              if (!open) setNotificationsOpen(false);
+              return !open;
+            })}
             aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
             aria-expanded={menuOpen}
             aria-controls="topbar-nav"
@@ -74,6 +162,7 @@ export function Header() {
         </div>
 
         <nav
+          ref={navRef}
           id="topbar-nav"
           className={`topbar-actions${menuOpen ? ' topbar-actions--open' : ''}`}
         >
@@ -91,6 +180,12 @@ export function Header() {
           )}
 
           {mounted && isAuthenticated && (
+            <Link href="/orders" className={navLinkClass('/orders')} onClick={() => setMenuOpen(false)}>
+              📦 Meus Pedidos
+            </Link>
+          )}
+
+          {mounted && isAuthenticated && (
             <Link href="/favorites" className={navLinkClass('/favorites')} onClick={() => setMenuOpen(false)}>
               ❤️ Favoritos
             </Link>
@@ -101,9 +196,24 @@ export function Header() {
           </Link>
 
           {mounted && isAuthenticated && (userInfo?.role === 'PARCEIRO' || userInfo?.role === 'ADMIN') && (
-            <Link href="/partner" className={navLinkClass('/partner')} onClick={() => setMenuOpen(false)}>
-              <BriefcaseIcon /> Meus Estabelecimentos
-            </Link>
+            <>
+              <Link href="/partner" className={navLinkClass('/partner')} onClick={() => setMenuOpen(false)}>
+                <BriefcaseIcon /> Meus Estabelecimentos
+              </Link>
+              <Link
+                href="/partner/orders"
+                className={navLinkClass('/partner/orders')}
+                onClick={() => setMenuOpen(false)}
+                id="header-kitchen-orders-btn"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>🍳</span> Pedidos da Cozinha
+              </Link>
+            </>
           )}
 
           {mounted && isAuthenticated && userInfo?.role === 'ADMIN' && (
@@ -149,6 +259,33 @@ export function Header() {
           )}
 
           {mounted && isAuthenticated && (
+            <div className="notification-bell-container notification-bell-desktop">
+              <button
+                type="button"
+                className="nav-icon-btn notification-bell-btn"
+                id="btn-notifications"
+                onClick={() => setNotificationsOpen((prev) => !prev)}
+                aria-label={`Notificações${unreadCount > 0 ? ` (${unreadCount} não lidas)` : ''}`}
+                aria-expanded={notificationsOpen}
+                title="Notificações"
+              >
+                <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <BellIcon />
+                  {unreadCount > 0 && (
+                    <span className="notification-red-dot" aria-hidden="true">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+              </button>
+              <NotificationDropdown
+                isOpen={notificationsOpen}
+                onClose={() => setNotificationsOpen(false)}
+              />
+            </div>
+          )}
+
+          {mounted && isAuthenticated && (
             <button
               type="button"
               onClick={() => {
@@ -181,6 +318,14 @@ export function Header() {
           )}
         </nav>
       </header>
+
+      {mounted && menuOpen && (
+        <div
+          className="topbar-backdrop"
+          onClick={() => setMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
       {mounted && userInfo?.role === 'ADMIN' && (
         <AdminDrawer

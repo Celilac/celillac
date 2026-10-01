@@ -1,0 +1,382 @@
+/* frontend/web-app/src/app/orders/orders.module.css */
+
+.container {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text, #f1f5f9);
+}
+
+.mainContent {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 5rem;
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pageTitle {
+  font-size: 1.875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-text, #f1f5f9);
+}
+
+.orderList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.orderCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.orderCard:hover {
+  border-color: var(--color-border-hover);
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3.5rem 1.5rem;
+}
+
+.emptyText {
+  color: var(--color-text-muted, #94a3b8);
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.85rem;
+}
+
+.orderId {
+  font-weight: 700;
+  color: var(--color-text, #f1f5f9);
+  font-size: 1.1rem;
+}
+
+.orderDate {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #94a3b8);
+  margin-top: 0.25rem;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.25;
+}
+
+.statusAwaitingPayment {
+  background: rgba(234, 179, 8, 0.15);
+  color: #b45309;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.statusPaid {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.statusConfirmed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.statusPreparing {
+  background: rgba(249, 115, 22, 0.15);
+  color: #ea580c;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.statusDelivered {
+  background: var(--color-safe-bg);
+  color: var(--color-safe);
+  border: 1px solid var(--color-safe-border);
+}
+
+.statusCancelled {
+  background: var(--color-blocked-bg);
+  color: var(--color-blocked);
+  border: 1px solid var(--color-blocked-border);
+}
+
+.itemsSummary {
+  font-size: 0.95rem;
+  color: var(--color-text, #cbd5e1);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.orderTotal {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-emerald);
+}
+
+.actionsGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.payActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.6rem 1.1rem;
+  background: var(--color-emerald);
+  color: #064e3b;
+  font-weight: 700;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: background 0.15s ease, transform 0.15s ease;
+  border: none;
+  white-space: nowrap;
+}
+
+.payActionBtn:hover {
+  background: var(--color-emerald-hover);
+  transform: translateY(-1px);
+}
+
+.payCardActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.6rem 1.1rem;
+  background: #2563eb;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.88rem;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.payCardActionBtn:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
+}
+
+.cancelActionBtn {
+  padding: 0.6rem 1rem;
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  font-weight: 600;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cancelActionBtn:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.55);
+  color: #ffffff;
+}
+
+:global(html[data-theme='light']) .cancelActionBtn {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+:global(html[data-theme='light']) .cancelActionBtn:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modalContent {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  max-width: 500px;
+  width: 100%;
+  padding: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modalTitle {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--color-text, #f1f5f9);
+}
+
+.modalText {
+  color: var(--color-text-muted, #94a3b8);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.refundAlert {
+  background: var(--color-safe-bg);
+  border: 1px solid var(--color-safe-border);
+  color: var(--color-safe);
+  padding: 0.85rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.reasonInput {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--input-bg, var(--color-surface));
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text, #f1f5f9);
+  font-family: inherit;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.reasonInput:focus {
+  border-color: var(--color-emerald);
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.modalCancelBtn {
+  padding: 0.75rem 1.25rem;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted, #94a3b8);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+.modalCancelBtn:hover {
+  background: var(--color-border);
+  color: var(--color-text);
+}
+
+.modalConfirmBtn {
+  padding: 0.75rem 1.25rem;
+  background: var(--color-blocked);
+  border: none;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: opacity 0.15s ease;
+}
+
+.modalConfirmBtn:hover {
+  opacity: 0.9;
+}
+
+@media (max-width: 640px) {
+  .cardHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .statusBadge {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .cardFooter {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .actionsGroup {
+    flex-direction: column;
+  }
+
+  .actionsGroup > * {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+.highlightCard {
+  border-color: var(--color-primary, #059669) !important;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 8px 30px rgba(5, 150, 105, 0.25) !important;
+  animation: pulseCardHighlight 2.5s ease-in-out infinite;
+}
+
+@keyframes pulseCardHighlight {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.4), 0 8px 30px rgba(5, 150, 105, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(5, 150, 105, 0.65), 0 12px 36px rgba(5, 150, 105, 0.4);
+  }
+}
+

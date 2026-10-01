@@ -18,7 +18,7 @@ interface RateLimitRecord {
  * Extrai o endereço IP real do cliente considerando proxies reversos (Traefik, Nginx, Cloudflare).
  */
 export function getClientIp(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
+  const forwarded = req.headers ? req.headers['x-forwarded-for'] : undefined;
   if (forwarded) {
     if (typeof forwarded === 'string') {
       const firstIp = forwarded.split(',')[0].trim();

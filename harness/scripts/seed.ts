@@ -98,6 +98,8 @@ const PRODUCTS: Array<{
   cross_contamination: string;
   analysis_status: string;
   partner_id?: string;
+  price?: number;
+  category?: string;
 }> = [
     // ── SAFE para celíacos ─────────────────────────────────────────────────────
     {
@@ -108,6 +110,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 18.90,
+      category: 'Mercearia & Grãos',
       partner_id: 'c0000001-0000-0000-0000-000000000002', // Mercado Natural & Cia
     },
     {
@@ -118,6 +122,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 12.50,
+      category: 'Mercearia & Grãos',
       partner_id: 'c0000001-0000-0000-0000-000000000002', // Mercado Natural & Cia
     },
     {
@@ -128,6 +134,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 42.00,
+      category: 'Óleos & Condimentos',
     },
     // ── WARNING — traços leves ─────────────────────────────────────────────────
     {
@@ -138,6 +146,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Pode conter traços de leite e amêndoas.',
       analysis_status: 'ANALISADO',
+      price: 16.90,
+      category: 'Doces & Sobremesas',
     },
     {
       id: 'b0000002-0000-0000-0000-000000000002',
@@ -147,6 +157,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Produzido em fábrica que processa castanhas e amendoim.',
       analysis_status: 'ANALISADO',
+      price: 24.50,
+      category: 'Cereais & Matinais',
     },
     {
       id: 'b0000002-0000-0000-0000-000000000003',
@@ -156,6 +168,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Produzido em fábrica que processa leite e soja.',
       analysis_status: 'ANALISADO',
+      price: 26.90,
+      category: 'Mercearia & Grãos',
       partner_id: 'c0000001-0000-0000-0000-000000000002', // Mercado Natural & Cia
     },
     // ── DANGER — alérgeno de alta severidade ──────────────────────────────────
@@ -167,6 +181,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 19.90,
+      category: 'Padaria & Confeitaria',
     },
     {
       id: 'b0000003-0000-0000-0000-000000000002',
@@ -176,6 +192,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 14.90,
+      category: 'Massas',
     },
     {
       id: 'b0000003-0000-0000-0000-000000000003',
@@ -185,6 +203,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: '',
       analysis_status: 'ANALISADO',
+      price: 8.50,
+      category: 'Laticínios',
     },
     {
       id: 'b0000003-0000-0000-0000-000000000004',
@@ -194,6 +214,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Livre de glúten. Contém derivados de leite.',
       analysis_status: 'ANALISADO',
+      price: 32.00,
+      category: 'Pratos Prontos',
     },
     // ── BLOCKED — FATAL para celíacos ─────────────────────────────────────────
     {
@@ -204,6 +226,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: 'Contém glúten. Produzido em linha compartilhada.',
       analysis_status: 'ANALISADO',
+      price: 11.90,
+      category: 'Snacks & Biscoitos',
     },
     {
       id: 'b0000004-0000-0000-0000-000000000002',
@@ -213,6 +237,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: 'Contém glúten e soja.',
       analysis_status: 'ANALISADO',
+      price: 15.00,
+      category: 'Óleos & Condimentos',
     },
     // ── CASO CRÍTICO: has_gluten=false mas traços de glúten → BLOCKED para celíacos
     {
@@ -223,6 +249,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Pode conter traços de glúten de trigo.',
       analysis_status: 'ANALISADO',
+      price: 13.50,
+      category: 'Mercearia & Grãos',
     },
     {
       id: 'b0000004-0000-0000-0000-000000000004',
@@ -232,6 +260,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: 'Contém cevada e glúten.',
       analysis_status: 'ANALISADO',
+      price: 21.00,
+      category: 'Mercearia & Grãos',
     },
     {
       id: 'b0000004-0000-0000-0000-000000000005',
@@ -241,6 +271,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'ALÉRGICOS: Embalado no mesmo maquinário que processa trigo. Pode conter traços de glúten.',
       analysis_status: 'ANALISADO',
+      price: 23.00,
+      category: 'Mercearia & Grãos',
     },
     // ── PENDENTE — sem ingredientes declarados → BLOCKED por precaução ─────────
     {
@@ -251,6 +283,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: '',
       analysis_status: 'PENDENTE_DE_ANALISE',
+      price: 35.00,
+      category: 'Geral',
     },
     // ── Frutas do mar (para APLV + shellfish) ─────────────────────────────────
     {
@@ -261,6 +295,8 @@ const PRODUCTS: Array<{
       has_gluten: true,
       cross_contamination: 'Contém camarão, glúten. Processado com outros frutos do mar.',
       analysis_status: 'ANALISADO',
+      price: 49.90,
+      category: 'Congelados',
     },
     // ── Produto com castanhas (para NUTS HIGH) ─────────────────────────────────
     {
@@ -271,6 +307,8 @@ const PRODUCTS: Array<{
       has_gluten: false,
       cross_contamination: 'Processado em ambiente com amendoim.',
       analysis_status: 'ANALISADO',
+      price: 38.00,
+      category: 'Snacks & Biscoitos',
     },
     // ── Produto de Parceiro 100% Seguro (Bistro Sem Glúten) ───────────────────
     {
@@ -279,9 +317,11 @@ const PRODUCTS: Array<{
       brand: 'Bistro Sem Glúten Fit',
       ingredients: 'farinha de arroz, polvilho doce, água, fermento biológico, sal',
       has_gluten: false,
-      cross_contamination: '100% livre de contaminação por glúten.',
+      cross_contamination: '',
       analysis_status: 'ANALISADO',
       partner_id: 'c0000001-0000-0000-0000-000000000001', // Bistro Sem Gluten Fit
+      price: 29.90,
+      category: 'Padaria & Confeitaria',
     },
     {
       id: 'b0000008-0000-0000-0000-000000000002',
@@ -289,9 +329,11 @@ const PRODUCTS: Array<{
       brand: 'Bistro Sem Glúten Fit',
       ingredients: 'cenoura, farinha de arroz, açúcar, óleo, cacau em pó 50%',
       has_gluten: false,
-      cross_contamination: 'Livre de glúten e leite. Sem compartilhamento de maquinário.',
+      cross_contamination: '',
       analysis_status: 'ANALISADO',
       partner_id: 'c0000001-0000-0000-0000-000000000001', // Bistro Sem Gluten Fit
+      price: 35.00,
+      category: 'Padaria & Confeitaria',
     },
   ];
 
@@ -481,6 +523,107 @@ async function createCertificationsTableIfNotExists(): Promise<void> {
   console.log('  ✅ Tabela product_certifications garantida.');
 }
 
+async function createOrdersAndPaymentsTablesIfNotExists(): Promise<void> {
+  // Orders & Items (Migration 025)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id UUID PRIMARY KEY,
+      consumer_id UUID NOT NULL REFERENCES users(id),
+      partner_id UUID NOT NULL REFERENCES partners(id),
+      status VARCHAR(50) NOT NULL DEFAULT 'CREATED',
+      subtotal_amount NUMERIC(10,2) NOT NULL,
+      delivery_fee NUMERIC(10,2) NOT NULL DEFAULT 0.00,
+      total_amount NUMERIC(10,2) NOT NULL,
+      allergen_check_verdict VARCHAR(50) NOT NULL DEFAULT 'SAFE',
+      notes TEXT,
+      cancelled_at TIMESTAMP WITH TIME ZONE,
+      cancel_reason TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_consumer_id ON orders(consumer_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_partner_id ON orders(partner_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC)`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS order_items (
+      id UUID PRIMARY KEY,
+      order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      product_id UUID NOT NULL REFERENCES products(id),
+      product_name VARCHAR(255) NOT NULL,
+      unit_price NUMERIC(10,2) NOT NULL,
+      quantity INT NOT NULL,
+      total_price NUMERIC(10,2) NOT NULL
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)`);
+
+  // Financial Accounts & Payments (Migration 026)
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS partner_financial_accounts (
+      id UUID PRIMARY KEY,
+      partner_id UUID NOT NULL UNIQUE REFERENCES partners(id),
+      gateway_subaccount_id VARCHAR(255),
+      pix_key VARCHAR(150) NOT NULL,
+      pix_key_type VARCHAR(20) NOT NULL,
+      bank_code VARCHAR(10),
+      agency_number VARCHAR(10),
+      account_number VARCHAR(20),
+      account_type VARCHAR(20),
+      is_verified BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_partner_financial_accounts_partner_id ON partner_financial_accounts(partner_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_partner_financial_accounts_subaccount ON partner_financial_accounts(gateway_subaccount_id)`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS payments (
+      id UUID PRIMARY KEY,
+      order_id UUID NOT NULL REFERENCES orders(id),
+      consumer_id UUID NOT NULL REFERENCES users(id),
+      partner_id UUID NOT NULL REFERENCES partners(id),
+      gateway VARCHAR(50) NOT NULL DEFAULT 'ASAAS',
+      gateway_transaction_id VARCHAR(255),
+      method VARCHAR(50) NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+      gross_amount NUMERIC(10,2) NOT NULL,
+      net_partner_amount NUMERIC(10,2) NOT NULL,
+      platform_fee_amount NUMERIC(10,2) NOT NULL,
+      pix_qr_code TEXT,
+      pix_copy_paste TEXT,
+      pix_expires_at TIMESTAMP WITH TIME ZONE,
+      paid_at TIMESTAMP WITH TIME ZONE,
+      failure_reason TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_gateway_transaction_id ON payments(gateway_transaction_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_partner_id ON payments(partner_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_consumer_id ON payments(consumer_id)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS payment_refunds (
+      id UUID PRIMARY KEY,
+      payment_id UUID NOT NULL REFERENCES payments(id),
+      gateway_refund_id VARCHAR(255),
+      refund_amount NUMERIC(10,2) NOT NULL,
+      reason TEXT NOT NULL,
+      status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_payment_refunds_payment_id ON payment_refunds(payment_id)`);
+
+  console.log('  ✅ Tabelas orders, order_items, partner_financial_accounts e payments garantidas.');
+}
+
 async function seedUsers(): Promise<Map<string, string>> {
   const emailToId = new Map<string, string>();
   const SALT_ROUNDS = 10;
@@ -579,8 +722,8 @@ async function seedPartners(emailToId: Map<string, string>): Promise<void> {
 async function seedProducts(): Promise<void> {
   for (const product of PRODUCTS) {
     await pool.query(
-      `INSERT INTO products (id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO products (id, name, brand, ingredients, has_gluten, cross_contamination, analysis_status, partner_id, price, category)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        ON CONFLICT (id) DO UPDATE SET
          name                = EXCLUDED.name,
          brand               = EXCLUDED.brand,
@@ -589,6 +732,8 @@ async function seedProducts(): Promise<void> {
          cross_contamination = EXCLUDED.cross_contamination,
          analysis_status     = EXCLUDED.analysis_status,
          partner_id          = EXCLUDED.partner_id,
+         price               = EXCLUDED.price,
+         category            = EXCLUDED.category,
          updated_at          = CURRENT_TIMESTAMP`,
       [
         product.id,
@@ -599,6 +744,8 @@ async function seedProducts(): Promise<void> {
         product.cross_contamination,
         product.analysis_status,
         product.partner_id || null,
+        product.price || 0.00,
+        product.category || 'Geral',
       ],
     );
 
@@ -646,6 +793,294 @@ async function seedProductCertifications(): Promise<void> {
   }
 }
 
+async function seedPartnerFinancialAccounts(): Promise<void> {
+  const partnerId = 'c0000001-0000-0000-0000-000000000001'; // Bistro Sem Gluten Fit
+  await pool.query(
+    `INSERT INTO partner_financial_accounts (
+       id, partner_id, gateway_subaccount_id, pix_key, pix_key_type,
+       bank_code, agency_number, account_number, account_type, is_verified
+     )
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+     ON CONFLICT (partner_id) DO UPDATE SET
+       gateway_subaccount_id = EXCLUDED.gateway_subaccount_id,
+       pix_key               = EXCLUDED.pix_key,
+       pix_key_type          = EXCLUDED.pix_key_type,
+       bank_code             = EXCLUDED.bank_code,
+       agency_number         = EXCLUDED.agency_number,
+       account_number        = EXCLUDED.account_number,
+       account_type          = EXCLUDED.account_type,
+       is_verified           = EXCLUDED.is_verified,
+       updated_at            = CURRENT_TIMESTAMP`,
+    [
+      'fa000001-0000-0000-0000-000000000001',
+      partnerId,
+      'sub_asaas_bistro_fit_001',
+      '12.345.678/0001-95',
+      'CNPJ',
+      '260',
+      '0001',
+      '1234567-8',
+      'CHECKING',
+      true,
+    ]
+  );
+  console.log('  🏦 Subconta financeira configurada para Bistro Sem Gluten Fit (Chave PIX: 12.345.678/0001-95)');
+}
+
+async function seedOrdersAndPayments(emailToId: Map<string, string>): Promise<void> {
+  const celiacoId = emailToId.get('celiaco.classico@seed.celilac.dev');
+  if (!celiacoId) return;
+
+  const partnerId = 'c0000001-0000-0000-0000-000000000001'; // Bistro Sem Gluten Fit
+  const breadId = 'b0000008-0000-0000-0000-000000000001';
+  const cakeId = 'b0000008-0000-0000-0000-000000000002';
+
+  // 1. Pedido 1: Em aberto para teste de Checkout PIX (AWAITING_PAYMENT)
+  const order1Id = 'd0000001-0000-0000-0000-000000000001';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
+    [order1Id, celiacoId, partnerId, 'AWAITING_PAYMENT', 59.80, 0.00, 59.80, 'SAFE', 'Favor embalar separadamente para evitar contato.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000001', order1Id, breadId, 'Pão Francês Artesanal Sem Glúten', 29.90, 2, 59.80]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount, pix_qr_code, pix_copy_paste, pix_expires_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000001',
+      order1Id,
+      celiacoId,
+      partnerId,
+      'ASAAS',
+      'pay_seed_asaas_001',
+      'PIX',
+      'PENDING',
+      59.80,
+      50.63,
+      7.18,
+      'https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=00020126580014br.gov.bcb.pix0136bistro-pix-seed-key520400005303986540559.805802BR5915CELILAC%20PAGAMENTOS6009SAO%20PAULO62070503***6304ABCD',
+      '00020126580014br.gov.bcb.pix0136bistro-pix-seed-key520400005303986540559.805802BR5915CELILAC PAGAMENTOS6009SAO PAULO62070503***6304ABCD',
+      new Date(Date.now() + 24 * 3600 * 1000)
+    ]
+  );
+  console.log(`  📦 [AWAITING_PAYMENT] Pedido Checkout PIX: ${order1Id} (Total: R$ 59,80)`);
+
+  // 2. Pedido 2: Pago e em preparo na cozinha (PREPARING)
+  const order2Id = 'd0000002-0000-0000-0000-000000000002';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
+    [order2Id, celiacoId, partnerId, 'PREPARING', 35.00, 0.00, 35.00, 'SAFE', 'Para viagem imediata.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000002', order2Id, cakeId, 'Bolo de Cenoura com Chocolate Sem Leite', 35.00, 1, 35.00]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount, paid_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000002',
+      order2Id,
+      celiacoId,
+      partnerId,
+      'ASAAS',
+      'pay_seed_asaas_002',
+      'PIX',
+      'PAID',
+      35.00,
+      28.81,
+      4.20,
+      new Date()
+    ]
+  );
+  console.log(`  🍳 [PREPARING] Pedido em Cozinha do Parceiro: ${order2Id} (Total: R$ 35,00)`);
+
+  // 3. Pedido 3: Concluído e Entregue (DELIVERED)
+  const order3Id = 'd0000003-0000-0000-0000-000000000003';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
+    [order3Id, celiacoId, partnerId, 'DELIVERED', 94.80, 0.00, 94.80, 'SAFE', 'Entregar na portaria.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000003', order3Id, breadId, 'Pão Francês Artesanal Sem Glúten', 29.90, 2, 59.80]
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000004', order3Id, cakeId, 'Bolo de Cenoura com Chocolate Sem Leite', 35.00, 1, 35.00]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount, paid_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000003',
+      order3Id,
+      celiacoId,
+      partnerId,
+      'ASAAS',
+      'pay_seed_asaas_003',
+      'PIX',
+      'PAID',
+      94.80,
+      81.43,
+      11.38,
+      new Date(Date.now() - 3600 * 1000 * 24)
+    ]
+  );
+  console.log(`  🛵 [DELIVERED] Pedido Concluído e Entregue: ${order3Id} (Total: R$ 94,80)`);
+
+  // 4. Pedido 4: Pagamento na Entrega (Maquininha) — Aguardando Aceite do Restaurante (AWAITING_PAYMENT)
+  const order4Id = 'd0000004-0000-0000-0000-000000000004';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
+    [order4Id, celiacoId, partnerId, 'AWAITING_PAYMENT', 35.00, 0.00, 35.00, 'SAFE', 'Pagamento com maquininha na entrega (cartão de crédito/débito). Favor enviar talheres descartáveis.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000005', order4Id, cakeId, 'Bolo de Cenoura com Chocolate Sem Leite', 35.00, 1, 35.00]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000004',
+      order4Id,
+      celiacoId,
+      partnerId,
+      'OFFLINE',
+      'pay_offline_delivery_card_004',
+      'CARD_ON_DELIVERY',
+      'PENDING',
+      35.00,
+      30.80,
+      4.20
+    ]
+  );
+  console.log(`  💳 [AWAITING_PAYMENT • MAQUININHA NA ENTREGA] Pedido Aguardando Aceite do Restaurante: ${order4Id} (Total: R$ 35,00)`);
+
+  // 5. Pedido 5: Pagamento na Entrega (Dinheiro c/ Troco) — Aceito e Em Preparo (CONFIRMED)
+  const order5Id = 'd0000005-0000-0000-0000-000000000005';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
+    [order5Id, celiacoId, partnerId, 'CONFIRMED', 29.90, 5.10, 35.00, 'SAFE', 'Pagamento em dinheiro na entrega. Levar troco para R$ 50,00.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000006', order5Id, breadId, 'Pão Francês Artesanal Sem Glúten', 29.90, 1, 29.90]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000005',
+      order5Id,
+      celiacoId,
+      partnerId,
+      'OFFLINE',
+      'pay_offline_delivery_cash_005',
+      'CASH_ON_DELIVERY',
+      'PENDING',
+      35.00,
+      31.41,
+      3.59
+    ]
+  );
+  console.log(`  💵 [CONFIRMED • DINHEIRO NA ENTREGA] Pedido Aceito pelo Restaurante: ${order5Id} (Total: R$ 35,00 - Troco p/ R$ 50)`);
+
+  // 6. Pedido 6: Pagamento na Entrega (Maquininha) — Em Rota de Entrega (OUT_FOR_DELIVERY)
+  const order6Id = 'd0000006-0000-0000-0000-000000000006';
+  await pool.query(
+    `INSERT INTO orders (id, consumer_id, partner_id, status, subtotal_amount, delivery_fee, total_amount, allergen_check_verdict, notes)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     ON CONFLICT (id) DO UPDATE SET 
+       status = EXCLUDED.status, 
+       cancel_reason = NULL,
+       cancelled_at = NULL,
+       updated_at = CURRENT_TIMESTAMP`,
+    [order6Id, celiacoId, partnerId, 'OUT_FOR_DELIVERY', 94.80, 0.00, 94.80, 'SAFE', 'Entregar na portaria. Pagamento na maquininha na entrega.']
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000007', order6Id, breadId, 'Pão Francês Artesanal Sem Glúten', 29.90, 2, 59.80]
+  );
+  await pool.query(
+    `INSERT INTO order_items (id, order_id, product_id, product_name, unit_price, quantity, total_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     ON CONFLICT (id) DO UPDATE SET quantity = EXCLUDED.quantity`,
+    ['d0000002-0000-0000-0000-000000000008', order6Id, cakeId, 'Bolo de Cenoura com Chocolate Sem Leite', 35.00, 1, 35.00]
+  );
+  await pool.query(
+    `INSERT INTO payments (id, order_id, consumer_id, partner_id, gateway, gateway_transaction_id, method, status, gross_amount, net_partner_amount, platform_fee_amount)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+     ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, updated_at = CURRENT_TIMESTAMP`,
+    [
+      'f0000001-0000-0000-0000-000000000006',
+      order6Id,
+      celiacoId,
+      partnerId,
+      'OFFLINE',
+      'pay_offline_delivery_card_006',
+      'CARD_ON_DELIVERY',
+      'PENDING',
+      94.80,
+      83.42,
+      11.38
+    ]
+  );
+  console.log(`  🛵 [OUT_FOR_DELIVERY • NA ENTREGA] Pedido a Caminho da Entrega: ${order6Id} (Total: R$ 94,80)`);
+}
+
 // ─── Entry point ────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -658,10 +1093,11 @@ async function main(): Promise<void> {
     await pool.query('SELECT 1');
     console.log('📡 Conexão com PostgreSQL estabelecida.\n');
 
-    // 1. Garantir tabelas products e certifications
+    // 1. Garantir tabelas products, certifications, orders e payments
     console.log('📦 Verificando tabelas…');
     await createProductsTableIfNotExists();
     await createCertificationsTableIfNotExists();
+    await createOrdersAndPaymentsTablesIfNotExists();
     console.log('');
 
     // 2. Usuários
@@ -689,25 +1125,84 @@ async function main(): Promise<void> {
     await seedProductCertifications();
     console.log('');
 
+    // 7. Subcontas Financeiras e Chaves PIX
+    console.log('💳 Configurando subcontas financeiras e chaves PIX…');
+    await seedPartnerFinancialAccounts();
+    console.log('');
+
+    // 8. Pedidos e Pagamentos (Casos de teste do Checkout, Split, Pagamento na Entrega e Notificações)
+    console.log('📦 Inserindo pedidos e pagamentos de teste…');
+    await seedOrdersAndPayments(emailToId);
+    console.log('');
+
+    // 9. Disparo de Notificação em Tempo Real (se backend estiver online)
+    console.log('🔔 Verificando hub de notificações em tempo real…');
+    try {
+      const backendPort = process.env.PORT ?? '3000';
+      const notifyRes = await fetch(`http://localhost:${backendPort}/orders/test-notification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: 'd0000004-0000-0000-0000-000000000004',
+          consumerId: emailToId.get('celiaco.classico@seed.celilac.dev'),
+          partnerId: 'c0000001-0000-0000-0000-000000000001',
+          status: 'CONFIRMED',
+          totalAmount: 35.0,
+        }),
+      });
+      if (notifyRes.ok) {
+        console.log('  🔔 Notificação SSE de teste transmitida com sucesso para o backend!');
+      }
+    } catch {
+      console.log('  ℹ️  Backend offline ou em porta diferente (notificação SSE em tempo real ignorada).');
+    }
+    console.log('');
+
     // Resumo final
     const { rows: userCount } = await pool.query('SELECT COUNT(*) FROM users');
     const { rows: profileCount } = await pool.query('SELECT COUNT(*) FROM food_profiles');
     const { rows: partnerCount } = await pool.query('SELECT COUNT(*) FROM partners');
     const { rows: productCount } = await pool.query('SELECT COUNT(*) FROM products');
     const { rows: certCount } = await pool.query('SELECT COUNT(*) FROM product_certifications');
+    const { rows: orderCount } = await pool.query('SELECT COUNT(*) FROM orders');
+    const { rows: paymentCount } = await pool.query('SELECT COUNT(*) FROM payments');
+    const { rows: financialAccountCount } = await pool.query('SELECT COUNT(*) FROM partner_financial_accounts');
 
     console.log('═'.repeat(55));
     console.log('✅ Seed concluído com sucesso!');
-    console.log(`   👤 Usuários:       ${userCount[0].count}`);
-    console.log(`   🥗 Perfis:         ${profileCount[0].count}`);
-    console.log(`   🏢 Parceiros:      ${partnerCount[0].count}`);
-    console.log(`   🏪 Produtos:       ${productCount[0].count}`);
-    console.log(`   🏅 Certificações:  ${certCount[0].count}`);
+    console.log(`   👤 Usuários:            ${userCount[0].count}`);
+    console.log(`   🥗 Perfis:              ${profileCount[0].count}`);
+    console.log(`   🏢 Parceiros:           ${partnerCount[0].count}`);
+    console.log(`   🏪 Produtos:            ${productCount[0].count}`);
+    console.log(`   🏅 Certificações:       ${certCount[0].count}`);
+    console.log(`   📦 Pedidos:             ${orderCount[0].count}`);
+    console.log(`   💳 Pagamentos:          ${paymentCount[0].count}`);
+    console.log(`   🏦 Subcontas PIX:       ${financialAccountCount[0].count}`);
     console.log('');
     console.log('📋 Credenciais de teste:');
     for (const user of USERS) {
       console.log(`   ${user.email.padEnd(45)} senha: Seed@123456`);
     }
+    console.log('');
+    console.log('🚀 URLs de Teste Rápido (Web App em http://localhost:3001):');
+    console.log('   🛒 Checkout PIX em Aberto: /checkout/d0000001-0000-0000-0000-000000000001');
+    console.log('   📦 Meus Pedidos (Celíaco): /orders');
+    console.log('   🍳 Fila de Pedidos (Cozinha do Parceiro): /partner/orders');
+    console.log('   💰 Extrato & Split 12% (Financeiro do Parceiro): /partner/financial');
+    console.log('');
+    console.log('🔔 Cenários de Teste de Notificação e Pagamento na Entrega:');
+    console.log('   💳 1. Pedido #000004 (Maquininha na Entrega - Aguardando Aceite):');
+    console.log('         - Acesse como parceiro em /partner/orders (aba "Novos")');
+    console.log('         - Clique em "✅ Aceitar Pedido"');
+    console.log('         - No perfil do consumidor em /orders, o sino toca e exibe "✅ Pedido Aceito!"');
+    console.log('   💵 2. Pedido #000005 (Dinheiro na Entrega - Aceito / Troco p/ R$ 50):');
+    console.log('         - Acesse como parceiro em /partner/orders (aba "Em Preparo")');
+    console.log('         - Avance para "Pronto" ou "Saiu para Entrega"');
+    console.log('         - O sino do consumidor recebe "📦 Pedido Pronto!" / "🛵 Saiu para Entrega!"');
+    console.log('   🚨 3. Pedido #000006 (Na Entrega em Rota - Denúncia de Não Pagamento):');
+    console.log('         - Acesse como parceiro em /partner/orders (aba "Em Rota")');
+    console.log('         - Clique em "🚨 Reportar Não Pagamento" caso o cliente se recuse a pagar');
+    console.log('         - O pedido é cancelado, a taxa da plataforma é estornada e o cliente tem compras na entrega bloqueadas');
     console.log('═'.repeat(55));
   } catch (err) {
     console.error('❌ Erro no seed:', err);

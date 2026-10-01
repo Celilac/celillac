@@ -35,13 +35,17 @@ export class LoginUserController extends BaseController {
 
     const { token, expiresIn } = result.getValue();
     const isProduction = process.env.NODE_ENV === 'production';
+    const host = req.headers.host || '';
+    const isCelilacDomain = host.includes('celilac.com.br');
+    const cookieDomain = process.env.COOKIE_DOMAIN || (isCelilacDomain ? '.celilac.com.br' : undefined);
 
-    // A02: Roubo de Sessão — Emite cookie HttpOnly, Secure e SameSite=Lax
+    // A02: Roubo de Sessão — Emite cookie HttpOnly, Secure e SameSite=Lax (com domínio compartilhado em prod)
     res.cookie('token', token, {
       httpOnly: true,
-      secure: isProduction,
+      secure: isProduction || isCelilacDomain,
       sameSite: 'lax',
       path: '/',
+      domain: cookieDomain,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 

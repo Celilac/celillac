@@ -319,5 +319,15 @@ describe('AuthMiddleware', () => {
       expect(nextFunction).toHaveBeenCalledTimes(1);
       expect(mockRequest.user).toEqual({ id: 'user-cookie-2', role: 'CONSUMER' });
     });
+
+    it('deve autenticar com sucesso se o token estiver presente no query parameter req.query.token (SSE)', async () => {
+      const validToken = jwt.sign({ sub: 'user-sse-1', role: 'PARCEIRO' }, 'test-secret-value');
+      (mockRequest as any).query = { token: validToken };
+
+      await authMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
+
+      expect(nextFunction).toHaveBeenCalledTimes(1);
+      expect(mockRequest.user).toEqual({ id: 'user-sse-1', role: 'PARCEIRO' });
+    });
   });
 });

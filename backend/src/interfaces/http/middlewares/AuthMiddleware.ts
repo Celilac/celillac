@@ -27,7 +27,12 @@ export function extractAuthToken(req: Request): { token?: string; error?: string
     }
   }
 
-  // 2. Fallback transparente para Authorization: Bearer <token>
+  // 2. Query parameter token (suporte a Server-Sent Events / EventSource nativo do browser)
+  if (req.query && typeof req.query.token === 'string' && req.query.token.trim().length > 0) {
+    return { token: req.query.token.trim() };
+  }
+
+  // 3. Fallback transparente para Authorization: Bearer <token>
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return { error: 'Token de autenticação não fornecido.' };

@@ -38,7 +38,10 @@ export function corsMiddleware(req: Request, res: Response, next: NextFunction):
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'Content-Type, Authorization, Idempotency-Key, x-idempotency-key, asaas-access-token, X-Requested-With'
+  );
 
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);

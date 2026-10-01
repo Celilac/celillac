@@ -223,3 +223,307 @@
   box-shadow: 0 4px 12px rgba(5, 150, 105, 0.18);
 }
 
+/* ==========================================================================
+   Área de Compra e Trava Biológica (Product Details)
+   ========================================================================== */
+
+.purchaseCard {
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+:global(html[data-theme='light']) .purchaseCard {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.purchaseHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.purchasePriceGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.purchasePriceLabel {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+:global(html[data-theme='light']) .purchasePriceLabel {
+  color: #64748b;
+}
+
+.purchasePriceValue {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--color-emerald);
+  line-height: 1.1;
+}
+
+:global(html[data-theme='light']) .purchasePriceValue {
+  color: #059669;
+}
+
+.quantityGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quantityLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-right: 0.35rem;
+}
+
+:global(html[data-theme='light']) .quantityLabel {
+  color: #1e293b;
+}
+
+.quantityControls {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+:global(html[data-theme='light']) .quantityControls {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+
+.quantityBtn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.quantityBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:global(html[data-theme='light']) .quantityBtn {
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .quantityBtn:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.quantityBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.quantityInput {
+  width: 44px;
+  height: 36px;
+  text-align: center;
+  border: none;
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+:global(html[data-theme='light']) .quantityInput {
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+.purchaseFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+}
+
+:global(html[data-theme='light']) .purchaseFooter {
+  border-color: #e2e8f0;
+}
+
+.subtotalInfo {
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+}
+
+:global(html[data-theme='light']) .subtotalInfo {
+  color: #475569;
+}
+
+.subtotalAmount {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--color-text);
+  margin-left: 0.35rem;
+}
+
+:global(html[data-theme='light']) .subtotalAmount {
+  color: #0f172a;
+}
+
+.btnOrderNow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--color-emerald);
+  color: #ffffff;
+  padding: 0.75rem 1.6rem;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.btnOrderNow:hover:not(:disabled) {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+.btnOrderNow:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btnOrderBlocked {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid #ef4444;
+  padding: 0.75rem 1.4rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: not-allowed;
+  width: 100%;
+  text-align: center;
+}
+
+:global(html[data-theme='light']) .btnOrderBlocked {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #f87171;
+}
+
+.biologicalLockNotice {
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: rgba(239, 68, 68, 0.08);
+  border-left: 4px solid #ef4444;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+:global(html[data-theme='light']) .biologicalLockNotice {
+  background: #fef2f2;
+  color: #7f1d1d;
+  border-left-color: #dc2626;
+}
+
+.catalogOnlyNotice {
+  padding: 1rem 1.25rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--color-border);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+:global(html[data-theme='light']) .catalogOnlyNotice {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+/* Botão Editar Perfil Alimentar — contraste alto com branco puro no tema escuro */
+.editProfileBtn {
+  font-size: 0.8rem;
+  padding: 0.35rem 0.75rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.editProfileBtn svg {
+  stroke: #ffffff !important;
+}
+
+.editProfileBtn:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: #ffffff;
+  transform: translateY(-1px);
+}
+
+:global(html[data-theme='light']) .editProfileBtn {
+  color: var(--color-brand-navy) !important;
+  background: transparent;
+  border-color: var(--color-border);
+}
+
+:global(html[data-theme='light']) .editProfileBtn svg {
+  stroke: var(--color-brand-navy) !important;
+}
+
+:global(html[data-theme='light']) .editProfileBtn:hover {
+  color: var(--color-brand-navy) !important;
+  background: rgba(36, 65, 81, 0.08);
+  border-color: var(--color-brand-navy);
+}
+
+

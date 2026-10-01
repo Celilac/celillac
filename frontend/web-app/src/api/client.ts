@@ -16,7 +16,7 @@
 //   ✅ Renderizar o riskLevel retornado pelo Backend
 // ══════════════════════════════════════════════════════════════
 
-function getApiBaseUrl(): string {
+export function getApiBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
 
   if (typeof window !== 'undefined') {

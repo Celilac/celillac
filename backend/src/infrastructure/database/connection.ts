@@ -257,6 +257,43 @@ export async function testDatabaseConnection(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON audit_logs(actor_id);
       CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
 
+      CREATE TABLE IF NOT EXISTS payments (
+        id UUID PRIMARY KEY,
+        order_id UUID NOT NULL REFERENCES orders(id),
+        consumer_id UUID NOT NULL REFERENCES users(id),
+        partner_id UUID NOT NULL REFERENCES partners(id),
+        gateway VARCHAR(50) NOT NULL DEFAULT 'ASAAS',
+        gateway_transaction_id VARCHAR(255),
+        method VARCHAR(50) NOT NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+        gross_amount NUMERIC(10,2) NOT NULL,
+        net_partner_amount NUMERIC(10,2) NOT NULL,
+        platform_fee_amount NUMERIC(10,2) NOT NULL,
+        pix_qr_code TEXT,
+        pix_copy_paste TEXT,
+        pix_expires_at TIMESTAMP WITH TIME ZONE,
+        paid_at TIMESTAMP WITH TIME ZONE,
+        failure_reason TEXT,
+        idempotency_key VARCHAR(100),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      ALTER TABLE payments ADD COLUMN IF NOT EXISTS idempotency_key VARCHAR(100);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_idempotency_key ON payments(idempotency_key) WHERE idempotency_key IS NOT NULL;
+
+      CREATE TABLE IF NOT EXISTS payment_refunds (
+        id UUID PRIMARY KEY,
+        payment_id UUID NOT NULL REFERENCES payments(id),
+        gateway_refund_id VARCHAR(255),
+        refund_amount NUMERIC(10,2) NOT NULL,
+        reason TEXT NOT NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'PENDING',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_payment_refunds_payment_id ON payment_refunds(payment_id);
+
       -- Seed de categorias padrão se a tabela estiver vazia
       INSERT INTO product_categories (name, normalized_name, status, visibility)
       SELECT name, normalized_name, 'APPROVED', 'GLOBAL'
