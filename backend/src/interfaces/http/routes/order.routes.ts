@@ -9,6 +9,8 @@ import { PgFoodProfileRepository } from '../../../infrastructure/database/food-p
 import { PgPaymentRepository } from '../../../infrastructure/database/payment/PgPaymentRepository';
 import { PgPaymentRefundRepository } from '../../../infrastructure/database/payment/PgPaymentRefundRepository';
 import { PgAuditLogRepository } from '../../../infrastructure/database/audit/PgAuditLogRepository';
+import { PgReportRepository } from '../../../infrastructure/database/admin/PgReportRepository';
+import { PgConsumerRepository } from '../../../infrastructure/database/consumer/PgConsumerRepository';
 import { AsaasPaymentGateway } from '../../../infrastructure/gateways/AsaasPaymentGateway';
 import { RefundPaymentUseCase } from '../../../application/payment/RefundPaymentUseCase';
 
@@ -18,6 +20,7 @@ import { GetOrderUseCase } from '../../../application/order/GetOrderUseCase';
 import { ListConsumerOrdersUseCase } from '../../../application/order/ListConsumerOrdersUseCase';
 import { ListPartnerOrdersUseCase } from '../../../application/order/ListPartnerOrdersUseCase';
 import { UpdateOrderStatusUseCase } from '../../../application/order/UpdateOrderStatusUseCase';
+import { ReportOrderNonPaymentUseCase } from '../../../application/order/ReportOrderNonPaymentUseCase';
 import { sseOrderNotificationHub } from '../../../infrastructure/notifications/SseOrderNotificationHub';
 
 import { OrderController } from '../controllers/order/OrderController';
@@ -33,6 +36,8 @@ const foodProfileRepository = new PgFoodProfileRepository(pool);
 const paymentRepository = new PgPaymentRepository(pool);
 const paymentRefundRepository = new PgPaymentRefundRepository(pool);
 const auditLogRepository = new PgAuditLogRepository(pool);
+const reportRepository = new PgReportRepository(pool);
+const consumerRepository = new PgConsumerRepository(pool);
 const paymentGateway = new AsaasPaymentGateway();
 
 const refundPaymentUseCase = new RefundPaymentUseCase(
@@ -60,7 +65,17 @@ const listPartnerOrdersUseCase = new ListPartnerOrdersUseCase(orderRepository, p
 const updateOrderStatusUseCase = new UpdateOrderStatusUseCase(
   orderRepository,
   partnerRepository,
-  sseOrderNotificationHub
+  sseOrderNotificationHub,
+  paymentRepository
+);
+const reportOrderNonPaymentUseCase = new ReportOrderNonPaymentUseCase(
+  orderRepository,
+  partnerRepository,
+  paymentRepository,
+  reportRepository,
+  consumerRepository,
+  sseOrderNotificationHub,
+  auditLogRepository
 );
 
 const orderController = new OrderController(
@@ -69,7 +84,8 @@ const orderController = new OrderController(
   getOrderUseCase,
   listConsumerOrdersUseCase,
   listPartnerOrdersUseCase,
-  updateOrderStatusUseCase
+  updateOrderStatusUseCase,
+  reportOrderNonPaymentUseCase
 );
 
 // Rotas de Pedidos (Orders)
@@ -128,5 +144,6 @@ router.get('/:id', authMiddleware, (req, res) => orderController.getOrder(req, r
 router.get('/partner/:partnerId', authMiddleware, (req, res) => orderController.listPartnerOrders(req, res));
 router.post('/:id/cancel', authMiddleware, (req, res) => orderController.cancelOrder(req, res));
 router.patch('/:id/status', authMiddleware, (req, res) => orderController.updateStatus(req, res));
+router.post('/:id/report-non-payment', authMiddleware, (req, res) => orderController.reportNonPayment(req, res));
 
 export default router;

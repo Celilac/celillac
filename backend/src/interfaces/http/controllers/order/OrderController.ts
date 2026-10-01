@@ -7,6 +7,7 @@ import { GetOrderUseCase } from '../../../../application/order/GetOrderUseCase';
 import { ListConsumerOrdersUseCase } from '../../../../application/order/ListConsumerOrdersUseCase';
 import { ListPartnerOrdersUseCase } from '../../../../application/order/ListPartnerOrdersUseCase';
 import { UpdateOrderStatusUseCase } from '../../../../application/order/UpdateOrderStatusUseCase';
+import { ReportOrderNonPaymentUseCase } from '../../../../application/order/ReportOrderNonPaymentUseCase';
 
 export class OrderController extends BaseController {
   constructor(
@@ -15,7 +16,8 @@ export class OrderController extends BaseController {
     private readonly getOrderUseCase: GetOrderUseCase,
     private readonly listConsumerOrdersUseCase: ListConsumerOrdersUseCase,
     private readonly listPartnerOrdersUseCase: ListPartnerOrdersUseCase,
-    private readonly updateOrderStatusUseCase: UpdateOrderStatusUseCase
+    private readonly updateOrderStatusUseCase: UpdateOrderStatusUseCase,
+    private readonly reportOrderNonPaymentUseCase?: ReportOrderNonPaymentUseCase
   ) {
     super();
   }
@@ -179,6 +181,42 @@ export class OrderController extends BaseController {
       return this.ok(res, result.getValue().toJSON());
     } catch (error: any) {
       return this.serverError(res, error.message || 'Erro ao atualizar status do pedido.');
+    }
+  }
+
+  public async reportNonPayment(req: Request, res: Response): Promise<Response> {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return this.unauthorized(res, 'Não autenticado.');
+      }
+
+      if (!this.reportOrderNonPaymentUseCase) {
+        return this.serverError(res, 'Caso de uso não injetado.');
+      }
+
+      const { id } = req.params;
+      const { reason, details } = req.body;
+
+      const result = await this.reportOrderNonPaymentUseCase.execute({
+        orderId: id,
+        partnerUserId: user.id,
+        reason,
+        details,
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+      });
+
+      if (result.isFailure) {
+        const error = result.getError();
+        if (error.includes('não encontrado')) return this.notFound(res, error);
+        if (error.includes('Acesso negado')) return this.forbidden(res, error);
+        return this.badRequest(res, error);
+      }
+
+      return this.ok(res, result.getValue());
+    } catch (error: any) {
+      return this.serverError(res, error.message || 'Erro ao reportar ocorrência de não pagamento.');
     }
   }
 }

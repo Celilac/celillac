@@ -57,6 +57,7 @@
    - [GET /orders/partner/:partnerId](#get-orderspartnerpartnerid)
    - [POST /orders/:id/cancel](#post-ordersidcancel)
    - [PATCH /orders/:id/status](#patch-ordersidstatus)
+   - [POST /orders/:id/report-non-payment](#post-ordersidreport-non-payment)
 15. [Pagamentos e Split Marketplace (Payments)](#15-pagamentos-e-split-marketplace-payments)
    - [POST /payments/checkout](#post-paymentscheckout)
    - [GET /payments/order/:orderId](#get-paymentsorderorderid)
@@ -1867,6 +1868,34 @@ Promove o status do pedido no fluxo de preparação e entrega do parceiro.
 
 ---
 
+### `POST /orders/:id/report-non-payment` 🔒 *(Restrito: Dono do Estabelecimento)*
+Permite ao parceiro comercial reportar que o consumidor se recusou a efetuar o pagamento na entrega, não atendeu o entregador ou aplicou golpe/trote. O pedido é cancelado imediatamente, o pagamento marcado como falhado, a comissão de 12% da plataforma é zerada/estornada em favor do restaurante e o consumidor perde o direito de realizar novos pedidos na entrega (`can_pay_on_delivery = false`).
+
+**Request Body:**
+```json
+{
+  "reason": "CLIENT_REFUSED_PAYMENT",
+  "details": "Entregador aguardou 20 minutos no local e cliente se recusou a pagar."
+}
+```
+*Motivos válidos:* `CLIENT_REFUSED_PAYMENT`, `CLIENT_ABSENT`, `FRAUDULENT_ORDER`. `details` é opcional.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "message": "Denúncia registrada com sucesso. O pedido foi cancelado, a taxa da plataforma foi isentada e o consumidor foi restringido para novos pedidos na entrega.",
+  "data": {
+    "orderId": "uuid-do-pedido",
+    "status": "CANCELLED",
+    "reportId": "uuid-da-denuncia",
+    "waivedFee": 7.18
+  }
+}
+```
+
+---
+
 ### `GET /orders/stream` 🔒 *(Server-Sent Events — SSE)*
 Canal HTTP persistente e unidirecional para recebimento de notificações em tempo real. Notifica o parceiro comercial instantaneamente quando o webhook Asaas confirmar o pagamento de um pedido (`order:payment_confirmed`) ou quando houver transição de status (`order:status_updated`).
 
@@ -1925,15 +1954,33 @@ data: {
 Módulo integrado ao gateway Asaas para processamento de cobranças (PIX com QR Code dinâmico e Copia-e-Cola, Cartão de Crédito), split automatizado de 12% da plataforma CeLiLac (padrão iFood) e liquidação em subcontas parceiras.
 
 ### `POST /payments/checkout` 🔒 *(Restrito: Consumidor)*
-Gera a cobrança do pedido com split e retorna o QR Code PIX e chave Copia-e-Cola.
+Gera a cobrança do pedido com split e retorna os dados de pagamento (QR Code PIX para online, ou confirmação direta para pagamento presencial na entrega).
 
-**Request Body:**
+**Request Body (Online - PIX):**
 ```json
 {
   "orderId": "uuid-do-pedido",
   "method": "PIX"
 }
 ```
+
+**Request Body (Na Entrega - Dinheiro com troco):**
+```json
+{
+  "orderId": "uuid-do-pedido",
+  "method": "CASH_ON_DELIVERY",
+  "changeFor": 100.00
+}
+```
+
+**Request Body (Na Entrega - Maquininha Débito/Crédito):**
+```json
+{
+  "orderId": "uuid-do-pedido",
+  "method": "CARD_ON_DELIVERY"
+}
+```
+*Observação:* Para métodos presenciais (`CASH_ON_DELIVERY` e `CARD_ON_DELIVERY`), o consumidor deve ter `can_pay_on_delivery = true`. Caso tenha sido restringido anteriormente por não comparecimento ou recusa de pagamento, a API retornará `400 Bad Request` exigindo pagamento prévio online.
 
 **Response `201 Created` / `200 OK` (Idempotente):**
 ```json

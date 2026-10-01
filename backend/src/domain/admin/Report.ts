@@ -8,6 +8,8 @@ export interface ReportProps {
   reporterId: string;
   productId?: string;
   partnerId?: string;
+  targetUserId?: string;
+  orderId?: string;
   reason: ReportReason;
   details?: string;
   isFoodSafetyRisk: boolean;
@@ -17,7 +19,7 @@ export interface ReportProps {
 }
 
 /**
- * Report — Entidade que representa uma denúncia de um produto ou parceiro comercial.
+ * Report — Entidade que representa uma denúncia de um produto, parceiro comercial ou usuário/pedido.
  * Raiz de agregado do contexto de Administração.
  */
 export class Report extends Entity<ReportProps> {
@@ -35,6 +37,14 @@ export class Report extends Entity<ReportProps> {
 
   get partnerId(): string | undefined {
     return this.props.partnerId;
+  }
+
+  get targetUserId(): string | undefined {
+    return this.props.targetUserId;
+  }
+
+  get orderId(): string | undefined {
+    return this.props.orderId;
   }
 
   get reason(): ReportReason {
@@ -108,8 +118,10 @@ export class Report extends Entity<ReportProps> {
 
     const hasProduct = !!props.productId && props.productId.trim() !== '';
     const hasPartner = !!props.partnerId && props.partnerId.trim() !== '';
+    const hasTargetUser = !!props.targetUserId && props.targetUserId.trim() !== '';
+    const hasOrder = !!props.orderId && props.orderId.trim() !== '';
 
-    if (!hasProduct && !hasPartner) {
+    if (!hasProduct && !hasPartner && !hasTargetUser && !hasOrder) {
       return Result.fail<Report>('Product ID or Partner ID is required.');
     }
     
@@ -132,6 +144,8 @@ export class Report extends Entity<ReportProps> {
       reporterId: props.reporterId.trim(),
       productId: hasProduct ? props.productId?.trim() : undefined,
       partnerId: hasPartner ? props.partnerId?.trim() : undefined,
+      targetUserId: hasTargetUser ? props.targetUserId?.trim() : undefined,
+      orderId: hasOrder ? props.orderId?.trim() : undefined,
       reason: props.reason,
       details: props.details,
       isFoodSafetyRisk,

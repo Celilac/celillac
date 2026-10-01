@@ -13,7 +13,12 @@ import styles from './checkout.module.css';
 function CheckoutPageContent() {
   const { orderId } = useParams() as { orderId: string };
   const searchParams = useSearchParams();
-  const initialMethod = searchParams.get('method') === 'CREDIT_CARD' ? 'CREDIT_CARD' : 'PIX';
+  const initialMethod =
+    searchParams.get('method') === 'CREDIT_CARD'
+      ? 'CREDIT_CARD'
+      : searchParams.get('method') === 'DELIVERY'
+      ? 'DELIVERY'
+      : 'PIX';
   const { token, isAuthenticated, isInitializing } = useAuth();
   const router = useRouter();
   const toast = useToast();
@@ -22,7 +27,10 @@ function CheckoutPageContent() {
   const [payment, setPayment] = useState<PaymentDetailsDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState<'PIX' | 'CREDIT_CARD'>(initialMethod);
+  const [selectedMethod, setSelectedMethod] = useState<'PIX' | 'CREDIT_CARD' | 'DELIVERY'>(initialMethod);
+  const [deliveryType, setDeliveryType] = useState<'CARD_ON_DELIVERY' | 'CASH_ON_DELIVERY'>('CARD_ON_DELIVERY');
+  const [changeFor, setChangeFor] = useState('');
+  const [deliveryBlockedReason, setDeliveryBlockedReason] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [qrLoadFailed, setQrLoadFailed] = useState(false);
 
@@ -30,6 +38,8 @@ function CheckoutPageContent() {
     const methodParam = searchParams.get('method');
     if (methodParam === 'CREDIT_CARD') {
       setSelectedMethod('CREDIT_CARD');
+    } else if (methodParam === 'DELIVERY') {
+      setSelectedMethod('DELIVERY');
     } else if (methodParam === 'PIX') {
       setSelectedMethod('PIX');
     }
@@ -221,6 +231,47 @@ function CheckoutPageContent() {
     }
   };
 
+  const handleCheckoutDelivery = async () => {
+    if (!token || !order) return;
+    setProcessing(true);
+    setDeliveryBlockedReason(null);
+
+    const changeVal = changeFor.trim() ? parseFloat(changeFor.replace(',', '.')) : undefined;
+    if (deliveryType === 'CASH_ON_DELIVERY' && changeVal !== undefined && changeVal < order.totalAmount) {
+      toast.error('O valor para troco deve ser maior ou igual ao total do pedido.', 'Atenção ao Troco');
+      setProcessing(false);
+      return;
+    }
+
+    try {
+      const paymentResult = await paymentsApi.checkout(
+        {
+          orderId: order.id,
+          method: deliveryType,
+          changeFor: changeVal,
+        },
+        token
+      );
+
+      setPayment(paymentResult);
+      setOrder((prev) => (prev ? { ...prev, status: 'CONFIRMED' } : null));
+      toast.success(
+        deliveryType === 'CARD_ON_DELIVERY'
+          ? 'Pedido confirmado! Pague na maquininha ao receber.'
+          : 'Pedido confirmado! Pague em dinheiro na entrega.',
+        'Pedido Confirmado'
+      );
+    } catch (err: any) {
+      const msg = err.message || 'Falha ao processar pagamento na entrega.';
+      if (msg.includes('indisponível para esta conta') || msg.includes('indisponível')) {
+        setDeliveryBlockedReason(msg);
+      }
+      toast.error(msg, 'Erro');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleCopyPix = () => {
     if (!payment?.pixCopyPaste) return;
     navigator.clipboard.writeText(payment.pixCopyPaste);
@@ -366,6 +417,18 @@ function CheckoutPageContent() {
                   <span style={{ fontSize: '1.5rem' }}>💳</span>
                   <span>Cartão</span>
                   <small style={{ fontSize: '0.75rem' }}>Crédito ou Débito</small>
+                </button>
+
+                <button
+                  type="button"
+                  className={`${styles.methodBtn} ${
+                    selectedMethod === 'DELIVERY' ? styles.methodBtnSelected : ''
+                  }`}
+                  onClick={() => setSelectedMethod('DELIVERY')}
+                >
+                  <span style={{ fontSize: '1.5rem' }}>🛵</span>
+                  <span>Na Entrega</span>
+                  <small style={{ fontSize: '0.75rem' }}>Dinheiro / Maquininha</small>
                 </button>
               </div>
 
@@ -560,6 +623,93 @@ function CheckoutPageContent() {
                     🔒 Ambiente criptografado e seguro (PCI-DSS)
                   </div>
                 </form>
+              )}
+
+              {/* Conteúdo da Aba Pagamento na Entrega */}
+              {selectedMethod === 'DELIVERY' && (
+                <div className={styles.deliveryContainer}>
+                  {deliveryBlockedReason ? (
+                    <div className={styles.blockedAlert}>
+                      <span className={styles.blockedAlertIcon}>⚠️</span>
+                      <div>
+                        <strong>Pagamento na Entrega Indisponível</strong>
+                        <p style={{ marginTop: '0.35rem', fontSize: '0.85rem', lineHeight: '1.4' }}>
+                          Esta conta não está autorizada a pagar na entrega devido a ocorrências anteriores de não pagamento.
+                          Por favor, utilize as abas <strong>PIX Dinâmico</strong> ou <strong>Cartão</strong> acima para concluir seu pedido.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+                        Escolha como deseja pagar ao entregador no momento do recebimento:
+                      </p>
+
+                      <div className={styles.deliveryOptionsGrid}>
+                        <div
+                          className={`${styles.deliveryCard} ${
+                            deliveryType === 'CARD_ON_DELIVERY' ? styles.deliveryCardSelected : ''
+                          }`}
+                          onClick={() => setDeliveryType('CARD_ON_DELIVERY')}
+                        >
+                          <span style={{ fontSize: '1.75rem' }}>💳</span>
+                          <span style={{ fontWeight: 700 }}>Maquininha</span>
+                          <small style={{ fontSize: '0.75rem', opacity: 0.8 }}>Crédito ou Débito</small>
+                        </div>
+
+                        <div
+                          className={`${styles.deliveryCard} ${
+                            deliveryType === 'CASH_ON_DELIVERY' ? styles.deliveryCardSelected : ''
+                          }`}
+                          onClick={() => setDeliveryType('CASH_ON_DELIVERY')}
+                        >
+                          <span style={{ fontSize: '1.75rem' }}>💵</span>
+                          <span style={{ fontWeight: 700 }}>Dinheiro</span>
+                          <small style={{ fontSize: '0.75rem', opacity: 0.8 }}>Com ou sem troco</small>
+                        </div>
+                      </div>
+
+                      {deliveryType === 'CASH_ON_DELIVERY' && (
+                        <div className={styles.changeBox}>
+                          <label className={styles.label} htmlFor="changeForInput">
+                            Precisa de troco? Para quanto?
+                          </label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontWeight: 700, color: 'var(--color-text-muted)' }}>R$</span>
+                            <input
+                              id="changeForInput"
+                              type="text"
+                              inputMode="decimal"
+                              placeholder={`Ex: ${(order.totalAmount + 20).toFixed(2).replace('.', ',')} (ou deixe vazio se não precisar)`}
+                              value={changeFor}
+                              onChange={(e) => setChangeFor(e.target.value)}
+                              className={styles.input}
+                              style={{ width: '100%' }}
+                            />
+                          </div>
+                          <small style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                            Total do pedido: R$ {order.totalAmount.toFixed(2).replace('.', ',')}. Se você tiver o valor exato em dinheiro, pode deixar este campo vazio.
+                          </small>
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        className={styles.payButton}
+                        onClick={handleCheckoutDelivery}
+                        disabled={processing}
+                      >
+                        {processing
+                          ? 'Confirmando pedido…'
+                          : `🛵 Confirmar Pedido na Entrega (R$ ${order.totalAmount.toFixed(2).replace('.', ',')})`}
+                      </button>
+
+                      <div className={styles.securityNote}>
+                        🛡️ Ao confirmar, o estabelecimento iniciará o preparo imediatamente. Pagamento no ato da entrega.
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
           </div>

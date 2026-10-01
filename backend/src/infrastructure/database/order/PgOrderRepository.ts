@@ -96,7 +96,16 @@ export class PgOrderRepository implements IOrderRepository {
   }
 
   async findById(id: string): Promise<Order | null> {
-    const orderRes = await this.pool.query('SELECT * FROM orders WHERE id = $1', [id]);
+    const orderRes = await this.pool.query(
+      `SELECT o.*, p.method AS payment_method, p.change_for
+       FROM orders o
+       LEFT JOIN (
+         SELECT DISTINCT ON (order_id) order_id, method, change_for
+         FROM payments ORDER BY order_id, created_at DESC
+       ) p ON p.order_id = o.id
+       WHERE o.id = $1`,
+      [id]
+    );
     if (orderRes.rows.length === 0) {
       return null;
     }
@@ -107,7 +116,14 @@ export class PgOrderRepository implements IOrderRepository {
 
   async findByConsumerId(consumerId: string): Promise<Order[]> {
     const orderRes = await this.pool.query(
-      'SELECT * FROM orders WHERE consumer_id = $1 ORDER BY created_at DESC',
+      `SELECT o.*, p.method AS payment_method, p.change_for
+       FROM orders o
+       LEFT JOIN (
+         SELECT DISTINCT ON (order_id) order_id, method, change_for
+         FROM payments ORDER BY order_id, created_at DESC
+       ) p ON p.order_id = o.id
+       WHERE o.consumer_id = $1
+       ORDER BY o.created_at DESC`,
       [consumerId]
     );
 
@@ -126,7 +142,14 @@ export class PgOrderRepository implements IOrderRepository {
 
   async findByPartnerId(partnerId: string): Promise<Order[]> {
     const orderRes = await this.pool.query(
-      'SELECT * FROM orders WHERE partner_id = $1 ORDER BY created_at DESC',
+      `SELECT o.*, p.method AS payment_method, p.change_for
+       FROM orders o
+       LEFT JOIN (
+         SELECT DISTINCT ON (order_id) order_id, method, change_for
+         FROM payments ORDER BY order_id, created_at DESC
+       ) p ON p.order_id = o.id
+       WHERE o.partner_id = $1
+       ORDER BY o.created_at DESC`,
       [partnerId]
     );
 
@@ -191,6 +214,8 @@ export class PgOrderRepository implements IOrderRepository {
         deliveryFee: parseFloat(orderRow.delivery_fee),
         allergenCheckVerdict: orderRow.allergen_check_verdict as 'SAFE' | 'WARNING',
         notes: orderRow.notes || undefined,
+        paymentMethod: orderRow.payment_method || undefined,
+        changeFor: orderRow.change_for ? parseFloat(orderRow.change_for) : undefined,
         cancelledAt: orderRow.cancelled_at ? new Date(orderRow.cancelled_at) : undefined,
         cancelReason: orderRow.cancel_reason || undefined,
         createdAt: new Date(orderRow.created_at),

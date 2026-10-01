@@ -531,3 +531,76 @@
   margin-top: 0.75rem;
   text-align: center;
 }
+
+.deliveryContainer {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.deliveryOptionsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 500px) {
+  .deliveryOptionsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.deliveryCard {
+  padding: 1.25rem 1rem;
+  border-radius: 12px;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  text-align: center;
+  transition: all 0.2s ease;
+  color: var(--color-text);
+}
+
+.deliveryCard:hover {
+  border-color: var(--color-border-hover);
+}
+
+.deliveryCardSelected {
+  border-color: var(--color-emerald);
+  background: var(--color-emerald-dim);
+  color: var(--color-emerald);
+}
+
+.changeBox {
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.blockedAlert {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 12px;
+  padding: 1.25rem;
+  color: #fca5a5;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  margin-top: 1rem;
+}
+
+.blockedAlertIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}

@@ -8,11 +8,12 @@ export interface PaymentDetailsDTO {
   partnerId: string;
   gateway: string;
   gatewayTransactionId?: string;
-  method: 'PIX' | 'CREDIT_CARD';
+  method: 'PIX' | 'CREDIT_CARD' | 'CASH_ON_DELIVERY' | 'CARD_ON_DELIVERY';
   status: 'PENDING' | 'AUTHORIZED' | 'PAID' | 'FAILED' | 'REFUNDED';
   grossAmount: number;
   netPartnerAmount: number;
   platformFeeAmount: number;
+  changeFor?: number;
   pixQrCode?: string;
   pixCopyPaste?: string;
   pixExpiresAt?: string;
@@ -21,8 +22,9 @@ export interface PaymentDetailsDTO {
 
 export interface CheckoutInput {
   orderId: string;
-  method: 'PIX' | 'CREDIT_CARD';
+  method: 'PIX' | 'CREDIT_CARD' | 'CASH_ON_DELIVERY' | 'CARD_ON_DELIVERY';
   creditCardToken?: string;
+  changeFor?: number;
   customerInfo?: {
     name: string;
     email: string;
