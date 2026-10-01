@@ -495,14 +495,26 @@ export default function PartnerDetailPage({ params }: PageProps) {
                               );
                             })()}
 
-                            {p.crossContamination &&
-                              p.crossContamination !== 'NONE' &&
-                              p.crossContamination !== 'NENHUM' &&
-                              !p.crossContamination.toLowerCase().startsWith('nenhum') && (
+                            {(() => {
+                              const cc = (p.crossContamination || '').trim().toLowerCase();
+                              const envRisk = (p as any).crossContaminationDetails?.environmentRisk;
+                              const isFree =
+                                !cc ||
+                                cc === 'none' ||
+                                cc === 'nenhum' ||
+                                cc.startsWith('nenhum') ||
+                                cc.startsWith('livre') ||
+                                cc.includes('100% livre') ||
+                                envRisk === 'EXCLUSIVE_ENVIRONMENT';
+
+                              if (isFree) return null;
+
+                              return (
                                 <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: '1px solid var(--color-warning-border)' }}>
                                   ⚠️ Contaminação Cruzada
                                 </span>
-                              )}
+                              );
+                            })()}
                           </div>
                         </div>
 
