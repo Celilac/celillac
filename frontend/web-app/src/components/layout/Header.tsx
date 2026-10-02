@@ -247,6 +247,13 @@ export function Header() {
             </button>
           )}
 
+          {mounted && isAuthenticated && (
+            <Link href="/profile" className={`nav-profile-link${pathname === '/profile' ? ' is-active' : ''}`} id="topbar-profile-link" onClick={() => setMenuOpen(false)}>
+              <UserAvatar avatarUrl={userInfo?.avatarUrl} fullName={userInfo?.fullName} email={userInfo?.email} size={28} />
+              <span>Perfil</span>
+            </Link>
+          )}
+
           <button
             type="button"
             onClick={toggleTheme}
@@ -255,13 +262,6 @@ export function Header() {
           >
             {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
           </button>
-
-          {mounted && isAuthenticated && (
-            <Link href="/profile" className={`nav-profile-link${pathname === '/profile' ? ' is-active' : ''}`} id="topbar-profile-link" onClick={() => setMenuOpen(false)}>
-              <UserAvatar avatarUrl={userInfo?.avatarUrl} fullName={userInfo?.fullName} email={userInfo?.email} size={28} />
-              <span>Perfil</span>
-            </Link>
-          )}
 
           {mounted && isAuthenticated && (
             <div className="notification-bell-container notification-bell-desktop">
