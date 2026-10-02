@@ -191,14 +191,16 @@ export function Header() {
             </Link>
           )}
 
-          <Link
-            href="/public-partners"
-            className={navLinkClass('/public-partners')}
-            onClick={() => setMenuOpen(false)}
-            title="Descubra estabelecimentos homologados e visualize todos os produtos ofertados"
-          >
-            <BuildingIcon /> Locais & Produtos
-          </Link>
+          {!pathname?.startsWith('/auth') && (
+            <Link
+              href="/public-partners"
+              className={navLinkClass('/public-partners')}
+              onClick={() => setMenuOpen(false)}
+              title="Descubra estabelecimentos homologados e visualize todos os produtos ofertados"
+            >
+              <BuildingIcon /> Locais & Produtos
+            </Link>
+          )}
 
           {mounted && isAuthenticated && (userInfo?.role === 'PARCEIRO' || userInfo?.role === 'ADMIN') && (
             <>
