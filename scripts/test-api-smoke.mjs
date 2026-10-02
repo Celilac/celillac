@@ -99,6 +99,7 @@ async function main() {
   console.log(`${colors.gray}Alvo: ${BASE_URL}${colors.reset}\n`);
 
   const allowOffline = args.includes('--allow-offline');
+  const results = [];
 
   // 1. Healthcheck
   const healthRes = await runRequest('Healthcheck & Conexão DB', '/health', {
