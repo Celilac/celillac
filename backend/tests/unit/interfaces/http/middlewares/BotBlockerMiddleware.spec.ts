@@ -8,8 +8,10 @@ describe('BotBlockerMiddleware', () => {
   let next: jest.Mock;
   let statusMock: jest.Mock;
   let jsonMock: jest.Mock;
+  let warnSpy: jest.SpyInstance;
 
   beforeEach(() => {
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     jsonMock = jest.fn();
     statusMock = jest.fn().mockReturnValue({ json: jsonMock });
     res = {
@@ -21,6 +23,10 @@ describe('BotBlockerMiddleware', () => {
       path: '/catalog/products',
       method: 'GET',
     };
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
   });
 
   it('deve permitir requisições com User-Agent legítimo de navegador (Chrome/Safari)', () => {

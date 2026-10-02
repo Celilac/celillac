@@ -10,7 +10,10 @@ describe('WebhookController (A01: Webhook Token Validation)', () => {
 
   const validSecret = 'test_webhook_secret_key_123';
 
+  let warnSpy: jest.SpyInstance;
+
   beforeEach(() => {
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     process.env.ASAAS_WEBHOOK_SECRET = validSecret;
 
     mockHandleAsaasWebhookUseCase = {
@@ -23,6 +26,10 @@ describe('WebhookController (A01: Webhook Token Validation)', () => {
       status: jest.fn().mockReturnThis(),
       json: jest.fn().mockReturnThis(),
     };
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
   });
 
   afterAll(() => {
