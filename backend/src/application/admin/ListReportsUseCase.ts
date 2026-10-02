@@ -31,6 +31,8 @@ export class ListReportsUseCase {
       reporterId: report.reporterId,
       productId: report.productId,
       partnerId: report.partnerId,
+      targetUserId: report.targetUserId,
+      orderId: report.orderId,
       reason: report.reason,
       isFoodSafetyRisk: report.isFoodSafetyRisk,
       status: report.status,

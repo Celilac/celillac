@@ -129,21 +129,9 @@ export class ReportOrderNonPaymentUseCase {
     const report = reportOrError.getValue();
     await this.reportRepository.save(report);
 
-    // 6. Revogar canPayOnDelivery no consumidor apenas em casos de fraude ou recusa direta de pagamento
-    let consumerBlocked = false;
-    const fraudReasons = [
-      ReportReason.CLIENT_REFUSED_PAYMENT,
-      ReportReason.CLIENT_ABSENT,
-      ReportReason.FRAUDULENT_ORDER,
-    ];
-    if (fraudReasons.includes(dto.reason)) {
-      const consumer = await this.consumerRepository.findByUserId(order.consumerId);
-      if (consumer) {
-        consumer.revokePayOnDelivery(cancelReasonText);
-        await this.consumerRepository.save(consumer);
-        consumerBlocked = true;
-      }
-    }
+    // 6. Denúncia submetida para auditoria do Administrador (não bloqueia unilateralmente o consumidor)
+    // O bloqueio de pagamento presencial (canPayOnDelivery = false) só ocorre após averiguação e aceite formal do ADMIN
+    const consumerBlocked = false;
 
     // 7. Notificações SSE
     if (this.notificationService) {

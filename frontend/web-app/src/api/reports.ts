@@ -5,6 +5,12 @@ export enum ReportReason {
   INCORRECT_INGREDIENTS = 'INCORRECT_INGREDIENTS',
   MISSING_ALLERGEN = 'MISSING_ALLERGEN',
   WRONG_CROSS_CONTAMINATION = 'WRONG_CROSS_CONTAMINATION',
+  CLIENT_REFUSED_PAYMENT = 'CLIENT_REFUSED_PAYMENT',
+  CLIENT_ABSENT = 'CLIENT_ABSENT',
+  FRAUDULENT_ORDER = 'FRAUDULENT_ORDER',
+  ADDRESS_UNREACHABLE = 'ADDRESS_UNREACHABLE',
+  CLIENT_REQUESTED_CANCELLATION = 'CLIENT_REQUESTED_CANCELLATION',
+  OUT_OF_STOCK = 'OUT_OF_STOCK',
   OTHER = 'OTHER',
 }
 
@@ -13,6 +19,8 @@ export interface ReportDTO {
   reporterId: string;
   productId?: string;
   partnerId?: string;
+  targetUserId?: string;
+  orderId?: string;
   reason: ReportReason | string;
   details?: string;
   isFoodSafetyRisk: boolean;
