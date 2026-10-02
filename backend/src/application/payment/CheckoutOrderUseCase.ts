@@ -10,6 +10,7 @@ import { IAuditLogRepository } from '../../domain/audit/repositories/IAuditLogRe
 import { AuditLog } from '../../domain/audit/AuditLog';
 import { IConsumerRepository } from '../../domain/consumer/repositories/IConsumerRepository';
 import { IOrderNotificationService } from '../../domain/order/services/IOrderNotificationService';
+import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
 
 export interface CheckoutCustomerInfo {
   name: string;
@@ -46,6 +47,7 @@ export class CheckoutOrderUseCase {
   private readonly consumerRepository?: IConsumerRepository;
   private readonly notificationService?: IOrderNotificationService;
   private readonly auditLogRepository?: IAuditLogRepository;
+  private readonly partnerRepository?: IPartnerRepository;
 
   constructor(
     private readonly orderRepository: IOrderRepository,
@@ -54,15 +56,18 @@ export class CheckoutOrderUseCase {
     private readonly paymentGateway: IPaymentGateway,
     consumerRepoOrAudit?: IConsumerRepository | IAuditLogRepository,
     notificationService?: IOrderNotificationService,
-    auditLogRepository?: IAuditLogRepository
+    auditLogRepository?: IAuditLogRepository,
+    partnerRepository?: IPartnerRepository
   ) {
     if (consumerRepoOrAudit && 'findByUserId' in consumerRepoOrAudit) {
       this.consumerRepository = consumerRepoOrAudit as IConsumerRepository;
       this.notificationService = notificationService;
       this.auditLogRepository = auditLogRepository;
+      this.partnerRepository = partnerRepository;
     } else if (consumerRepoOrAudit) {
       this.auditLogRepository = consumerRepoOrAudit as IAuditLogRepository;
       this.notificationService = notificationService;
+      this.partnerRepository = partnerRepository;
     }
   }
 
@@ -300,10 +305,20 @@ export class CheckoutOrderUseCase {
     await this.paymentRepository.save(payment);
     await this.orderRepository.save(order);
 
-    if (this.notificationService && isDeliveryPayment(payment.method)) {
+    if (this.notificationService && (isDeliveryPayment(payment.method) || payment.status === PaymentStatus.PAID)) {
+      let partnerName: string | undefined;
+      if (this.partnerRepository) {
+        try {
+          const partner = await this.partnerRepository.findById(order.partnerId);
+          partnerName = partner?.name;
+        } catch {
+          // silencia erro na busca de parceiro
+        }
+      }
       const payload = {
         orderId: order.id,
         partnerId: order.partnerId,
+        partnerName,
         consumerId: order.consumerId,
         totalAmount: order.totalAmount,
         status: order.status,

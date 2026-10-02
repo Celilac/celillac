@@ -1248,22 +1248,37 @@ export default function DashboardPage() {
                               </span>
                             )}
 
-                            {product.crossContamination && product.crossContamination !== 'NONE' && (
-                              <span style={{
-                                padding: '4px 10px',
-                                borderRadius: '9999px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                background: 'var(--color-warning-bg)',
-                                color: 'var(--color-warning)',
-                                border: '1px solid var(--color-warning-border)',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                              }}>
-                                ⚠️ Contaminação Cruzada
-                              </span>
-                            )}
+                            {(() => {
+                              const cc = (product.crossContamination || '').trim().toLowerCase();
+                              const envRisk = product.crossContaminationDetails?.environmentRisk;
+                              const isFree =
+                                !cc ||
+                                cc === 'none' ||
+                                cc === 'nenhum' ||
+                                cc.startsWith('nenhum') ||
+                                cc.startsWith('livre') ||
+                                cc.includes('100% livre') ||
+                                envRisk === 'EXCLUSIVE_ENVIRONMENT';
+
+                              if (isFree) return null;
+
+                              return (
+                                <span style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '9999px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  background: 'var(--color-warning-bg)',
+                                  color: 'var(--color-warning)',
+                                  border: '1px solid var(--color-warning-border)',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}>
+                                  ⚠️ Contaminação Cruzada
+                                </span>
+                              );
+                            })()}
                           </div>
                         </div>
                       </Link>

@@ -335,6 +335,63 @@ describe('Product Entity', () => {
       expect(product.certifications[0].certificateCode).toBe('CERT-12345');
       expect(product.certifications[1].certifyingEntity).toBe('SVB');
     });
+
+    it('deve sincronizar hasGluten ao declarar GLUTEN ou WHEAT como CONTAINS ou FREE', () => {
+      const product = Product.create({
+        name: 'Pão de Forma',
+        ingredients: 'Farinha de trigo, água, sal',
+        crossContamination: 'Nenhum',
+        hasGluten: false,
+      }).getValue();
+
+      expect(product.hasGluten).toBe(false);
+
+      product.setDeclaredAllergen('WHEAT', 'CONTAINS');
+      expect(product.hasGluten).toBe(true);
+
+      product.setDeclaredAllergen('WHEAT', 'FREE');
+      expect(product.hasGluten).toBe(false);
+
+      product.setDeclaredAllergen('GLUTEN', 'CONTAINS');
+      expect(product.hasGluten).toBe(true);
+
+      product.setDeclaredAllergen('GLUTEN', 'FREE');
+      expect(product.hasGluten).toBe(false);
+
+      // Se GLUTEN for CONTAINS e WHEAT for FREE, hasGluten deve permanecer true
+      product.setDeclaredAllergen('GLUTEN', 'CONTAINS');
+      product.setDeclaredAllergen('WHEAT', 'FREE');
+      expect(product.hasGluten).toBe(true);
+    });
+
+    it('deve resolver hasGluten na criação a partir de declaredAllergens com WHEAT e GLUTEN', () => {
+      const p1 = Product.create({
+        name: 'Bolo de Trigo',
+        ingredients: 'Trigo',
+        crossContamination: 'Nenhum',
+        declaredAllergens: { WHEAT: 'CONTAINS' },
+      }).getValue();
+      expect(p1.hasGluten).toBe(true);
+
+      const p2 = Product.create({
+        name: 'Biscoito Sem Glúten',
+        ingredients: 'Polvilho',
+        crossContamination: 'Nenhum',
+        hasGluten: false,
+        declaredAllergens: { GLUTEN: 'FREE', WHEAT: 'FREE' },
+      }).getValue();
+      expect(p2.hasGluten).toBe(false);
+
+      const p3 = Product.create({
+        name: 'Massa Pura',
+        ingredients: 'Arroz',
+        crossContamination: 'Nenhum',
+        hasGluten: false,
+      }).getValue();
+      expect(p3.hasGluten).toBe(false);
+      expect(p3.declaredAllergens?.['GLUTEN']).toBe('FREE');
+      expect(p3.declaredAllergens?.['WHEAT']).toBe('FREE');
+    });
   });
 });
 

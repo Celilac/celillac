@@ -138,9 +138,16 @@ export class Product extends Entity<ProductProps> {
       this.props.declaredAllergens = {};
     }
     this.props.declaredAllergens[allergen] = presence;
-    if (allergen === 'GLUTEN') {
-      if (presence === 'CONTAINS') this.props.hasGluten = true;
-      else if (presence === 'FREE') this.props.hasGluten = false;
+    if (allergen === 'GLUTEN' || allergen === 'WHEAT') {
+      if (presence === 'CONTAINS') {
+        this.props.hasGluten = true;
+      } else if (
+        presence === 'FREE' &&
+        this.props.declaredAllergens['GLUTEN'] !== 'CONTAINS' &&
+        this.props.declaredAllergens['WHEAT'] !== 'CONTAINS'
+      ) {
+        this.props.hasGluten = false;
+      }
     }
   }
 
@@ -368,11 +375,15 @@ export class Product extends Entity<ProductProps> {
 
     // Sincronização com hasGluten a partir de declaredAllergens se presente
     let resolvedHasGluten = props.hasGluten ?? false;
-    const declaredAllergens = props.declaredAllergens || {};
-    if (declaredAllergens['GLUTEN'] === 'CONTAINS') {
+    const declaredAllergens = { ...(props.declaredAllergens || {}) };
+    if (declaredAllergens['GLUTEN'] === 'CONTAINS' || declaredAllergens['WHEAT'] === 'CONTAINS') {
       resolvedHasGluten = true;
-    } else if (declaredAllergens['GLUTEN'] === 'FREE') {
+    } else if (declaredAllergens['GLUTEN'] === 'FREE' && (declaredAllergens['WHEAT'] === 'FREE' || !declaredAllergens['WHEAT'])) {
       resolvedHasGluten = false;
+    } else if (props.hasGluten === false) {
+      resolvedHasGluten = false;
+      if (!declaredAllergens['GLUTEN']) declaredAllergens['GLUTEN'] = 'FREE';
+      if (!declaredAllergens['WHEAT']) declaredAllergens['WHEAT'] = 'FREE';
     }
 
     const dietaryFeatures = props.dietaryFeatures || [];

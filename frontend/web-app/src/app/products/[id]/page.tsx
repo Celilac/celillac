@@ -481,7 +481,13 @@ export default function ProductDetailsPage({ params }: PageProps) {
               <h4 style={{ color: 'var(--color-text)', marginBottom: '0.5rem' }}>⚠️ Classificações & Alérgenos</h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  🌾 <strong>Contém Glúten:</strong> {product.hasGluten ? 'Sim' : 'Não'}
+                  🌾 <strong>Contém Glúten:</strong> {
+                    product.hasGluten ||
+                    product.declaredAllergens?.['GLUTEN'] === 'CONTAINS' ||
+                    product.declaredAllergens?.['WHEAT'] === 'CONTAINS'
+                      ? 'Sim'
+                      : 'Não'
+                  }
                 </li>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
                   🥛 <strong>Declaração de Leite:</strong> {(() => {

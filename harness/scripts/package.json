@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "seed":    "ts-node seed.ts",
-    "migrate": "ts-node migrate.ts"
+    "seed":       "ts-node seed.ts",
+    "seed:mine":  "ts-node seed-mine.ts",
+    "clean:seed": "ts-node clean-seed.ts",
+    "migrate":    "ts-node migrate.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

@@ -1,7 +1,7 @@
 'use client';
 // frontend/web-app/src/app/public-partners/page.tsx
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { catalogApi, ProductSummary } from '@/api/catalog';
@@ -11,16 +11,27 @@ import { Header } from '@/components/layout/Header';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
 import styles from './public-partners.module.css';
 
-export default function PublicPartnersListPage() {
+function PublicPartnersContent() {
   const { theme, toggleTheme } = useTheme();
   const { token } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<'partners' | 'products'>('partners');
+  const requestedTab = searchParams.get('tab') === 'products' ? 'products' : 'partners';
+  const [activeTab, setActiveTab] = useState<'partners' | 'products'>(requestedTab);
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'products') {
+      setActiveTab('products');
+    } else if (tabParam === 'partners') {
+      setActiveTab('partners');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     setLoading(true);
@@ -70,9 +81,9 @@ export default function PublicPartnersListPage() {
       <main className={styles.container}>
         <div className={styles.header}>
           <div className={styles.titleArea}>
-            <h1 className={styles.title}>Guia Comercial CeLiLac</h1>
+            <h1 className={styles.title}>Guia Comercial: Locais & Produtos</h1>
             <p className={styles.subtitle}>
-              Descubra estabelecimentos homologados e alimentos seguros certificados com transparência biológica.
+              Descubra estabelecimentos homologados e navegue por todos os produtos certificados com transparência biológica.
             </p>
           </div>
         </div>
@@ -103,7 +114,7 @@ export default function PublicPartnersListPage() {
             }}
             id="tab-filter-products"
           >
-            📦 Produtos <span className={styles.tabExtraLabel}>Ofertados </span>({products.length})
+            📦 Produtos Ofertados ({products.length})
           </button>
         </div>
 
@@ -161,7 +172,46 @@ export default function PublicPartnersListPage() {
 
         {/* Visualização de Estabelecimentos */}
         {activeTab === 'partners' ? (
-          <div className={styles.partnersGrid}>
+          <div>
+            {/* Banner de atalho para ver produtos diretamente */}
+            <div style={{
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              borderRadius: '12px',
+              padding: '12px 18px',
+              marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              flexWrap: 'wrap',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', color: 'var(--color-text)' }}>
+                <span>💡</span>
+                <span>Procurando itens específicos? Você pode navegar por todos os produtos homologados cadastrados de uma vez só.</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('products');
+                  setQuery('');
+                }}
+                className="btn btn-em"
+                style={{
+                  fontSize: '0.82rem',
+                  padding: '6px 14px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                📦 Ver Todos os Produtos ({products.length})
+              </button>
+            </div>
+
+            <div className={styles.partnersGrid}>
             {filteredPartners.length === 0 ? (
               <div className={styles.emptyState}>
                 <span className={styles.emptyIcon}>🔍</span>
@@ -217,6 +267,7 @@ export default function PublicPartnersListPage() {
                 </section>
               ))
             )}
+            </div>
           </div>
         ) : (
           /* Visualização de Produtos */
@@ -315,5 +366,20 @@ export default function PublicPartnersListPage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function PublicPartnersListPage() {
+  return (
+    <Suspense fallback={
+      <div className="profile-page">
+        <Header />
+        <main className={styles.container}>
+          <p className="profile-loading" role="status">Carregando estabelecimentos e produtos homologados…</p>
+        </main>
+      </div>
+    }>
+      <PublicPartnersContent />
+    </Suspense>
   );
 }
