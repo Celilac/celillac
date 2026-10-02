@@ -227,6 +227,12 @@ function MyOrdersContent() {
                           >
                             💳 Pagar com Cartão
                           </Link>
+                          <Link
+                            href={`/checkout/${order.id}?method=DELIVERY`}
+                            className={styles.payDeliveryActionBtn}
+                          >
+                            💵 Pagar na Entrega
+                          </Link>
                         </>
                       )}
 
