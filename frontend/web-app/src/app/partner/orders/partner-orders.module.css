@@ -36,48 +36,51 @@
   align-items: center;
 }
 
-.selectPartnerWrapper {
+.selectPartnerContainer {
   position: relative;
-  display: flex;
+  display: inline-block;
+}
+
+.selectPartnerTrigger {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+  gap: 1rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  padding: 0.6rem 1rem;
+  padding: 0.75rem 1.35rem;
   border-radius: 12px;
   cursor: pointer;
-  min-width: 220px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 280px;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
 }
 
-.selectPartnerWrapper:hover {
-  border-color: var(--color-border-hover, rgba(255, 255, 255, 0.2));
-}
-
-.selectPartnerWrapper:focus-within {
+.selectPartnerTrigger:hover {
   border-color: var(--color-emerald);
-  box-shadow: 0 0 0 2px var(--color-emerald-dim);
+  background: var(--color-elevated, var(--color-surface));
+}
+
+.selectPartnerTriggerActive {
+  border-color: var(--color-emerald);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
 .selectPartnerLabel {
   font-size: 0.85rem;
   color: var(--color-text-muted, #94a3b8);
   font-weight: 500;
-  pointer-events: none;
-  user-select: none;
   flex-shrink: 0;
 }
 
 .selectPartnerValue {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
   color: var(--color-text, #f1f5f9);
-  font-weight: 600;
-  font-size: 0.95rem;
-  pointer-events: none;
-  user-select: none;
+  font-weight: 700;
+  font-size: 0.98rem;
+  flex: 1;
   min-width: 0;
 }
 
@@ -87,32 +90,141 @@
   white-space: nowrap;
 }
 
-.selectPartnerArrow {
-  color: var(--color-text-muted, #94a3b8);
+.activePartnerBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 2px 6px;
+  border-radius: 8px;
   flex-shrink: 0;
 }
 
-.partnerSelect {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 2;
-  -webkit-appearance: none;
-  appearance: none;
+.selectPartnerArrow {
+  color: var(--color-text-muted, #94a3b8);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
 }
 
-.partnerSelect option {
+.selectPartnerArrowOpen {
+  transform: rotate(180deg);
+  color: var(--color-emerald);
+}
+
+.partnerDropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 100%;
+  width: max-content;
+  max-width: 380px;
   background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  padding: 8px;
+  list-style: none;
+  margin: 0;
+  z-index: 100;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), 0 4px 10px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 360px;
+  overflow-y: auto;
+  animation: dropdownFade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:global(html[data-theme='light']) .partnerDropdownMenu {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.partnerDropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.85rem 1.15rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  user-select: none;
+}
+
+.partnerDropdownItem:hover {
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.partnerDropdownItemSelected {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--color-emerald);
+  font-weight: 600;
+}
+
+:global(html[data-theme='light']) .partnerDropdownItemSelected {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.partnerItemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.partnerItemName {
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+:global(html[data-theme='light']) .partnerItemName {
+  color: #0f172a;
+}
+
+.partnerItemCity {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.pendingBadge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.itemCheckIcon {
+  color: var(--color-emerald);
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .headerActions {
   display: flex;
-  gap: 1rem;
+  gap: 1.25rem;
   align-items: center;
 }
 
