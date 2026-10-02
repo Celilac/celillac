@@ -40,10 +40,12 @@ A branch `main` é a branch de produção e **nunca aceita push direto**. Todo c
 | Branch | Propósito | Push Direto | Merge via |
 |:-------|:----------|:-----------:|:----------|
 | `main` | Produção estável | ❌ Proibido | Pull Request de `develop` |
-| `develop` | Integração contínua | ✅ Permitido | Direto ou PR de feature branch |
-| `feature/*` | Desenvolvimento de features | ✅ Permitido | PR para `develop` |
+| `develop` | Integração contínua | ❌ Proibido p/ features | PR de feature/fix branch |
+| `feature/*` ou `feat/*` | Desenvolvimento de features | ✅ Permitido | PR para `develop` |
 | `fix/*` | Correção de bugs | ✅ Permitido | PR para `develop` |
 | `hotfix/*` | Correção urgente de produção | ✅ Permitido | PR para `main` e `develop` |
+
+> **⚠️ Regra Estrita de Feature Branching:** É expressamente proibido desenvolver ou commitar novas features diretamente na branch `develop`. Toda nova funcionalidade deve ser desenvolvida em uma branch isolada (`feat/*` ou `feature/*`) e integrada à `develop` exclusivamente via Pull Request após validação completa.
 
 ### Proteções Ativas
 

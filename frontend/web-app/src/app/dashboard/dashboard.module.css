@@ -369,9 +369,18 @@
   margin: 0;
 }
 
+.quantityInput:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.05);
+}
+
 :global(html[data-theme='light']) .quantityInput {
   color: #0f172a;
   border-color: #cbd5e1;
+}
+
+:global(html[data-theme='light']) .quantityInput:focus {
+  background: #f8fafc;
 }
 
 .purchaseFooter {

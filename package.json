@@ -1,0 +1,12 @@
+{
+  "name": "celilac",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CeLiLac - Plataforma de Segurança Alimentar",
+  "scripts": {
+    "verify": "node scripts/agent-verify.mjs",
+    "verify:quick": "node scripts/agent-verify.mjs --quick",
+    "verify:full": "node scripts/agent-verify.mjs --full",
+    "test:smoke": "node scripts/test-api-smoke.mjs"
+  }
+}

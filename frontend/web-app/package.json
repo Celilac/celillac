@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start -p 3001"
+    "start": "next start -p 3001",
+    "typecheck": "tsc --noEmit",
+    "verify": "node ../../scripts/agent-verify.mjs --frontend"
   },
   "dependencies": {
     "next": "^14.2.5",

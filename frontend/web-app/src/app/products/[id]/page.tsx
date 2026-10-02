@@ -387,6 +387,8 @@ export default function ProductDetailsPage({ params }: PageProps) {
                     </button>
                     <input
                       type="number"
+                      inputMode="numeric"
+                      aria-label="Quantidade"
                       className={styles.quantityInput}
                       value={quantity}
                       min={1}
@@ -396,6 +398,10 @@ export default function ProductDetailsPage({ params }: PageProps) {
                         if (!isNaN(val) && val >= 1 && val <= 50) {
                           setQuantity(val);
                         }
+                      }}
+                      onBlur={() => {
+                        if (!quantity || quantity < 1) setQuantity(1);
+                        else if (quantity > 50) setQuantity(50);
                       }}
                       disabled={submittingOrder}
                     />
