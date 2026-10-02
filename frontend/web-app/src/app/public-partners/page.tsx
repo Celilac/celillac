@@ -101,7 +101,7 @@ function PublicPartnersContent() {
             }}
             id="tab-filter-partners"
           >
-            🏢 Estabelecimentos Homologados ({partners.length})
+            🏢 Estabelecimentos ({partners.length})
           </button>
           <button
             type="button"
@@ -114,7 +114,7 @@ function PublicPartnersContent() {
             }}
             id="tab-filter-products"
           >
-            📦 Todos os Produtos Ofertados ({products.length})
+            📦 Produtos Ofertados ({products.length})
           </button>
         </div>
 

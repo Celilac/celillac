@@ -168,26 +168,6 @@ export default function Home() {
             >
               🏢 Descobrir Locais & Produtos
             </Link>
-            <Link
-              href="/public-partners?tab=products"
-              className="btn"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.35rem',
-                fontSize: 'var(--text-body)',
-                textDecoration: 'none',
-                background: 'var(--color-elevated, var(--color-surface))',
-                border: '1px solid var(--color-emerald)',
-                color: 'var(--color-emerald)',
-                fontWeight: 600,
-              }}
-              title="Visualizar a lista completa de todos os produtos ofertados e cadastrados"
-            >
-              📦 Ver Todos os Produtos
-            </Link>
           </div>
         </div>
 
