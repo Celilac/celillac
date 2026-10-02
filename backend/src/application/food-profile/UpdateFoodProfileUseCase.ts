@@ -137,6 +137,7 @@ export class UpdateFoodProfileUseCase {
       userId:                      profile.userId,
       isActive:                    profile.isActive(),
       requiresHistoryRevalidation: profile.requiresHistoryRevalidation,
+      acceptsCrossContamination:   profile.acceptsCrossContamination,
       restrictions:                profile.restrictions.map((r) => ({
         id:       r.id,
         allergen: r.allergen,

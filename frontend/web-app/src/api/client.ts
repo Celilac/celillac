@@ -31,7 +31,7 @@ export function getApiBaseUrl(): string {
     // Se o envUrl não estiver definido ou se for localhost, mas o navegador estiver em um IP remoto (ex: VPS Oracle 163.176.195.210)
     const isNumericIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
     if (isNumericIp && (!envUrl || envUrl.includes('localhost'))) {
-      return `${protocol}//${hostname}:3002`;
+      return 'https://api.celilac.com.br';
     }
   }
 
@@ -59,20 +59,30 @@ async function request<T>(
   const { headers: optionHeaders, ...restOptions } = options;
   const baseUrl = getApiBaseUrl();
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(optionHeaders ?? {}),
-    },
-    ...restOptions,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(optionHeaders ?? {}),
+      },
+      ...restOptions,
+    });
+  } catch (networkErr: any) {
+    throw new HttpError(
+      503,
+      'Não foi possível conectar ao servidor da API. O serviço pode estar temporariamente em manutenção ou inicializando.',
+    );
+  }
 
   const text = await response.text().catch(() => '');
 
   if (!response.ok) {
     let errorMessage = 'Erro no servidor.';
-    if (text && text.trim()) {
+    if (response.status === 502 || response.status === 503 || response.status === 504) {
+      errorMessage = 'Serviço temporariamente indisponível. O backend está em manutenção ou inicializando. Tente novamente em instantes.';
+    } else if (text && text.trim()) {
       try {
         const body = JSON.parse(text);
         errorMessage = body.error || body.message || errorMessage;

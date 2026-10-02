@@ -1,7 +1,7 @@
 import 'dotenv/config'; // deve ser a primeira importação
 import express from 'express';
 
-import { testDatabaseConnection } from './infrastructure/database/connection';
+import { pool, testDatabaseConnection } from './infrastructure/database/connection';
 import { iamRouter } from './interfaces/http/routes/iam.routes';
 import { foodProfileRouter } from './interfaces/http/routes/food-profile.routes';
 import { compatibilityRouter } from './interfaces/http/routes/compatibility.routes';
@@ -54,8 +54,25 @@ const globalApiRateLimiter = createRateLimiter({
 });
 
 // --- Rotas ---
-app.get('/health', (_req, res) => {
-  res.json({ status: 'OK', service: 'CeLiLac Backend' });
+// Healthcheck com diagnóstico ativo de conectividade do banco
+app.get('/health', async (_req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.status(200).json({
+      status: 'OK',
+      service: 'CeLiLac Backend',
+      database: 'CONNECTED',
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    res.status(503).json({
+      status: 'DEGRADED',
+      service: 'CeLiLac Backend',
+      database: 'DISCONNECTED',
+      error: err?.message || 'Database unavailable',
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 // Aplica limiter global em todas as rotas da API
@@ -89,14 +106,13 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 async function bootstrap(): Promise<void> {
   try {
     await testDatabaseConnection();
-    app.listen(port, () => {
-      console.log(`[Server]: CeLiLac Backend rodando em http://localhost:${port}`);
-    });
   } catch (error) {
-    console.error('[Server]: Falha ao conectar com o banco de dados. Verifique se o Docker está rodando.');
-    console.error(error);
-    process.exit(1);
+    console.error('[Server]: Falha na sincronização inicial do banco de dados (o servidor continuará ativo em modo degradado):', error);
   }
+
+  app.listen(port, () => {
+    console.log(`[Server]: CeLiLac Backend rodando em http://localhost:${port}`);
+  });
 }
 
 bootstrap();

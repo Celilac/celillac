@@ -10,6 +10,7 @@ export interface UseOrderNotificationsOptions {
   enabled?: boolean;
   onPaymentConfirmed?: (payload: OrderNotificationDTO) => void;
   onStatusUpdated?: (payload: OrderNotificationDTO) => void;
+  onPollSync?: () => void;
 }
 
 export interface UseOrderNotificationsReturn {
@@ -70,6 +71,7 @@ export function useOrderNotifications({
   enabled = true,
   onPaymentConfirmed,
   onStatusUpdated,
+  onPollSync,
 }: UseOrderNotificationsOptions): UseOrderNotificationsReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [lastNotification, setLastNotification] = useState<OrderNotificationDTO | null>(null);
@@ -78,6 +80,7 @@ export function useOrderNotifications({
   // Armazena callbacks em referências mutáveis para evitar reconexão de SSE a cada render
   const onPaymentConfirmedRef = useRef(onPaymentConfirmed);
   const onStatusUpdatedRef = useRef(onStatusUpdated);
+  const onPollSyncRef = useRef(onPollSync);
 
   useEffect(() => {
     onPaymentConfirmedRef.current = onPaymentConfirmed;
@@ -86,6 +89,10 @@ export function useOrderNotifications({
   useEffect(() => {
     onStatusUpdatedRef.current = onStatusUpdated;
   }, [onStatusUpdated]);
+
+  useEffect(() => {
+    onPollSyncRef.current = onPollSync;
+  }, [onPollSync]);
 
   const handlePaymentConfirmed = useCallback((payload: OrderNotificationDTO) => {
     setLastNotification(payload);
@@ -101,6 +108,20 @@ export function useOrderNotifications({
       onStatusUpdatedRef.current(payload);
     }
   }, []);
+
+  // Polling de resiliência: se o SSE estiver desconectado, consulta a cada 15s; se conectado, a cada 60s
+  useEffect(() => {
+    if (!enabled || !token || typeof window === 'undefined') return;
+
+    const intervalMs = isConnected ? 60000 : 15000;
+    const timer = setInterval(() => {
+      if (onPollSyncRef.current) {
+        onPollSyncRef.current();
+      }
+    }, intervalMs);
+
+    return () => clearInterval(timer);
+  }, [enabled, token, isConnected]);
 
   useEffect(() => {
     if (!enabled || !token || typeof window === 'undefined') {
@@ -133,6 +154,13 @@ export function useOrderNotifications({
           console.debug('Canal de eventos em tempo real desconectado temporariamente, aguardando reconexão...');
         }
       };
+
+      eventSource.addEventListener('connected', () => {
+        if (!isCancelled) {
+          setIsConnected(true);
+          setError(null);
+        }
+      });
 
       eventSource.addEventListener('order:payment_confirmed', (e: MessageEvent) => {
         if (isCancelled) return;

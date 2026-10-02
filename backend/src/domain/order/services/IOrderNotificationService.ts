@@ -3,6 +3,7 @@
 export interface OrderNotificationDTO {
   orderId: string;
   partnerId: string;
+  partnerName?: string;
   consumerId: string;
   totalAmount: number;
   status: string;

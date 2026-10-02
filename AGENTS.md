@@ -124,9 +124,24 @@ O Agente DEVE adaptar seu comportamento de acordo com o tipo da tarefa solicitad
 2. **Propor alteração** (novas tabelas, colunas, constraints ou índices).
 3. **Explicar impacto** sobre os dados existentes e performance.
 4. **Aguardar autorização humana** se envolver a criação/execução de uma migration estrutural.
-5. **Criar migration** de forma segura.
-6. **Rodar testes** para assegurar que a camada de repositório continua íntegra.
-7. **Documentar alteração** no `docs/DATABASE.md`.
+5. **Criar migration de forma segura e idempotente:** Criar arquivo `.sql` em `harness/scripts/migrations/` e registrar no `docker-compose.yml`.
+6. **Sincronizar no `connection.ts`:** Replicar as DDLs de forma defensiva no `backend/src/infrastructure/database/connection.ts` usando `executeSafeDdl` para execução automática em bancos já persistidos na VPS.
+7. **Rodar testes** para assegurar que a camada de repositório continua íntegra.
+8. **Documentar alteração** no `docs/DATABASE.md`.
+
+## 🛡️ Regra de Resiliência de Deploy e Prevenção de Falhas na VPS (Zero 502 Bad Gateway)
+Para evitar que o backend entre em crash após o deploy na VPS (o que causa `502 Bad Gateway` no Traefik e a mensagem "Erro ao entrar" no frontend), o Agente DEVE cumprir rigorosamente:
+1. **Sincronização Idempotente no `connection.ts`:**
+   - O container oficial do PostgreSQL só executa scripts de `/docker-entrypoint-initdb.d/` na **primeira criação** do volume. Em volumes existentes na VPS, novas migrations NÃO são executadas pelo Docker automaticamente.
+   - Portanto, **toda nova migration DEVE ser replicada no `connection.ts`** dentro de blocos `executeSafeDdl` com `IF NOT EXISTS` e `DROP CONSTRAINT IF EXISTS`.
+   - NUNCA introduzir colunas `NOT NULL` sem valor `DEFAULT` em tabelas existentes.
+2. **Inicialização Resiliente do Servidor:**
+   - O servidor Express DEVE inicializar e escutar a porta HTTP mesmo em caso de lentidão temporária do banco, permitindo que a rota `/health` forneça diagnóstico ativo (`status: 503 DEGRADED`). O processo NÃO deve abortar abruptamente com `process.exit(1)`.
+3. **Healthcheck Ativo no CD (`cd-deploy.yml`):**
+   - O pipeline de deploy SSH valida a subida dos containers com `docker compose ps` e `wget -qO- http://localhost:3000/health`. Em caso de falha, os logs do container são exibidos no output do GitHub Actions e o pipeline falha para intervenção rápida.
+4. **Resolução de API no Frontend (`client.ts`):**
+   - Requisições ao backend em produção devem sempre apontar para o domínio oficial `https://api.celilac.com.br`, sem injetar portas fantasmas (ex: `:3002`).
+   - Erros de rede (Failed to fetch) e status 502/503 devem ser exibidos ao usuário como "Serviço temporariamente indisponível. O backend está em manutenção ou inicializando."
 
 ## Regras de Entrega de Feature
 Ao entregar uma feature nova, o Agente DEVE cumprir:
@@ -150,6 +165,8 @@ Para que uma alteração feita pelo Agente seja considerada concluída e pronta 
 - [ ] Testes de integração passando (quando aplicável).
 - [ ] Linter executado sem erros.
 - [ ] Build concluído com sucesso.
+- [ ] Migrations novas replicadas de forma idempotente no `connection.ts` e registradas no `docker-compose.yml`.
+- [ ] Rota `/health` e resiliência de boot preservadas.
 - [ ] Nenhum segredo ou credencial (variáveis de ambiente, senhas, tokens) exposto no código.
 - [ ] Nenhuma regra crítica de negócio alterada sem autorização prévia humana.
 - [ ] Documentação atualizada quando necessário (`PRD`, `DATABASE`, contratos, etc).

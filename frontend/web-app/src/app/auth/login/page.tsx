@@ -53,8 +53,11 @@ export default function LoginPage() {
       login(session.token, payload.sub ?? '');
       toast.success('Login realizado com sucesso!');
       router.push('/');
-    } catch (err) {
-      toast.error(err instanceof HttpError ? err.message : 'Erro ao entrar.', 'Erro ao entrar');
+    } catch (err: any) {
+      const isServerError = err instanceof HttpError && err.status >= 500;
+      const title = isServerError ? 'Serviço Indisponível' : 'Erro ao entrar';
+      const fallback = 'Não foi possível concluir o login. Verifique seus dados e tente novamente.';
+      toast.error(err instanceof HttpError ? err.message : fallback, title);
     } finally {
       setLoading(false);
     }

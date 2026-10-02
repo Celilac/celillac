@@ -3,6 +3,7 @@ import { apiClient, getApiBaseUrl } from './client';
 export interface OrderNotificationDTO {
   orderId: string;
   partnerId: string;
+  partnerName?: string;
   consumerId: string;
   totalAmount: number;
   status: string;
@@ -56,10 +57,21 @@ export interface CreateOrderInput {
   notes?: string;
 }
 
-export interface ReportNonPaymentInput {
-  reason: 'CLIENT_REFUSED_PAYMENT' | 'CLIENT_ABSENT' | 'FRAUDULENT_ORDER';
+export type OrderProblemReason =
+  | 'CLIENT_ABSENT'
+  | 'CLIENT_REFUSED_PAYMENT'
+  | 'ADDRESS_UNREACHABLE'
+  | 'FRAUDULENT_ORDER'
+  | 'CLIENT_REQUESTED_CANCELLATION'
+  | 'OUT_OF_STOCK'
+  | 'OTHER';
+
+export interface ReportProblemInput {
+  reason: OrderProblemReason;
   details?: string;
 }
+
+export type ReportNonPaymentInput = ReportProblemInput;
 
 export interface ReportNonPaymentOutput {
   reportId: string;
@@ -89,9 +101,16 @@ export const ordersApi = {
       token
     ),
 
+  reportProblem: (orderId: string, data: ReportProblemInput, token?: string) =>
+    apiClient.post<ReportNonPaymentOutput>(
+      `/orders/${orderId}/report-problem`,
+      data,
+      token
+    ),
+
   reportNonPayment: (orderId: string, data: ReportNonPaymentInput, token?: string) =>
     apiClient.post<ReportNonPaymentOutput>(
-      `/orders/${orderId}/report-non-payment`,
+      `/orders/${orderId}/report-problem`,
       data,
       token
     ),

@@ -102,14 +102,30 @@ export function NotificationDropdown({ isOpen, onClose }: NotificationDropdownPr
       target = notif.type === 'NEW_ORDER' ? '/partner/orders' : '/orders';
     }
 
+    // Garante que o parâmetro partnerId esteja presente na URL se aplicável
+    if (notif.partnerId && !target.includes('partnerId=')) {
+      const sep = target.includes('?') ? '&' : '?';
+      target = `${target}${sep}partnerId=${encodeURIComponent(notif.partnerId)}`;
+    }
+
     // Garante que o parâmetro orderId esteja presente na URL
     if (notif.orderId && !target.includes('orderId=')) {
       const sep = target.includes('?') ? '&' : '?';
       target = `${target}${sep}orderId=${encodeURIComponent(notif.orderId)}`;
     }
 
-    // Se já estiver na mesma página de destino, força scroll e destaque imediatamente
+    // Se já estiver na mesma página de destino, notifica ouvintes locais para troca instantânea de estabelecimento
     if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('celilac:switch-partner-order', {
+          detail: {
+            partnerId: notif.partnerId,
+            orderId: notif.orderId,
+            targetUrl: target,
+          },
+        })
+      );
+
       const targetPath = target.split('?')[0];
       if (window.location.pathname === targetPath && notif.orderId) {
         const el = document.getElementById(`order-${notif.orderId}`);

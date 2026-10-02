@@ -7,9 +7,67 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
 import { partnerApi, PartnerSummary } from '@/api/partner';
-import { ordersApi, OrderDTO } from '@/api/orders';
+import { ordersApi, OrderDTO, OrderProblemReason } from '@/api/orders';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import styles from './partner-orders.module.css';
+
+const PROBLEM_OPTIONS: Array<{
+  reason: OrderProblemReason;
+  icon: string;
+  title: string;
+  desc: string;
+  isSevere: boolean;
+}> = [
+  {
+    reason: 'CLIENT_ABSENT',
+    icon: '🏃',
+    title: 'Cliente ausente / Não atende entregador',
+    desc: 'Entregador aguardou no local e não conseguiu contato por telefone ou interfone.',
+    isSevere: true,
+  },
+  {
+    reason: 'CLIENT_REFUSED_PAYMENT',
+    icon: '💳',
+    title: 'Cliente recusou o pagamento na entrega',
+    desc: 'Cliente se negou a realizar o pagamento na maquininha ou em dinheiro.',
+    isSevere: true,
+  },
+  {
+    reason: 'ADDRESS_UNREACHABLE',
+    icon: '📍',
+    title: 'Endereço incorreto, incompleto ou inacessível',
+    desc: 'Endereço inexistente, sem número, fora da rota ou sem acesso de segurança.',
+    isSevere: false,
+  },
+  {
+    reason: 'FRAUDULENT_ORDER',
+    icon: '🎭',
+    title: 'Suspeita de trote ou pedido fraudulento',
+    desc: 'Telefone inválido, dados falsos ou comportamento suspeito do cliente.',
+    isSevere: true,
+  },
+  {
+    reason: 'CLIENT_REQUESTED_CANCELLATION',
+    icon: '✋',
+    title: 'Cliente solicitou o cancelamento',
+    desc: 'O cliente entrou em contato com a loja pedindo expressamente o cancelamento.',
+    isSevere: false,
+  },
+  {
+    reason: 'OUT_OF_STOCK',
+    icon: '🍳',
+    title: 'Item ou ingrediente esgotado na cozinha',
+    desc: 'A cozinha não possui insumos seguros disponíveis para atender ao pedido.',
+    isSevere: false,
+  },
+  {
+    reason: 'OTHER',
+    icon: '💬',
+    title: 'Outro problema com o cliente ou entrega',
+    desc: 'Outra ocorrência não listada acima (detalhar no campo abaixo).',
+    isSevere: false,
+  },
+];
 
 const STATUS_LABELS: Record<string, string> = {
   CREATED: 'Aguardando Pagamento',
@@ -30,18 +88,44 @@ function PartnerOrdersContent() {
   const toast = useToast();
 
   const targetOrderId = searchParams ? searchParams.get('orderId') : null;
+  const targetPartnerId = searchParams ? searchParams.get('partnerId') : null;
 
   const [partners, setPartners] = useState<PartnerSummary[]>([]);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>('');
+  const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
   const [orders, setOrders] = useState<OrderDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'NEW' | 'PREPARING' | 'READY' | 'COMPLETED'>('NEW');
 
-  // Estado do Modal de Denúncia / Não Pagamento
+  // Estado do Modal de Reportar Problema / Cancelamento
   const [reportingOrder, setReportingOrder] = useState<OrderDTO | null>(null);
-  const [reportReason, setReportReason] = useState<'CLIENT_REFUSED_PAYMENT' | 'CLIENT_ABSENT' | 'FRAUDULENT_ORDER'>('CLIENT_REFUSED_PAYMENT');
+  const [reportReason, setReportReason] = useState<OrderProblemReason>('CLIENT_ABSENT');
   const [reportDetails, setReportDetails] = useState<string>('');
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+
+  // Buscar contagem de pedidos pendentes em todos os estabelecimentos do usuário
+  const fetchAllPendingCounts = useCallback(async (partnerList: PartnerSummary[]) => {
+    if (!token || partnerList.length === 0) return;
+    try {
+      const counts: Record<string, number> = {};
+      await Promise.all(
+        partnerList.map(async (p) => {
+          try {
+            const partnerOrders = await ordersApi.getPartnerOrders(p.id, token);
+            const pending = partnerOrders.filter(
+              (o) => o.status === 'AWAITING_PAYMENT' || o.status === 'CREATED' || o.status === 'PAID'
+            ).length;
+            counts[p.id] = pending;
+          } catch {
+            counts[p.id] = 0;
+          }
+        })
+      );
+      setPendingCounts(counts);
+    } catch {
+      // Silencia falha em contagens globais
+    }
+  }, [token]);
 
   // Carregar pedidos do estabelecimento selecionado
   const fetchPartnerOrders = useCallback(async () => {
@@ -49,6 +133,10 @@ function PartnerOrdersContent() {
     try {
       const data = await ordersApi.getPartnerOrders(selectedPartnerId, token);
       setOrders(data);
+      const currentPending = data.filter(
+        (o) => o.status === 'AWAITING_PAYMENT' || o.status === 'CREATED' || o.status === 'PAID'
+      ).length;
+      setPendingCounts((prev) => ({ ...prev, [selectedPartnerId]: currentPending }));
     } catch (err: any) {
       toast.error(err.message || 'Erro ao carregar pedidos.', 'Erro');
     }
@@ -60,16 +148,50 @@ function PartnerOrdersContent() {
     token,
     enabled: Boolean(token && selectedPartnerId),
     onPaymentConfirmed: (payload) => {
-      toast.info(
-        `Novo pedido pago recebido! #${payload.orderId.slice(0, 8)} • R$ ${Number(payload.totalAmount).toFixed(2)}`,
-        'Novo Pedido Pago! 🔔'
-      );
-      fetchPartnerOrders();
+      const isForCurrent = !payload.partnerId || payload.partnerId === selectedPartnerId;
+      const targetPartner = partners.find((p) => p.id === payload.partnerId);
+      const locName = targetPartner?.name || payload.partnerName;
+
+      if (isForCurrent) {
+        toast.info(
+          `Novo pedido recebido! #${payload.orderId.slice(0, 8)} • R$ ${Number(payload.totalAmount).toFixed(2)}`,
+          'Novo Pedido! 🔔'
+        );
+        fetchPartnerOrders();
+      } else {
+        toast.info(
+          `Novo pedido em ${locName || 'outro estabelecimento'}! #${payload.orderId.slice(0, 8)}`,
+          'Novo Pedido! 🔔'
+        );
+      }
+      fetchAllPendingCounts(partners);
     },
     onStatusUpdated: () => {
       fetchPartnerOrders();
+      fetchAllPendingCounts(partners);
+    },
+    onPollSync: () => {
+      fetchPartnerOrders();
+      fetchAllPendingCounts(partners);
     },
   });
+
+  // Ouvir evento disparado pelo dropdown de notificações para troca imediata
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleSwitch = (e: any) => {
+      const detail = e.detail;
+      if (detail?.partnerId && detail.partnerId !== selectedPartnerId) {
+        setSelectedPartnerId(detail.partnerId);
+      }
+    };
+
+    window.addEventListener('celilac:switch-partner-order', handleSwitch);
+    return () => {
+      window.removeEventListener('celilac:switch-partner-order', handleSwitch);
+    };
+  }, [selectedPartnerId]);
 
   // Carregar estabelecimentos do parceiro
   useEffect(() => {
@@ -80,21 +202,99 @@ function PartnerOrdersContent() {
     }
 
     partnerApi.listUserPartners(token)
-      .then((data) => {
+      .then(async (data) => {
         setPartners(data);
         if (data.length > 0) {
-          const urlParamId = typeof window !== 'undefined'
-            ? new URLSearchParams(window.location.search).get('partnerId')
-            : null;
-          const found = urlParamId && data.some((p) => p.id === urlParamId);
-          setSelectedPartnerId(found ? (urlParamId as string) : data[0].id);
+          const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+          const urlPartnerId = urlParams ? urlParams.get('partnerId') : null;
+          const urlOrderId = urlParams ? urlParams.get('orderId') : null;
+          const found = urlPartnerId && data.some((p) => p.id === urlPartnerId);
+
+          if (found) {
+            setSelectedPartnerId(urlPartnerId as string);
+            fetchAllPendingCounts(data);
+          } else if (urlOrderId) {
+            // Se veio apenas orderId na URL, descobre em qual estabelecimento o pedido reside
+            let matchingPartnerId = data[0].id;
+            for (const p of data) {
+              try {
+                const pOrders = await ordersApi.getPartnerOrders(p.id, token);
+                if (pOrders.some((o) => o.id === urlOrderId)) {
+                  matchingPartnerId = p.id;
+                  break;
+                }
+              } catch {}
+            }
+            setSelectedPartnerId(matchingPartnerId);
+            fetchAllPendingCounts(data);
+          } else {
+            // Se não veio parâmetro na URL, seleciona preferencialmente o restaurante com pedidos pendentes
+            let bestPartnerId = data[0].id;
+            try {
+              const counts: Record<string, number> = {};
+              for (const p of data) {
+                try {
+                  const pOrders = await ordersApi.getPartnerOrders(p.id, token);
+                  const pending = pOrders.filter(
+                    (o) => o.status === 'AWAITING_PAYMENT' || o.status === 'CREATED' || o.status === 'PAID'
+                  ).length;
+                  counts[p.id] = pending;
+                  if (pending > 0 && bestPartnerId === data[0].id) {
+                    bestPartnerId = p.id;
+                  }
+                } catch {
+                  counts[p.id] = 0;
+                }
+              }
+              setPendingCounts(counts);
+            } catch {}
+            setSelectedPartnerId(bestPartnerId);
+          }
         }
       })
       .catch((err) => {
         toast.error(err.message || 'Erro ao carregar parceiros.', 'Erro');
       })
       .finally(() => setLoading(false));
-  }, [isAuthenticated, isInitializing, token, router, toast]);
+  }, [isAuthenticated, isInitializing, token, router, toast, fetchAllPendingCounts]);
+
+  // Sincronizar reativamente caso a URL mude o partnerId (ex: clique no sino ou toast)
+  useEffect(() => {
+    if (targetPartnerId && partners.length > 0) {
+      const exists = partners.some((p) => p.id === targetPartnerId);
+      if (exists && targetPartnerId !== selectedPartnerId) {
+        setSelectedPartnerId(targetPartnerId);
+      }
+    }
+  }, [targetPartnerId, partners, selectedPartnerId]);
+
+  // Se houver um targetOrderId mas o pedido não estiver no estabelecimento atual,
+  // varre todos os estabelecimentos do usuário para encontrar e selecionar o correto automaticamente!
+  useEffect(() => {
+    if (!targetOrderId || !token || partners.length === 0) return;
+
+    if (orders.some((o) => o.id === targetOrderId)) return;
+
+    let isMounted = true;
+    (async () => {
+      for (const p of partners) {
+        if (p.id === selectedPartnerId) continue;
+        try {
+          const pOrders = await ordersApi.getPartnerOrders(p.id, token);
+          if (pOrders.some((o) => o.id === targetOrderId)) {
+            if (isMounted) {
+              setSelectedPartnerId(p.id);
+            }
+            break;
+          }
+        } catch {}
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [targetOrderId, token, partners, selectedPartnerId, orders]);
 
   useEffect(() => {
     if (selectedPartnerId) {
@@ -140,13 +340,13 @@ function PartnerOrdersContent() {
 
   const handleOpenReportModal = (order: OrderDTO) => {
     setReportingOrder(order);
-    setReportReason('CLIENT_REFUSED_PAYMENT');
+    setReportReason('CLIENT_ABSENT');
     setReportDetails('');
   };
 
   const handleCloseReportModal = () => {
     setReportingOrder(null);
-    setReportReason('CLIENT_REFUSED_PAYMENT');
+    setReportReason('CLIENT_ABSENT');
     setReportDetails('');
   };
 
@@ -154,21 +354,26 @@ function PartnerOrdersContent() {
     e.preventDefault();
     if (!token || !reportingOrder) return;
 
+    if (reportReason === 'OTHER' && !reportDetails.trim()) {
+      toast.error('Por favor, descreva os detalhes do ocorrido para a opção "Outro".', 'Atenção');
+      return;
+    }
+
     setIsSubmittingReport(true);
     try {
-      await ordersApi.reportNonPayment(
+      await ordersApi.reportProblem(
         reportingOrder.id,
-        { reason: reportReason, details: reportDetails },
+        { reason: reportReason, details: reportDetails.trim() || undefined },
         token
       );
       toast.success(
-        'Denúncia registrada com sucesso. O pedido foi cancelado e a comissão da plataforma foi isentada.',
-        'Sucesso'
+        'Ocorrência registrada com sucesso. O pedido foi cancelado e a comissão da plataforma foi isentada.',
+        'Pedido Cancelado'
       );
       handleCloseReportModal();
       fetchPartnerOrders();
     } catch (err: any) {
-      toast.error(err.message || 'Erro ao registrar denúncia.', 'Erro');
+      toast.error(err.message || 'Erro ao registrar ocorrência.', 'Erro');
     } finally {
       setIsSubmittingReport(false);
     }
@@ -295,19 +500,17 @@ function PartnerOrdersContent() {
             </h1>
 
             <div
+              className={styles.statusPill}
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '0.35rem 0.75rem',
-                borderRadius: '20px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                backgroundColor: isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                color: isConnected ? '#10b981' : '#f87171',
-                border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                backgroundColor: isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                color: isConnected ? '#10b981' : '#f59e0b',
+                border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
               }}
-              title={isConnected ? 'Conectado em tempo real: novos pedidos pagos aparecem instantaneamente' : 'Conectando ao canal em tempo real...'}
+              title={
+                isConnected
+                  ? 'Conectado em tempo real: novos pedidos pagos aparecem instantaneamente'
+                  : 'Canal em tempo real conectando... Sincronização automática ativa.'
+              }
             >
               <span
                 style={{
@@ -315,15 +518,15 @@ function PartnerOrdersContent() {
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  backgroundColor: isConnected ? '#10b981' : '#f87171',
-                  boxShadow: isConnected ? '0 0 8px #10b981' : 'none',
+                  backgroundColor: isConnected ? '#10b981' : '#f59e0b',
+                  boxShadow: isConnected ? '0 0 8px #10b981' : '0 0 6px #f59e0b',
                 }}
               />
-              {isConnected ? 'Tempo Real Ativo' : 'Reconectando...'}
+              {isConnected ? 'Tempo Real Ativo' : 'Sincronização Ativa'}
             </div>
           </div>
 
-          <div className={styles.headerControls}>
+          <div className={styles.headerActions}>
             {partners.length > 0 && (
               <label
                 className={styles.selectPartnerWrapper}
@@ -357,18 +560,21 @@ function PartnerOrdersContent() {
                   onChange={(e) => setSelectedPartnerId(e.target.value)}
                   aria-label="Selecionar estabelecimento"
                 >
-                  {partners.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
+                  {partners.map((p) => {
+                    const count = pendingCounts[p.id] || 0;
+                    return (
+                      <option key={p.id} value={p.id}>
+                        {p.name}{count > 0 ? ` 🔔 (${count} ${count === 1 ? 'novo' : 'novos'})` : ''}
+                      </option>
+                    );
+                  })}
                 </select>
               </label>
             )}
 
             <Link
               href={`/partner/financial?partnerId=${selectedPartnerId}`}
-              className={styles.financialLink}
+              className={styles.financialButton}
             >
               💰 Painel Financeiro & PIX
             </Link>
@@ -391,6 +597,39 @@ function PartnerOrdersContent() {
           </div>
         ) : (
           <>
+            {/* Alerta de Pedidos em Outros Estabelecimentos */}
+            {partners.filter((p) => p.id !== selectedPartnerId && (pendingCounts[p.id] || 0) > 0).length > 0 && (
+              <div className={styles.multiPartnerAlert}>
+                <div className={styles.multiPartnerAlertContent}>
+                  <span className={styles.multiPartnerAlertIcon}>🔔</span>
+                  <span>
+                    Atenção: Você possui{' '}
+                    <strong>
+                      {partners
+                        .filter((p) => p.id !== selectedPartnerId && (pendingCounts[p.id] || 0) > 0)
+                        .reduce((acc, p) => acc + (pendingCounts[p.id] || 0), 0)}{' '}
+                      pedido(s) pendente(s)
+                    </strong>{' '}
+                    aguardando aceite em outro estabelecimento:
+                  </span>
+                </div>
+                <div className={styles.multiPartnerAlertActions}>
+                  {partners
+                    .filter((p) => p.id !== selectedPartnerId && (pendingCounts[p.id] || 0) > 0)
+                    .map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        className={styles.switchPartnerBtn}
+                        onClick={() => setSelectedPartnerId(p.id)}
+                      >
+                        Ver {p.name} ({pendingCounts[p.id]}) →
+                      </button>
+                    ))}
+                </div>
+              </div>
+            )}
+
             {/* Abas de Produção */}
             <div className={styles.tabsBar}>
               <button
@@ -398,7 +637,8 @@ function PartnerOrdersContent() {
                 className={`${styles.tabBtn} ${activeTab === 'NEW' ? styles.tabBtnActive : ''}`}
                 onClick={() => setActiveTab('NEW')}
               >
-                Novos Pedidos
+                <span className={styles.tabLabelDesktop}>Novos Pedidos</span>
+                <span className={styles.tabLabelMobile}>Novos</span>
                 <span className={styles.badgeCount}>
                   {orders.filter((o) => o.status === 'PAID' || o.status === 'AWAITING_PAYMENT' || o.status === 'CREATED').length}
                 </span>
@@ -409,7 +649,8 @@ function PartnerOrdersContent() {
                 className={`${styles.tabBtn} ${activeTab === 'PREPARING' ? styles.tabBtnActive : ''}`}
                 onClick={() => setActiveTab('PREPARING')}
               >
-                Em Preparo
+                <span className={styles.tabLabelDesktop}>Em Preparo</span>
+                <span className={styles.tabLabelMobile}>Preparo</span>
                 <span className={styles.badgeCount}>
                   {orders.filter((o) => o.status === 'CONFIRMED' || o.status === 'PREPARING').length}
                 </span>
@@ -420,7 +661,8 @@ function PartnerOrdersContent() {
                 className={`${styles.tabBtn} ${activeTab === 'READY' ? styles.tabBtnActive : ''}`}
                 onClick={() => setActiveTab('READY')}
               >
-                Prontos / Despachados
+                <span className={styles.tabLabelDesktop}>Prontos / Despachados</span>
+                <span className={styles.tabLabelMobile}>Prontos</span>
                 <span className={styles.badgeCount}>
                   {orders.filter((o) => o.status === 'READY_FOR_PICKUP' || o.status === 'OUT_FOR_DELIVERY').length}
                 </span>
@@ -431,7 +673,8 @@ function PartnerOrdersContent() {
                 className={`${styles.tabBtn} ${activeTab === 'COMPLETED' ? styles.tabBtnActive : ''}`}
                 onClick={() => setActiveTab('COMPLETED')}
               >
-                Histórico / Entregues
+                <span className={styles.tabLabelDesktop}>Histórico / Entregues</span>
+                <span className={styles.tabLabelMobile}>Histórico</span>
                 <span className={styles.badgeCount}>
                   {orders.filter((o) => o.status === 'DELIVERED' || o.status === 'CANCELLED').length}
                 </span>
@@ -583,20 +826,16 @@ function PartnerOrdersContent() {
                           </button>
                         )}
 
-                        {/* Denúncia de Não Pagamento / Cliente Ausente para pedidos na entrega que já foram aceitos/despachados */}
-                        {isDelivery &&
-                          order.status !== 'CREATED' &&
-                          order.status !== 'AWAITING_PAYMENT' &&
-                          order.status !== 'DELIVERED' &&
-                          order.status !== 'CANCELLED' && (
-                            <button
-                              type="button"
-                              className={styles.btnReportNonPayment}
-                              onClick={() => handleOpenReportModal(order)}
-                              title="Reportar cliente ausente ou recusa de pagamento na entrega"
-                            >
-                              🚨 Reportar Não Pagamento
-                            </button>
+                        {/* Reportar Problema com o Pedido / Cliente (Referência iFood) */}
+                        {order.status !== 'DELIVERED' && order.status !== 'CANCELLED' && (
+                          <button
+                            type="button"
+                            className={styles.btnReportNonPayment}
+                            onClick={() => handleOpenReportModal(order)}
+                            title="Reportar ocorrência ou problema com este pedido ou cliente"
+                          >
+                            🚨 Reportar Problema
+                          </button>
                         )}
                       </div>
                     </div>
@@ -607,56 +846,101 @@ function PartnerOrdersContent() {
           </>
         )}
 
-        {/* Modal de Denúncia / Não Pagamento */}
+        {/* Modal de Reportar Problema / Ocorrência com Pedido (Referência iFood) */}
         {reportingOrder && (
           <div className={styles.modalOverlay} onClick={handleCloseReportModal}>
             <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
               <div className={styles.modalHeader}>
                 <h2 className={styles.modalTitle}>
-                  🚨 Denunciar Não Pagamento / Fraude
+                  🚨 Reportar Problema com o Pedido
                 </h2>
                 <button
                   type="button"
                   className={styles.modalClose}
                   onClick={handleCloseReportModal}
+                  aria-label="Fechar"
                 >
                   ✕
                 </button>
               </div>
 
-              <div className={styles.modalWarning}>
-                <strong>Atenção:</strong> Ao reportar esta ocorrência, o pedido <code>#{reportingOrder.id.slice(0, 8)}</code> será cancelado imediatamente. A comissão de intermediação da plataforma (12%) será <strong>estornada e zerada</strong> para o seu restaurante e o cliente perderá o direito de realizar novos pedidos com pagamento na entrega.
+              {/* Resumo do Pedido Afetado */}
+              <div className={styles.modalOrderSummary}>
+                <span>
+                  Pedido: <strong>#{reportingOrder.id.slice(0, 8)}</strong>
+                </span>
+                <span>
+                  Total: <strong>R$ {Number(reportingOrder.totalAmount).toFixed(2).replace('.', ',')}</strong>
+                </span>
+                <span>
+                  Forma:{' '}
+                  <strong>
+                    {reportingOrder.paymentMethod === 'CARD_ON_DELIVERY'
+                      ? 'Maquininha na Entrega'
+                      : reportingOrder.paymentMethod === 'CASH_ON_DELIVERY'
+                      ? 'Dinheiro na Entrega'
+                      : 'Pagamento Online'}
+                  </strong>
+                </span>
               </div>
 
               <form onSubmit={handleSubmitReport}>
                 <div className={styles.modalFormGroup}>
-                  <label className={styles.modalLabel}>Motivo da Ocorrência:</label>
-                  <select
-                    className={styles.modalSelect}
-                    value={reportReason}
-                    onChange={(e) => setReportReason(e.target.value as 'CLIENT_REFUSED_PAYMENT' | 'CLIENT_ABSENT' | 'FRAUDULENT_ORDER')}
-                  >
-                    <option value="CLIENT_REFUSED_PAYMENT">
-                      Cliente se recusou a pagar na entrega
-                    </option>
-                    <option value="CLIENT_ABSENT">
-                      Cliente ausente / Não atendeu o entregador
-                    </option>
-                    <option value="FRAUDULENT_ORDER">
-                      Pedido suspeito de trote ou fraude
-                    </option>
-                  </select>
+                  <label className={styles.modalLabel}>Selecione o motivo da ocorrência:</label>
+                  <div className={styles.problemOptionsList}>
+                    {PROBLEM_OPTIONS.map((opt) => {
+                      const isSelected = reportReason === opt.reason;
+                      return (
+                        <div
+                          key={opt.reason}
+                          className={`${styles.problemOptionCard} ${isSelected ? styles.problemOptionCardSelected : ''}`}
+                          onClick={() => setReportReason(opt.reason)}
+                        >
+                          <span className={styles.problemOptionIcon}>{opt.icon}</span>
+                          <div className={styles.problemOptionInfo}>
+                            <span className={styles.problemOptionTitle}>{opt.title}</span>
+                            <span className={styles.problemOptionDesc}>{opt.desc}</span>
+                          </div>
+                          <input
+                            type="radio"
+                            name="problemReason"
+                            className={styles.problemOptionRadio}
+                            checked={isSelected}
+                            onChange={() => setReportReason(opt.reason)}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div className={styles.modalFormGroup}>
-                  <label className={styles.modalLabel}>Detalhes do Ocorrido (opcional):</label>
+                  <label className={styles.modalLabel}>
+                    Observações e detalhes do ocorrido {reportReason === 'OTHER' ? '(obrigatório)' : '(opcional)'}:
+                  </label>
                   <textarea
                     className={styles.modalTextarea}
-                    rows={3}
-                    placeholder="Ex: Entregador aguardou 20 minutos no local, cliente visualizou as mensagens mas recusou o pagamento..."
+                    rows={2}
+                    placeholder={
+                      reportReason === 'CLIENT_ABSENT'
+                        ? 'Ex: Entregador aguardou 15 min no endereço, tentou ligar 3 vezes e ninguém atendeu...'
+                        : reportReason === 'CLIENT_REFUSED_PAYMENT'
+                        ? 'Ex: Cliente se recusou a pagar com a maquininha ao receber a entrega...'
+                        : reportReason === 'ADDRESS_UNREACHABLE'
+                        ? 'Ex: Número não existe na rua informada e cliente não responde mensagens...'
+                        : 'Descreva informações adicionais que auxiliem na ocorrência...'
+                    }
                     value={reportDetails}
                     onChange={(e) => setReportDetails(e.target.value)}
+                    required={reportReason === 'OTHER'}
                   />
+                </div>
+
+                <div className={styles.modalWarning}>
+                  <strong>Impacto do Cancelamento:</strong> O pedido será cancelado imediatamente e a comissão de intermediação da plataforma (12%) será <strong>estornada e zerada</strong> para seu estabelecimento.
+                  {PROBLEM_OPTIONS.find((o) => o.reason === reportReason)?.isSevere && (
+                    <span> Por se tratar de infração de pagamento ou ausência do cliente, a conta do consumidor será prevenida de novos pedidos presenciais.</span>
+                  )}
                 </div>
 
                 <div className={styles.modalFooter}>
@@ -666,14 +950,14 @@ function PartnerOrdersContent() {
                     onClick={handleCloseReportModal}
                     disabled={isSubmittingReport}
                   >
-                    Cancelar
+                    Voltar
                   </button>
                   <button
                     type="submit"
                     className={styles.btnDangerConfirm}
                     disabled={isSubmittingReport}
                   >
-                    {isSubmittingReport ? 'Processando...' : 'Confirmar Denúncia e Cancelar'}
+                    {isSubmittingReport ? 'Processando...' : '🚨 Confirmar e Cancelar Pedido'}
                   </button>
                 </div>
               </form>

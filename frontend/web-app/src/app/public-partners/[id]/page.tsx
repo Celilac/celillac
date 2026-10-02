@@ -316,19 +316,29 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                       <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', lineHeight: '1.5', wordBreak: 'break-word' }}>
                         <strong style={{ color: 'var(--color-text)' }}>Ingredientes:</strong> {product.ingredients}
                       </p>
-                      {product.crossContamination &&
-                        product.crossContamination !== 'NONE' &&
-                        product.crossContamination !== 'NENHUM' &&
-                        !product.crossContamination.toLowerCase().startsWith('nenhum') && (
+                      {(() => {
+                        const cc = (product.crossContamination || '').trim().toLowerCase();
+                        const isFree =
+                          !cc ||
+                          cc === 'none' ||
+                          cc === 'nenhum' ||
+                          cc.startsWith('nenhum') ||
+                          cc.startsWith('livre') ||
+                          cc.includes('100% livre');
+
+                        if (isFree) return null;
+
+                        return (
                           <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-warning)', fontStyle: 'italic' }}>
                             ⚠️ Traços: {(() => {
-                              const cc = product.crossContamination;
-                              if (cc === 'TRACES' || cc === 'TRACOS') return 'Pode conter traços (Alerta preventivo no rótulo)';
-                              if (cc === 'SHARED_EQUIPMENT' || cc === 'MAQUINARIO_COMPARTILHADO') return 'Compartilha maquinário / linhas de produção';
-                              return cc;
+                              const raw = product.crossContamination || '';
+                              if (raw === 'TRACES' || raw === 'TRACOS') return 'Pode conter traços (Alerta preventivo no rótulo)';
+                              if (raw === 'SHARED_EQUIPMENT' || raw === 'MAQUINARIO_COMPARTILHADO') return 'Compartilha maquinário / linhas de produção';
+                              return raw;
                             })()}
                           </p>
-                        )}
+                        );
+                      })()}
                       <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
                         <Link
                           href={`/products/${product.id}`}
