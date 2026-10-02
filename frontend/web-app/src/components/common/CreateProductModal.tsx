@@ -186,11 +186,12 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
       setIngredients(data.ingredients || '');
       setMayContainTraces(data.mayContainTraces || '');
       setCompositionNotes(data.compositionNotes || '');
-      // Glúten
+      // Glúten e Trigo
       const glutenDeclared = data.declaredAllergens?.['GLUTEN'];
-      if (glutenDeclared === 'CONTAINS') {
+      const wheatDeclared = data.declaredAllergens?.['WHEAT'];
+      if (glutenDeclared === 'CONTAINS' || wheatDeclared === 'CONTAINS') {
         setHasGluten(true);
-      } else if (glutenDeclared === 'FREE') {
+      } else if (glutenDeclared === 'FREE' && (!wheatDeclared || wheatDeclared === 'FREE')) {
         setHasGluten(false);
       } else {
         setHasGluten(Boolean(data.hasGluten));
@@ -227,8 +228,14 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
       if (milk && !allergens['MILK']) {
         allergens['MILK'] = milk;
       }
-      if (data.hasGluten !== undefined && !allergens['GLUTEN']) {
-        allergens['GLUTEN'] = data.hasGluten ? 'CONTAINS' : 'FREE';
+      if (data.hasGluten !== undefined) {
+        if (!allergens['GLUTEN']) {
+          allergens['GLUTEN'] = data.hasGluten ? 'CONTAINS' : 'FREE';
+        }
+        if (!data.hasGluten) {
+          if (allergens['GLUTEN'] === 'CONTAINS') allergens['GLUTEN'] = 'FREE';
+          if (allergens['WHEAT'] === 'CONTAINS') allergens['WHEAT'] = 'FREE';
+        }
       }
       setDeclaredAllergens(allergens);
 
@@ -353,9 +360,9 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
   // Sincronização entre Matriz de Alérgenos e seletores rápidos de Glúten e Leite
   const handleAllergenMatrixChange = useCallback((updated: Record<string, AllergenPresence>) => {
     setDeclaredAllergens(updated);
-    if (updated['GLUTEN'] === 'CONTAINS') {
+    if (updated['GLUTEN'] === 'CONTAINS' || updated['WHEAT'] === 'CONTAINS') {
       setHasGluten(true);
-    } else if (updated['GLUTEN'] === 'FREE') {
+    } else if (updated['GLUTEN'] === 'FREE' && (!updated['WHEAT'] || updated['WHEAT'] === 'FREE' || updated['WHEAT'] === 'NOT_INFORMED')) {
       setHasGluten(false);
     }
     if (updated['MILK'] === 'CONTAINS') {
@@ -373,6 +380,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
     setDeclaredAllergens((prev) => ({
       ...prev,
       GLUTEN: next ? 'CONTAINS' : 'FREE',
+      WHEAT: next ? 'CONTAINS' : 'FREE',
     }));
   };
 
@@ -547,6 +555,17 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
         }
       }
 
+      // Garantir coerência biológica estrita entre hasGluten e alérgenos declarados
+      const finalDeclaredAllergens = { ...declaredAllergens };
+      if (!hasGluten) {
+        if (finalDeclaredAllergens['GLUTEN'] === 'CONTAINS') finalDeclaredAllergens['GLUTEN'] = 'FREE';
+        if (finalDeclaredAllergens['WHEAT'] === 'CONTAINS') finalDeclaredAllergens['WHEAT'] = 'FREE';
+      } else {
+        if (!finalDeclaredAllergens['GLUTEN'] || finalDeclaredAllergens['GLUTEN'] === 'FREE') {
+          finalDeclaredAllergens['GLUTEN'] = 'CONTAINS';
+        }
+      }
+
       const resolvedCoverUrl = coverImage?.url?.trim() || undefined;
 
       const payload: CreateProductInput = {
@@ -569,7 +588,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
         mayContainTraces: mayContainTraces.trim() || undefined,
         compositionNotes: compositionNotes.trim() || undefined,
         publicationStatus: statusToSave,
-        declaredAllergens: Object.keys(declaredAllergens).length > 0 ? declaredAllergens : undefined,
+        declaredAllergens: Object.keys(finalDeclaredAllergens).length > 0 ? finalDeclaredAllergens : undefined,
         crossContaminationDetails: crossContaminationDetails.environmentRisk ? crossContaminationDetails : undefined,
         dietaryFeatures: dietaryFeatures.length > 0 ? dietaryFeatures : undefined,
         informationOrigin: informationOrigin || 'PARTNER_DECLARED',

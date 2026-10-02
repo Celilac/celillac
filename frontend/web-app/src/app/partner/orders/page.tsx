@@ -323,14 +323,39 @@ function PartnerOrdersContent() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <div className={styles.headerControls}>
             {partners.length > 0 && (
-              <div className={styles.selectPartnerWrapper}>
-                <label style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Local:</label>
+              <label
+                className={styles.selectPartnerWrapper}
+                htmlFor="partner-orders-select"
+                title="Clique em qualquer lugar da caixa para trocar o local"
+              >
+                <span className={styles.selectPartnerLabel}>Local:</span>
+                <span className={styles.selectPartnerValue}>
+                  <span className={styles.partnerNameText}>
+                    {partners.find((p) => p.id === selectedPartnerId)?.name || 'Selecione um local'}
+                  </span>
+                  <svg
+                    className={styles.selectPartnerArrow}
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
                 <select
+                  id="partner-orders-select"
                   className={styles.partnerSelect}
                   value={selectedPartnerId}
                   onChange={(e) => setSelectedPartnerId(e.target.value)}
+                  aria-label="Selecionar estabelecimento"
                 >
                   {partners.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -338,21 +363,12 @@ function PartnerOrdersContent() {
                     </option>
                   ))}
                 </select>
-              </div>
+              </label>
             )}
 
             <Link
               href={`/partner/financial?partnerId=${selectedPartnerId}`}
-              style={{
-                padding: '0.6rem 1rem',
-                background: 'var(--color-emerald-dim)',
-                color: 'var(--color-emerald)',
-                border: '1px solid var(--color-emerald)',
-                borderRadius: '8px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                fontSize: '0.9rem',
-              }}
+              className={styles.financialLink}
             >
               💰 Painel Financeiro & PIX
             </Link>

@@ -30,29 +30,105 @@
   color: var(--color-text, #f1f5f9);
 }
 
+.headerControls {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
 .selectPartnerWrapper {
+  position: relative;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.75rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  padding: 0.5rem 1rem;
+  padding: 0.6rem 1rem;
   border-radius: 12px;
+  cursor: pointer;
+  min-width: 220px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.selectPartnerWrapper:hover {
+  border-color: var(--color-border-hover, rgba(255, 255, 255, 0.2));
+}
+
+.selectPartnerWrapper:focus-within {
+  border-color: var(--color-emerald);
+  box-shadow: 0 0 0 2px var(--color-emerald-dim);
+}
+
+.selectPartnerLabel {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #94a3b8);
+  font-weight: 500;
+  pointer-events: none;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.selectPartnerValue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-text, #f1f5f9);
+  font-weight: 600;
+  font-size: 0.95rem;
+  pointer-events: none;
+  user-select: none;
+  min-width: 0;
+}
+
+.partnerNameText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.selectPartnerArrow {
+  color: var(--color-text-muted, #94a3b8);
+  flex-shrink: 0;
 }
 
 .partnerSelect {
-  background: transparent;
-  border: none;
-  color: var(--color-text, #f1f5f9);
-  font-weight: 600;
-  outline: none;
-  font-size: 0.95rem;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
   cursor: pointer;
+  z-index: 2;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .partnerSelect option {
   background: var(--color-surface);
   color: var(--color-text);
+}
+
+.financialLink {
+  padding: 0.6rem 1rem;
+  background: var(--color-emerald-dim);
+  color: var(--color-emerald);
+  border: 1px solid var(--color-emerald);
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.financialLink:hover {
+  background: var(--color-emerald);
+  color: #ffffff;
 }
 
 .tabsBar {
@@ -683,9 +759,21 @@
     font-size: 1.4rem;
   }
 
+  .headerControls {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
   .selectPartnerWrapper {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .financialLink {
+    width: 100%;
+    text-align: center;
   }
 
   .tabsBar {
