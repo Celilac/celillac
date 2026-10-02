@@ -52,7 +52,7 @@ const emailService            = new FakeEmailService();
 
 const createReportUseCase        = new CreateReportUseCase(reportRepository);
 const listReportsUseCase         = new ListReportsUseCase(reportRepository);
-const reviewReportUseCase        = new ReviewReportUseCase(reportRepository, auditLogRepository);
+const reviewReportUseCase        = new ReviewReportUseCase(reportRepository, auditLogRepository, consumerRepository);
 const approveAdminUserUseCase   = new ApproveAdminUserUseCase(userRepository, emailService);
 const listUsersUseCase           = new ListUsersUseCase(userRepository);
 const evaluateUserProfileUseCase = new EvaluateUserProfileUseCase(userRepository, consumerRepository, auditLogRepository);

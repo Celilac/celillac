@@ -41,6 +41,8 @@
 }
 
 .card {
+  width: 100%;
+  box-sizing: border-box;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -228,6 +230,8 @@
    ========================================================================== */
 
 .purchaseCard {
+  width: 100%;
+  box-sizing: border-box;
   background: var(--color-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -354,6 +358,15 @@
   color: var(--color-text);
   font-size: 0.95rem;
   font-weight: 600;
+  box-sizing: border-box;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.quantityInput::-webkit-outer-spin-button,
+.quantityInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 :global(html[data-theme='light']) .quantityInput {
@@ -389,6 +402,7 @@
   font-size: 1.15rem;
   color: var(--color-text);
   margin-left: 0.35rem;
+  font-variant-numeric: tabular-nums;
 }
 
 :global(html[data-theme='light']) .subtotalAmount {
