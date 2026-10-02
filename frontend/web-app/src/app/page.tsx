@@ -164,8 +164,9 @@ export default function Home() {
                 border: '1px solid var(--color-border)',
                 color: 'var(--color-text)',
               }}
+              title="Descubra estabelecimentos homologados e alimentos seguros"
             >
-              🏢 Descobrir Locais Seguros
+              🏢 Descobrir Locais & Produtos
             </Link>
           </div>
         </div>

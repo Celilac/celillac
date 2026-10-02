@@ -191,9 +191,16 @@ export function Header() {
             </Link>
           )}
 
-          <Link href="/public-partners" className={navLinkClass('/public-partners')} onClick={() => setMenuOpen(false)}>
-            <BuildingIcon /> Descobrir Locais
-          </Link>
+          {!pathname?.startsWith('/auth') && (
+            <Link
+              href="/public-partners"
+              className={navLinkClass('/public-partners')}
+              onClick={() => setMenuOpen(false)}
+              title="Descubra estabelecimentos homologados e visualize todos os produtos ofertados"
+            >
+              <BuildingIcon /> Locais & Produtos
+            </Link>
+          )}
 
           {mounted && isAuthenticated && (userInfo?.role === 'PARCEIRO' || userInfo?.role === 'ADMIN') && (
             <>
@@ -242,6 +249,13 @@ export function Header() {
             </button>
           )}
 
+          {mounted && isAuthenticated && (
+            <Link href="/profile" className={`nav-profile-link${pathname === '/profile' ? ' is-active' : ''}`} id="topbar-profile-link" onClick={() => setMenuOpen(false)}>
+              <UserAvatar avatarUrl={userInfo?.avatarUrl} fullName={userInfo?.fullName} email={userInfo?.email} size={28} />
+              <span>Perfil</span>
+            </Link>
+          )}
+
           <button
             type="button"
             onClick={toggleTheme}
@@ -250,13 +264,6 @@ export function Header() {
           >
             {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
           </button>
-
-          {mounted && isAuthenticated && (
-            <Link href="/profile" className={`nav-profile-link${pathname === '/profile' ? ' is-active' : ''}`} id="topbar-profile-link" onClick={() => setMenuOpen(false)}>
-              <UserAvatar avatarUrl={userInfo?.avatarUrl} fullName={userInfo?.fullName} email={userInfo?.email} size={28} />
-              <span>Perfil</span>
-            </Link>
-          )}
 
           {mounted && isAuthenticated && (
             <div className="notification-bell-container notification-bell-desktop">
