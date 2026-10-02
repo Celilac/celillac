@@ -528,12 +528,37 @@ function PartnerOrdersContent() {
 
           <div className={styles.headerActions}>
             {partners.length > 0 && (
-              <div className={styles.selectPartnerWrapper}>
-                <label style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Local:</label>
+              <label
+                className={styles.selectPartnerWrapper}
+                htmlFor="partner-orders-select"
+                title="Clique em qualquer lugar da caixa para trocar o local"
+              >
+                <span className={styles.selectPartnerLabel}>Local:</span>
+                <span className={styles.selectPartnerValue}>
+                  <span className={styles.partnerNameText}>
+                    {partners.find((p) => p.id === selectedPartnerId)?.name || 'Selecione um local'}
+                  </span>
+                  <svg
+                    className={styles.selectPartnerArrow}
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </span>
                 <select
+                  id="partner-orders-select"
                   className={styles.partnerSelect}
                   value={selectedPartnerId}
                   onChange={(e) => setSelectedPartnerId(e.target.value)}
+                  aria-label="Selecionar estabelecimento"
                 >
                   {partners.map((p) => {
                     const count = pendingCounts[p.id] || 0;
@@ -544,7 +569,7 @@ function PartnerOrdersContent() {
                     );
                   })}
                 </select>
-              </div>
+              </label>
             )}
 
             <Link

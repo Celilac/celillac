@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const RestrictionSchema = z.object({
   allergen: z.string().trim().min(1, 'O nome do alérgeno é obrigatório.'),
   severity: z.enum(['LIFESTYLE', 'LOW', 'MEDIUM', 'HIGH', 'FATAL']),
-  type: z.enum(['ALLERGY', 'INTOLERANCE', 'MEDICAL_RESTRICTION', 'DIETARY_PREFERENCE', 'LIFESTYLE']),
+  type: z.enum(['ALLERGY', 'INTOLERANCE', 'MEDICAL_RESTRICTION', 'DIETARY_PREFERENCE', 'LIFESTYLE']).default('ALLERGY'),
   notes: z.string().trim().max(500).optional(),
 });
 

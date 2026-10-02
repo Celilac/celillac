@@ -512,21 +512,56 @@ export default function ProfilePage() {
 
       // 3. Atualiza ou Cria o Perfil Alimentar (apenas CELIACO)
       if (userRole === 'CELIACO') {
+        // Validação clínica prévia (RN-CONSUMER-05): Alergia não pode ter severidade Baixa ou Estilo de Vida
+        for (let i = 0; i < rows.length; i++) {
+          const r = rows[i];
+          const effectiveType = r.type || 'ALLERGY';
+          if (effectiveType === 'ALLERGY' && (r.severity === 'LOW' || r.severity === 'LIFESTYLE')) {
+            toast.error(
+              `Restrição #${i + 1}: Uma Alergia não pode ter severidade Baixa ou Estilo de Vida (severidade mínima: Média). Se a sua condição for leve, altere o tipo para 'Intolerância', 'Restrição Médica' ou 'Preferência'.`,
+              'Combinação Inválida'
+            );
+            setLoading(false);
+            return;
+          }
+        }
+
         const payload = {
-          restrictions: rows,
+          restrictions: rows.map((r) => ({
+            allergen: r.allergen,
+            severity: r.severity,
+            type: r.type || 'ALLERGY',
+            notes: r.notes ? r.notes.trim() : undefined,
+          })),
           acceptsCrossContamination,
         };
 
-        try {
-          await foodProfileApi.update(userId, payload, token);
-          setHasProfile(true);
-        } catch (updateErr: any) {
-          const errMsg = updateErr?.message || '';
-          if (errMsg.includes('não encontrado') || updateErr?.status === 404 || updateErr?.status === 400) {
+        if (hasProfile) {
+          try {
+            await foodProfileApi.update(userId, payload, token);
+          } catch (updateErr: any) {
+            const errMsg = updateErr?.message || '';
+            // Apenas recorre a create se o perfil realmente não existir (404)
+            if (updateErr?.status === 404 || errMsg.toLowerCase().includes('não encontrado')) {
+              await foodProfileApi.create({ userId, ...payload }, token);
+              setHasProfile(true);
+            } else {
+              throw updateErr;
+            }
+          }
+        } else {
+          try {
             await foodProfileApi.create({ userId, ...payload }, token);
             setHasProfile(true);
-          } else {
-            throw updateErr;
+          } catch (createErr: any) {
+            const errMsg = createErr?.message || '';
+            // Se já possuir perfil cadastrado, redireciona para atualização
+            if (errMsg.includes('já possui um perfil') || createErr?.status === 400) {
+              await foodProfileApi.update(userId, payload, token);
+              setHasProfile(true);
+            } else {
+              throw createErr;
+            }
           }
         }
 
@@ -1010,6 +1045,27 @@ export default function ProfilePage() {
                           ))}
                         </select>
                       </div>
+
+                      {((row.type || 'ALLERGY') === 'ALLERGY' && (row.severity === 'LOW' || row.severity === 'LIFESTYLE')) && (
+                        <div style={{
+                          gridColumn: '1 / -1',
+                          marginTop: '4px',
+                          padding: '10px 14px',
+                          borderRadius: '8px',
+                          background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.25)',
+                          color: 'var(--color-danger, #ef4444)',
+                          fontSize: '0.8rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}>
+                          <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+                          <span>
+                            <strong>Incompatibilidade Clínica:</strong> Alergias exigem severidade Média, Alta ou Fatal. Para severidade Baixa ou Estilo de Vida, altere o Tipo de Condição para <strong>Intolerância</strong>, <strong>Restrição Médica</strong> ou <strong>Preferência</strong>.
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
