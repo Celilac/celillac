@@ -1,6 +1,6 @@
 'use client';
 // frontend/web-app/src/app/partner/financial/page.tsx
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,6 +30,31 @@ function PartnerFinancialPageContent() {
   const [agencyNumber, setAgencyNumber] = useState('0001');
   const [accountNumber, setAccountNumber] = useState('');
   const [savingAccount, setSavingAccount] = useState(false);
+
+  // Dropdown customizado e espaçoso para seleção de local/estabelecimento
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsDropdownOpen(false);
+      }
+    }
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isDropdownOpen]);
 
   // 1. Carregar lista de parceiros do usuário
   useEffect(() => {
@@ -144,18 +169,24 @@ function PartnerFinancialPageContent() {
 
           <div className={styles.headerControls}>
             {partners.length > 0 && (
-              <label
-                className={styles.selectPartnerWrapper}
-                htmlFor="partner-financial-select"
-                title="Clique em qualquer lugar da caixa para trocar o local"
-              >
-                <span className={styles.selectPartnerLabel}>Local:</span>
-                <span className={styles.selectPartnerValue}>
-                  <span className={styles.partnerNameText}>
-                    {partners.find((p) => p.id === selectedPartnerId)?.name || 'Selecione um local'}
+              <div className={styles.selectPartnerContainer} ref={dropdownRef}>
+                <button
+                  type="button"
+                  className={`${styles.selectPartnerTrigger} ${isDropdownOpen ? styles.selectPartnerTriggerActive : ''}`}
+                  onClick={() => setIsDropdownOpen((prev) => !prev)}
+                  aria-haspopup="listbox"
+                  aria-expanded={isDropdownOpen}
+                  id="partner-financial-select-btn"
+                  title="Clique para alternar entre seus estabelecimentos"
+                >
+                  <span className={styles.selectPartnerLabel}>Local:</span>
+                  <span className={styles.selectPartnerValue}>
+                    <span className={styles.partnerNameText}>
+                      {partners.find((p) => p.id === selectedPartnerId)?.name || 'Selecione um local'}
+                    </span>
                   </span>
                   <svg
-                    className={styles.selectPartnerArrow}
+                    className={`${styles.selectPartnerArrow} ${isDropdownOpen ? styles.selectPartnerArrowOpen : ''}`}
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
@@ -168,21 +199,38 @@ function PartnerFinancialPageContent() {
                   >
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
-                </span>
-                <select
-                  id="partner-financial-select"
-                  className={styles.partnerSelect}
-                  value={selectedPartnerId}
-                  onChange={(e) => setSelectedPartnerId(e.target.value)}
-                  aria-label="Selecionar estabelecimento"
-                >
-                  {partners.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                </button>
+
+                {isDropdownOpen && (
+                  <ul className={styles.partnerDropdownMenu} role="listbox" aria-labelledby="partner-financial-select-btn">
+                    {partners.map((p) => {
+                      const isSelected = p.id === selectedPartnerId;
+                      return (
+                        <li
+                          key={p.id}
+                          role="option"
+                          aria-selected={isSelected}
+                          className={`${styles.partnerDropdownItem} ${isSelected ? styles.partnerDropdownItemSelected : ''}`}
+                          onClick={() => {
+                            setSelectedPartnerId(p.id);
+                            setIsDropdownOpen(false);
+                          }}
+                        >
+                          <div className={styles.partnerItemInfo}>
+                            <span className={styles.partnerItemName}>{p.name}</span>
+                            {p.city && <span className={styles.partnerItemCity}>{p.city}</span>}
+                          </div>
+                          {isSelected && (
+                            <svg className={styles.itemCheckIcon} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
             )}
 
             <Link
