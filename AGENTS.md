@@ -25,9 +25,14 @@ O CeLiLac é uma plataforma de segurança alimentar focada em celíacos e pessoa
    - **Para Novas Features:** O Agente está PROIBIDO de iniciar desenvolvimento, alterar arquivos de código, criar componentes ou aplicar alterações estruturais sem que o usuário tenha explicitamente aprovado o plano (seja clicando em "Proceed" no artefato nativo ou autorizando explicitamente no chat). Após criar o artefato de plano, o Agente DEVE pausar e aguardar a decisão do usuário.
    - **Para Correções de Bugs / Fixes Gerais:** O Agente pode tocar direto sem precisar pedir autorização, aplicando as correções e testes de forma ágil e objetiva.
 
-3. **Camadas Isoladas:** Regras de negócio ficam APENAS no `domain`. Controllers não decidem lógica.
-4. **Segurança Alimentar:** Qualquer alteração no `ALLERGEN_ENGINE` exige aprovação humana imediata.
-5. **Testes Primeiro:** Siga a cultura de TDD sempre que possível.
+3. **Criação Obrigatória de Branch para Features (Proibido Commit Direto na `develop`):**
+   - TODA VEZ que uma nova funcionalidade (feature) for implementada, o Agente DEVE OBRIGATORIAMENTE criar uma nova branch a partir de `develop` atualizada (padrão de nomenclatura: `feat/<nome-da-feature>` ou `feature/<nome-da-feature>`).
+   - É **TERMINANTEMENTE PROIBIDO commitar código de novas features diretamente na branch `develop`**. Todo o desenvolvimento, testes e commits da feature devem viver na branch isolada, sendo integrados na `develop` exclusivamente via Pull Request após validação completa.
+   - Para correções de bugs, deve-se priorizar o uso de branches `fix/<nome-do-fix>`.
+
+4. **Camadas Isoladas:** Regras de negócio ficam APENAS no `domain`. Controllers não decidem lógica.
+5. **Segurança Alimentar:** Qualquer alteração no `ALLERGEN_ENGINE` exige aprovação humana imediata.
+6. **Testes Primeiro:** Siga a cultura de TDD sempre que possível.
 
 
 ## Guardrails e Políticas de Segurança (Harness)
@@ -97,10 +102,11 @@ O Agente DEVE adaptar seu comportamento de acordo com o tipo da tarefa solicitad
 2. **Identificar** o módulo/contexto afetado.
 3. **Criar ou Atualizar o Plano no Artefato Único (`plano_de_implementacao.md`):** Gerar ou sobrescrever exclusivamente o arquivo `plano_de_implementacao.md` com o título `# Plano de Implementação` e `RequestFeedback: true` no metadata. NUNCA criar múltiplos arquivos de plano nem arquivos `PLAN.md` no workspace.
 4. **PAUSAR e Aguardar Aprovação Humana:** Aguardar o usuário clicar no botão "Proceed" ou autorizar explicitamente no chat antes de editar ou criar arquivos.
-5. **Criar ou atualizar testes** antes ou junto do código (TDD).
-6. **Implementar** em pequenos passos.
-7. **Rodar testes** e linter (`npm test`, `npm run build`).
-8. **Gerar relatório final** atualizando `walkthrough.md`.
+5. **Criar Branch Isolada da Feature:** Após aprovação do plano, atualizar a `develop` (`git checkout develop && git pull origin develop`) e criar uma nova branch dedicada (`git checkout -b feat/<nome-da-feature>`). É PROIBIDO commitar features diretamente na `develop`.
+6. **Criar ou atualizar testes** antes ou junto do código (TDD).
+7. **Implementar** em pequenos passos.
+8. **Rodar Bateria de Testes & Auto-Cura:** Executar `node scripts/agent-verify.mjs` (ou `npm run verify`). Se houver falha, corrigir autonomamente até 100% verde.
+9. **Gerar relatório final** atualizando `walkthrough.md`.
 
 ### 2. Workflow para Correção de Bug / Qualquer Fix
 1. **Reproduzir e Diagnosticar** o problema (analisar logs ou código existente).

@@ -8,12 +8,13 @@
 ## [WF-01] Nova Funcionalidade (Feature)
 1. **Analise:** Ler `docs/PRD.md`, `docs/DOMAIN_MODEL.md` e `docs/ARCHITECTURE.md`.
 2. **Plano Obrigatório:** No Antigravity IDE, criar exclusivamente o artefato nativo `plano_de_implementacao.md` com `RequestFeedback: true` e aguardar aprovação humana. No Claude Code, criar `PLAN.md`.
-3. **Domínio:** Definir Entidades e Value Objects no `domain/`.
-4. **Testes:** Criar testes unitários em `backend/tests/unit` (TDD).
-5. **Implementação:** Seguir a regra de dependência (domain ← application ← infrastructure ← interfaces).
-6. **Validação & Auto-Cura:** Executar `node scripts/agent-verify.mjs` (ou `npm run verify`). Se houver qualquer erro em compilação, testes, paridade ou rotas, **NÃO pare para perguntar**: aplique a correção imediatamente e re-execute até obter 100% verde.
-7. **E2E Visual:** Se alterou telas no frontend, validar o fluxo no navegador via subagente (`browser_subagent`).
-8. **Entrega:** Atualizar `docs/features/`, `README.md`, `CHANGELOG.md`, `docs/API_CONTRACTS.md` sem duplicar `DOMAIN_MODEL.md`.
+3. **Branch Isolada Obrigatória:** Puxar a `develop` atualizada (`git checkout develop && git pull origin develop`) e criar nova branch `feat/<nome-da-feature>`. É PROIBIDO commitar features diretamente na `develop`.
+4. **Domínio:** Definir Entidades e Value Objects no `domain/`.
+5. **Testes:** Criar testes unitários em `backend/tests/unit` (TDD).
+6. **Implementação:** Seguir a regra de dependência (domain ← application ← infrastructure ← interfaces).
+7. **Validação & Auto-Cura:** Executar `node scripts/agent-verify.mjs` (ou `npm run verify`). Se houver qualquer erro em compilação, testes, paridade ou rotas, **NÃO pare para perguntar**: aplique a correção imediatamente e re-execute até obter 100% verde.
+8. **E2E Visual:** Se alterou telas no frontend, validar o fluxo no navegador via subagente (`browser_subagent`).
+9. **Entrega & Pull Request:** Atualizar `docs/features/`, `README.md`, `CHANGELOG.md`, `docs/API_CONTRACTS.md` sem duplicar `DOMAIN_MODEL.md`. Abrir PR da branch da feature para a `develop`.
 
 ---
 
