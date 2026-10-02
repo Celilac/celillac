@@ -515,6 +515,48 @@ input, select, textarea { font-family: inherit; }
 .btn-ghost:hover { background: rgba(255,255,255,0.05); color: var(--color-text); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
 
+/* Botão Primário e Estados de Moderação de Alto Contraste */
+.btn-primary {
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #1d4ed8;
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+}
+.btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  border-color: #1e40af;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-action-active-global {
+  background: rgba(59, 130, 246, 0.18) !important;
+  color: #60a5fa !important;
+  border: 1px solid rgba(59, 130, 246, 0.45) !important;
+  opacity: 1 !important;
+  cursor: default !important;
+}
+
+:root[data-theme='light'] .btn-action-active-global {
+  background: rgba(37, 99, 235, 0.10) !important;
+  color: #1d4ed8 !important;
+  border-color: rgba(37, 99, 235, 0.35) !important;
+}
+
+.btn-action-active-restricted {
+  background: rgba(234, 179, 8, 0.18) !important;
+  color: #facc15 !important;
+  border: 1px solid rgba(234, 179, 8, 0.45) !important;
+  opacity: 1 !important;
+  cursor: default !important;
+}
+
+:root[data-theme='light'] .btn-action-active-restricted {
+  background: rgba(234, 179, 8, 0.12) !important;
+  color: #a16207 !important;
+  border-color: rgba(234, 179, 8, 0.35) !important;
+}
+
 /* Input */
 .field { display: flex; flex-direction: column; gap: var(--space-2); }
 .field-label { font-size: var(--text-label); font-weight: 600; color: var(--color-text-muted); letter-spacing: 0.05em; text-transform: uppercase; line-height: 1.3; }
