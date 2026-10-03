@@ -8,6 +8,21 @@ import { useToast } from '@/hooks/useToast';
 import { apiClient, HttpError } from '@/api/client';
 import { certificationsApi, AdminCertificationItem } from '@/api/certifications';
 import { Header } from '@/components/layout/Header';
+import {
+  BanIcon,
+  AwardIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClipboardListIcon,
+  ShieldCheckIcon,
+  SearchIcon,
+  FileTextIcon,
+  BuildingIcon,
+  HashIcon,
+  CalendarIcon,
+  StoreIcon,
+} from '@/components/layout/icons';
 import styles from '../../partner/partner.module.css';
 
 export default function AdminCertificationsPage() {
@@ -151,7 +166,9 @@ export default function AdminCertificationsPage() {
       <div style={{ minHeight: '100vh', background: 'var(--color-bg)' }}>
         <Header />
         <main className="container" style={{ padding: '60px 20px', textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: 16 }}>⛔</div>
+          <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
+            <BanIcon size={48} style={{ color: 'var(--color-danger, #ef4444)' }} />
+          </div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-danger, #ef4444)' }}>
             403 — Acesso Proibido
           </h1>
@@ -195,7 +212,7 @@ export default function AdminCertificationsPage() {
         {/* Cabeçalho */}
         <div style={{ marginBottom: 28 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-            <span style={{ fontSize: '1.8rem' }}>🏅</span>
+            <AwardIcon size={28} style={{ color: 'var(--color-primary)' }} />
             <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--color-text)', margin: 0 }}>
               Moderação de Selos & Laudos Laboratoriais
             </h1>
@@ -226,10 +243,10 @@ export default function AdminCertificationsPage() {
           {/* Pills de Status */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {[
-              { id: 'DECLARED_BY_PARTNER', label: '⏳ Pendentes' },
-              { id: 'VERIFIED_BY_CELILAC', label: '✅ Homologados' },
-              { id: 'REJECTED', label: '❌ Rejeitados' },
-              { id: 'ALL', label: '📋 Todos' },
+              { id: 'DECLARED_BY_PARTNER', label: 'Pendentes', icon: <ClockIcon size={14} /> },
+              { id: 'VERIFIED_BY_CELILAC', label: 'Homologados', icon: <CheckCircleIcon size={14} /> },
+              { id: 'REJECTED', label: 'Rejeitados', icon: <XCircleIcon size={14} /> },
+              { id: 'ALL', label: 'Todos', icon: <ClipboardListIcon size={14} /> },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -245,8 +262,12 @@ export default function AdminCertificationsPage() {
                   color: statusFilter === tab.id ? 'var(--color-primary, #0284c7)' : 'var(--color-text)',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
+                {tab.icon}
                 {tab.label}
               </button>
             ))}
@@ -280,7 +301,9 @@ export default function AdminCertificationsPage() {
           </div>
         ) : filteredItems.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px', background: 'var(--color-surface)', borderRadius: 12, border: '1px dashed var(--color-border)' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🛡️</div>
+            <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+              <ShieldCheckIcon size={44} style={{ color: 'var(--color-text-muted)' }} />
+            </div>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '0 0 6px' }}>Nenhum selo/laudo encontrado</h3>
             <p style={{ color: 'var(--color-text-muted)', fontSize: '0.88rem', margin: 0 }}>
               {statusFilter === 'DECLARED_BY_PARTNER'
@@ -335,8 +358,8 @@ export default function AdminCertificationsPage() {
                           alt="Laudo técnico"
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
-                        <span style={{ position: 'absolute', bottom: 2, right: 2, fontSize: '0.65rem', background: 'rgba(0,0,0,0.7)', color: '#fff', padding: '1px 3px', borderRadius: 3 }}>
-                          🔍 Zoom
+                        <span style={{ position: 'absolute', bottom: 2, right: 2, fontSize: '0.65rem', background: 'rgba(0,0,0,0.7)', color: '#fff', padding: '1px 3px', borderRadius: 3, display: 'inline-flex', alignItems: 'center', gap: 2 }}>
+                          <SearchIcon size={10} /> Zoom
                         </span>
                       </button>
                     ) : (
@@ -350,11 +373,10 @@ export default function AdminCertificationsPage() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontSize: '1.4rem',
                           flexShrink: 0,
                         }}
                       >
-                        📄
+                        <FileTextIcon size={28} style={{ color: 'var(--color-text-muted)' }} />
                       </div>
                     )}
 
@@ -375,18 +397,18 @@ export default function AdminCertificationsPage() {
                         </span>
 
                         {isVerified && (
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', background: '#d1fae5', padding: '2px 7px', borderRadius: 6 }}>
-                            🛡️ HOMOLOGADO
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', background: '#d1fae5', padding: '2px 7px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <ShieldCheckIcon size={12} /> HOMOLOGADO
                           </span>
                         )}
                         {isRejected && (
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#dc2626', background: '#fee2e2', padding: '2px 7px', borderRadius: 6 }}>
-                            ❌ REJEITADO
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#dc2626', background: '#fee2e2', padding: '2px 7px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <XCircleIcon size={12} /> REJEITADO
                           </span>
                         )}
                         {!isVerified && !isRejected && (
-                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#d97706', background: '#fef3c7', padding: '2px 7px', borderRadius: 6 }}>
-                            ⏳ AGUARDANDO REVISÃO
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#d97706', background: '#fef3c7', padding: '2px 7px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <ClockIcon size={12} /> AGUARDANDO REVISÃO
                           </span>
                         )}
                       </div>
@@ -396,14 +418,14 @@ export default function AdminCertificationsPage() {
                       </h3>
 
                       <div style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', display: 'flex', flexWrap: 'wrap', gap: 14 }}>
-                        <span>🏢 <strong>Entidade:</strong> {item.certifyingEntity}</span>
-                        {item.certificateCode && <span>🔢 <strong>Código/Nº:</strong> {item.certificateCode}</span>}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><BuildingIcon size={13} /> <strong>Entidade:</strong> {item.certifyingEntity}</span>
+                        {item.certificateCode && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><HashIcon size={13} /> <strong>Código/Nº:</strong> {item.certificateCode}</span>}
                         {item.validUntil && (
-                          <span style={{ color: expired ? '#ef4444' : 'inherit', fontWeight: expired ? 700 : 400 }}>
-                            📅 <strong>Validade:</strong> {new Date(item.validUntil).toLocaleDateString('pt-BR')} {expired && '(VENCIDO)'}
+                          <span style={{ color: expired ? '#ef4444' : 'inherit', fontWeight: expired ? 700 : 400, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <CalendarIcon size={13} /> <strong>Validade:</strong> {new Date(item.validUntil).toLocaleDateString('pt-BR')} {expired && '(VENCIDO)'}
                           </span>
                         )}
-                        {item.partnerName && <span>🏪 <strong>Estabelecimento:</strong> {item.partnerName}</span>}
+                        {item.partnerName && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><StoreIcon size={13} /> <strong>Estabelecimento:</strong> {item.partnerName}</span>}
                       </div>
 
                       {item.verificationNotes && (
@@ -432,9 +454,12 @@ export default function AdminCertificationsPage() {
                           color: '#fff',
                           border: 'none',
                           cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
                         }}
                       >
-                        ✅ Homologar
+                        <CheckCircleIcon size={14} /> Homologar
                       </button>
                     )}
 
@@ -454,9 +479,12 @@ export default function AdminCertificationsPage() {
                           color: '#ef4444',
                           border: '1px solid #ef4444',
                           cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
                         }}
                       >
-                        ❌ Rejeitar
+                        <XCircleIcon size={14} /> Rejeitar
                       </button>
                     )}
                   </div>
@@ -470,8 +498,8 @@ export default function AdminCertificationsPage() {
         {approvingItem && (
           <div className={styles.modalOverlay}>
             <div className={styles.modalContent} style={{ maxWidth: 460 }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 10px', color: '#10b981' }}>
-                ✅ Homologar Selo / Laudo Técnico
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 10px', color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <CheckCircleIcon size={18} /> Homologar Selo / Laudo Técnico
               </h2>
               <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', marginBottom: 14 }}>
                 Você está homologando o selo <strong>{approvingItem.certificationType}</strong> para o produto <strong>{approvingItem.productName}</strong>. Este produto passará a exibir o selo de segurança alimentar auditada pelo CeLiLac.
@@ -526,8 +554,8 @@ export default function AdminCertificationsPage() {
         {rejectingItem && (
           <div className={styles.modalOverlay}>
             <div className={styles.modalContent} style={{ maxWidth: 460 }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 10px', color: '#ef4444' }}>
-                ❌ Rejeitar Selo / Laudo Técnico
+              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 10px', color: '#ef4444', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <XCircleIcon size={18} /> Rejeitar Selo / Laudo Técnico
               </h2>
               <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', marginBottom: 14 }}>
                 Informe a justificativa da rejeição para o produto <strong>{rejectingItem.productName}</strong> ({rejectingItem.certificationType}):

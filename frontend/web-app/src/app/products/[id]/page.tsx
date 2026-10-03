@@ -17,6 +17,23 @@ import { CreateProductModal } from '@/components/common/CreateProductModal';
 import { useToast } from '@/hooks/useToast';
 import { translateReasoning, translateConflictReason, translateAllergen } from '@/utils/compatibilityTranslator';
 import { saveRecentCheck } from '@/services/recentChecks';
+import {
+  ShieldCheckIcon,
+  ShieldIcon,
+  AlertTriangleIcon,
+  BuildingIcon,
+  BanIcon,
+  InfoIcon,
+  LockIcon,
+  ClockIcon,
+  ShoppingCartIcon,
+  ScrollIcon,
+  WheatIcon,
+  MilkIcon,
+  FlaskIcon,
+  FileTextIcon,
+  CheckCircleIcon,
+} from '@/components/layout/icons';
 import styles from '../../dashboard/dashboard.module.css';
 
 interface PageProps {
@@ -276,8 +293,8 @@ export default function ProductDetailsPage({ params }: PageProps) {
           {/* Veredito de Compatibilidade Alimentar (Condicional por Papel do Usuário) */}
           {isAuthenticated && userRole === 'CELIACO' ? (
             <div style={{ background: 'var(--color-elevated)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '0.75rem' }}>
-                🛡️ Análise de Compatibilidade Alimentar
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ShieldCheckIcon size={18} /> Análise de Compatibilidade Alimentar
               </h3>
               {compatibility ? (
                 <>
@@ -287,8 +304,9 @@ export default function ProductDetailsPage({ params }: PageProps) {
                       {translateReasoning(compatibility.reasoning)}
                     </p>
                     {compatibility.conflicts?.map((conflict, index) => (
-                      <div key={index} style={{ marginTop: '0.5rem', color: 'var(--color-danger)', fontSize: '0.9rem' }}>
-                        ⚠️ <strong>{translateAllergen(conflict.allergen)}:</strong> {translateConflictReason(conflict.reason)}
+                      <div key={index} style={{ marginTop: '0.5rem', color: 'var(--color-danger)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <AlertTriangleIcon size={14} style={{ color: 'var(--color-danger)', flexShrink: 0 }} />
+                        <span><strong>{translateAllergen(conflict.allergen)}:</strong> {translateConflictReason(conflict.reason)}</span>
                       </div>
                     ))}
                   </div>
@@ -315,7 +333,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                <span style={{ fontSize: '1.1rem' }}>🏢</span>
+                <BuildingIcon size={20} style={{ color: 'var(--color-brand-gold)' }} />
                 <h3 style={{ fontSize: '1rem', color: 'var(--color-text)', margin: 0 }}>
                   Visão do Estabelecimento Parceiro
                 </h3>
@@ -335,7 +353,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                <span style={{ fontSize: '1.1rem' }}>🛡️</span>
+                <ShieldIcon size={20} style={{ color: '#3b82f6' }} />
                 <h3 style={{ fontSize: '1rem', color: 'var(--color-text)', margin: 0 }}>
                   Visão Administrativa (Moderação)
                 </h3>
@@ -346,8 +364,8 @@ export default function ProductDetailsPage({ params }: PageProps) {
             </div>
           ) : !isAuthenticated ? (
             <div style={{ background: 'var(--color-elevated)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
-              <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '0.5rem' }}>
-                🛡️ Análise de Compatibilidade Alimentar
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ShieldCheckIcon size={18} /> Análise de Compatibilidade Alimentar
               </h3>
               <p style={{ margin: '0 0 0.85rem 0', fontSize: '0.875rem', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
                 Faça login como consumidor para verificar se este produto é seguro para o seu perfil e restrições alimentares.
@@ -423,15 +441,23 @@ export default function ProductDetailsPage({ params }: PageProps) {
             {isPurchaseBlocked ? (
               <div>
                 <button type="button" className={styles.btnOrderBlocked} disabled>
-                  ⛔ Compra Bloqueada por Incompatibilidade Alimentar
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <BanIcon size={16} /> Compra Bloqueada por Incompatibilidade Alimentar
+                  </span>
                 </button>
                 <div className={styles.biologicalLockNotice}>
-                  <strong>🛡️ Trava de Segurança Biológica CeLiLac:</strong> Para resguardar sua saúde contra reações alérgicas graves e contaminação cruzada, o sistema impede a realização de pedidos de produtos avaliados como não seguros para o seu perfil.
+                  <strong style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <ShieldCheckIcon size={16} style={{ color: 'var(--color-danger)' }} /> Trava de Segurança Biológica CeLiLac:
+                  </strong>{' '}
+                  Para resguardar sua saúde contra reações alérgicas graves e contaminação cruzada, o sistema impede a realização de pedidos de produtos avaliados como não seguros para o seu perfil.
                 </div>
               </div>
             ) : !product.partnerId ? (
               <div className={styles.catalogOnlyNotice}>
-                ℹ️ <strong>Produto Informativo:</strong> Este item foi cadastrado no catálogo geral para consulta de rótulo e ingredientes. Para realizar pedidos com entrega segura, explore os estabelecimentos homologados em <Link href="/public-partners" style={{ color: 'var(--color-emerald)', fontWeight: 600 }}>Descobrir Locais</Link>.
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <InfoIcon size={16} style={{ color: 'var(--color-primary)' }} /> <strong>Produto Informativo:</strong>
+                </span>{' '}
+                Este item foi cadastrado no catálogo geral para consulta de rótulo e ingredientes. Para realizar pedidos com entrega segura, explore os estabelecimentos homologados em <Link href="/public-partners" style={{ color: 'var(--color-emerald)', fontWeight: 600 }}>Descobrir Locais</Link>.
               </div>
             ) : !isAuthenticated ? (
               <div className={styles.purchaseFooter}>
@@ -443,12 +469,17 @@ export default function ProductDetailsPage({ params }: PageProps) {
                   className={styles.btnOrderNow}
                   style={{ textDecoration: 'none' }}
                 >
-                  🔐 Entrar para Comprar
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <LockIcon size={15} /> Entrar para Comprar
+                  </span>
                 </Link>
               </div>
             ) : userRole === 'PARCEIRO' || userRole === 'ADMIN' ? (
               <div className={styles.catalogOnlyNotice} style={{ borderLeft: '4px solid var(--color-brand-gold)' }}>
-                🏢 <strong>Visão de Gestão:</strong> Pedidos com entrega e pagamento são realizados exclusivamente por consumidores. Como parceiro ou moderador, utilize este painel para verificar a apresentação do produto.
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <BuildingIcon size={16} style={{ color: 'var(--color-brand-gold)' }} /> <strong>Visão de Gestão:</strong>
+                </span>{' '}
+                Pedidos com entrega e pagamento são realizados exclusivamente por consumidores. Como parceiro ou moderador, utilize este painel para verificar a apresentação do produto.
               </div>
             ) : (
               <div className={styles.purchaseFooter}>
@@ -465,9 +496,13 @@ export default function ProductDetailsPage({ params }: PageProps) {
                   disabled={submittingOrder}
                 >
                   {submittingOrder ? (
-                    <>⏳ Processando Pedido...</>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <ClockIcon size={15} /> Processando Pedido...
+                    </span>
                   ) : (
-                    <>🛒 Fazer Pedido / Comprar Agora</>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <ShoppingCartIcon size={15} /> Fazer Pedido / Comprar Agora
+                    </span>
                   )}
                 </button>
               </div>
@@ -477,17 +512,21 @@ export default function ProductDetailsPage({ params }: PageProps) {
           {/* Ficha Técnica / Detalhes */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
             <div>
-              <h4 style={{ color: 'var(--color-text)', marginBottom: '0.5rem' }}>📜 Ingredientes</h4>
+              <h4 style={{ color: 'var(--color-text)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ScrollIcon size={16} /> Ingredientes
+              </h4>
               <p style={{ background: 'var(--color-surface)', padding: '0.75rem', borderRadius: 'var(--radius-sm)', color: 'var(--color-text)', fontSize: '0.9rem', lineHeight: '1.5' }}>
                 {product.ingredients || 'Ingredientes não informados.'}
               </p>
             </div>
 
             <div>
-              <h4 style={{ color: 'var(--color-text)', marginBottom: '0.5rem' }}>⚠️ Classificações & Alérgenos</h4>
+              <h4 style={{ color: 'var(--color-text)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <AlertTriangleIcon size={16} style={{ color: '#f59e0b' }} /> Classificações & Alérgenos
+              </h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  🌾 <strong>Contém Glúten:</strong> {
+                  <WheatIcon size={15} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> <strong>Contém Glúten:</strong> {
                     product.hasGluten ||
                     product.declaredAllergens?.['GLUTEN'] === 'CONTAINS' ||
                     product.declaredAllergens?.['WHEAT'] === 'CONTAINS'
@@ -496,7 +535,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
                   }
                 </li>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  🥛 <strong>Declaração de Leite:</strong> {(() => {
+                  <MilkIcon size={15} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> <strong>Declaração de Leite:</strong> {(() => {
                     const ing = (product.ingredients || '').toLowerCase();
                     const cross = (product.crossContamination || '').toLowerCase();
                     const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme', 'whey', 'soro'];
@@ -506,7 +545,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
                   })()}
                 </li>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  🧪 <strong>Contaminação Cruzada:</strong> {(() => {
+                  <FlaskIcon size={15} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> <strong>Contaminação Cruzada:</strong> {(() => {
                     const cc = product.crossContamination || '';
                     if (!cc || cc === 'NONE' || cc === 'NENHUM') return 'Nenhum (Ambiente 100% livre)';
                     if (cc === 'TRACES' || cc === 'TRACOS') return 'Pode conter traços (Alerta preventivo no rótulo)';
@@ -515,11 +554,11 @@ export default function ProductDetailsPage({ params }: PageProps) {
                   })()}
                 </li>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  📋 <strong>Status da Análise:</strong> {
+                  <FileTextIcon size={15} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> <strong>Status da Análise:</strong> {
                     product.analysisStatus === 'ANALISADO' || product.analysisStatus === 'APPROVED'
-                      ? '✅ Analisado'
+                      ? 'Analisado'
                       : product.analysisStatus === 'PENDENTE_DE_ANALISE' || product.analysisStatus === 'PENDING_ANALYSIS'
-                      ? '⏳ Pendente de Análise'
+                      ? 'Pendente de Análise'
                       : product.analysisStatus || 'VERIFICADO'
                   }
                 </li>

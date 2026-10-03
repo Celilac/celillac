@@ -2,6 +2,7 @@
 // frontend/web-app/src/components/common/DietaryFeaturesPicker.tsx
 import React from 'react';
 import { DietaryFeature } from '@/api/catalog';
+import { LeafIcon, SparklesIcon, ShieldCheckIcon, ShieldIcon, CheckCircleIcon } from '@/components/layout/icons';
 
 interface DietaryFeaturesPickerProps {
   selected: DietaryFeature[];
@@ -12,7 +13,7 @@ interface DietaryFeaturesPickerProps {
 interface FeatureConfig {
   key: DietaryFeature;
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   badgeBg: string;
   badgeColor: string;
   badgeBorder: string;
@@ -23,7 +24,7 @@ const FEATURE_CONFIGS: FeatureConfig[] = [
   {
     key: 'VEGAN',
     label: 'Vegano',
-    icon: '🌱',
+    icon: <LeafIcon size={20} style={{ color: '#10b981' }} />,
     badgeBg: 'rgba(16, 185, 129, 0.15)',
     badgeColor: '#10b981',
     badgeBorder: 'rgba(16, 185, 129, 0.35)',
@@ -32,7 +33,7 @@ const FEATURE_CONFIGS: FeatureConfig[] = [
   {
     key: 'VEGETARIAN',
     label: 'Vegetariano',
-    icon: '🥕',
+    icon: <LeafIcon size={20} style={{ color: '#34d399' }} />,
     badgeBg: 'rgba(52, 211, 153, 0.15)',
     badgeColor: '#34d399',
     badgeBorder: 'rgba(52, 211, 153, 0.35)',
@@ -41,7 +42,7 @@ const FEATURE_CONFIGS: FeatureConfig[] = [
   {
     key: 'NO_ADDED_SUGAR',
     label: 'Sem Adição de Açúcares',
-    icon: '🍎',
+    icon: <SparklesIcon size={20} style={{ color: '#f59e0b' }} />,
     badgeBg: 'rgba(245, 158, 11, 0.15)',
     badgeColor: '#f59e0b',
     badgeBorder: 'rgba(245, 158, 11, 0.35)',
@@ -50,7 +51,7 @@ const FEATURE_CONFIGS: FeatureConfig[] = [
   {
     key: 'SUGAR_FREE',
     label: 'Zero Açúcar',
-    icon: '🫐',
+    icon: <ShieldCheckIcon size={20} style={{ color: '#38bdf8' }} />,
     badgeBg: 'rgba(56, 189, 248, 0.15)',
     badgeColor: '#38bdf8',
     badgeBorder: 'rgba(56, 189, 248, 0.35)',
@@ -59,7 +60,7 @@ const FEATURE_CONFIGS: FeatureConfig[] = [
   {
     key: 'ORGANIC',
     label: 'Orgânico',
-    icon: '🌿',
+    icon: <LeafIcon size={20} style={{ color: '#a3e635' }} />,
     badgeBg: 'rgba(132, 204, 22, 0.15)',
     badgeColor: '#a3e635',
     badgeBorder: 'rgba(132, 204, 22, 0.35)',
@@ -68,7 +69,7 @@ const FEATURE_CONFIGS: FeatureConfig[] = [
   {
     key: 'KOSHER',
     label: 'Kosher',
-    icon: '✡️',
+    icon: <ShieldIcon size={20} style={{ color: '#c084fc' }} />,
     badgeBg: 'rgba(168, 85, 247, 0.15)',
     badgeColor: '#c084fc',
     badgeBorder: 'rgba(168, 85, 247, 0.35)',
@@ -77,7 +78,7 @@ const FEATURE_CONFIGS: FeatureConfig[] = [
   {
     key: 'HALAL',
     label: 'Halal',
-    icon: '☪️',
+    icon: <ShieldIcon size={20} style={{ color: '#f472b6' }} />,
     badgeBg: 'rgba(236, 72, 153, 0.15)',
     badgeColor: '#f472b6',
     badgeBorder: 'rgba(236, 72, 153, 0.35)',
@@ -143,15 +144,7 @@ export const DietaryFeaturesPicker: React.FC<DietaryFeaturesPickerProps> = ({
                     {cfg.label}
                   </span>
                   {isSelected && (
-                    <span
-                      style={{
-                        fontSize: '11px',
-                        color: cfg.badgeColor,
-                        fontWeight: 900,
-                      }}
-                    >
-                      ✓
-                    </span>
+                    <CheckCircleIcon size={14} style={{ color: cfg.badgeColor }} />
                   )}
                 </div>
                 <span

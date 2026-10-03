@@ -1,6 +1,7 @@
 'use client';
 // frontend/web-app/src/components/common/UserAvatar.tsx
 import { useState, useEffect } from 'react';
+import { UserIcon } from '@/components/layout/icons';
 
 interface UserAvatarProps {
   avatarUrl?: string;
@@ -17,7 +18,7 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
   }, []);
 
   // Gera as iniciais do nome como fallback simbólico
-  const getInitials = () => {
+  const getInitials = (): string | null => {
     if (fullName && fullName.trim()) {
       const parts = fullName.trim().split(' ');
       if (parts.length >= 2) {
@@ -28,7 +29,7 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
     if (email) {
       return email[0].toUpperCase();
     }
-    return '👤';
+    return null;
   };
 
   const initials = getInitials();
@@ -54,7 +55,7 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
           verticalAlign: 'middle',
         }}
       >
-        👤
+        <UserIcon size={Math.round(size * 0.55)} style={{ color: '#ffffff' }} />
       </span>
     );
   }
@@ -68,13 +69,16 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
           height: size,
           borderRadius: '50%',
           overflow: 'hidden',
-          position: 'relative',
-          border: '2px solid var(--color-emerald, #10b981)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '2px solid var(--color-emerald-light, #34d399)',
+          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
           flexShrink: 0,
-          display: 'inline-block',
           verticalAlign: 'middle',
         }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={avatarUrl}
           alt={fullName || 'Avatar do usuário'}
@@ -109,7 +113,7 @@ export function UserAvatar({ avatarUrl, fullName, email, size = 36 }: UserAvatar
       }}
       title={fullName || email || 'Usuário'}
     >
-      {initials}
+      {initials ? initials : <UserIcon size={Math.round(size * 0.55)} style={{ color: '#ffffff' }} />}
     </span>
   );
 }

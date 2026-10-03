@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
 import { HttpError } from '@/api/client';
+import { CheckCircleIcon, RefreshIcon, MailIcon } from '@/components/layout/icons';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -210,9 +211,9 @@ export default function VerifyEmailPage() {
               type="submit"
               className="btn btn-em"
               disabled={loading || digits.join('').length !== 6}
-              style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', marginBottom: '1rem' }}
+              style={{ width: '100%', justifyContent: 'center', padding: '0.75rem', marginBottom: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
             >
-              {loading ? 'Verificando…' : '✅ Validar Código'}
+              {loading ? 'Verificando…' : <><CheckCircleIcon size={16} /> Validar Código</>}
             </button>
           </form>
 
@@ -225,13 +226,15 @@ export default function VerifyEmailPage() {
               onClick={handleResend}
               disabled={countdown > 0 || resendLoading}
               className="btn btn-ghost"
-              style={{ fontSize: 'var(--text-label)', color: countdown > 0 ? 'var(--color-text-muted)' : 'var(--color-emerald)' }}
+              style={{ fontSize: 'var(--text-label)', color: countdown > 0 ? 'var(--color-text-muted)' : 'var(--color-emerald)', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
             >
-              {resendLoading
-                ? 'Enviando…'
-                : countdown > 0
-                ? `🔄 Reenviar código em ${countdown}s`
-                : '📩 Reenviar novo código'}
+              {resendLoading ? (
+                'Enviando…'
+              ) : countdown > 0 ? (
+                <><RefreshIcon size={14} /> Reenviar código em {countdown}s</>
+              ) : (
+                <><MailIcon size={14} /> Reenviar novo código</>
+              )}
             </button>
           </div>
         </div>

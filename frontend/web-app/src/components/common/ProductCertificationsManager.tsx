@@ -2,6 +2,7 @@
 // frontend/web-app/src/components/common/ProductCertificationsManager.tsx
 import React, { useState } from 'react';
 import { ProductCertificationDTO, ProductImageDTO } from '@/api/catalog';
+import { WheatIcon, LeafIcon, FlaskIcon, MedalIcon, CameraIcon, CheckCircleIcon } from '@/components/layout/icons';
 
 interface ProductCertificationsManagerProps {
   certifications: ProductCertificationDTO[];
@@ -14,7 +15,7 @@ const PRESET_CERTIFICATIONS: Array<{
   type: string;
   name: string;
   defaultEntity: string;
-  icon: string;
+  icon: React.ReactNode;
   badgeBg: string;
   badgeColor: string;
 }> = [
@@ -22,7 +23,7 @@ const PRESET_CERTIFICATIONS: Array<{
     type: 'ACELBRA_SEAL',
     name: 'Selo ACELBRA (Celíacos do Brasil)',
     defaultEntity: 'ACELBRA - Associação dos Celíacos do Brasil',
-    icon: '🌾',
+    icon: <WheatIcon size={24} style={{ color: '#10b981' }} />,
     badgeBg: 'rgba(16, 185, 129, 0.15)',
     badgeColor: '#10b981',
   },
@@ -30,7 +31,7 @@ const PRESET_CERTIFICATIONS: Array<{
     type: 'VEGAN_SVB',
     name: 'Certificado Vegano SVB',
     defaultEntity: 'Sociedade Vegetariana Brasileira',
-    icon: '🌱',
+    icon: <LeafIcon size={24} style={{ color: '#34d399' }} />,
     badgeBg: 'rgba(52, 211, 153, 0.15)',
     badgeColor: '#34d399',
   },
@@ -38,7 +39,7 @@ const PRESET_CERTIFICATIONS: Array<{
     type: 'ORGANIC_BRAZIL',
     name: 'Selo Orgânico Brasil',
     defaultEntity: 'Ministério da Agricultura / SisOrg',
-    icon: '🌿',
+    icon: <LeafIcon size={24} style={{ color: '#a3e635' }} />,
     badgeBg: 'rgba(132, 204, 22, 0.15)',
     badgeColor: '#a3e635',
   },
@@ -46,7 +47,7 @@ const PRESET_CERTIFICATIONS: Array<{
     type: 'GLUTEN_FREE_LAB',
     name: 'Laudo Laboratorial (<20 ppm Glúten)',
     defaultEntity: 'Laboratório Credenciado',
-    icon: '🔬',
+    icon: <FlaskIcon size={24} style={{ color: '#38bdf8' }} />,
     badgeBg: 'rgba(56, 189, 248, 0.15)',
     badgeColor: '#38bdf8',
   },
@@ -54,7 +55,7 @@ const PRESET_CERTIFICATIONS: Array<{
     type: 'OTHER',
     name: 'Outro Selo ou Laudo Oficial',
     defaultEntity: '',
-    icon: '🏅',
+    icon: <MedalIcon size={24} style={{ color: '#c084fc' }} />,
     badgeBg: 'rgba(168, 85, 247, 0.15)',
     badgeColor: '#c084fc',
   },
@@ -117,7 +118,7 @@ export const ProductCertificationsManager: React.FC<ProductCertificationsManager
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {certifications.map((cert, idx) => {
             const preset = PRESET_CERTIFICATIONS.find((p) => p.type === cert.certificationType) || {
-              icon: '🏅',
+              icon: <MedalIcon size={24} style={{ color: '#818cf8' }} />,
               name: cert.certificationType,
               badgeBg: 'rgba(99, 102, 241, 0.15)',
               badgeColor: '#818cf8',
@@ -141,7 +142,7 @@ export const ProductCertificationsManager: React.FC<ProductCertificationsManager
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '24px' }}>{preset.icon}</span>
+                  <span style={{ fontSize: '24px', display: 'flex', alignItems: 'center' }}>{preset.icon}</span>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text)' }}>
@@ -153,6 +154,9 @@ export const ProductCertificationsManager: React.FC<ProductCertificationsManager
                           fontWeight: 700,
                           padding: '2px 6px',
                           borderRadius: '4px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
                           background:
                             cert.verificationStatus === 'VERIFIED_BY_CELILAC'
                               ? 'rgba(16, 185, 129, 0.15)'
@@ -163,9 +167,14 @@ export const ProductCertificationsManager: React.FC<ProductCertificationsManager
                               : '#94a3b8',
                         }}
                       >
-                        {cert.verificationStatus === 'VERIFIED_BY_CELILAC'
-                          ? '✓ Auditado CeLiLac'
-                          : 'Declarado pelo Parceiro'}
+                        {cert.verificationStatus === 'VERIFIED_BY_CELILAC' ? (
+                          <>
+                            <CheckCircleIcon size={12} style={{ color: '#10b981' }} />
+                            Auditado CeLiLac
+                          </>
+                        ) : (
+                          'Declarado pelo Parceiro'
+                        )}
                       </span>
                     </div>
 
@@ -184,8 +193,8 @@ export const ProductCertificationsManager: React.FC<ProductCertificationsManager
                         </span>
                       )}
                       {linkedImg && (
-                        <span style={{ fontSize: '11px', color: '#10b981' }}>
-                          📸 Foto Comprobatória Vinculada
+                        <span style={{ fontSize: '11px', color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <CameraIcon size={13} /> Foto Comprobatória Vinculada
                         </span>
                       )}
                     </div>

@@ -29,6 +29,26 @@ import { DietaryFeaturesPicker } from './DietaryFeaturesPicker';
 import { ProductCertificationsManager } from './ProductCertificationsManager';
 import { NutritionalInfoAccordion } from './NutritionalInfoAccordion';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
+import {
+  SaveIcon,
+  BuildingIcon,
+  AlertTriangleIcon,
+  TagIcon,
+  PackageIcon,
+  FileTextIcon,
+  BowlIcon,
+  ShieldCheckIcon,
+  ShieldIcon,
+  StatusDot,
+  MilkIcon,
+  LeafIcon,
+  MedalIcon,
+  RocketIcon,
+  EyeIcon,
+  CameraIcon,
+  ChartBarIcon,
+  ExternalLinkIcon,
+} from '@/components/layout/icons';
 
 interface CreateProductModalProps {
   isOpen: boolean;
@@ -712,8 +732,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             {lastAutoSaved && (
-              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                💾 Auto-salvo às {lastAutoSaved}
+              <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <SaveIcon size={12} /> Auto-salvo às {lastAutoSaved}
               </span>
             )}
             <button
@@ -805,14 +825,14 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
             >
               {!initialPartnerId && (
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                    🏢 Estabelecimento Produtor / Fornecedor *
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                    <BuildingIcon size={16} /> Estabelecimento Produtor / Fornecedor *
                   </label>
                   {loadingPartners ? (
                     <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Carregando seus estabelecimentos…</p>
                   ) : partners.length === 0 ? (
-                    <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', fontSize: '0.85rem', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
-                      ⚠️ Você ainda não possui um estabelecimento cadastrado. Crie seu estabelecimento para vincular os produtos.
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.75rem', borderRadius: '8px', background: 'rgba(234, 179, 8, 0.1)', color: '#eab308', fontSize: '0.85rem', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+                      <AlertTriangleIcon size={16} style={{ flexShrink: 0 }} /> Você ainda não possui um estabelecimento cadastrado. Crie seu estabelecimento para vincular os produtos.
                     </div>
                   ) : (
                     <select
@@ -847,8 +867,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
 
               {/* Origem Comercial: Fabricação Própria vs Revenda */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-                  🏷️ Origem Comercial do Produto *
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.35rem' }}>
+                  <TagIcon size={16} /> Origem Comercial do Produto *
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   <button
@@ -868,7 +888,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <span style={{ fontSize: '1.2rem' }}>🏭</span>
+                    <BuildingIcon size={22} style={{ color: '#10b981', flexShrink: 0 }} />
                     <div>
                       <div style={{ fontSize: '0.85rem', fontWeight: 700, color: commercialOrigin === 'OWN_MANUFACTURE' ? '#10b981' : 'inherit' }}>
                         Fabricação Própria
@@ -896,7 +916,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    <span style={{ fontSize: '1.2rem' }}>📦</span>
+                    <PackageIcon size={22} style={{ color: '#3b82f6', flexShrink: 0 }} />
                     <div>
                       <div style={{ fontSize: '0.85rem', fontWeight: 700, color: commercialOrigin === 'THIRD_PARTY_RESELL' ? '#3b82f6' : 'inherit' }}>
                         Revenda / Fornecido por Terceiro
@@ -924,7 +944,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
               }}
             >
               <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                📋 Identificação do Produto
+                <FileTextIcon size={16} /> Identificação do Produto
               </h4>
 
               {/* Nome & Marca */}
@@ -1029,10 +1049,10 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                     >
                       {categories.map((cat) => (
                         <option key={cat.id} value={cat.name}>
-                          {cat.name} {cat.status === 'PENDING_APPROVAL' ? '⏳ (Sob Moderação)' : ''}
+                          {cat.name} {cat.status === 'PENDING_APPROVAL' ? '(Sob Moderação)' : ''}
                         </option>
                       ))}
-                      <option value="__NEW_CATEGORY__">➕ + Registrar Nova Categoria...</option>
+                      <option value="__NEW_CATEGORY__">+ Registrar Nova Categoria...</option>
                     </select>
                   ) : (
                     <div
@@ -1272,7 +1292,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  🥣 Ingredientes & Matriz de Alérgenos
+                  <BowlIcon size={16} /> Ingredientes & Matriz de Alérgenos
                 </h4>
                 <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 600 }}>
                   RDC 727/2022 ANVISA
@@ -1301,8 +1321,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   }}
                   required
                 />
-                <small style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '2px', display: 'block' }}>
-                  🛡️ Processado pelo motor de segurança alimentar para alertar contra alérgenos da formulação.
+                <small style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <ShieldCheckIcon size={13} style={{ color: '#10b981', flexShrink: 0 }} /> Processado pelo motor de segurança alimentar para alertar contra alérgenos da formulação.
                 </small>
               </div>
 
@@ -1316,7 +1336,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                 }}
               >
                 <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 700, color: '#f59e0b', marginBottom: '0.35rem' }}>
-                  ⚠️ Declaração "Pode Conter..." (Traços / Alérgenos por Contato Cruzado)
+                  <AlertTriangleIcon size={16} /> Declaração "Pode Conter..." (Traços / Alérgenos por Contato Cruzado)
                 </label>
                 <input
                   type="text"
@@ -1341,8 +1361,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
               {/* Matriz Oficial de Alérgenos (Fase 3) */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
                 <div>
-                  <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                    🏷️ Matriz Declarada de Alérgenos (10 Alérgenos ANVISA)
+                  <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <TagIcon size={15} /> Matriz Declarada de Alérgenos (10 Alérgenos ANVISA)
                   </h5>
                   <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                     Selecione o estado de cada alérgeno: Livre, Contém ou Pode Conter Traços. O CeLiLac gera os selos automáticos.
@@ -1393,7 +1413,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  🛡️ Ambiente, Estilos de Vida & Certificações
+                  <ShieldIcon size={16} /> Ambiente, Estilos de Vida & Certificações
                 </h4>
                 <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 600 }}>
                   Fase 3 • Auditoria Técnica
@@ -1419,8 +1439,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                      {hasGluten ? '🔴 Produto Contém Glúten' : '🟢 Produto Livre de Glúten (Sem Glúten)'}
+                    <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <StatusDot color={hasGluten ? 'red' : 'green'} size={10} /> {hasGluten ? 'Produto Contém Glúten' : 'Produto Livre de Glúten (Sem Glúten)'}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
                       {hasGluten
@@ -1466,8 +1486,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: milkDeclaration === 'FREE' ? '#10b981' : 'var(--color-text)' }}>
-                        🟢 Sem Leite nem Traços
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: milkDeclaration === 'FREE' ? '#10b981' : 'var(--color-text)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <StatusDot color="green" size={8} /> Sem Leite nem Traços
                       </span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
                         100% Livre (Apto p/ APLV)
@@ -1490,8 +1510,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: milkDeclaration === 'CONTAINS' ? '#ef4444' : 'var(--color-text)' }}>
-                        🥛 Contém Leite
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: milkDeclaration === 'CONTAINS' ? '#ef4444' : 'var(--color-text)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <MilkIcon size={14} /> Contém Leite
                       </span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
                         Possui leite na composição
@@ -1514,8 +1534,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: milkDeclaration === 'TRACES' ? '#f59e0b' : 'var(--color-text)' }}>
-                        ⚠️ Traços de Leite
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: milkDeclaration === 'TRACES' ? '#f59e0b' : 'var(--color-text)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <AlertTriangleIcon size={14} style={{ color: '#f59e0b' }} /> Traços de Leite
                       </span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
                         Risco de contato cruzado
@@ -1536,8 +1556,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
 
               {/* 3. Estilos de Vida & Dietas Especiais */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 700, marginBottom: '6px', color: 'var(--color-text)' }}>
-                  🌱 Estilos de Vida & Características Alimentares
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem', fontWeight: 700, marginBottom: '6px', color: 'var(--color-text)' }}>
+                  <LeafIcon size={16} /> Estilos de Vida & Características Alimentares
                 </label>
                 <DietaryFeaturesPicker
                   selected={dietaryFeatures}
@@ -1548,8 +1568,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
 
               {/* 4. Gerenciador de Selos e Certificações Oficiais */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 700, marginBottom: '6px', color: 'var(--color-text)' }}>
-                  🏅 Selos Oficiais, Certificados e Laudos Laboratoriais
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.88rem', fontWeight: 700, marginBottom: '6px', color: 'var(--color-text)' }}>
+                  <MedalIcon size={16} /> Selos Oficiais, Certificados e Laudos Laboratoriais
                 </label>
                 <ProductCertificationsManager
                   certifications={certifications}
@@ -1587,8 +1607,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                 gap: '0.85rem',
               }}
             >
-              <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                🚀 Ações da Publicação
+              <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <RocketIcon size={16} /> Ações da Publicação
               </h4>
 
               <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-text-muted)', lineHeight: 1.4 }}>
@@ -1617,7 +1637,11 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   transition: 'all 0.15s ease',
                 }}
               >
-                {loading ? 'Processando…' : '🚀 Publicar no Catálogo'}
+                {loading ? 'Processando…' : (
+                  <>
+                    <RocketIcon size={16} /> Publicar no Catálogo
+                  </>
+                )}
               </button>
 
               <button
@@ -1641,7 +1665,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   transition: 'all 0.15s ease',
                 }}
               >
-                💾 Salvar como Rascunho
+                <SaveIcon size={15} /> Salvar como Rascunho
               </button>
 
               {lastAutoSaved && (
@@ -1671,8 +1695,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>
-                  👁️ Prévia do Consumidor
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <EyeIcon size={15} /> Prévia do Consumidor
                 </span>
                 <span
                   style={{
@@ -1726,14 +1750,17 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                         fontWeight: 700,
                         padding: '2px 7px',
                         borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
                       }}
                     >
-                      📷 {images.length} {images.length === 1 ? 'foto' : 'fotos'}
+                      <CameraIcon size={12} /> {images.length} {images.length === 1 ? 'foto' : 'fotos'}
                     </div>
                   </>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', color: '#64748b' }}>
-                    <span style={{ fontSize: '1.4rem' }}>📷</span>
+                    <CameraIcon size={32} />
                     <span style={{ fontSize: '0.72rem' }}>Sem fotos cadastradas</span>
                   </div>
                 )}
@@ -1769,9 +1796,12 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                     fontWeight: 700,
                     background: hasGluten ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)',
                     color: hasGluten ? '#ef4444' : '#10b981',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
                   }}
                 >
-                  {hasGluten ? '🔴 COM GLÚTEN' : '🟢 SEM GLÚTEN'}
+                  <StatusDot color={hasGluten ? 'red' : 'green'} size={7} /> {hasGluten ? 'COM GLÚTEN' : 'SEM GLÚTEN'}
                 </span>
 
                 {milkDeclaration && (
@@ -1783,9 +1813,18 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                       fontWeight: 700,
                       background: milkDeclaration === 'FREE' ? 'rgba(16, 185, 129, 0.2)' : milkDeclaration === 'CONTAINS' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)',
                       color: milkDeclaration === 'FREE' ? '#10b981' : milkDeclaration === 'CONTAINS' ? '#ef4444' : '#f59e0b',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
                   >
-                    {milkDeclaration === 'FREE' ? '🟢 SEM LEITE' : milkDeclaration === 'CONTAINS' ? '🥛 COM LEITE' : '⚠️ TRAÇOS LEITE'}
+                    {milkDeclaration === 'FREE' ? (
+                      <><StatusDot color="green" size={7} /> SEM LEITE</>
+                    ) : milkDeclaration === 'CONTAINS' ? (
+                      <><MilkIcon size={11} /> COM LEITE</>
+                    ) : (
+                      <><AlertTriangleIcon size={11} /> TRAÇOS LEITE</>
+                    )}
                   </span>
                 )}
 
@@ -1816,9 +1855,12 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                       background: 'rgba(52, 211, 153, 0.15)',
                       color: '#34d399',
                       border: '1px solid rgba(52, 211, 153, 0.3)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
                   >
-                    🌱 {f === 'VEGAN' ? 'Vegano' : f === 'ORGANIC' ? 'Orgânico' : f === 'NO_ADDED_SUGAR' ? 'Sem Açúcar Adic.' : f}
+                    <LeafIcon size={11} /> {f === 'VEGAN' ? 'Vegano' : f === 'ORGANIC' ? 'Orgânico' : f === 'NO_ADDED_SUGAR' ? 'Sem Açúcar Adic.' : f}
                   </span>
                 ))}
 
@@ -1833,9 +1875,12 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                       background: 'rgba(99, 102, 241, 0.15)',
                       color: '#818cf8',
                       border: '1px solid rgba(99, 102, 241, 0.3)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
                     }}
                   >
-                    🏅 {c.certifyingEntity}
+                    <MedalIcon size={11} /> {c.certifyingEntity}
                   </span>
                 ))}
               </div>
@@ -1847,8 +1892,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
               )}
 
               {nutritionalInfo?.calories !== undefined && (
-                <div style={{ fontSize: '0.72rem', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.08)', padding: '6px', borderRadius: '6px', lineHeight: 1.3 }}>
-                  📊 <strong>{nutritionalInfo.calories} kcal</strong> {nutritionalInfo.servingSize ? `(porção ${nutritionalInfo.servingSize})` : ''}
+                <div style={{ fontSize: '0.72rem', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.08)', padding: '6px', borderRadius: '6px', lineHeight: 1.3, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <ChartBarIcon size={13} /> <strong>{nutritionalInfo.calories} kcal</strong> {nutritionalInfo.servingSize ? `(porção ${nutritionalInfo.servingSize})` : ''}
                 </div>
               )}
             </div>
@@ -1866,8 +1911,8 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)' }}>
-                  📸 Documentação Visual
+                <h4 style={{ margin: 0, fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <CameraIcon size={15} /> Documentação Visual
                 </h4>
                 <span style={{ fontSize: '0.75rem', color: '#10b981', fontWeight: 700 }}>
                   {images.length}/8 fotos
@@ -1876,28 +1921,36 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--color-text-muted)' }}>🏷️ Rótulo Frontal:</span>
+                  <span style={{ color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <TagIcon size={13} /> Rótulo Frontal:
+                  </span>
                   <span style={{ fontWeight: 600, color: images.some((i) => i.imageType === 'LABEL') ? '#10b981' : '#94a3b8' }}>
                     {images.some((i) => i.imageType === 'LABEL') ? '✓ Anexado' : 'Opcional'}
                   </span>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--color-text-muted)' }}>🥣 Ingredientes (RDC 727):</span>
+                  <span style={{ color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <BowlIcon size={13} /> Ingredientes (RDC 727):
+                  </span>
                   <span style={{ fontWeight: 600, color: images.some((i) => i.imageType === 'INGREDIENTS') ? '#10b981' : '#94a3b8' }}>
                     {images.some((i) => i.imageType === 'INGREDIENTS') ? '✓ Anexado' : 'Opcional'}
                   </span>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--color-text-muted)' }}>📦 Embalagem / Produto:</span>
+                  <span style={{ color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <PackageIcon size={13} /> Embalagem / Produto:
+                  </span>
                   <span style={{ fontWeight: 600, color: images.some((i) => i.imageType === 'PRODUCT' || i.imageType === 'PACKAGING') ? '#10b981' : '#94a3b8' }}>
                     {images.some((i) => i.imageType === 'PRODUCT' || i.imageType === 'PACKAGING') ? '✓ Anexado' : 'Opcional'}
                   </span>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'var(--color-text-muted)' }}>🏅 Laudo / Certificação:</span>
+                  <span style={{ color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <MedalIcon size={13} /> Laudo / Certificação:
+                  </span>
                   <span style={{ fontWeight: 600, color: certifications.length > 0 || images.some((i) => i.imageType === 'CERTIFICATION') ? '#10b981' : '#94a3b8' }}>
                     {certifications.length > 0 ? `✓ ${certifications.length} selo(s)` : 'Opcional'}
                   </span>
@@ -1918,9 +1971,13 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   fontWeight: 600,
                   cursor: 'pointer',
                   textAlign: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '4px',
                 }}
               >
-                Gerenciar Fotos na Galeria ↗
+                Gerenciar Fotos na Galeria <ExternalLinkIcon size={12} />
               </button>
             </div>
           </div>

@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { reviewApi } from '@/api/reviews';
 import { apiClient } from '@/api/client';
 import { useToast } from '@/hooks/useToast';
+import { StarIcon, MailIcon, AlertTriangleIcon, CloseIcon } from '@/components/layout/icons';
 import styles from '../../app/partner/partner.module.css';
 
 interface ReviewModalProps {
@@ -90,8 +91,9 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
     <div className={styles.dialogOverlay}>
       <div className={styles.dialogCard} style={{ maxWidth: '480px' }}>
         <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>
-            ⭐ Avaliar {targetName}
+          <h3 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <StarIcon size={20} filled style={{ color: '#f59e0b' }} />
+            Avaliar {targetName}
           </h3>
           <button
             type="button"
@@ -99,7 +101,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             className={styles.modalCloseBtn}
             aria-label="Fechar"
           >
-            ✕
+            <CloseIcon size={16} />
           </button>
         </div>
 
@@ -110,7 +112,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         {!isEmailVerified && (
           <div className={`${styles.alertBanner} ${styles.alertBannerWarning}`} style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>📩</span>
+              <MailIcon size={18} style={{ color: 'var(--color-warning)' }} />
               <div>
                 <strong>E-mail não verificado:</strong> Valide sua conta para habilitar avaliações.
               </div>
@@ -134,8 +136,8 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         )}
 
         {error && (
-          <div className={`${styles.alertBanner} ${styles.alertBannerDanger}`} style={{ marginBottom: '1rem' }}>
-            <span>⚠️</span>
+          <div className={`${styles.alertBanner} ${styles.alertBannerDanger}`} style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertTriangleIcon size={18} style={{ color: 'var(--color-danger)' }} />
             <div>{error}</div>
           </div>
         )}
@@ -146,7 +148,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
               Sua Nota (1 a 5 estrelas)
             </label>
             <div
-              style={{ display: 'inline-flex', gap: '0.25rem', alignItems: 'center' }}
+              style={{ display: 'inline-flex', gap: '0.5rem', alignItems: 'center' }}
               onMouseLeave={() => setHoverRating(0)}
             >
               {[1, 2, 3, 4, 5].map((star) => {
@@ -162,20 +164,25 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      fontSize: '2rem',
-                      width: '42px',
-                      height: '42px',
+                      width: '38px',
+                      height: '38px',
                       padding: 0,
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      lineHeight: 1,
-                      filter: active ? 'none' : 'grayscale(100%) opacity(30%)',
-                      transition: 'filter 0.15s ease',
                       userSelect: 'none',
+                      transition: 'transform 0.1s ease',
+                      transform: active ? 'scale(1.1)' : 'scale(1)',
                     }}
                   >
-                    ⭐
+                    <StarIcon
+                      size={28}
+                      filled={active}
+                      style={{
+                        color: active ? '#f59e0b' : 'var(--color-border)',
+                        transition: 'all 0.15s ease',
+                      }}
+                    />
                   </button>
                 );
               })}
