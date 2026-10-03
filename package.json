@@ -7,6 +7,7 @@
     "verify": "node scripts/agent-verify.mjs",
     "verify:quick": "node scripts/agent-verify.mjs --quick",
     "verify:full": "node scripts/agent-verify.mjs --full",
+    "verify:offline": "node scripts/agent-verify.mjs --allow-offline",
     "test:smoke": "node scripts/test-api-smoke.mjs"
   }
 }

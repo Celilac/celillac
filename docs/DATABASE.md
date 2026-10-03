@@ -86,6 +86,7 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `is_food_profile_complete` | BOOLEAN | DEFAULT false |
 | `is_food_profile_critical` | BOOLEAN | DEFAULT false |
 | `status` | VARCHAR | `CONTA_CRIADA`, `PERFIL_INCOMPLETO`, `PERFIL_CONFIGURADO`, `PERFIL_CRITICO`, `ATIVO`, `INATIVO` |
+| `can_pay_on_delivery` | BOOLEAN | NOT NULL DEFAULT true (Migration 028: elegibilidade para pagamento presencial) |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
 | `updated_at` | TIMESTAMP | DEFAULT NOW() |
 
@@ -138,17 +139,24 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `comment` | TEXT | Opcional |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
 
-### Tabela: `partner_reports` (Denúncias de Parceiros)
+### Tabela: `product_reports` (Denúncias Unificadas — Produtos, Parceiros, Usuários e Pedidos)
+> Unificada via Migration 014 e expandida na Migration 028 com suporte a denúncia de não-pagamento / pedido.
+
 | Coluna | Tipo | Restrições |
 |:-------|:-----|:-----------|
 | `id` | UUID | PK |
-| `reporter_id` | UUID | FK → users.id |
-| `partner_id` | UUID | FK → partners.id |
-| `reason` | VARCHAR | Motivo da denúncia |
-| `details` | TEXT | Opcional |
-| `is_food_safety_risk` | BOOLEAN | DEFAULT false (Colocado no topo da fila de moderação se true) |
-| `status` | VARCHAR | DEFAULT `PENDING` |
+| `reporter_id` | UUID | FK → users.id, NOT NULL |
+| `product_id` | UUID | FK → products.id, ON DELETE CASCADE (Opcional) |
+| `partner_id` | UUID | FK → partners.id, ON DELETE CASCADE (Opcional) |
+| `target_user_id` | UUID | FK → users.id, ON DELETE SET NULL (Opcional - Migration 028) |
+| `order_id` | UUID | FK → orders.id, ON DELETE SET NULL (Opcional - Migration 028) |
+| `reason` | VARCHAR(100) | Motivo da denúncia |
+| `details` | TEXT | Detalhamento da ocorrência |
+| `is_food_safety_risk` | BOOLEAN | DEFAULT false (Prioridade máxima se true) |
+| `status` | VARCHAR(50) | DEFAULT `PENDING` (`PENDING`, `INVESTIGATING`, `RESOLVED`, `DISMISSED`) |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
+| `updated_at` | TIMESTAMP | DEFAULT NOW() |
+| *(índices e check)* | CONSTRAINT | `check_report_target`: Exige ao menos 1 alvo (`product_id`, `partner_id`, `target_user_id` ou `order_id`) |
 
 ### Tabela: `products` (Catálogo)
 | Coluna | Tipo | Restrições |
@@ -325,9 +333,11 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `pix_expires_at` | TIMESTAMP WITH TIME ZONE | Data e hora de expiração da chave dinâmica PIX |
 | `paid_at` | TIMESTAMP WITH TIME ZONE | Timestamp de confirmação do pagamento |
 | `failure_reason` | TEXT | Motivo de falha caso rejeitado |
+| `idempotency_key` | VARCHAR(100) | Chave única de idempotência anti-duplicidade (Migration 027) |
+| `change_for` | NUMERIC(10,2) | Valor para troco em dinheiro (Migration 028) |
 | `created_at` | TIMESTAMP WITH TIME ZONE | DEFAULT NOW() |
 | `updated_at` | TIMESTAMP WITH TIME ZONE | DEFAULT NOW() |
-| *(índices)* | INDEX | `idx_payments_order_id`, `idx_payments_gateway_transaction_id`, `idx_payments_partner_id`, `idx_payments_consumer_id`, `idx_payments_status` |
+| *(índices)* | INDEX | `idx_payments_order_id`, `idx_payments_gateway_transaction_id`, `idx_payments_partner_id`, `idx_payments_consumer_id`, `idx_payments_status`, `idx_payments_idempotency_key` |
 
 ### Tabela: `payment_refunds` (Estornos e Reembolsos de Pagamento)
 | Coluna | Tipo | Restrições |
