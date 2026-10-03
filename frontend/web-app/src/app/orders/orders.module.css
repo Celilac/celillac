@@ -184,6 +184,29 @@
   transform: translateY(-1px);
 }
 
+.partnerActionBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--color-emerald);
+  border: 1px solid var(--color-emerald);
+  font-weight: 700;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.88rem;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.partnerActionBtn:hover {
+  background: var(--color-emerald);
+  color: #064e3b;
+  transform: translateY(-1px);
+}
+
 .payCardActionBtn {
   display: inline-flex;
   align-items: center;
