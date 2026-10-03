@@ -48,12 +48,16 @@ export class LoginUserUseCase {
     }
 
     // 4. Gerar JWT
-    const secret = process.env.JWT_SECRET as string;
+    const secret = process.env.JWT_SECRET;
+    if (!secret && process.env.NODE_ENV === 'production') {
+      throw new Error('Configuração crítica ausente: JWT_SECRET obrigatório em ambiente de produção.');
+    }
+    const finalSecret = secret || 'celilac_jwt_secret_key_2026_dev';
     const expiresIn = process.env.JWT_EXPIRES_IN ?? '7d';
 
     const token = jwt.sign(
       { sub: user.id, role: user.role },
-      secret,
+      finalSecret,
       { expiresIn } as jwt.SignOptions,
     );
 

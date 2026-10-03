@@ -64,4 +64,22 @@ describe('Review Entity', () => {
     expect(reviewOrError.isFailure).toBe(true);
     expect(reviewOrError.getError()).toBe('A avaliação deve ser entre 1 e 5 estrelas.');
   });
+
+  it('deve serializar corretamente via toJSON() incluindo id e propriedades', () => {
+    const review = Review.create(
+      {
+        userId: 'user-1',
+        partnerId: 'partner-1',
+        rating: 5,
+        comment: 'Muito seguro',
+      },
+      'rev-custom-id'
+    ).getValue();
+
+    const json = review.toJSON();
+    expect(json.id).toBe('rev-custom-id');
+    expect(json.rating).toBe(5);
+    expect(json.comment).toBe('Muito seguro');
+    expect(json.partnerId).toBe('partner-1');
+  });
 });

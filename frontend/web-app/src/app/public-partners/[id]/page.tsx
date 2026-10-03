@@ -2,17 +2,20 @@
 // frontend/web-app/src/app/public-partners/[id]/page.tsx
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { catalogApi, ProductSummary } from '@/api/catalog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
-import { HttpError } from '@/api/client';
+import { HttpError, apiClient } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { FavoriteButton } from '@/components/common/FavoriteButton';
 import { ReviewsList } from '@/components/common/ReviewsList';
 import { ReportModal } from '@/components/common/ReportModal';
+import PartnerLocationMap from '@/components/common/PartnerLocationMap';
+import { formatDisplayPhone } from '@/utils/mask';
 import styles from '../../partner/partner.module.css';
 
 interface PageProps {
@@ -33,7 +36,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
 
   useEffect(() => {
     Promise.all([
-      partnerApi.get(id),
+      partnerApi.get(id, token || undefined),
       catalogApi.listByPartner(id, token || undefined)
     ])
       .then(([partnerData, catalogData]) => {
@@ -50,6 +53,25 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
       .finally(() => setLoading(false));
   }, [id, token, router, toast]);
 
+  const handleOpenReport = async () => {
+    if (!token) {
+      alert('Você precisa estar autenticado para denunciar um estabelecimento.');
+      return;
+    }
+
+    try {
+      const me = await apiClient.get<any>('/iam/me', token);
+      if (me && me.isEmailVerified === false) {
+        alert('É obrigatório validar seu endereço de e-mail com o código OTP antes de denunciar qualquer produto.');
+        return;
+      }
+    } catch {
+      // prossegue em caso de falha temporária
+    }
+
+    setIsReportModalOpen(true);
+  };
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -65,18 +87,90 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
       <Header />
 
       <main className={styles.container}>
-        <div className={styles.header}>
-          <div className={styles.titleArea}>
-            <h1 className={styles.title}>{partner.name}</h1>
-            <p className={styles.subtitle}>Perfil comercial homologado pelo CeLiLac</p>
+        <div className={styles.header} style={{ marginBottom: '1rem', gap: '0.85rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            {partner.logoUrl && (
+              <div style={{
+                width: '52px',
+                height: '52px',
+                borderRadius: '12px',
+                background: 'var(--color-elevated)',
+                border: '1px solid var(--color-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                flexShrink: 0,
+                padding: '4px',
+              }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={partner.logoUrl}
+                  alt={`Marca de ${partner.name}`}
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                />
+              </div>
+            )}
+            <div className={styles.titleArea} style={{ gap: '0.2rem' }}>
+              <h1 className={styles.title} style={{ fontSize: '1.4rem', margin: 0 }}>{partner.name}</h1>
+              <p className={styles.subtitle} style={{ fontSize: '0.85rem', margin: 0 }}>Perfil comercial homologado pelo CeLiLac</p>
+            </div>
           </div>
-          <button 
-            type="button" 
-            className={`${styles.btn} ${styles.btnSecondary}`}
-            onClick={() => router.push('/public-partners')}
-          >
-            ⬅️ Voltar ao Guia
-          </button>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            gap: '0.5rem',
+            width: '100%',
+            maxWidth: '380px',
+          }}>
+            <a
+              href="#avaliacoes"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.35rem',
+                padding: '0.45rem 0.6rem',
+                borderRadius: '999px',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                textDecoration: 'none',
+                color: 'var(--color-emerald, #10B981)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                background: 'rgba(16, 185, 129, 0.08)',
+                whiteSpace: 'nowrap',
+                textAlign: 'center',
+                transition: 'all 0.15s ease',
+              }}
+              title="Ver avaliações da comunidade"
+            >
+              💬 Ver avaliações ↓
+            </a>
+            <button 
+              type="button" 
+              onClick={() => router.push('/public-partners')}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.35rem',
+                padding: '0.45rem 0.6rem',
+                borderRadius: '999px',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                color: 'var(--color-text, #f1f5f9)',
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-surface, #101c23)',
+                whiteSpace: 'nowrap',
+                textAlign: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              ⬅️ Voltar ao Guia
+            </button>
+          </div>
         </div>
 
         {partner.operationalStatus === 'TEMPORARILY_CLOSED' && (
@@ -94,56 +188,77 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
         <div className={styles.dashboardLayout}>
           <section className={styles.mainPanel}>
             {/* Detalhes do parceiro com variáveis adaptativas de tema */}
-            <div className={styles.card} style={{ gap: '1rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h2 className={styles.sectionTitle}>ℹ️ Sobre o Estabelecimento</h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className={styles.card} style={{ gap: '0.85rem', padding: '1.25rem' }}>
+              <div className={styles.partnerSectionHeader} style={{ marginBottom: 0 }}>
+                <h2 className={styles.sectionTitle} style={{ margin: 0, fontSize: '1.15rem' }}>ℹ️ Sobre o Estabelecimento</h2>
+                <div className={styles.partnerHeaderActions}>
                   <FavoriteButton partnerId={partner.id} />
                   <button
                     type="button"
-                    onClick={() => setIsReportModalOpen(true)}
+                    onClick={handleOpenReport}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '0.25rem',
-                      padding: '0.4rem 0.75rem',
-                      fontSize: '0.8rem',
+                      padding: '0.35rem 0.65rem',
+                      fontSize: '0.78rem',
                       fontWeight: 600,
                       borderRadius: '0.75rem',
                       border: '1px solid var(--color-border)',
                       backgroundColor: 'rgba(239, 68, 68, 0.1)',
                       color: '#ef4444',
                       cursor: 'pointer',
+                      whiteSpace: 'nowrap',
                     }}
                   >
-                    🚩 Denunciar Estabelecimento
+                    🚩 Denunciar
                   </button>
                 </div>
               </div>
 
-              <p className={styles.partnerDescription} style={{ fontSize: 'var(--text-body)', lineHeight: '1.6', WebkitLineClamp: 'none', lineClamp: 'none' }}>
-                {partner.description || 'Este parceiro ainda não forneceu uma descrição detalhada.'}
-              </p>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
+              <div className={styles.partnerInfoGrid} style={{ fontSize: '0.88rem', margin: 0 }}>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>📍 Endereço:</strong> {partner.address}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🌆 Cidade:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não informada'}</p>
+                  <p style={{ margin: '0 0 0.35rem' }}><strong style={{ color: 'var(--color-text)' }}>📍 Endereço:</strong> {partner.address}</p>
+                  <p style={{ margin: 0 }}><strong style={{ color: 'var(--color-text)' }}>🌆 Cidade:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não informada'}</p>
                 </div>
                 <div>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>📞 Contato:</strong> {partner.phone}</p>
-                  <p style={{ marginBottom: '0.5rem' }}><strong style={{ color: 'var(--color-text)' }}>🚗 Região Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
+                  <p style={{ margin: '0 0 0.35rem' }}>
+                    <strong style={{ color: 'var(--color-text)' }}>📞 Contato:</strong>{' '}
+                    <a
+                      href={`https://wa.me/${partner.phone?.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.phoneLink}
+                      title="Clique para abrir no WhatsApp"
+                    >
+                      {formatDisplayPhone(partner.phone)}
+                    </a>
+                  </p>
+                  <p style={{ margin: 0 }}><strong style={{ color: 'var(--color-text)' }}>🚗 Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
                 </div>
               </div>
+
+              {/* Mapa de Localização Interativo em Destaque Direto */}
+              <div style={{ marginTop: '0.25rem' }}>
+                <PartnerLocationMap
+                  address={partner.address}
+                  city={partner.city}
+                  state={partner.state}
+                  name={partner.name}
+                  height={210}
+                  showDirectionsButton={true}
+                />
+              </div>
+
+              {partner.description && (
+                <p className={styles.partnerDescription} style={{ fontSize: '0.88rem', lineHeight: '1.5', margin: '0.25rem 0 0', color: 'var(--color-text-muted)', WebkitLineClamp: 'none', lineClamp: 'none' }}>
+                  {partner.description}
+                </p>
+              )}
             </div>
 
-            {/* Avaliações do Parceiro */}
-            <div className={styles.card} style={{ marginTop: '1rem', padding: '1.5rem' }}>
-              <ReviewsList partnerId={partner.id} targetName={partner.name} />
-            </div>
-
-            {/* Listagem de produtos */}
-            <div style={{ marginTop: '1rem' }}>
+            {/* Listagem de produtos ofertados */}
+            <div style={{ marginTop: '1.25rem' }}>
               <h2 className={styles.sectionTitle} style={{ marginBottom: '1rem' }}>📦 Produtos Ofertados ({products.length})</h2>
               
               {products.length === 0 ? (
@@ -153,26 +268,98 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                   <p>Volte em breve para verificar novos lançamentos de produtos seguros.</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className={styles.partnerProductsGrid}>
                   {products.map((product) => (
                     <div key={product.id} className={styles.card} style={{ padding: '1.25rem', gap: '0.5rem' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <h3 className={styles.partnerName} style={{ fontSize: 'var(--text-title)', fontWeight: '700' }}>{product.name}</h3>
-                        {product.hasGluten ? (
-                          <span className={`${styles.badge} ${styles.badgeRejected}`}>Contém Glúten</span>
-                        ) : (
-                          <span className={`${styles.badge} ${styles.badgeApproved}`}>Sem Glúten</span>
-                        )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
+                        <Link
+                          href={`/products/${product.id}`}
+                          style={{ textDecoration: 'none', color: 'inherit' }}
+                        >
+                          <h3
+                            className={styles.partnerName}
+                            style={{
+                              fontSize: 'var(--text-title)',
+                              fontWeight: '700',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            {product.name}
+                            <span style={{ fontSize: '0.8rem', color: 'var(--color-emerald, #059669)' }}>↗</span>
+                          </h3>
+                        </Link>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {product.hasGluten ? (
+                            <span className={`${styles.badge} ${styles.badgeRejected}`}>Contém Glúten</span>
+                          ) : (
+                            <span className={`${styles.badge} ${styles.badgeApproved}`}>Sem Glúten</span>
+                          )}
+
+                          {(() => {
+                            const ing = (product.ingredients || '').toLowerCase();
+                            const cross = (product.crossContamination || '').toLowerCase();
+                            const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme', 'whey', 'soro'];
+                            if (milkTerms.some((t) => ing.includes(t))) {
+                              return <span className={`${styles.badge} ${styles.badgeRejected}`}>Contém Leite</span>;
+                            }
+                            if (milkTerms.some((t) => cross.includes(t))) {
+                              return <span className={`${styles.badge} ${styles.badgePending}`}>Traços de Leite</span>;
+                            }
+                            return <span className={`${styles.badge} ${styles.badgeApproved}`}>Sem Leite</span>;
+                          })()}
+                        </div>
                       </div>
                       <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>Marca: {product.brand}</p>
-                      <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        Ingredientes: {product.ingredients}
+                      <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', lineHeight: '1.5', wordBreak: 'break-word' }}>
+                        <strong style={{ color: 'var(--color-text)' }}>Ingredientes:</strong> {product.ingredients}
                       </p>
-                      {product.crossContamination && (
-                        <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-warning)', fontStyle: 'italic' }}>
-                          ⚠️ Traços: {product.crossContamination}
-                        </p>
-                      )}
+                      {(() => {
+                        const cc = (product.crossContamination || '').trim().toLowerCase();
+                        const isFree =
+                          !cc ||
+                          cc === 'none' ||
+                          cc === 'nenhum' ||
+                          cc.startsWith('nenhum') ||
+                          cc.startsWith('livre') ||
+                          cc.includes('100% livre');
+
+                        if (isFree) return null;
+
+                        return (
+                          <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-warning)', fontStyle: 'italic' }}>
+                            ⚠️ Traços: {(() => {
+                              const raw = product.crossContamination || '';
+                              if (raw === 'TRACES' || raw === 'TRACOS') return 'Pode conter traços (Alerta preventivo no rótulo)';
+                              if (raw === 'SHARED_EQUIPMENT' || raw === 'MAQUINARIO_COMPARTILHADO') return 'Compartilha maquinário / linhas de produção';
+                              return raw;
+                            })()}
+                          </p>
+                        );
+                      })()}
+                      <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                        <Link
+                          href={`/products/${product.id}`}
+                          style={{
+                            fontSize: '0.8rem',
+                            fontWeight: 600,
+                            color: 'var(--color-emerald, #059669)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            textDecoration: 'none',
+                            padding: '4px 8px',
+                            borderRadius: 'var(--radius-md, 6px)',
+                            background: 'rgba(16, 185, 129, 0.08)',
+                            border: '1px solid rgba(16, 185, 129, 0.2)',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          📦 Ver Detalhes do Produto
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -190,6 +377,11 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                   Este parceiro comercial declarou conformidade e responsabilidade no manejo de alimentos para celíacos.
                 </p>
               </div>
+            </div>
+
+            {/* Avaliações da Comunidade na Coluna Lateral */}
+            <div id="avaliacoes" className={styles.card} style={{ padding: '1.5rem', scrollMarginTop: '2rem' }}>
+              <ReviewsList partnerId={partner.id} targetName={partner.name} />
             </div>
           </aside>
         </div>

@@ -1,4 +1,4 @@
-// backend/tests/unit/application/partner/ListAdminPartnersUseCase.spec.ts
+﻿// backend/tests/unit/application/partner/ListAdminPartnersUseCase.spec.ts
 import { ListAdminPartnersUseCase } from '../../../../src/application/partner/ListAdminPartnersUseCase';
 import { IPartnerRepository } from '../../../../src/domain/partner/repositories/IPartnerRepository';
 import { IUserRepository } from '../../../../src/domain/iam/repositories/IUserRepository';
@@ -29,11 +29,12 @@ describe('ListAdminPartnersUseCase', () => {
       findById: jest.fn(),
       findAll: jest.fn(),
       save: jest.fn(),
+      delete: jest.fn(async (_id: string) => {}),
     };
     useCase = new ListAdminPartnersUseCase(partnerRepository, userRepository);
   });
 
-  it('deve listar todos os parceiros, inclusive não públicos, para ADMIN (11.12)', async () => {
+  it('deve listar todos os parceiros, inclusive nÃ£o pÃºblicos, para ADMIN (11.12)', async () => {
     const admin = User.create({
       email: makeValidEmail('admin@teste.com'),
       passwordHash: makeValidHash(),
@@ -58,7 +59,7 @@ describe('ListAdminPartnersUseCase', () => {
     expect(result.getValue()).toHaveLength(2);
   });
 
-  it('deve recusar acesso a usuário que não é ADMIN', async () => {
+  it('deve recusar acesso a usuÃ¡rio que nÃ£o Ã© ADMIN', async () => {
     const normalUser = User.create({
       email: makeValidEmail('celiaco@teste.com'),
       passwordHash: makeValidHash(),
@@ -74,7 +75,7 @@ describe('ListAdminPartnersUseCase', () => {
     expect(partnerRepository.findAll).not.toHaveBeenCalled();
   });
 
-  it('deve falhar se o usuário administrador não for encontrado', async () => {
+  it('deve falhar se o usuÃ¡rio administrador nÃ£o for encontrado', async () => {
     userRepository.findById.mockResolvedValue(null);
 
     const result = await useCase.execute({ adminUserId: 'user-inexistente' });
@@ -83,3 +84,6 @@ describe('ListAdminPartnersUseCase', () => {
     expect(partnerRepository.findAll).not.toHaveBeenCalled();
   });
 });
+
+
+

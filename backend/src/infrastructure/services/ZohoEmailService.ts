@@ -34,6 +34,7 @@ export class ZohoEmailService implements IEmailService {
   }
 
   async sendVerificationCode(recipientEmail: string, code: string, recipientName?: string): Promise<void> {
+    console.log(`[EmailService]: 🔑 Código OTP gerado para ${recipientEmail}: [ ${code} ]`);
     const subject = 'CeLiLac — Seu código de verificação';
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
@@ -64,6 +65,38 @@ export class ZohoEmailService implements IEmailService {
     await this.dispatchEmail(recipientEmail, subject, htmlContent);
   }
 
+  async sendPasswordResetCode(recipientEmail: string, code: string, recipientName?: string): Promise<void> {
+    console.log(`[ZohoEmailService]: 🔑 Código de recuperação de senha gerado para ${recipientEmail}: [ ${code} ]`);
+    const subject = 'CeLiLac — Recuperação de Senha';
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #059669; margin: 0; font-size: 24px;">Celi<span style="color: #10b981;">Lac</span></h2>
+          <p style="color: #6b7280; font-size: 13px; margin-top: 4px;">Segurança Alimentar</p>
+        </div>
+        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <h3 style="color: #111827; margin-top: 0;">Recuperação de Senha</h3>
+          <p style="color: #374151; font-size: 14px; line-height: 1.5;">
+            Olá${recipientName ? ' <strong>' + recipientName + '</strong>' : ''},
+          </p>
+          <p style="color: #374151; font-size: 14px; line-height: 1.5;">
+            Você solicitou a recuperação de senha da sua conta no CeLiLac. Utilize o código de 6 dígitos abaixo para prosseguir com a redefinição:
+          </p>
+          <div style="text-align: center; margin: 24px 0;">
+            <span style="display: inline-block; font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #059669; background-color: #ecfdf5; padding: 12px 28px; border-radius: 8px; border: 1px solid #a7f3d0;">
+              ${code}
+            </span>
+          </div>
+          <p style="color: #6b7280; font-size: 13px; text-align: center;">
+            Este código é válido por <strong>15 minutos</strong>. Se você não solicitou a redefinição de senha, nenhuma ação é necessária e sua senha atual permanece segura.
+          </p>
+        </div>
+      </div>
+    `;
+
+    await this.dispatchEmail(recipientEmail, subject, htmlContent);
+  }
+
   async sendAdminApprovalNotification(recipientEmail: string, adminName?: string): Promise<void> {
     const subject = 'CeLiLac — Sua conta de Administrador foi aprovada!';
     const htmlContent = `
@@ -83,6 +116,80 @@ export class ZohoEmailService implements IEmailService {
       </div>
     `;
 
+    await this.dispatchEmail(recipientEmail, subject, htmlContent);
+  }
+
+  async sendNewUserRegisteredAdminNotification(
+    recipientEmail: string,
+    userDetails: {
+      fullName?: string;
+      email: string;
+      role: string;
+      registeredAt: Date;
+    },
+  ): Promise<void> {
+    const roleLabels: Record<string, { label: string; badgeBg: string; badgeColor: string }> = {
+      CELIACO: { label: '🥗 Consumidor (Segurança Alimentar)', badgeBg: '#ecfdf5', badgeColor: '#059669' },
+      PARCEIRO: { label: '🏭 Parceiro Comercial (Estabelecimento/Catálogo)', badgeBg: '#eff6ff', badgeColor: '#2563eb' },
+      ADMIN: { label: '🛡️ Administrador', badgeBg: '#fef3c7', badgeColor: '#d97706' },
+    };
+
+    const roleInfo = roleLabels[userDetails.role] || { label: userDetails.role, badgeBg: '#f3f4f6', badgeColor: '#374151' };
+    const dateFormatted = userDetails.registeredAt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+
+    const subject = `CeLiLac — 🔔 Novo Usuário Cadastrado: ${userDetails.fullName || userDetails.email} (${userDetails.role})`;
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h2 style="color: #244151; margin: 0; font-size: 26px; font-weight: 800;">Celi<span style="color: #e1a118;">Lac</span></h2>
+          <p style="color: #6b7280; font-size: 13px; margin-top: 4px;">Plataforma de Segurança Alimentar</p>
+        </div>
+
+        <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
+          <div style="border-bottom: 1px solid #e5e7eb; padding-bottom: 12px; margin-bottom: 16px;">
+            <h3 style="color: #111827; margin: 0; font-size: 18px;">🔔 Novo Usuário Registrado</h3>
+            <p style="color: #6b7280; font-size: 13px; margin: 4px 0 0 0;">Uma nova conta acabou de ser criada no ecossistema CeLiLac.</p>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px;">
+            <tbody>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; width: 130px; font-weight: 600;">Nome Completo:</td>
+                <td style="padding: 8px 0; color: #111827; font-weight: bold;">${userDetails.fullName || 'Não informado'}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">E-mail:</td>
+                <td style="padding: 8px 0; color: #111827;">${userDetails.email}</td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Perfil / Tipo:</td>
+                <td style="padding: 8px 0;">
+                  <span style="background-color: ${roleInfo.badgeBg}; color: ${roleInfo.badgeColor}; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold;">
+                    ${roleInfo.label}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 8px 0; color: #6b7280; font-weight: 600;">Data do Registro:</td>
+                <td style="padding: 8px 0; color: #374151;">${dateFormatted}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="text-align: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid #f3f4f6;">
+            <a href="https://celilac.com.br/admin/users" style="display: inline-block; background-color: #059669; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 14px;">
+              Gerenciar Usuários no Painel Admin →
+            </a>
+          </div>
+        </div>
+
+        <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 16px;">
+          Esta é uma notificação automática enviada para administradores do CeLiLac.
+        </p>
+      </div>
+    `;
+
+    console.log(`[ZohoEmailService]: 🔔 Enviando notificação de novo usuário para admin: ${recipientEmail}`);
     await this.dispatchEmail(recipientEmail, subject, htmlContent);
   }
 

@@ -6,6 +6,8 @@ import { FoodProfile } from '../../domain/food-profile/FoodProfile';
 
 export interface GetFoodProfileDTO {
   userId: string;
+  actorId?: string;
+  actorRole?: string;
 }
 
 /**
@@ -15,6 +17,13 @@ export class GetFoodProfileUseCase {
   constructor(private readonly profileRepository: IFoodProfileRepository) {}
 
   async execute(dto: GetFoodProfileDTO): Promise<Result<FoodProfileResponseDTO>> {
+    // BOLA / IDOR Defense (A01): Apenas o próprio dono do perfil ou ADMIN podem acessar
+    if (dto.actorId && dto.actorId !== dto.userId && dto.actorRole !== 'ADMIN') {
+      return Result.fail<FoodProfileResponseDTO>(
+        'Acesso negado: Você não possui permissão para acessar o perfil alimentar deste usuário.',
+      );
+    }
+
     const profile = await this.profileRepository.findByUserId(dto.userId);
 
     if (!profile) {
@@ -32,6 +41,7 @@ export class GetFoodProfileUseCase {
       userId:                      profile.userId,
       isActive:                    profile.isActive(),
       requiresHistoryRevalidation: profile.requiresHistoryRevalidation,
+      acceptsCrossContamination:   profile.acceptsCrossContamination,
       restrictions:                profile.restrictions.map((r) => ({
         id:       r.id,
         allergen: r.allergen,

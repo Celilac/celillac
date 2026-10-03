@@ -75,7 +75,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       appBar: AppBar(
         title: Row(
           children: const [
-            BrandLogo(height: 24),
+            BrandLogo(size: 24),
             SizedBox(width: 8),
             Text('Meus Favoritos'),
           ],

@@ -1,8 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { reportApi, ReportReason } from '@/api/reports';
+import { apiClient } from '@/api/client';
 import styles from '../../app/partner/partner.module.css';
 
 interface ReportModalProps {
@@ -29,6 +31,21 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState(false);
+  const [isEmailVerified, setIsEmailVerified] = useState<boolean>(true);
+
+  React.useEffect(() => {
+    if (!isOpen || !token || !isAuthenticated) return;
+
+    apiClient.get<any>('/iam/me', token)
+      .then((user) => {
+        if (user && user.isEmailVerified === false) {
+          setIsEmailVerified(false);
+        } else {
+          setIsEmailVerified(true);
+        }
+      })
+      .catch(() => {});
+  }, [isOpen, token, isAuthenticated]);
 
   if (!isOpen) return null;
 
@@ -36,6 +53,11 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     e.preventDefault();
     if (!isAuthenticated || !token) {
       setError('Você precisa estar autenticado para enviar uma denúncia.');
+      return;
+    }
+
+    if (!isEmailVerified) {
+      setError('É obrigatório validar seu endereço de e-mail com o código OTP antes de enviar denúncias.');
       return;
     }
 
@@ -57,7 +79,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         setSuccessMsg(false);
         onSuccess?.();
         onClose();
-      }, 1500);
+      }, 5000);
     } catch (err: any) {
       setError(err.message || 'Erro ao enviar denúncia.');
     } finally {
@@ -75,7 +97,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: 'var(--color-text-muted)' }}
+            className={styles.modalCloseBtn}
+            aria-label="Fechar"
           >
             ✕
           </button>
@@ -84,6 +107,32 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
           Notifique a equipe de moderação sobre informações incorretas ou riscos à saúde dos consumidores.
         </p>
+
+        {!isEmailVerified && (
+          <div className={`${styles.alertBanner} ${styles.alertBannerWarning}`} style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>📩</span>
+              <div>
+                <strong>E-mail não verificado:</strong> Valide sua conta para enviar denúncias.
+              </div>
+            </div>
+            <Link
+              href="/auth/verify-email?send=true"
+              style={{
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: '#ffffff',
+                background: 'var(--color-warning, #f59e0b)',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Validar Agora
+            </Link>
+          </div>
+        )}
 
         {error && (
           <div className={`${styles.alertBanner} ${styles.alertBannerDanger}`} style={{ marginBottom: '1rem' }}>
@@ -98,9 +147,21 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <h4 className={styles.partnerName} style={{ marginTop: '1rem' }}>
               Denúncia enviada com sucesso!
             </h4>
-            <p className={styles.subtitle} style={{ marginTop: '0.5rem' }}>
+            <p className={styles.subtitle} style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>
               Nossa equipe de moderação revisará o relato com prioridade máxima.
             </p>
+            <button
+              type="button"
+              className={styles.btnPrimary}
+              style={{ padding: '0.5rem 1.5rem', minWidth: '130px', margin: '0 auto', display: 'inline-flex' }}
+              onClick={() => {
+                setSuccessMsg(false);
+                onSuccess?.();
+                onClose();
+              }}
+            >
+              Entendido
+            </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -156,7 +217,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               </label>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.5rem' }}>
+            <div className={styles.modalActions}>
               <button
                 type="button"
                 onClick={onClose}
@@ -166,10 +227,10 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               </button>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !isEmailVerified}
                 className={`${styles.btn} ${styles.btnDanger}`}
               >
-                {loading ? 'Enviando...' : 'Enviar Denúncia'}
+                {loading ? 'Enviando...' : !isEmailVerified ? 'Validação necessária' : 'Enviar Denúncia'}
               </button>
             </div>
           </form>

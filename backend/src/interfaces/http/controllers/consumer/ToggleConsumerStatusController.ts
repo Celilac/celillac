@@ -7,7 +7,7 @@ export class ToggleConsumerStatusController {
 
   async execute(req: Request, res: Response): Promise<Response> {
     try {
-      const requestedByUserId = (req as any).user?.sub;
+      const requestedByUserId = req.user?.id || (req as any).user?.sub || (req as any).user?.userId;
       if (!requestedByUserId) {
         return res.status(401).json({ error: 'Não autorizado.' });
       }

@@ -12,13 +12,14 @@ export class ReviewController {
 
   public async submit(req: Request, res: Response): Promise<Response> {
     try {
-      const { userId, productId, partnerId, rating, comment } = req.body;
+      const { productId, partnerId, rating, comment } = req.body;
+      const userId = req.user?.id || req.body.userId;
 
       if (!userId || (!productId && !partnerId) || rating === undefined) {
-        return res.status(400).json({ error: 'Os campos userId, rating (1-5) e pelo menos um de productId ou partnerId são obrigatórios.' });
+        return res.status(400).json({ error: 'Os campos rating (1-5) e pelo menos um de productId ou partnerId são obrigatórios.' });
       }
 
-      if (req.user?.id !== userId && req.user?.role !== 'ADMIN') {
+      if (req.user?.id && req.body.userId && req.user.id !== req.body.userId && req.user?.role !== 'ADMIN') {
         return res.status(403).json({ error: 'Você não tem permissão para enviar avaliação em nome de outro usuário.' });
       }
 
@@ -79,7 +80,18 @@ export class ReviewController {
         return res.status(400).json({ error: result.getError() });
       }
 
-      return res.status(200).json(result.getValue());
+      const reviews = result.getValue();
+      const dtos = reviews.map((rev) => ({
+        id: rev.id,
+        userId: rev.userId,
+        productId: rev.productId,
+        partnerId: rev.partnerId,
+        rating: rev.rating,
+        comment: rev.comment,
+        createdAt: rev.createdAt,
+      }));
+
+      return res.status(200).json(dtos);
     } catch (error: any) {
       return res.status(500).json({ error: 'Erro interno no servidor ao buscar avaliações.' });
     }

@@ -32,11 +32,15 @@
 ## 3. Catálogo de Parceiros
 - **Responsabilidade:** Gerenciar estabelecimentos (restaurantes, lojas) que cadastram produtos.
 - **Entidades:** `Partner`.
-- **Value Objects:** `PartnerStatus` (ACTIVE, SUSPENDED, PENDING_APPROVAL).
+- **Value Objects:**
+    - `PartnerApprovalStatus` (DRAFT, PENDING_REVIEW, APPROVED, REJECTED, SUSPENDED).
+    - `PartnerOperationalStatus` (ACTIVE, INACTIVE, TEMPORARILY_CLOSED).
+    - `Cnpj` (Validação oficial Módulo 11 da Receita Federal com verificação dos 2 dígitos verificadores, rejeição de sequências repetidas, formatação `99.999.999/9999-99` e suporte à opcionalidade para produtores artesanais/PF).
 - **Regras:**
-    - Um parceiro deve ser aprovado por um ADMIN antes de poder cadastrar produtos.
-    - Parceiro suspenso perde acesso ao cadastro de produtos.
-    - Produtos de um parceiro suspenso devem ser sinalizados no catálogo.
+    - Um parceiro deve ter `approvalStatus = APPROVED` e `operationalStatus = ACTIVE` antes de poder publicar produtos.
+    - Parceiro com cadastro em `DRAFT` ou `PENDING_REVIEW` aguarda revisão administrativa antes de operar.
+    - Parceiro suspenso ou inativo perde acesso ao cadastro de novos produtos e tem seus itens sinalizados/ocultados.
+    - Se informado, o CNPJ DEVE ser estritamente válido matematicamente pelas regras da Receita Federal; cadastros com CNPJ inválido são sumariamente rejeitados (*fail-fast* no domínio).
 
 ---
 
@@ -112,24 +116,32 @@
 
 ---
 
-## 11. Pedidos *(Planejado — Não Implementado)*
-- **Responsabilidade:** Gerenciar pedidos de produtos em parceiros (restaurantes/lojas) pelo consumidor.
-- **Entidades previstas:** `Order`, `OrderItem`.
-- **Value Objects previstos:** `OrderStatus` (PENDING, CONFIRMED, DELIVERED, CANCELLED), `OrderTotal`.
-- **Regras previstas:**
-    - Um pedido só pode ser confirmado se todos os produtos são compatíveis com o perfil do usuário.
-    - Cancelamento disponível até a confirmação do parceiro.
-- **⚠️ Exige aprovação humana** antes de qualquer implementação — impacto em dados financeiros e alimentares.
+## 11. Pedidos
+- **Responsabilidade:** Gerenciar o ciclo de vida de pedidos alimentares entre o consumidor e os estabelecimentos comerciais parceiros.
+- **Entidades / Agregados:** Aggregate Root `Order` (`id`, `orderNumber`, `consumerId`, `partnerId`, `items`, `status`, `deliveryAddress`, `notes`, `subtotal`, `deliveryFee`, `total`, `isRefundEligible`, `createdAt`, `updatedAt`), Entidade `OrderItem` (`id`, `productId`, `productName`, `unitPrice`, `quantity`, `subtotal`).
+- **Value Objects:** `OrderStatus` (`CREATED`, `AWAITING_PAYMENT`, `PAID`, `CONFIRMED`, `PREPARING`, `READY_FOR_PICKUP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `CANCELLED`), `OrderCancellationPolicy`.
+- **Regras Críticas:**
+    - **Invariante Biológica Obrigatória (Trava AllergenEngine):** Antes de criar qualquer pedido, todos os itens selecionados são avaliados contra o `FoodProfile` ativo do consumidor via `AllergenEngine`. Se qualquer item tiver risco `BLOCKED` ou `DANGER`, a criação do pedido é sumariamente bloqueada com `FOOD_SAFETY_RISK_BLOCK`.
+    - **Itens do Mesmo Parceiro:** Um pedido não pode conter produtos de parceiros comerciais distintos.
+    - **Ciclo de Estados:** Segue progressão estrita: `CREATED` ➔ `AWAITING_PAYMENT` ➔ `PAID` ➔ `CONFIRMED` ➔ `PREPARING` ➔ `READY_FOR_PICKUP`/`OUT_FOR_DELIVERY` ➔ `DELIVERED`.
+    - **Cancelamento e Reembolso:** O consumidor pode cancelar pedidos em status `CREATED`, `AWAITING_PAYMENT` ou `PAID`. Se já pago antes do início do preparo pelo parceiro (`CONFIRMED`/`PREPARING`), o pedido é cancelado com direito a reembolso total imediato (`isRefundEligible = true`). Se o parceiro já iniciou a produção ou despacho, o cancelamento unilateral pelo cliente é bloqueado.
 
 ---
 
-## 12. Pagamentos *(Planejado — Não Implementado)*
-- **Responsabilidade:** Processar transações financeiras entre consumidores e parceiros.
-- **Entidades previstas:** `Payment`, `Refund`.
-- **Value Objects previstos:** `Money` (valor + moeda), `PaymentStatus` (PENDING, APPROVED, FAILED, REFUNDED).
-- **Regras previstas:**
-    - Pagamento só é processado após confirmação do pedido.
-    - Reembolso deve ser processado em caso de cancelamento após confirmação.
-- **⚠️ Exige aprovação humana** antes de qualquer implementação — contexto financeiro regulado.
+## 12. Pagamentos e Split Marketplace
+- **Responsabilidade:** Processar transações financeiras (checkout PIX e Cartão de Crédito), split automatizado de receitas marketplace e liquidação de reembolsos.
+- **Entidades / Agregados:** Aggregate Root `Payment` (`id`, `orderId`, `gatewayPaymentId`, `method`, `status`, `amount`, `platformFee`, `netPartnerAmount`, `pixQrCodeUrl`, `pixCopyPaste`, `paidAt`, `createdAt`, `updatedAt`), Entidade `PartnerFinancialAccount` (`id`, `partnerId`, `asaasAccountId`, `pixKeyType`, `pixKey`, `isVerified`, `createdAt`), Entidade `PaymentRefund` (`id`, `paymentId`, `amount`, `reason`, `gatewayRefundId`, `createdAt`).
+- **Value Objects:** `PaymentMethod` (`PIX`, `CREDIT_CARD`), `PaymentStatus` (`PENDING`, `AUTHORIZED`, `PAID`, `FAILED`, `REFUNDED`), `SplitCalculator`.
+- **Serviços / Gateways:** Porta `IPaymentGateway`, Adaptador `AsaasPaymentGateway` (integração Asaas API v3).
+- **Regras Críticas:**
+    - **Modelo de Split Marketplace (Padrão iFood):**
+        - Take rate da plataforma CeLiLac: 12% incidente sobre o valor dos produtos/itens.
+        - Taxa operacional do gateway Asaas (R$ 1,99 no PIX ou equivalente).
+        - Taxa de entrega repassada integralmente ao parceiro.
+        - Valor líquido (`netPartnerAmount`) repassado diretamente para a subconta Asaas do parceiro comercial.
+    - **Idempotência do Checkout:** Múltiplas requisições de checkout para o mesmo pedido em pagamento pendente retornam os dados do pagamento e QR Code já emitidos, sem gerar duplicidade de cobrança no gateway.
+    - **Liquidação Automática via Webhook:** Notificações de liquidação de pagamento enviadas pela Asaas atualizam atomicamente o `Payment` para `PAID` e promovem o `Order` para `PAID`.
+    - **Reembolso Transacional:** Cancelamentos elegíveis acionam o estorno da cobrança junto ao gateway e registram a auditoria em `PaymentRefund`.
+
 
 

@@ -20,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _showPassword = false;
 
   @override
   void dispose() {
@@ -105,8 +106,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(hintText: 'Senha'),
+                      obscureText: !_showPassword,
+                      decoration: InputDecoration(
+                        hintText: 'Senha',
+                        suffixIcon: IconButton(
+                          icon: Text(_showPassword ? '🙈' : '👁'),
+                          onPressed: () => setState(() => _showPassword = !_showPassword),
+                        ),
+                      ),
                       style: const TextStyle(color: AppColors.textPrimary),
                     ),
                     const SizedBox(height: 20),

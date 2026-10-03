@@ -42,6 +42,7 @@ describe('SubmitPartnerForReviewUseCase', () => {
       findById: jest.fn(),
       findAll: jest.fn(),
       save: jest.fn(),
+      delete: jest.fn(async (_id: string) => {}),
     };
     useCase = new SubmitPartnerForReviewUseCase(partnerRepository, userRepository);
   });

@@ -15,10 +15,25 @@ O CeLiLac é uma plataforma de segurança alimentar focada em celíacos e pessoa
 - Nunca reintroduzir os assets placeholder padrão do template Flutter (o ícone azul "F") nem emojis como substituto da logo.
 
 ## Regras Obrigatórias
-1. **Nunca implemente sem um plano:** Antes de qualquer código, crie um `PLAN.md` na tarefa.
-2. **Camadas Isoladas:** Regras de negócio ficam APENAS no `domain`. Controllers não decidem lógica.
-3. **Segurança Alimentar:** Qualquer alteração no `ALLERGEN_ENGINE` exige aprovação humana imediata.
-4. **Testes Primeiro:** Siga a cultura de TDD sempre que possível.
+1. **Planejamento Obrigatório por Ambiente (Apenas para Novas Features):**
+   - **Para Novas Features:**
+     - **No Antigravity IDE (Gemini / Code Agent):** O plano de implementação DEVE ser apresentado EXCLUSIVAMENTE como o **Artefato Nativo do IDE** denominado obrigatoriamente **`plano_de_implementacao.md`** com o título `# Plano de Implementação` (`write_to_file` no diretório de artefatos com `RequestFeedback: true` no `ArtifactMetadata`), exibindo o botão "Proceed". É TERMINANTEMENTE PROIBIDO criar múltiplos arquivos de plano (`plan_x.md`, `plan_y.md`) ou arquivos `PLAN.md` no workspace. O Agente deve SEMPRE atualizar/sobrescrever o mesmo artefato `plano_de_implementacao.md`.
+     - **No Claude Code (CLI via terminal):** Crie o plano como `PLAN.md` local para acompanhamento da tarefa.
+   - **Para Correção de Bugs / Fixes em Geral:** NÃO é necessário criar plano de implementação nem pausar para autorização; o Agente tem autonomia para diagnosticar e aplicar o fix diretamente.
+
+2. **Aprovação Humana Prévia Obrigatória (Apenas para Novas Features):**
+   - **Para Novas Features:** O Agente está PROIBIDO de iniciar desenvolvimento, alterar arquivos de código, criar componentes ou aplicar alterações estruturais sem que o usuário tenha explicitamente aprovado o plano (seja clicando em "Proceed" no artefato nativo ou autorizando explicitamente no chat). Após criar o artefato de plano, o Agente DEVE pausar e aguardar a decisão do usuário.
+   - **Para Correções de Bugs / Fixes Gerais:** O Agente pode tocar direto sem precisar pedir autorização, aplicando as correções e testes de forma ágil e objetiva.
+
+3. **Criação Obrigatória de Branch para Features (Proibido Commit Direto na `develop`):**
+   - TODA VEZ que uma nova funcionalidade (feature) for implementada, o Agente DEVE OBRIGATORIAMENTE criar uma nova branch a partir de `develop` atualizada (padrão de nomenclatura: `feat/<nome-da-feature>` ou `feature/<nome-da-feature>`).
+   - É **TERMINANTEMENTE PROIBIDO commitar código de novas features diretamente na branch `develop`**. Todo o desenvolvimento, testes e commits da feature devem viver na branch isolada, sendo integrados na `develop` exclusivamente via Pull Request após validação completa.
+   - Para correções de bugs, deve-se priorizar o uso de branches `fix/<nome-do-fix>`.
+
+4. **Camadas Isoladas:** Regras de negócio ficam APENAS no `domain`. Controllers não decidem lógica.
+5. **Segurança Alimentar:** Qualquer alteração no `ALLERGEN_ENGINE` exige aprovação humana imediata.
+6. **Testes Primeiro:** Siga a cultura de TDD sempre que possível.
+
 
 ## Guardrails e Políticas de Segurança (Harness)
 Esta seção define as limitações estritas de operação do Agente, baseadas no princípio do menor privilégio e segurança *by-design*.
@@ -47,8 +62,9 @@ Esta seção define as limitações estritas de operação do Agente, baseadas n
 - **Princípio do Menor Privilégio:** A infraestrutura de um contexto não pode acessar as tabelas de outro diretamente. Funções não devem ter poderes além do seu propósito estrito.
 - **Remoção de Testes:** É expressamente proibido deletar, comentar ou pular testes (`.skip`) para mascarar quebras. Se um teste quebrar, a lógica (ou o teste defasado) deve ser corrigida.
 
-### Ações Autônomas (Exemplos de Tarefas Permitidas)
-O Agente tem autonomia total para prosseguir sem interrupção nestes cenários:
+### Execução de Tarefas Autorizadas (Após Aprovação do Plano para Features / Autonomia para Fixes)
+O Agente tem autonomia para proceder com os passos acordados nos seguintes cenários:
+- Correção de bugs, ajustes de CSS/UI, pequenos reparos e qualquer fix diretamente, sem necessidade de aprovação prévia.
 - Criar testes unitários para o motor de compatibilidade alimentar (`AllergenEngine.spec.ts`).
 - Criar testes de integração para o cadastro de produtos.
 - Implementar lógicas de validação em Value Objects (ex: `Email`, `Rating`).
@@ -84,19 +100,21 @@ O Agente DEVE adaptar seu comportamento de acordo com o tipo da tarefa solicitad
 ### 1. Workflow para Nova Feature
 1. **Ler** documentação obrigatória (`PRD`, `DOMAIN_MODEL`, `API_CONTRACTS`, `DATABASE`).
 2. **Identificar** o módulo/contexto afetado.
-3. **Criar plano** estruturado.
-4. **Solicitar confirmação humana** se a feature afetar algum domínio crítico (ex: motor de alérgenos).
-5. **Criar ou atualizar testes** antes ou junto do código (TDD).
-6. **Implementar** em pequenos passos.
-7. **Rodar testes** e linter (`npm test`, `npm run build`).
-8. **Gerar relatório final** atualizando `walkthrough.md`.
+3. **Criar ou Atualizar o Plano no Artefato Único (`plano_de_implementacao.md`):** Gerar ou sobrescrever exclusivamente o arquivo `plano_de_implementacao.md` com o título `# Plano de Implementação` e `RequestFeedback: true` no metadata. NUNCA criar múltiplos arquivos de plano nem arquivos `PLAN.md` no workspace.
+4. **PAUSAR e Aguardar Aprovação Humana:** Aguardar o usuário clicar no botão "Proceed" ou autorizar explicitamente no chat antes de editar ou criar arquivos.
+5. **Criar Branch Isolada da Feature:** Após aprovação do plano, atualizar a `develop` (`git checkout develop && git pull origin develop`) e criar uma nova branch dedicada (`git checkout -b feat/<nome-da-feature>`). É PROIBIDO commitar features diretamente na `develop`.
+6. **Criar ou atualizar testes** antes ou junto do código (TDD).
+7. **Implementar** em pequenos passos.
+8. **Rodar Bateria de Testes & Auto-Cura:** Executar `node scripts/agent-verify.mjs` (ou `npm run verify`). Se houver falha, corrigir autonomamente até 100% verde.
+9. **Gerar relatório final** atualizando `walkthrough.md`.
 
-### 2. Workflow para Correção de Bug
-1. **Reproduzir** o problema (analisar logs ou código existente).
-2. **Criar teste que falha** para garantir que o bug foi isolado.
-3. **Corrigir** a menor parte possível para não causar regressões.
-4. **Rodar testes** em toda a suíte para validar a correção.
-5. **Explicar** de forma concisa a causa e a correção no relatório de entrega.
+### 2. Workflow para Correção de Bug / Qualquer Fix
+1. **Reproduzir e Diagnosticar** o problema (analisar logs ou código existente).
+2. **Tocar Direto (Sem Plano/Sem Pausa):** Em correções de bugs, fixes visuais ou pequenos ajustes, o Agente tem autonomia para aplicar a correção imediatamente sem precisar criar artefato de plano nem pausar para autorização prévia.
+3. **Criar ou ajustar teste** para garantir que o bug foi isolado e evitar regressões.
+4. **Corrigir** a menor parte possível para manter a estabilidade.
+5. **Rodar testes** e validações (`npm test`, `npm run build`).
+6. **Explicar** de forma concisa a causa e a correção no relatório final.
 
 ### 3. Workflow para Alteração de Regra de Negócio
 1. **Ler** `docs/ALLERGEN_ENGINE.md` e `docs/DOMAIN_MODEL.md`.
@@ -112,9 +130,58 @@ O Agente DEVE adaptar seu comportamento de acordo com o tipo da tarefa solicitad
 2. **Propor alteração** (novas tabelas, colunas, constraints ou índices).
 3. **Explicar impacto** sobre os dados existentes e performance.
 4. **Aguardar autorização humana** se envolver a criação/execução de uma migration estrutural.
-5. **Criar migration** de forma segura.
-6. **Rodar testes** para assegurar que a camada de repositório continua íntegra.
-7. **Documentar alteração** no `docs/DATABASE.md`.
+5. **Criar migration de forma segura e idempotente:** Criar arquivo `.sql` em `harness/scripts/migrations/` e registrar no `docker-compose.yml`.
+6. **Sincronizar no `connection.ts`:** Replicar as DDLs de forma defensiva no `backend/src/infrastructure/database/connection.ts` usando `executeSafeDdl` para execução automática em bancos já persistidos na VPS.
+7. **Rodar testes** para assegurar que a camada de repositório continua íntegra.
+8. **Documentar alteração** no `docs/DATABASE.md`.
+
+## 🔄 Protocolo de Autonomia de Testes e Auto-Cura (Self-Healing Loop)
+> **Diretiva Sagrada:** *"Encontrou um problema? Corriga. Achou um bug? Resolva."*
+
+Após qualquer implementação de funcionalidade ou correção de bug, o Agente DEVE testar autonomamente o sistema antes de considerar a tarefa entregue. O Agente opera sob um **ciclo controlado de auto-cura**:
+
+1. **Dever de Testar Pós-Alteração:**
+   - O Agente DEVE rodar a bateria de validação usando o orquestrador autônomo: `node scripts/agent-verify.mjs` (ou `npm run verify` / `npm run verify:quick`).
+   - Se a alteração envolver telas ou componentes no `frontend/web-app`, o Agente DEVE acionar o `browser_subagent` na URL local (`http://localhost:3001`), navegar pelo fluxo afetado, verificar a ausência de exceções no console do navegador e inspecionar a interface.
+
+2. **Princípio de Resolução Autônoma & Limite de Tentativas (Cap de 3 Iterações):**
+   - Se qualquer camada acusar erro (falha de compilação TypeScript, erro de teste unitário Jest, quebra de rota no Smoke Test HTTP ou bug visual/console no navegador):
+   - O Agente DEVE:
+     1. Isolar a causa raiz do erro a partir dos logs e stack traces.
+     2. Aplicar a correção cirúrgica na implementação interna.
+     3. Re-executar os testes relevantes.
+   - **Trava de Loop Infinito (Máximo 3 Iterações):** O ciclo de auto-cura é limitado a **no máximo 3 tentativas consecutivas**. Se após a 3ª iteração o sistema ainda não estiver 100% verde, o Agente está **TERMINANTEMENTE PROIBIDO** de continuar tentando em looping. Ele DEVE reverter as alterações que causaram regressão (`git checkout -- .`) e reportar um diagnóstico claro ao usuário solicitando intervenção humana.
+
+3. **Fronteiras Estritas de Blast Radius (O que PODE e o que NÃO PODE ser alterado):**
+   - ✅ **O que o Agente PODE alterar autonomamente:**
+     - Implementação interna de funções auxiliares, controllers, use cases e componentes criados/afetados pela tarefa.
+     - Correção de erros de tipagem estática do TypeScript (interfaces internas, generics, imports).
+     - Correção de sintaxe, seletores CSS, alinhamentos e responsividade no Frontend.
+     - Ajuste do payload ou headers enviados pelo cliente quando a API exigir parâmetros válidos.
+   - 🚫 **O que é TERMINANTEMENTE PROIBIDO sem autorização humana expressa:**
+     - **Proibido flexibilizar asserções de testes:** É proibido alterar os `expect()` ou `assert()` de testes existentes para deixá-los mais permissivos apenas para fazê-los passar.
+     - **Proibido alterar contratos públicos de API:** Proibido modificar parâmetros obrigatórios, status codes de sucesso ou schemas de retorno em endpoints públicos sem atualização formal de `docs/API_CONTRACTS.md`.
+     - **Proibido enfraquecer segurança:** Proibido desativar, enfraquecer ou contornar validações de middlewares (CORS, Rate Limit, BotBlocker, Auth, Zod DTOs) ou criar backdoors sob pretexto de testes.
+     - **Proibido alterar regras biológicas:** Qualquer alteração no `ALLERGEN_ENGINE` permanece bloqueada.
+     - **Proibido alterar migrations ou schemas de banco já consolidados.**
+
+4. **Comportamento em CI vs Local (Strict Fail):**
+   - **Em Ambientes de CI (GitHub Actions / Pipelines):** Smoke tests HTTP e testes de integração operam em modo **Strict Fail**. Qualquer timeout, recusa de conexão ou indisponibilidade da API gera `exit 1` e interrompe o build imediatamente. A tolerância offline é bloqueada em CI.
+   - **Em Ambiente Local de Desenvolvimento:** A tolerância offline (`--allow-offline`) só é permitida quando explicitada pelo desenvolvedor (`npm run verify:offline`), emitindo aviso de que a validação de rede foi ignorada.
+
+## 🛡️ Regra de Resiliência de Deploy e Prevenção de Falhas na VPS (Zero 502 Bad Gateway)
+Para evitar que o backend entre em crash após o deploy na VPS (o que causa `502 Bad Gateway` no Traefik e a mensagem "Erro ao entrar" no frontend), o Agente DEVE cumprir rigorosamente:
+1. **Sincronização Idempotente no `connection.ts`:**
+   - O container oficial do PostgreSQL só executa scripts de `/docker-entrypoint-initdb.d/` na **primeira criação** do volume. Em volumes existentes na VPS, novas migrations NÃO são executadas pelo Docker automaticamente.
+   - Portanto, **toda nova migration DEVE ser replicada no `connection.ts`** dentro de blocos `executeSafeDdl` com `IF NOT EXISTS` e `DROP CONSTRAINT IF EXISTS`.
+   - NUNCA introduzir colunas `NOT NULL` sem valor `DEFAULT` em tabelas existentes.
+2. **Inicialização Resiliente do Servidor:**
+   - O servidor Express DEVE inicializar e escutar a porta HTTP mesmo em caso de lentidão temporária do banco, permitindo que a rota `/health` forneça diagnóstico ativo (`status: 503 DEGRADED`). O processo NÃO deve abortar abruptamente com `process.exit(1)`.
+3. **Healthcheck Ativo no CD (`cd-deploy.yml`):**
+   - O pipeline de deploy SSH valida a subida dos containers com `docker compose ps` e `wget -qO- http://localhost:3000/health`. Em caso de falha, os logs do container são exibidos no output do GitHub Actions e o pipeline falha para intervenção rápida.
+4. **Resolução de API no Frontend (`client.ts`):**
+   - Requisições ao backend em produção devem sempre apontar para o domínio oficial `https://api.celilac.com.br`, sem injetar portas fantasmas (ex: `:3002`).
+   - Erros de rede (Failed to fetch) e status 502/503 devem ser exibidos ao usuário como "Serviço temporariamente indisponível. O backend está em manutenção ou inicializando."
 
 ## Regras de Entrega de Feature
 Ao entregar uma feature nova, o Agente DEVE cumprir:
@@ -128,20 +195,24 @@ Ao entregar uma feature nova, o Agente DEVE cumprir:
 Ao final de cada tarefa, o Agente deve apresentar um resumo claro contendo:
 1. **Status da Missão:** Breve parágrafo confirmando se a meta foi alcançada.
 2. **O que foi feito:** Lista em tópicos das principais adições e modificações estruturais.
-3. **Qualidade:** Resultado da execução dos testes (`npm test`) com a cobertura de código atingida e confirmação de sucesso do build.
-4. **Próximos Passos:** Uma recomendação clara de qual deve ser a próxima feature a ser atacada (conforme PRD).
+3. **Qualidade:** Resultado da execução dos testes (`npm test`, `npm run verify`) com a cobertura de código atingida e confirmação de sucesso do build.
+4. **Auto-Cura Realizada:** Descrição concisa de problemas/bugs encontrados durante a validação e como foram sanados autonomamente.
+5. **Próximos Passos:** Uma recomendação clara de qual deve ser a próxima feature a ser atacada (conforme PRD).
 O Agente também deve manter o artefato `walkthrough.md` sempre atualizado com o histórico de entregas.
 
 ## Checklist de Validação (Aceite de Alterações)
 Para que uma alteração feita pelo Agente seja considerada concluída e pronta para aceite (Merge/Commit), os seguintes critérios DEVEM ser obrigatoriamente preenchidos:
-- [ ] Testes unitários passando.
-- [ ] Testes de integração passando (quando aplicável).
-- [ ] Linter executado sem erros.
-- [ ] Build concluído com sucesso.
+- [ ] Bateria de testes e auto-cura executada com 100% de sucesso (`node scripts/agent-verify.mjs` ou `npm run verify`).
+- [ ] Testes unitários Jest passando (100% verde).
+- [ ] Compilação do Backend (`tsc -p tsconfig.build.json`) e Build do Frontend sem erros de tipagem.
+- [ ] Smoke tests de API HTTP respondendo com sucesso (`/health`, produtos, parceiros).
+- [ ] Teste de navegação e interface executado via `browser_subagent` (quando envolver alterações no frontend).
+- [ ] Migrations novas replicadas de forma idempotente no `connection.ts` e registradas no `docker-compose.yml`.
+- [ ] Rota `/health` e resiliência de boot preservadas.
 - [ ] Nenhum segredo ou credencial (variáveis de ambiente, senhas, tokens) exposto no código.
 - [ ] Nenhuma regra crítica de negócio alterada sem autorização prévia humana.
 - [ ] Documentação atualizada quando necessário (`PRD`, `DATABASE`, contratos, etc).
 - [ ] Aderência estrita à Clean Architecture.
 - [ ] Aderência aos Bounded Contexts (sem ferir os limites dos domínios).
-- [ ] Relatório final gerado de forma clara e objetiva.
+- [ ] Relatório final gerado de forma clara e objetiva com seção de auto-cura se aplicável.
 - [ ] Revisão humana solicitada e realizada antes do aceite definitivo da branch.

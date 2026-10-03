@@ -1,4 +1,31 @@
 services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: unless-stopped
+    environment:
+      - DOCKER_API_VERSION=1.41
+    command:
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=traefik_network"
+      - "--entryPoints.web.address=:80"
+      - "--entryPoints.websecure.address=:443"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=contato@celilac.com.br"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./acme.json:/letsencrypt/acme.json"
+    networks:
+      - traefik_network
+
   db:
     image: postgres:15-alpine
     container_name: celilac-postgres
@@ -25,12 +52,30 @@ services:
       - ./harness/scripts/migrations/011_add_type_to_partners.sql:/docker-entrypoint-initdb.d/011_add_type_to_partners.sql:ro
       - ./harness/scripts/migrations/012_create_consumers_and_partner_interactions.sql:/docker-entrypoint-initdb.d/012_create_consumers_and_partner_interactions.sql:ro
       - ./harness/scripts/migrations/013_add_user_profile_fields_and_admin_approval.sql:/docker-entrypoint-initdb.d/013_add_user_profile_fields_and_admin_approval.sql:ro
+      - ./harness/scripts/migrations/014_cleanup_and_unify_reports.sql:/docker-entrypoint-initdb.d/014_cleanup_and_unify_reports.sql:ro
       - ./harness/scripts/migrations/014_create_email_verifications_table.sql:/docker-entrypoint-initdb.d/014_create_email_verifications_table.sql:ro
+      - ./harness/scripts/migrations/015_add_consumer_audit_fields.sql:/docker-entrypoint-initdb.d/015_add_consumer_audit_fields.sql:ro
+      - ./harness/scripts/migrations/015_add_whatsapp_phone_to_users.sql:/docker-entrypoint-initdb.d/015_add_whatsapp_phone_to_users.sql:ro
+      - ./harness/scripts/migrations/016_fix_allergy_severity_floor.sql:/docker-entrypoint-initdb.d/016_fix_allergy_severity_floor.sql:ro
+      - ./harness/scripts/migrations/017_create_audit_logs.sql:/docker-entrypoint-initdb.d/017_create_audit_logs.sql:ro
+      - ./harness/scripts/migrations/018_add_whatsapp_phone_to_users.sql:/docker-entrypoint-initdb.d/018_add_whatsapp_phone_to_users.sql:ro
+      - ./harness/scripts/migrations/019_add_logo_url_to_partners.sql:/docker-entrypoint-initdb.d/019_add_logo_url_to_partners.sql:ro
+      - ./harness/scripts/migrations/020_create_product_categories_table.sql:/docker-entrypoint-initdb.d/020_create_product_categories_table.sql:ro
+      - ./harness/scripts/migrations/021_extend_product_identification_and_composition.sql:/docker-entrypoint-initdb.d/021_extend_product_identification_and_composition.sql:ro
+      - ./harness/scripts/migrations/022_create_product_images_table.sql:/docker-entrypoint-initdb.d/022_create_product_images_table.sql:ro
+      - ./harness/scripts/migrations/023_add_product_safety_matrix_and_certifications.sql:/docker-entrypoint-initdb.d/023_add_product_safety_matrix_and_certifications.sql:ro
+      - ./harness/scripts/migrations/024_create_password_resets_table.sql:/docker-entrypoint-initdb.d/024_create_password_resets_table.sql:ro
+      - ./harness/scripts/migrations/025_create_orders_and_items_tables.sql:/docker-entrypoint-initdb.d/025_create_orders_and_items_tables.sql:ro
+      - ./harness/scripts/migrations/026_create_payments_and_financial_accounts_tables.sql:/docker-entrypoint-initdb.d/026_create_payments_and_financial_accounts_tables.sql:ro
+      - ./harness/scripts/migrations/027_add_idempotency_key_to_payments.sql:/docker-entrypoint-initdb.d/027_add_idempotency_key_to_payments.sql:ro
+      - ./harness/scripts/migrations/028_add_delivery_payment_and_fraud_protection.sql:/docker-entrypoint-initdb.d/028_add_delivery_payment_and_fraud_protection.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U celilac_user -d celilac_db"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - internal_network
 
   backend:
     build: ./backend
@@ -40,13 +85,43 @@ services:
       - ./backend/.env
     environment:
       DB_HOST: db
-    ports:
-      - "3002:3000"
     volumes:
       - ./backend/src:/app/src
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - internal_network
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.backend.rule=Host(`api.celilac.com.br`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.routers.backend.middlewares=security-headers,security-buffering,security-inflight,backend-ratelimit"
+      - "traefik.http.routers.backend.priority=10"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      # Router dedicado para Server-Sent Events (SSE) sem buffering para fluxo em tempo real
+      - "traefik.http.routers.backend-sse.rule=Host(`api.celilac.com.br`) && PathPrefix(`/orders/stream`)"
+      - "traefik.http.routers.backend-sse.entrypoints=websecure"
+      - "traefik.http.routers.backend-sse.tls.certresolver=myresolver"
+      - "traefik.http.routers.backend-sse.middlewares=security-headers"
+      - "traefik.http.routers.backend-sse.service=backend"
+      - "traefik.http.routers.backend-sse.priority=100"
+      # Middlewares de Proteção e Anti-DDoS do Traefik
+      - "traefik.http.middlewares.security-buffering.buffering.maxRequestBodyBytes=26214400"
+      - "traefik.http.middlewares.security-buffering.buffering.memRequestBodyBytes=2097152"
+      - "traefik.http.middlewares.security-inflight.inflightreq.amount=50"
+      - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=100"
+      - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=150"
+      - "traefik.http.middlewares.security-headers.headers.sslredirect=true"
+      - "traefik.http.middlewares.security-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.security-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.security-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.security-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.security-headers.headers.frameDeny=true"
 
   web-app:
     build: ./frontend/web-app
@@ -54,13 +129,28 @@ services:
     restart: unless-stopped
     env_file:
       - ./frontend/web-app/.env.local
-    ports:
-      - "3003:3001"
     volumes:
       - ./frontend/web-app/src:/app/src
       - ./frontend/web-app/public:/app/public
     depends_on:
       - backend
+    networks:
+      - internal_network
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik_network"
+      - "traefik.http.routers.webapp.rule=Host(`celilac.com.br`) || Host(`www.celilac.com.br`)"
+      - "traefik.http.routers.webapp.entrypoints=websecure"
+      - "traefik.http.routers.webapp.tls.certresolver=myresolver"
+      - "traefik.http.routers.webapp.middlewares=security-headers,security-buffering,security-inflight"
+      - "traefik.http.services.webapp.loadbalancer.server.port=3001"
 
 volumes:
   postgres_data:
+
+networks:
+  traefik_network:
+    external: true
+  internal_network:
+    driver: bridge

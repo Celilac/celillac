@@ -1,4 +1,4 @@
-# CeLiLac 🛡️
+# CeLiLac
 
 > **Plataforma de Segurança Alimentar para Celíacos**
 > Detecta alérgenos em produtos — incluindo traços de contaminação cruzada — e avisa antes de você consumir.
@@ -6,14 +6,14 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-41%20suites%20%7C%20230%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-82%20suites%20%7C%20512%20passing-brightgreen)](#-testes)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20%2B%20Oracle%20Cloud-orange)](#-segurança--governança)
 
 ---
 
 ## Índice
 
-- [Ambiente de Demonstração (VPS)](#-ambiente-de-demonstração--produção-vps-oracle-cloud)
+- [Ambiente de Produção (VPS)](#-ambiente-de-produção-vps-oracle-cloud)
 - [Estrutura do Monorepo](#-estrutura-do-monorepo)
 - [Como Começar](#-como-começar)
 - [Funcionalidades](#-funcionalidades)
@@ -24,10 +24,11 @@
 
 ---
 
-## 🌐 Ambiente de Demonstração / Produção (VPS Oracle Cloud)
+## 🌐 Ambiente de Produção (VPS Oracle Cloud)
 
-- 💻 **Web App (Next.js)**: [http://163.176.195.210:3003](http://163.176.195.210:3003)
-- ⚙️ **Backend API (Node.js)**: [http://163.176.195.210:3002](http://163.176.195.210:3002)
+- 💻 **Web App**: [https://www.celilac.com.br/](https://www.celilac.com.br/) (ou [https://celilac.com.br/](https://celilac.com.br/))
+- ⚙️ **Backend API**: [https://api.celilac.com.br/](https://api.celilac.com.br/)
+- 🔒 **Reverse Proxy & SSL**: Traefik com renovação automática Let's Encrypt
 
 ---
 
@@ -41,9 +42,9 @@ celillac/
 │   ├── src/
 │   │   ├── domain/          # Coração: entidades, VOs, interfaces (zero dependências)
 │   │   ├── application/     # Casos de uso
-│   │   ├── infrastructure/  # PostgreSQL (pg), repositórios
+│   │   ├── infrastructure/  # PostgreSQL (pg), gateways (Asaas), repositórios
 │   │   └── interfaces/      # Controllers HTTP (Express)
-│   └── tests/unit/          # 41 suítes | 230 testes
+│   └── tests/unit/          # 82 suítes | 512 testes
 ├── frontend/
 │   ├── web-app/             # Aplicação principal (Next.js 14, porta 3001)
 │   ├── landing-page/        # Landing page estática (Next.js 14, porta 3002)
@@ -116,44 +117,66 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 🥗 Perfil Alimentar | ✅ Implementado | [`docs/features/food-profile.md`](docs/features/food-profile.md) |
 | ⚠️ Motor de Alérgenos (Core Domain) | ✅ Implementado | [`docs/features/allergen-engine.md`](docs/features/allergen-engine.md) |
 | 🛒 Catálogo de Produtos | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
-| 🏪 Gestão de Parceiros Comerciais | ✅ Implementado | [`docs/features/catalog.md`](docs/features/catalog.md) |
+| 🏷️ Categorias de Produtos & Moderação | ✅ Implementado | [`docs/features/categories.md`](docs/features/categories.md) |
+| 🏪 Gestão de Parceiros Comerciais | ✅ Implementado | [`docs/features/partner.md`](docs/features/partner.md) |
+| 📦 Pedidos & Trava Biológica | ✅ Implementado | [`docs/features/orders.md`](docs/features/orders.md) |
+| 💳 Pagamentos, Asaas & Split Marketplace | ✅ Implementado | [`docs/features/payments.md`](docs/features/payments.md) |
 | 🌐 Frontend (Web App + Landing Page) | ✅ Implementado | [`docs/features/frontend.md`](docs/features/frontend.md) |
 | 🛡️ Administração & Moderação | ✅ Implementado | [`docs/features/admin.md`](docs/features/admin.md) |
 | ⭐ Avaliações e Confiança | ✅ Implementado | [`docs/features/reviews.md`](docs/features/reviews.md) |
 | ❤️ Favoritos | ✅ Implementado | [`docs/features/favorites.md`](docs/features/favorites.md) |
 | 📜 Auditoria & Rastreabilidade do Domínio | ✅ Implementado | [`docs/features/audit.md`](docs/features/audit.md) |
 | 📱 App Mobile (Flutter) | ✅ Implementado | [`docs/features/mobile-app.md`](docs/features/mobile-app.md) |
+| 🛡️ Segurança, Anti-Bot & Anti-DDoS | ✅ Implementado | [`docs/features/security-hardening.md`](docs/features/security-hardening.md) |
+| 💵 Pagamento na Entrega & Proteção Contra Fraude | ✅ Implementado | [`docs/features/delivery-payment-and-fraud-protection.md`](docs/features/delivery-payment-and-fraud-protection.md) |
+| 🔄 Autonomia de Testes & Auto-Cura | ✅ Implementado | [`docs/features/autonomous-testing-protocol.md`](docs/features/autonomous-testing-protocol.md) |
 
 ---
 
-## 🧪 Testes
+## 🧪 Testes e Validação Autônoma
 
 ```bash
-cd backend
-npm test
+# Validação completa em pirâmide (Backend Typecheck + 87 suítes Jest + Paridade + Frontend Typecheck + Smoke Tests)
+npm run verify           # ou node scripts/agent-verify.mjs
+
+# Execução rápida (apenas backend)
+npm run verify:quick     # ou node scripts/agent-verify.mjs --quick
+
+# Smoke tests HTTP contra a API em execução
+npm run test:smoke       # ou node scripts/test-api-smoke.mjs
+
+# Apenas testes unitários Jest
+cd backend && npm test
 ```
 
-**41 suítes de teste | 230 casos**, cobrindo domínio, casos de uso, middlewares de segurança e o Motor de Alérgenos:
+**87 suítes de teste | 592 casos 100% aprovados**, cobrindo domínio, casos de uso, controllers, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
 | `domain/Result.spec.ts` | 100% |
-| `domain/iam/Email`, `PasswordHash`, `User` | 100% |
+| `domain/partner/Cnpj.spec.ts` | 100% |
+| `domain/iam/Email`, `PasswordHash`, `User`, `PasswordReset` | 100% |
 | `domain/food-profile/SeverityLevel`, `Restriction`, `FoodProfile` | 100% |
 | `domain/allergen-engine/AllergenEngine` ← 9 casos críticos | ~98% |
-| `domain/catalog/Product` | 100% |
-| `domain/partner/Partner` | ~97.7% |
+| `domain/catalog/Product`, `Category` | ~98.5% |
+| `domain/partner/Partner` | ~97.8% |
+| `domain/order/Order`, `OrderItem`, `OrderStatus` | 100% |
+| `domain/payment/Payment`, `PartnerFinancialAccount`, `PaymentRefund` | 100% |
 | `domain/reviews/Review` | 95% |
 | `domain/audit/AuditLog`, `PgAuditLogRepository` | 100% |
 | `application/food-profile/UpdateFoodProfileUseCase` | 100% |
 | `application/consumer/ToggleConsumerStatusUseCase` | ~95.8% |
 | `application/allergen-engine/CheckCompatibilityUseCase` | 100% |
-| `application/catalog/CreateProductUseCase`, `SearchProductsUseCase` | 100% |
+| `application/catalog/CreateProductUseCase`, `CreateCategoryUseCase`, `SearchProductsUseCase` | 100% |
+| `application/order/CreateOrderUseCase`, `OrderUseCases` (Cancel, Get, List, UpdateStatus) | 100% |
+| `application/payment/PaymentUseCases` (Checkout, Subaccount, Webhook, Refund) | 100% |
 | `application/reviews/SubmitReviewUseCase`, `GetProductReviewsUseCase` | ~94% |
-| `application/admin/CreateReportUseCase`, `ListReportsUseCase`, `ReviewReportUseCase` | ~94% |
-| `application/iam/LogoutUserUseCase` | ~92.8% |
+| `application/admin/CreateReportUseCase`, `ListReportsUseCase`, `ReviewReportUseCase`, `ReviewCategoryUseCase` | ~94% |
+| `application/iam/LogoutUserUseCase`, `RequestPasswordResetUseCase`, `ResetPasswordUseCase` | ~96% |
+| `interfaces/http/controllers/consumer/ToggleConsumerStatusController` | 100% |
 | `interfaces/http/middlewares/AuthMiddleware` | 100% |
 | `interfaces/http/middlewares/SecurityMiddleware` | 100% |
+| `interfaces/http/middlewares/RateLimitMiddleware` | 100% |
 
 Para relatório de cobertura: `npm test -- --coverage`.
 
@@ -187,8 +210,9 @@ Usuário: celilac_user
 |:-------|:----------|
 | `users` | IAM — id, email, password_hash, role, full_name, avatar_url, account_status |
 | `food_profiles` | Perfil — user_id (FK), restrictions (JSONB), accepts_cross_contamination |
-| `partners` | Parceiros — name, cnpj, address, phone, type, approval_status, operational_status, updated_at |
-| `products` | Catálogo — nome, marca, ingredientes, status de análise, partner_id (FK) |
+| `partners` | Parceiros — name, cnpj, address, phone, type, approval_status, operational_status, logo_url, updated_at |
+| `product_categories` | Categorias — name, normalized_name, partner_id (FK), status, visibility, rejection_reason |
+| `products` | Catálogo — nome, marca, ingredientes, categoria, category_id (FK), status de análise, partner_id (FK) |
 | `product_reviews` | Avaliações — user_id (FK), product_id (FK), rating, comment |
 | `product_reports` | Denúncias — reporter_id (FK), product_id (FK), reason, details, status |
 | `user_favorites` | Favoritos — user_id (FK), product_id (FK), partner_id (FK) |

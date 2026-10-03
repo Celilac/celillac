@@ -368,3 +368,114 @@ describe('TC-14: RN-CONSUMER-05 — Restriction.create() impede ALLERGY+LOW (Abo
     expect(report.conflicts[0].reason).toContain('DIETARY_PREFERENCE');
   });
 });
+
+// ============================================================
+// TC-15: Fase 4 — Matriz declarada RDC 727 com CONTAINS
+// ============================================================
+describe('TC-15: Fase 4 — Matriz declarada RDC 727 com CONTAINS', () => {
+  it('deve acusar conflito quando a matriz declara CONTAINS para a restrição', () => {
+    const profile = makeProfile([makeRestriction(AllergenType.SOY, SeverityLevel.HIGH)]);
+    const product = makeProduct({
+      hasGluten: false,
+      ingredients: 'óleo vegetal, emulsificante',
+      declaredAllergens: { SOY: 'CONTAINS' },
+    });
+
+    const report = AllergenEngine.check(profile, product);
+
+    expect(report.riskLevel).toBe(RiskLevel.DANGER);
+    expect(report.isCompatible).toBe(false);
+    expect(report.conflicts[0].reason).toContain('CONTÉM');
+  });
+});
+
+// ============================================================
+// TC-16: Fase 4 — Matriz declarada RDC 727 com TRACES
+// ============================================================
+describe('TC-16: Fase 4 — Matriz declarada RDC 727 com TRACES', () => {
+  it('deve gerar conflito de traços quando matriz declara TRACES', () => {
+    const profile = makeProfile([makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL)]);
+    const product = makeProduct({
+      hasGluten: false,
+      ingredients: 'polvilho doce, queijo, sal',
+      declaredAllergens: { GLUTEN: 'TRACES' },
+    });
+
+    const report = AllergenEngine.check(profile, product);
+
+    expect(report.riskLevel).toBe(RiskLevel.BLOCKED);
+    expect(report.conflicts[0].reason).toContain('PODE CONTER');
+  });
+});
+
+// ============================================================
+// TC-17: Fase 4 — Detecção de Divergência Crítica (declarado FREE mas presente no texto)
+// ============================================================
+describe('TC-17: Fase 4 — Detecção de Divergência Crítica', () => {
+  it('deve bloquear produto celíaco e apontar divergência crítica se parceiro declarou FREE mas ingrediente tem trigo', () => {
+    const profile = makeProfile([makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL)]);
+    const product = makeProduct({
+      hasGluten: false,
+      ingredients: 'farinha de trigo especial, fermento, sal',
+      declaredAllergens: { GLUTEN: 'FREE' },
+    });
+
+    const report = AllergenEngine.check(profile, product);
+
+    expect(report.riskLevel).toBe(RiskLevel.BLOCKED);
+    expect(report.analysisDetails?.hasDivergence).toBe(true);
+    expect(report.analysisDetails?.divergenceNotes).toContain('Divergência em GLUTEN');
+    expect(report.confidenceLevel).toBe('PRECAUTIONARY');
+    expect(report.conflicts[0].reason).toContain('DIVERGÊNCIA CRÍTICA');
+  });
+});
+
+// ============================================================
+// TC-18: Fase 4 — Certificação Técnica Verificada (AUDITED_BY_CELILAC)
+// ============================================================
+describe('TC-18: Fase 4 — Certificação Técnica Verificada', () => {
+  it('deve conceder nível AUDITED_BY_CELILAC quando produto possui laudo/selo verificado e ativo', () => {
+    const profile = makeProfile([makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL)]);
+    const product = makeProduct({
+      hasGluten: false,
+      ingredients: 'arroz integral, sal marinho',
+      declaredAllergens: { GLUTEN: 'FREE' },
+      certifications: [
+        {
+          certificationType: 'ACELBRA',
+          certifyingEntity: 'ACELBRA Nacional',
+          isVerified: true,
+          validUntil: '2099-12-31',
+        },
+      ],
+    });
+
+    const report = AllergenEngine.check(profile, product);
+
+    expect(report.isCompatible).toBe(true);
+    expect(report.riskLevel).toBe(RiskLevel.SAFE);
+    expect(report.confidenceLevel).toBe('AUDITED_BY_CELILAC');
+    expect(report.reasoning).toContain('Segurança comprovada por laudo/selo');
+    expect(report.analysisDetails?.certificationsEvaluation).toContain('ACELBRA');
+  });
+});
+
+// ============================================================
+// TC-19: Fase 4 — Ambiente Compartilhado (SHARED_FACILITY) e tolerância zero a traços
+// ============================================================
+describe('TC-19: Fase 4 — Ambiente Compartilhado sem isolamento para celíaco', () => {
+  it('deve elevar risco para BLOCKED para celíaco quando ambiente for SHARED_FACILITY sem declaração FREE', () => {
+    const profile = makeProfile([makeRestriction(AllergenType.GLUTEN, SeverityLevel.FATAL)]);
+    const product = makeProduct({
+      hasGluten: false,
+      ingredients: 'polvilho doce, mandioca, sal',
+      crossContaminationDetails: { riskLevel: 'SHARED_FACILITY' },
+    });
+
+    const report = AllergenEngine.check(profile, product);
+
+    expect(report.riskLevel).toBe(RiskLevel.BLOCKED);
+    expect(report.analysisDetails?.environmentEvaluation).toContain('Ambiente compartilhado');
+  });
+});
+

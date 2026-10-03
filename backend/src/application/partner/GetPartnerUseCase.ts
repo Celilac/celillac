@@ -66,6 +66,7 @@ export class GetPartnerUseCase {
       city:               partner.city,
       state:              partner.state,
       deliveryRegion:     partner.deliveryRegion,
+      logoUrl:            partner.logoUrl,
     });
   }
 }

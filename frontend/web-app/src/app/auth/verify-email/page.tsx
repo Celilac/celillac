@@ -20,30 +20,45 @@ export default function VerifyEmailPage() {
   const [countdown, setCountdown] = useState(0);
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
-  const hasAutoSent = useRef(false);
+  const hasSentRef = useRef(false);
 
   useEffect(() => {
     const localToken = typeof window !== 'undefined' ? localStorage.getItem('celilac:token') : null;
-    if (!isAuthenticated && !localToken) {
-      router.push('/auth/login');
-    }
-  }, [isAuthenticated, router]);
+    const currentToken = token || localToken;
 
-  // Dispara o envio automático de código OTP ao entrar na página
-  useEffect(() => {
-    const currentToken = token || (typeof window !== 'undefined' ? localStorage.getItem('celilac:token') : null);
-    if (currentToken && !hasAutoSent.current) {
-      hasAutoSent.current = true;
+    if (!isAuthenticated && !currentToken) {
+      router.push('/auth/login');
+      return;
+    }
+
+    if (typeof window === 'undefined') return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const shouldSend = urlParams.get('send') === 'true';
+    const isRecent = urlParams.get('recent') === 'true';
+
+    if (isRecent) {
+      setCountdown(60);
+    } else if (shouldSend && !hasSentRef.current && currentToken) {
+      hasSentRef.current = true;
+      setResendLoading(true);
       iamApi.resendEmailVerificationCode(currentToken)
         .then(() => {
-          toast.info('Um código de verificação foi enviado para seu e-mail.', 'E-mail Enviado');
+          toast.success('Código de verificação gerado e enviado para seu e-mail!', 'Código Enviado');
           setCountdown(60);
         })
-        .catch(() => {});
+        .catch((err) => {
+          toast.error(
+            err instanceof HttpError ? err.message : 'Erro ao enviar código de verificação.',
+            'Aviso'
+          );
+        })
+        .finally(() => {
+          setResendLoading(false);
+        });
     }
-  }, [token]);
+  }, [isAuthenticated, token, router, toast]);
 
-  // Contador de 60 segundos para reenvio de código
+  // Contador regressivo para reenvio manual de código
   useEffect(() => {
     if (countdown <= 0) return;
     const timer = setInterval(() => {
@@ -104,8 +119,8 @@ export default function VerifyEmailPage() {
     setLoading(true);
     try {
       await iamApi.verifyEmailCode(fullCode, currentToken);
-      toast.success('Seu endereço de e-mail foi verificado com sucesso!', 'E-mail Verificado');
-      router.push('/dashboard');
+      toast.success('Seu endereço de e-mail foi verificado com sucesso! Complete seu perfil para continuar.', 'E-mail Verificado');
+      router.push('/profile');
     } catch (err) {
       toast.error(
         err instanceof HttpError ? err.message : 'Erro ao verificar código de e-mail.',

@@ -12,6 +12,7 @@ export interface ConsumerProps {
   statusChangedAt?: Date;
   statusChangedBy?: string;
   statusChangeReason?: string;
+  canPayOnDelivery?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -34,6 +35,7 @@ export class Consumer extends Entity<ConsumerProps> {
         isFoodProfileComplete: props.isFoodProfileComplete ?? false,
         isFoodProfileCritical: props.isFoodProfileCritical ?? false,
         status: props.status || ConsumerStatus.CONTA_CRIADA,
+        canPayOnDelivery: props.canPayOnDelivery ?? true,
         createdAt: props.createdAt || new Date(),
         updatedAt: props.updatedAt || new Date(),
       },
@@ -71,6 +73,21 @@ export class Consumer extends Entity<ConsumerProps> {
 
   get statusChangeReason(): string | undefined {
     return this.props.statusChangeReason;
+  }
+
+  get canPayOnDelivery(): boolean {
+    return this.props.canPayOnDelivery !== false;
+  }
+
+  public revokePayOnDelivery(reason?: string): void {
+    this.props.canPayOnDelivery = false;
+    this.props.statusChangeReason = reason || 'Bloqueado para pagamento na entrega devido a ocorrência registrada';
+    this.props.updatedAt = new Date();
+  }
+
+  public restorePayOnDelivery(): void {
+    this.props.canPayOnDelivery = true;
+    this.props.updatedAt = new Date();
   }
 
   get createdAt(): Date {

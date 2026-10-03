@@ -21,7 +21,7 @@ import { ListPublicPartnersUseCase } from '../../../application/partner/ListPubl
 
 // Controladores e Middleware
 import { PartnerController } from '../controllers/partner/PartnerController';
-import { authMiddleware, optionalAuthMiddleware, adminOnlyMiddleware } from '../middlewares/AuthMiddleware';
+import { authMiddleware, optionalAuthMiddleware, adminOnlyMiddleware, verifiedEmailOnlyMiddleware } from '../middlewares/AuthMiddleware';
 
 const router = Router();
 
@@ -81,7 +81,7 @@ router.get('/partners/me', authMiddleware, (req, res) => {
 });
 
 // Cadastrar um novo parceiro
-router.post('/partners', authMiddleware, (req, res) => partnerController.register(req, res));
+router.post('/partners', authMiddleware, verifiedEmailOnlyMiddleware, (req, res) => partnerController.register(req, res));
 
 // Submeter parceiro para revisão
 router.post('/partners/:id/submit', authMiddleware, (req, res) => partnerController.submitForReview(req, res));

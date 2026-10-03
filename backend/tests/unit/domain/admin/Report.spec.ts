@@ -81,7 +81,7 @@ describe('Report Entity', () => {
     expect(report.status).toBe(ReportStatus.IN_REVIEW);
   });
 
-  it('should not allow changing status if report is already RESOLVED', () => {
+  it('should allow reopening a RESOLVED or DISMISSED report to PENDING or IN_REVIEW', () => {
     const report = Report.create({
       reporterId: 'user-1',
       productId: 'prod-1',
@@ -89,9 +89,27 @@ describe('Report Entity', () => {
       status: ReportStatus.RESOLVED,
     }).getValue();
 
-    const changeResult = report.changeStatus(ReportStatus.PENDING);
-    expect(changeResult.isFailure).toBe(true);
-    expect(changeResult.getError()).toBe('Cannot change status of a closed report.');
-    expect(report.status).toBe(ReportStatus.RESOLVED);
+    const reopenResult = report.reopen(ReportStatus.PENDING);
+    expect(reopenResult.isSuccess).toBe(true);
+    expect(report.status).toBe(ReportStatus.PENDING);
+
+    // Reabrir para IN_REVIEW
+    report.changeStatus(ReportStatus.DISMISSED);
+    const reopenInReview = report.reopen(ReportStatus.IN_REVIEW);
+    expect(reopenInReview.isSuccess).toBe(true);
+    expect(report.status).toBe(ReportStatus.IN_REVIEW);
+  });
+
+  it('should fail reopening a report that is already open (PENDING)', () => {
+    const report = Report.create({
+      reporterId: 'user-1',
+      productId: 'prod-1',
+      reason: ReportReason.OTHER,
+      status: ReportStatus.PENDING,
+    }).getValue();
+
+    const reopenResult = report.reopen(ReportStatus.PENDING);
+    expect(reopenResult.isFailure).toBe(true);
+    expect(reopenResult.getError()).toBe('Only closed reports can be reopened.');
   });
 });

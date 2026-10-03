@@ -13,6 +13,7 @@ export interface ReviewDTO {
 }
 
 export interface SubmitReviewPayload {
+  userId?: string;
   productId?: string;
   partnerId?: string;
   rating: number;

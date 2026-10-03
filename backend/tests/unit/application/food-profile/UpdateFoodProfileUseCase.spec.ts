@@ -70,6 +70,7 @@ describe('UpdateFoodProfileUseCase', () => {
     expect(dto.restrictions).toHaveLength(1);
     expect(dto.restrictions[0].allergen).toBe('GLUTEN');
     expect(dto.requiresHistoryRevalidation).toBe(true);
+    expect(dto.acceptsCrossContamination).toBe(false);
 
     expect(profileRepository.update).toHaveBeenCalledWith(existingProfile);
     expect(consumerRepository.save).toHaveBeenCalledWith(mockConsumer);
@@ -80,6 +81,28 @@ describe('UpdateFoodProfileUseCase', () => {
         actorId: 'user-123',
       }),
     );
+  });
+
+  it('deve atualizar acceptsCrossContamination para true e refletir no DTO retornado', async () => {
+    const existingProfile = FoodProfile.create({
+      userId: 'user-123',
+      restrictions: [
+        Restriction.create({ allergen: AllergenType.LACTOSE, severity: SeverityLevel.LOW, type: 'INTOLERANCE' as any }).getValue(),
+      ],
+      acceptsCrossContamination: false,
+    }).getValue();
+
+    profileRepository.findByUserId.mockResolvedValue(existingProfile);
+
+    const result = await useCase.execute({
+      userId: 'user-123',
+      restrictions: [{ allergen: 'LACTOSE', severity: 'LOW', type: 'INTOLERANCE' }],
+      acceptsCrossContamination: true,
+    });
+
+    expect(result.isSuccess).toBe(true);
+    expect(result.getValue().acceptsCrossContamination).toBe(true);
+    expect(existingProfile.acceptsCrossContamination).toBe(true);
   });
 
   it('deve falhar se houver restrições inválidas no DTO', async () => {

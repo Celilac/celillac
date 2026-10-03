@@ -1,17 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { catalogApi, ProductDetails } from '@/api/catalog';
 import { compatibilityApi, CompatibilityResponse } from '@/api/compatibility';
+import { ordersApi } from '@/api/orders';
+import { apiClient } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { FavoriteButton } from '@/components/common/FavoriteButton';
 import { ReportModal } from '@/components/common/ReportModal';
 import { ReviewsList } from '@/components/common/ReviewsList';
+import { CreateProductModal } from '@/components/common/CreateProductModal';
 import { useToast } from '@/hooks/useToast';
+import { translateReasoning, translateConflictReason, translateAllergen } from '@/utils/compatibilityTranslator';
+import { saveRecentCheck } from '@/services/recentChecks';
 import styles from '../../dashboard/dashboard.module.css';
 
 interface PageProps {
@@ -25,34 +30,75 @@ export default function ProductDetailsPage({ params }: PageProps) {
   const router = useRouter();
   const toast = useToast();
 
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [product, setProduct] = useState<ProductDetails | null>(null);
   const [compatibility, setCompatibility] = useState<CompatibilityResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [quantity, setQuantity] = useState<number>(1);
+  const [submittingOrder, setSubmittingOrder] = useState<boolean>(false);
 
   useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        const prodData = await catalogApi.getById(productId, token || undefined);
-        setProduct(prodData);
-
-        if (isAuthenticated && token && userId) {
-          try {
-            const comp = await compatibilityApi.check({ userId, productId }, token);
-            setCompatibility(comp);
-          } catch (_) {
-            // Ignora erro de compatibilidade se perfil incompleto
-          }
-        }
-      } catch (err: any) {
-        toast.error('Erro ao carregar detalhes do produto.', 'Erro');
-      } finally {
-        setLoading(false);
-      }
+    if (isAuthenticated && token) {
+      apiClient.get<any>('/iam/me', token)
+        .then((u) => {
+          setUserRole(u?.role || null);
+        })
+        .catch(() => {});
     }
+  }, [isAuthenticated, token]);
+
+  const canEdit = isAuthenticated && (userRole === 'ADMIN' || userRole === 'PARCEIRO');
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      let role = userRole;
+      if (isAuthenticated && token && !role) {
+        try {
+          const u = await apiClient.get<any>('/iam/me', token);
+          role = u?.role || null;
+          setUserRole(role);
+        } catch (_) {}
+      }
+
+      const prodData = await catalogApi.getById(productId, token || undefined);
+      setProduct(prodData);
+
+      // A análise de compatibilidade pertence exclusivamente a consumidores (CELIACO)
+      // Parceiros e administradores gerenciam o catálogo e não possuem restrições pessoais
+      if (isAuthenticated && token && userId && role === 'CELIACO') {
+        try {
+          const comp = await compatibilityApi.check({ userId, productId }, token);
+          setCompatibility(comp);
+          if (prodData) {
+            saveRecentCheck(
+              {
+                productId: prodData.id,
+                productName: prodData.name,
+                riskLevel: comp.riskLevel,
+              },
+              userId
+            );
+          }
+        } catch (_) {
+          // Perfil incompleto do celíaco
+          setCompatibility(null);
+        }
+      } else {
+        setCompatibility(null);
+      }
+    } catch (err: any) {
+      toast.error('Erro ao carregar detalhes do produto.', 'Erro');
+    } finally {
+      setLoading(false);
+    }
+  }, [productId, token, userId, isAuthenticated, userRole, toast]);
+
+  useEffect(() => {
     loadData();
-  }, [productId, token, userId, isAuthenticated, toast]);
+  }, [loadData]);
 
   if (loading) {
     return (
@@ -80,21 +126,83 @@ export default function ProductDetailsPage({ params }: PageProps) {
     );
   }
 
-  const activeRiskLevel = compatibility?.riskLevel || product.compatibilityReport?.riskLevel || 'UNEVALUATED';
+  const handleBuyNow = async () => {
+    if (!isAuthenticated || !token) {
+      router.push(`/auth/login?redirect=/products/${productId}`);
+      return;
+    }
+
+    if (!product?.partnerId) {
+      toast.error('Este produto não possui estabelecimento parceiro cadastrado para envio.');
+      return;
+    }
+
+    try {
+      setSubmittingOrder(true);
+      const res = await ordersApi.createOrder(
+        {
+          partnerId: product.partnerId,
+          items: [{ productId: product.id, quantity }],
+        },
+        token
+      );
+
+      const targetOrderId = (res as any).orderId || res.id;
+      toast.success('Pedido iniciado com sucesso! Redirecionando para o pagamento...');
+      router.push(`/checkout/${targetOrderId}`);
+    } catch (err: any) {
+      toast.error(
+        err?.message || 'Não foi possível iniciar o pedido deste produto. Verifique sua conexão ou tente novamente.',
+        'Erro ao Fazer Pedido'
+      );
+    } finally {
+      setSubmittingOrder(false);
+    }
+  };
+
+  const isCeliaco = userRole === 'CELIACO';
+  const isPurchaseBlocked =
+    isCeliaco &&
+    compatibility !== null &&
+    (!compatibility.isCompatible ||
+      compatibility.riskLevel === 'BLOCKED' ||
+      compatibility.riskLevel === 'DANGER');
+
+  const unitPrice = typeof product.price === 'number' && product.price > 0 ? product.price : 0;
+  const subtotal = unitPrice * quantity;
+
+  const handleOpenReport = async () => {
+    if (!isAuthenticated || !token) {
+      alert('Você precisa estar autenticado para denunciar um produto.');
+      return;
+    }
+
+    try {
+      const me = await apiClient.get<any>('/iam/me', token);
+      if (me && me.isEmailVerified === false) {
+        alert('É obrigatório validar seu endereço de e-mail com o código OTP antes de denunciar qualquer produto.');
+        return;
+      }
+    } catch {
+      // prossegue em caso de falha de rede temporária
+    }
+
+    setIsReportModalOpen(true);
+  };
 
   return (
     <div>
       <Header />
 
-      <main className={styles.container} style={{ maxWidth: '900px', margin: '0 auto', padding: '2rem 1rem' }}>
-        <div style={{ marginBottom: '1.5rem' }}>
+      <main className={styles.container} style={{ maxWidth: '900px', width: '100%', boxSizing: 'border-box', margin: '0 auto', padding: '2rem 1rem' }}>
+        <div style={{ width: '100%', marginBottom: '1.5rem' }}>
           <Link href="/dashboard" style={{ color: 'var(--color-emerald)', textDecoration: 'none', fontWeight: 600 }}>
             ← Voltar ao Dashboard
           </Link>
         </div>
 
         {/* Card Principal do Produto */}
-        <div className={styles.card} style={{ marginBottom: '2rem' }}>
+        <div className={styles.card} style={{ width: '100%', boxSizing: 'border-box', marginBottom: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -109,10 +217,34 @@ export default function ProductDetailsPage({ params }: PageProps) {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="btn btn-secondary"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    padding: '0.45rem 0.85rem',
+                    borderRadius: '999px',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  title="Editar informações do produto"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                  Editar
+                </button>
+              )}
               <FavoriteButton productId={product.id} />
               <button
                 type="button"
-                onClick={() => setIsReportModalOpen(true)}
+                onClick={handleOpenReport}
                 className="btn btn-ghost"
                 style={{
                   display: 'inline-flex',
@@ -124,34 +256,220 @@ export default function ProductDetailsPage({ params }: PageProps) {
                   fontWeight: 600,
                   color: 'var(--color-danger)',
                   border: '1px solid var(--color-danger-border)',
-                  background: 'transparent',
+                  background: 'var(--color-danger-bg)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
                 }}
                 title="Denunciar Produto"
               >
-                🚩 Denunciar
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                  <line x1="4" y1="22" x2="4" y2="15" />
+                </svg>
+                Denunciar
               </button>
             </div>
           </div>
 
           <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: '1.5rem 0' }} />
 
-          {/* Veredito de Compatibilidade Alimentar */}
-          <div style={{ background: 'var(--color-elevated)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '0.75rem' }}>
-              🛡️ Análise de Compatibilidade Alimentar
-            </h3>
-            <RiskBadge riskLevel={activeRiskLevel} showDescription={true} />
-
-            {compatibility && (
-              <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px dotted var(--color-border)' }}>
-                <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text)' }}>
-                  {compatibility.reasoning}
-                </p>
-                {compatibility.conflicts?.map((conflict, index) => (
-                  <div key={index} style={{ marginTop: '0.5rem', color: 'var(--color-danger)', fontSize: '0.9rem' }}>
-                    ⚠️ <strong>{conflict.allergen}:</strong> {conflict.reason}
+          {/* Veredito de Compatibilidade Alimentar (Condicional por Papel do Usuário) */}
+          {isAuthenticated && userRole === 'CELIACO' ? (
+            <div style={{ background: 'var(--color-elevated)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '0.75rem' }}>
+                🛡️ Análise de Compatibilidade Alimentar
+              </h3>
+              {compatibility ? (
+                <>
+                  <RiskBadge riskLevel={compatibility.riskLevel} showDescription={true} />
+                  <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px dotted var(--color-border)' }}>
+                    <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-text)' }}>
+                      {translateReasoning(compatibility.reasoning)}
+                    </p>
+                    {compatibility.conflicts?.map((conflict, index) => (
+                      <div key={index} style={{ marginTop: '0.5rem', color: 'var(--color-danger)', fontSize: '0.9rem' }}>
+                        ⚠️ <strong>{translateAllergen(conflict.allergen)}:</strong> {translateConflictReason(conflict.reason)}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </>
+              ) : (
+                <div>
+                  <RiskBadge riskLevel="UNEVALUATED" showDescription={true} />
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <Link href="/profile" style={{ color: 'var(--color-emerald)', fontSize: '0.875rem', fontWeight: 600 }}>
+                      Configurar restrições no perfil alimentar →
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : isAuthenticated && userRole === 'PARCEIRO' ? (
+            <div
+              style={{
+                background: 'var(--color-elevated)',
+                padding: '1.1rem 1.25rem',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '1.5rem',
+                borderLeft: '4px solid var(--color-brand-gold)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '1.1rem' }}>🏢</span>
+                <h3 style={{ fontSize: '1rem', color: 'var(--color-text)', margin: 0 }}>
+                  Visão do Estabelecimento Parceiro
+                </h3>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
+                Como parceiro comercial, você gerencia as especificações e laudos técnicos deste produto. A compatibilidade alimentar é avaliada automaticamente para cada consumidor que visualiza o item no catálogo.
+              </p>
+            </div>
+          ) : isAuthenticated && userRole === 'ADMIN' ? (
+            <div
+              style={{
+                background: 'var(--color-elevated)',
+                padding: '1.1rem 1.25rem',
+                borderRadius: 'var(--radius-md)',
+                marginBottom: '1.5rem',
+                borderLeft: '4px solid #3b82f6',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                <span style={{ fontSize: '1.1rem' }}>🛡️</span>
+                <h3 style={{ fontSize: '1rem', color: 'var(--color-text)', margin: 0 }}>
+                  Visão Administrativa (Moderação)
+                </h3>
+              </div>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
+                Produto cadastrado no catálogo geral da plataforma. O veredito de segurança alimentar é calculado individualmente de acordo com as restrições de cada consumidor.
+              </p>
+            </div>
+          ) : !isAuthenticated ? (
+            <div style={{ background: 'var(--color-elevated)', padding: '1.25rem', borderRadius: 'var(--radius-md)', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '0.5rem' }}>
+                🛡️ Análise de Compatibilidade Alimentar
+              </h3>
+              <p style={{ margin: '0 0 0.85rem 0', fontSize: '0.875rem', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
+                Faça login como consumidor para verificar se este produto é seguro para o seu perfil e restrições alimentares.
+              </p>
+              <Link href="/auth/login" className="btn btn-em" style={{ fontSize: '0.8rem', padding: '0.45rem 1rem', textDecoration: 'none', display: 'inline-block' }}>
+                Entrar para verificar compatibilidade
+              </Link>
+            </div>
+          ) : null}
+
+          {/* Card de Preço, Quantidade e Ação de Compra com Trava Biológica */}
+          <div className={styles.purchaseCard}>
+            <div className={styles.purchaseHeader}>
+              <div className={styles.purchasePriceGroup}>
+                <span className={styles.purchasePriceLabel}>Preço do Item</span>
+                <span className={styles.purchasePriceValue}>
+                  {unitPrice > 0 ? (
+                    `R$ ${unitPrice.toFixed(2).replace('.', ',')}`
+                  ) : (
+                    <span style={{ fontSize: '1.2rem', color: 'var(--color-text-muted)' }}>Sob Consulta</span>
+                  )}
+                </span>
+              </div>
+
+              {!isPurchaseBlocked && product.partnerId && (
+                <div className={styles.quantityGroup}>
+                  <span className={styles.quantityLabel}>Quantidade:</span>
+                  <div className={styles.quantityControls}>
+                    <button
+                      type="button"
+                      className={styles.quantityBtn}
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={quantity <= 1 || submittingOrder}
+                      aria-label="Diminuir quantidade"
+                    >
+                      −
+                    </button>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      aria-label="Quantidade"
+                      className={styles.quantityInput}
+                      value={quantity}
+                      min={1}
+                      max={50}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (!isNaN(val) && val >= 1 && val <= 50) {
+                          setQuantity(val);
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!quantity || quantity < 1) setQuantity(1);
+                        else if (quantity > 50) setQuantity(50);
+                      }}
+                      disabled={submittingOrder}
+                    />
+                    <button
+                      type="button"
+                      className={styles.quantityBtn}
+                      onClick={() => setQuantity((q) => Math.min(50, q + 1))}
+                      disabled={quantity >= 50 || submittingOrder}
+                      aria-label="Aumentar quantidade"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Condições de Compra / Trava Biológica */}
+            {isPurchaseBlocked ? (
+              <div>
+                <button type="button" className={styles.btnOrderBlocked} disabled>
+                  ⛔ Compra Bloqueada por Incompatibilidade Alimentar
+                </button>
+                <div className={styles.biologicalLockNotice}>
+                  <strong>🛡️ Trava de Segurança Biológica CeLiLac:</strong> Para resguardar sua saúde contra reações alérgicas graves e contaminação cruzada, o sistema impede a realização de pedidos de produtos avaliados como não seguros para o seu perfil.
+                </div>
+              </div>
+            ) : !product.partnerId ? (
+              <div className={styles.catalogOnlyNotice}>
+                ℹ️ <strong>Produto Informativo:</strong> Este item foi cadastrado no catálogo geral para consulta de rótulo e ingredientes. Para realizar pedidos com entrega segura, explore os estabelecimentos homologados em <Link href="/public-partners" style={{ color: 'var(--color-emerald)', fontWeight: 600 }}>Descobrir Locais</Link>.
+              </div>
+            ) : !isAuthenticated ? (
+              <div className={styles.purchaseFooter}>
+                <div className={styles.subtotalInfo}>
+                  Faça login para adicionar ao seu pedido e pagar via PIX ou Cartão.
+                </div>
+                <Link
+                  href={`/auth/login?redirect=/products/${productId}`}
+                  className={styles.btnOrderNow}
+                  style={{ textDecoration: 'none' }}
+                >
+                  🔐 Entrar para Comprar
+                </Link>
+              </div>
+            ) : userRole === 'PARCEIRO' || userRole === 'ADMIN' ? (
+              <div className={styles.catalogOnlyNotice} style={{ borderLeft: '4px solid var(--color-brand-gold)' }}>
+                🏢 <strong>Visão de Gestão:</strong> Pedidos com entrega e pagamento são realizados exclusivamente por consumidores. Como parceiro ou moderador, utilize este painel para verificar a apresentação do produto.
+              </div>
+            ) : (
+              <div className={styles.purchaseFooter}>
+                <div className={styles.subtotalInfo}>
+                  Subtotal ({quantity} {quantity === 1 ? 'item' : 'itens'}):
+                  <span className={styles.subtotalAmount}>
+                    R$ {subtotal.toFixed(2).replace('.', ',')}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.btnOrderNow}
+                  onClick={handleBuyNow}
+                  disabled={submittingOrder}
+                >
+                  {submittingOrder ? (
+                    <>⏳ Processando Pedido...</>
+                  ) : (
+                    <>🛒 Fazer Pedido / Comprar Agora</>
+                  )}
+                </button>
               </div>
             )}
           </div>
@@ -169,13 +487,41 @@ export default function ProductDetailsPage({ params }: PageProps) {
               <h4 style={{ color: 'var(--color-text)', marginBottom: '0.5rem' }}>⚠️ Classificações & Alérgenos</h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  🌾 <strong>Contém Glúten:</strong> {product.hasGluten ? 'Sim' : 'Não'}
+                  🌾 <strong>Contém Glúten:</strong> {
+                    product.hasGluten ||
+                    product.declaredAllergens?.['GLUTEN'] === 'CONTAINS' ||
+                    product.declaredAllergens?.['WHEAT'] === 'CONTAINS'
+                      ? 'Sim'
+                      : 'Não'
+                  }
                 </li>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  🧪 <strong>Contaminação Cruzada:</strong> {product.crossContamination || 'Não informada'}
+                  🥛 <strong>Declaração de Leite:</strong> {(() => {
+                    const ing = (product.ingredients || '').toLowerCase();
+                    const cross = (product.crossContamination || '').toLowerCase();
+                    const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme', 'whey', 'soro'];
+                    if (milkTerms.some((t) => ing.includes(t))) return 'Contém Leite / Derivados';
+                    if (milkTerms.some((t) => cross.includes(t))) return 'Pode conter traços de leite';
+                    return 'Não contém leite nem traços (Livre)';
+                  })()}
                 </li>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  📋 <strong>Status da Análise:</strong> {product.analysisStatus || 'VERIFICADO'}
+                  🧪 <strong>Contaminação Cruzada:</strong> {(() => {
+                    const cc = product.crossContamination || '';
+                    if (!cc || cc === 'NONE' || cc === 'NENHUM') return 'Nenhum (Ambiente 100% livre)';
+                    if (cc === 'TRACES' || cc === 'TRACOS') return 'Pode conter traços (Alerta preventivo no rótulo)';
+                    if (cc === 'SHARED_EQUIPMENT' || cc === 'MAQUINARIO_COMPARTILHADO') return 'Compartilha maquinário / linhas de produção';
+                    return cc;
+                  })()}
+                </li>
+                <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
+                  📋 <strong>Status da Análise:</strong> {
+                    product.analysisStatus === 'ANALISADO' || product.analysisStatus === 'APPROVED'
+                      ? '✅ Analisado'
+                      : product.analysisStatus === 'PENDENTE_DE_ANALISE' || product.analysisStatus === 'PENDING_ANALYSIS'
+                      ? '⏳ Pendente de Análise'
+                      : product.analysisStatus || 'VERIFICADO'
+                  }
                 </li>
               </ul>
             </div>
@@ -186,6 +532,16 @@ export default function ProductDetailsPage({ params }: PageProps) {
         <div className={styles.card}>
           <ReviewsList productId={product.id} targetName={product.name} />
         </div>
+
+        {/* Modal de Edição de Produto */}
+        {canEdit && (
+          <CreateProductModal
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            productToEdit={product}
+            onSuccess={loadData}
+          />
+        )}
       </main>
 
       {/* Modal de Denúncia */}

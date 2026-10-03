@@ -16,15 +16,22 @@
 //   ✅ Renderizar o riskLevel retornado pelo Backend
 // ══════════════════════════════════════════════════════════════
 
-function getApiBaseUrl(): string {
+export function getApiBaseUrl(): string {
   const envUrl = process.env.NEXT_PUBLIC_API_URL;
 
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
-    // Se o envUrl não estiver definido ou se for localhost, mas o navegador estiver em um IP/domínio remoto (ex: VPS Oracle 163.176.195.210)
-    if (!envUrl || (envUrl.includes('localhost') && hostname !== 'localhost' && hostname !== '127.0.0.1')) {
-      const protocol = window.location.protocol;
-      return `${protocol}//${hostname}:3002`;
+    const protocol = window.location.protocol;
+
+    // Domínio oficial de produção e subdomínios (ex: celilac.com.br, www.celilac.com.br)
+    if (hostname === 'celilac.com.br' || hostname.endsWith('.celilac.com.br')) {
+      return `${protocol}//api.celilac.com.br`;
+    }
+
+    // Se o envUrl não estiver definido ou se for localhost, mas o navegador estiver em um IP remoto (ex: VPS Oracle 163.176.195.210)
+    const isNumericIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+    if (isNumericIp && (!envUrl || envUrl.includes('localhost'))) {
+      return 'https://api.celilac.com.br';
     }
   }
 
@@ -52,24 +59,42 @@ async function request<T>(
   const { headers: optionHeaders, ...restOptions } = options;
   const baseUrl = getApiBaseUrl();
 
-  const response = await fetch(`${baseUrl}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(optionHeaders ?? {}),
-    },
-    ...restOptions,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(optionHeaders ?? {}),
+      },
+      ...restOptions,
+    });
+  } catch (networkErr: any) {
+    throw new HttpError(
+      503,
+      'Não foi possível conectar ao servidor da API. O serviço pode estar temporariamente em manutenção ou inicializando.',
+    );
+  }
 
   const text = await response.text().catch(() => '');
 
   if (!response.ok) {
     let errorMessage = 'Erro no servidor.';
-    if (text && text.trim()) {
+    if (response.status === 502 || response.status === 503 || response.status === 504) {
+      errorMessage = 'Serviço temporariamente indisponível. O backend está em manutenção ou inicializando. Tente novamente em instantes.';
+    } else if (text && text.trim()) {
       try {
         const body = JSON.parse(text);
         errorMessage = body.error || body.message || errorMessage;
       } catch (_) {
-        errorMessage = text;
+        const preMatch = text.match(/<pre>([\s\S]*?)<\/pre>/i);
+        if (preMatch && preMatch[1]) {
+          errorMessage = preMatch[1].replace(/<[^>]*>?/gm, '').trim();
+        } else if (text.includes('<html') || text.includes('<!DOCTYPE')) {
+          errorMessage = `Erro ${response.status}: Não foi possível processar a solicitação no servidor.`;
+        } else {
+          errorMessage = text.trim().slice(0, 200);
+        }
       }
     }
     throw new HttpError(response.status, errorMessage);
@@ -90,11 +115,12 @@ export const apiClient = {
   get: <T>(path: string, token?: string) =>
     request<T>(path, { method: 'GET', headers: token ? { Authorization: `Bearer ${token}` } : {} }),
 
-  post: <T>(path: string, body: unknown, token?: string) =>
+  post: <T>(path: string, body: unknown, token?: string, options?: RequestInit) =>
     request<T>(path, {
       method: 'POST',
       body: JSON.stringify(body),
       headers: token ? { Authorization: `Bearer ${token}` } : {},
+      ...options,
     }),
 
   put: <T>(path: string, body: unknown, token?: string) =>

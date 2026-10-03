@@ -26,11 +26,12 @@ export interface FoodProfileResponseDTO {
   userId:                      string;
   isActive:                    boolean;
   requiresHistoryRevalidation: boolean;
+  acceptsCrossContamination:   boolean;
   restrictions: Array<{
     id:       string;
     allergen: string;
     severity: string;
-    type:     string;
+    type?:    string;
     notes?:   string;
   }>;
 }
@@ -109,6 +110,7 @@ export class CreateFoodProfileUseCase {
       userId:                      profile.userId,
       isActive:                    profile.isActive(),
       requiresHistoryRevalidation: profile.requiresHistoryRevalidation,
+      acceptsCrossContamination:   profile.acceptsCrossContamination,
       restrictions:                profile.restrictions.map((r) => ({
         id:       r.id,
         allergen: r.allergen,

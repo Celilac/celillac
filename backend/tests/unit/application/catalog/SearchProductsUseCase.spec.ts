@@ -136,4 +136,42 @@ describe('SearchProductsUseCase', () => {
       avoidAllergens: ['LACTOSE'],
     }));
   });
+
+  it('deve retornar declaredAllergens e metadados adicionais do produto no resultado da busca', async () => {
+    const product = Product.create({
+      name: 'Peixe ao Molho Branco',
+      brand: 'Marca Peixe',
+      ingredients: 'Peixe, leite, farinha de arroz',
+      hasGluten: false,
+      crossContamination: '',
+      partnerId: 'partner-1',
+      declaredAllergens: {
+        MILK: 'CONTAINS',
+        GLUTEN: 'FREE',
+      },
+      crossContaminationDetails: {
+        environmentRisk: 'EXCLUSIVE_ENVIRONMENT',
+      },
+    }).getValue();
+
+    repository.search.mockResolvedValue({
+      data: [product],
+      total: 1,
+      page: 1,
+      limit: 20,
+    });
+
+    const result = await useCase.execute({
+      query: 'peixe',
+      partnerId: 'partner-1',
+    });
+
+    expect(result.isSuccess).toBe(true);
+    const paginated = result.getValue();
+    expect(paginated.data[0].declaredAllergens).toEqual({
+      MILK: 'CONTAINS',
+      GLUTEN: 'FREE',
+    });
+    expect(paginated.data[0].crossContaminationDetails?.environmentRisk).toBe('EXCLUSIVE_ENVIRONMENT');
+  });
 });

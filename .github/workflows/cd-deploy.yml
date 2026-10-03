@@ -23,11 +23,39 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
+            set -e
             cd ~/celillac
-            echo "pulling latest changes from main branch..."
+            echo "==> 1. Atualizando repositório para os commits mais recentes da main..."
             git pull origin main
-            echo "building and starting docker containers..."
+            echo "==> 2. Construindo e subindo containers via Docker Compose..."
             docker compose up -d --build
-            echo "cleaning unused docker images..."
+            echo "==> 3. Limpando imagens órfãs..."
             docker image prune -f
-            echo "deployment successfully completed!"
+
+            echo "==> 4. Aguardando estabilização dos serviços (15s)..."
+            sleep 15
+
+            echo "==> 5. Estado atual dos containers:"
+            docker compose ps
+
+            echo "==> 6. Executando verificação de saúde interna do backend..."
+            if ! docker compose exec -T backend wget -qO- http://localhost:3000/health; then
+              echo "❌ ERRO: O Backend falhou ao responder em http://localhost:3000/health!"
+              echo "==> Últimos 100 logs do backend:"
+              docker compose logs --tail=100 backend
+              exit 1
+            fi
+            echo ""
+            echo "✅ Healthcheck interno do backend aprovado!"
+
+            echo "==> 7. Executando smoke test na API pública via Traefik (HTTPS)..."
+            if curl -k -f -s -m 10 https://api.celilac.com.br/health; then
+              echo ""
+              echo "✅ API pública (https://api.celilac.com.br/health) operacional!"
+            else
+              echo "⚠️ Aviso: Verificação externa retornou código diferente de 200 ou timeout."
+              echo "==> Logs recentes do backend para diagnóstico:"
+              docker compose logs --tail=50 backend
+            fi
+
+            echo "==> 8. Deploy concluído e validado com sucesso!"

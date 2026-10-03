@@ -10,9 +10,10 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
+import { translatePartnerType } from '@/utils/compatibilityTranslator';
 import styles from './partner.module.css';
 
-export default function PartnerDashboardPage() {
+export default function PartnerListPage() {
   const { token, isAuthenticated, isInitializing } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function PartnerDashboardPage() {
     if (isInitializing) return;
 
     if (!isAuthenticated || !token) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
 
@@ -40,10 +41,13 @@ export default function PartnerDashboardPage() {
       .finally(() => setLoading(false));
   }, [isAuthenticated, token, isInitializing, router, toast]);
 
-  if (loading || isInitializing) {
+  if (loading || isInitializing || !isAuthenticated) {
     return (
       <div className={styles.container}>
-        <p className="profile-loading" role="status">Carregando seus estabelecimentos…</p>
+        <Header />
+        {(loading || isInitializing) && (
+          <p className="profile-loading" role="status">Carregando seus estabelecimentos…</p>
+        )}
       </div>
     );
   }
@@ -92,7 +96,7 @@ export default function PartnerDashboardPage() {
             partners.map((partner) => (
               <section key={partner.id} className={styles.card}>
                 <div className={styles.cardContent}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div className={styles.cardHeader}>
                     <h2 className={styles.partnerName}>{partner.name}</h2>
                     {getStatusLabel(partner.approvalStatus)}
                   </div>
@@ -101,7 +105,7 @@ export default function PartnerDashboardPage() {
                   <div className={styles.partnerMeta}>
                     <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
                     <span className={styles.metaItem}>📞 {partner.phone}</span>
-                    <span className={styles.metaItem}>💼 {partner.type}</span>
+                    <span className={styles.metaItem}>💼 {translatePartnerType(partner.type)}</span>
                   </div>
 
                   {partner.approvalStatus === 'REJECTED' && partner.rejectionReason && (
@@ -120,6 +124,12 @@ export default function PartnerDashboardPage() {
                 <div className={styles.cardActions}>
                   <Link href={`/partner/${partner.id}`} className={`${styles.btn} ${styles.btnPrimary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
                     Gerenciar
+                  </Link>
+                  <Link href={`/partner/orders?partnerId=${partner.id}`} className={`${styles.btn} ${styles.btnSecondary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
+                    🍳 Pedidos
+                  </Link>
+                  <Link href={`/partner/financial?partnerId=${partner.id}`} className={`${styles.btn} ${styles.btnSecondary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
+                    💰 Financeiro
                   </Link>
                   <Link href={`/partner/${partner.id}/edit`} className={`${styles.btn} ${styles.btnSecondary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
                     Editar Dados

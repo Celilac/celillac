@@ -87,6 +87,10 @@ export class PgUserRepository implements IUserRepository {
     );
   }
 
+  async delete(id: string): Promise<void> {
+    await this.pool.query('DELETE FROM users WHERE id = $1', [id]);
+  }
+
   private mapRowToUser(row: {
     id: string;
     email: string;

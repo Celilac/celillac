@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { favoriteApi, FavoriteDTO } from '@/api/favorites';
+import { TrashIcon } from '@/components/layout/icons';
 import styles from '../partner/partner.module.css';
 
 export default function FavoritesPage() {
@@ -22,7 +23,7 @@ export default function FavoritesPage() {
 
   useEffect(() => {
     if (mounted && !isInitializing && !isAuthenticated) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
     }
   }, [mounted, isInitializing, isAuthenticated, router]);
 
@@ -61,7 +62,15 @@ export default function FavoritesPage() {
     return true;
   });
 
-  if (!mounted || isInitializing || loading) {
+  if (!mounted || !isAuthenticated) {
+    return (
+      <div className="profile-page">
+        <Header />
+      </div>
+    );
+  }
+
+  if (isInitializing || loading) {
     return (
       <div className="profile-page">
         <Header />
@@ -146,32 +155,15 @@ export default function FavoritesPage() {
               return (
                 <section key={fav.id} className={styles.card}>
                   <div className={styles.cardContent}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                        <span className={`${styles.badge} ${isPartner ? styles.badgePending : styles.badgeApproved}`}>
-                          {isPartner ? '🏢 Parceiro' : '📦 Produto'}
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span className={`${styles.badge} ${isPartner ? styles.badgePending : styles.badgeApproved}`}>
+                        {isPartner ? '🏢 Parceiro' : '📦 Produto'}
+                      </span>
+                      {!isPartner && fav.product?.category && (
+                        <span className={styles.badge} style={{ background: 'var(--color-elevated)', color: 'var(--color-text-muted)' }}>
+                          {fav.product.category}
                         </span>
-                        {!isPartner && fav.product?.category && (
-                          <span className={styles.badge} style={{ background: 'var(--color-elevated)', color: 'var(--color-text-muted)' }}>
-                            {fav.product.category}
-                          </span>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleRemove(targetId)}
-                        title="Remover dos favoritos"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: '1.1rem',
-                          color: 'var(--color-text-muted)',
-                          padding: '0.25rem',
-                        }}
-                      >
-                        🗑️
-                      </button>
+                      )}
                     </div>
 
                     <h2 className={styles.partnerName} style={{ marginTop: '0.5rem' }}>
@@ -188,26 +180,40 @@ export default function FavoritesPage() {
                     </div>
                   </div>
 
-                  <div className={styles.cardActions} style={{ marginTop: '1rem' }}>
+                  <div className={styles.cardActions} style={{ marginTop: '1.25rem' }}>
                     {isPartner ? (
                       <button
                         type="button"
                         className={`${styles.btn} ${styles.btnPrimary}`}
-                        style={{ flex: 1 }}
                         onClick={() => router.push(`/public-partners/${fav.partnerId}`)}
                       >
-                        🔍 Ver Perfil Completo
+                        🔍 Ver Perfil
                       </button>
                     ) : (
                       <button
                         type="button"
                         className={`${styles.btn} ${styles.btnPrimary}`}
-                        style={{ flex: 1 }}
                         onClick={() => router.push(`/products/${fav.productId}`)}
                       >
-                        📦 Ver Detalhes do Produto
+                        📦 Ver Detalhes
                       </button>
                     )}
+                    <button
+                      type="button"
+                      className={`${styles.btn} ${styles.btnDanger}`}
+                      onClick={() => handleRemove(targetId)}
+                      title="Remover dos favoritos"
+                      aria-label="Remover dos favoritos"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.35rem',
+                      }}
+                    >
+                      <TrashIcon />
+                      <span>Remover</span>
+                    </button>
                   </div>
                 </section>
               );

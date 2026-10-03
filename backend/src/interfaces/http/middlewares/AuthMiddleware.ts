@@ -11,27 +11,48 @@ export interface DecodedToken {
 
 const blacklistRepository = new PgBlacklistTokenRepository(pool);
 
-export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
+export function extractAuthToken(req: Request): { token?: string; error?: string } {
+  // 1. Authorization: Bearer <token> (credencial explícita enviada pelo cliente HTTP)
   const authHeader = req.headers.authorization;
+  if (authHeader) {
+    const parts = authHeader.split(' ');
+    if (parts.length === 2 && /^Bearer$/i.test(parts[0])) {
+      return { token: parts[1] };
+    }
+    return { error: 'Token de autenticação malformado.' };
+  }
 
-  if (!authHeader) {
-    res.status(401).json({ error: 'Token de autenticação não fornecido.' });
+  // 2. Query parameter token (suporte a Server-Sent Events / EventSource nativo do browser)
+  if (req.query && typeof req.query.token === 'string' && req.query.token.trim().length > 0) {
+    return { token: req.query.token.trim() };
+  }
+
+  // 3. Cookie HttpOnly (A02: Roubo de Sessão — credencial implícita)
+  if (req.cookies && req.cookies.token) {
+    return { token: req.cookies.token };
+  }
+  if (req.headers.cookie) {
+    const cookies = req.headers.cookie.split(';');
+    for (const c of cookies) {
+      const [name, ...val] = c.trim().split('=');
+      if (name === 'token') {
+        const parsed = decodeURIComponent(val.join('='));
+        if (parsed) return { token: parsed };
+      }
+    }
+  }
+
+  return { error: 'Token de autenticação não fornecido.' };
+}
+
+export async function authMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
+  const extracted = extractAuthToken(req);
+  if (extracted.error || !extracted.token) {
+    res.status(401).json({ error: extracted.error || 'Token de autenticação não fornecido.' });
     return;
   }
 
-  const parts = authHeader.split(' ');
-
-  if (parts.length !== 2) {
-    res.status(401).json({ error: 'Token de autenticação malformado.' });
-    return;
-  }
-
-  const [scheme, token] = parts;
-
-  if (!/^Bearer$/i.test(scheme)) {
-    res.status(401).json({ error: 'Token de autenticação malformado.' });
-    return;
-  }
+  const token = extracted.token;
 
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -92,27 +113,13 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 }
 
 export async function optionalAuthMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
+  const extracted = extractAuthToken(req);
+  if (extracted.error || !extracted.token) {
     next();
     return;
   }
 
-  const parts = authHeader.split(' ');
-
-  if (parts.length !== 2) {
-    next();
-    return;
-  }
-
-  const [scheme, token] = parts;
-
-  if (!/^Bearer$/i.test(scheme)) {
-    next();
-    return;
-  }
-
+  const token = extracted.token;
   const secret = process.env.JWT_SECRET || 'secret';
 
   try {
@@ -137,5 +144,43 @@ export function adminOnlyMiddleware(req: Request, res: Response, next: NextFunct
     res.status(403).json({ error: 'Acesso negado. Apenas administradores possuem acesso a esta funcionalidade.' });
     return;
   }
+  next();
+}
+
+export async function verifiedEmailOnlyMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
+  if (!req.user) {
+    res.status(401).json({ error: 'Token de autenticação não fornecido ou inválido.' });
+    return;
+  }
+
+  // Administradores são isentos
+  if (req.user.role === 'ADMIN') {
+    next();
+    return;
+  }
+
+  try {
+    const userQuery = await pool.query(
+      'SELECT is_email_verified FROM users WHERE id = $1 LIMIT 1',
+      [req.user.id]
+    );
+
+    if (userQuery && userQuery.rows && userQuery.rows.length > 0) {
+      if (!userQuery.rows[0].is_email_verified) {
+        res.status(403).json({
+          error: 'É necessário validar seu e-mail com o código OTP antes de realizar esta ação.',
+          code: 'EMAIL_NOT_VERIFIED',
+        });
+        return;
+      }
+    }
+  } catch (err: any) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('[verifiedEmailOnlyMiddleware] Erro ao verificar validação de e-mail:', err);
+      res.status(500).json({ error: 'Erro ao verificar permissão do usuário.' });
+      return;
+    }
+  }
+
   next();
 }

@@ -7,6 +7,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
+import PartnerLocationMap from '@/components/common/PartnerLocationMap';
+import { formatDisplayPhone, maskCnpj } from '@/utils/mask';
+import { translatePartnerType } from '@/utils/compatibilityTranslator';
 import styles from '../../partner/partner.module.css';
 
 export default function AdminPartnersPage() {
@@ -52,7 +55,7 @@ export default function AdminPartnersPage() {
     if (isInitializing) return;
 
     if (!isAuthenticated || !token) {
-      router.push('/auth/login');
+      router.replace('/auth/login');
       return;
     }
 
@@ -143,10 +146,13 @@ export default function AdminPartnersPage() {
     setReason('');
   }
 
-  if (loading || isInitializing) {
+  if (loading || isInitializing || !isAuthenticated) {
     return (
-      <div className={styles.container}>
-        <p className="profile-loading" role="status">Carregando painel de moderação…</p>
+      <div className="profile-page">
+        <Header />
+        <main className={styles.container}>
+          <p className="profile-loading" role="status">Carregando painel de moderação…</p>
+        </main>
       </div>
     );
   }
@@ -188,7 +194,7 @@ export default function AdminPartnersPage() {
             partners.map((partner) => (
               <section key={partner.id} className={styles.card}>
                 <div className={styles.cardContent}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                  <div className={styles.cardHeader}>
                     <h2 className={styles.partnerName}>{partner.name}</h2>
                     {getStatusLabel(partner.approvalStatus)}
                   </div>
@@ -196,8 +202,8 @@ export default function AdminPartnersPage() {
                   
                   <div className={styles.partnerMeta}>
                     <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
-                    <span className={styles.metaItem}>📞 {partner.phone}</span>
-                    <span className={styles.metaItem}>💼 {partner.type}</span>
+                    <span className={styles.metaItem}>📞 {formatDisplayPhone(partner.phone)}</span>
+                    <span className={styles.metaItem}>💼 {translatePartnerType(partner.type)}</span>
                   </div>
 
                   {partner.approvalStatus === 'REJECTED' && partner.rejectionReason && (
@@ -305,7 +311,6 @@ export default function AdminPartnersPage() {
                 </div>
                 <button
                   type="button"
-                  ref={detailCloseRef}
                   onClick={() => setDetailPartner(null)}
                   style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', opacity: 0.7 }}
                   aria-label="Fechar"
@@ -325,15 +330,25 @@ export default function AdminPartnersPage() {
                 <div className={styles.infoGrid}>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>CNPJ / Registro</span>
-                    <p className={styles.detailValue}>{detailPartner.cnpj || 'Não informado (Pessoa Física)'}</p>
+                    <p className={styles.detailValue}>{detailPartner.cnpj ? maskCnpj(detailPartner.cnpj) : 'Não informado (Pessoa Física)'}</p>
                   </div>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>Tipo de Fornecedor</span>
-                    <p className={styles.detailValue}>{detailPartner.type}</p>
+                    <p className={styles.detailValue}>{translatePartnerType(detailPartner.type)}</p>
                   </div>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>Telefone de Contato</span>
-                    <p className={styles.detailValue}>{detailPartner.phone}</p>
+                    <p className={styles.detailValue}>
+                      <a
+                        href={`https://wa.me/${detailPartner.phone?.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: 'var(--color-accent, #2563EB)', textDecoration: 'none', fontWeight: 500 }}
+                        title="Abrir no WhatsApp"
+                      >
+                        {formatDisplayPhone(detailPartner.phone)}
+                      </a>
+                    </p>
                   </div>
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>Cidade / Estado</span>
@@ -344,6 +359,17 @@ export default function AdminPartnersPage() {
                 <div className={styles.detailBox}>
                   <span className={styles.detailLabel}>📍 Endereço Completo</span>
                   <p className={styles.detailValue} style={{ marginTop: '0.25rem' }}>{detailPartner.address}</p>
+
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <PartnerLocationMap
+                      address={detailPartner.address}
+                      city={detailPartner.city}
+                      state={detailPartner.state}
+                      name={detailPartner.name}
+                      height={200}
+                      showDirectionsButton={true}
+                    />
+                  </div>
                 </div>
 
                 <div className={styles.detailBox}>

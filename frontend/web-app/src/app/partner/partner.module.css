@@ -61,11 +61,21 @@
   gap: var(--space-3);
 }
 
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
 .partnerName {
   font-size: var(--text-title);
   font-weight: 700;
   color: var(--color-text);
-  line-height: 1.2;
+  line-height: 1.25;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .partnerDescription {
@@ -113,23 +123,39 @@
 }
 
 .cardActions {
-  display: flex;
-  gap: var(--space-3);
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.cardActions .btn {
+  width: 100%;
+  font-size: 0.85rem;
+  padding: 0.55rem 0.75rem;
+  text-align: center;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 /* Status Badges — status administrativo de cadastro, deliberadamente
    separado da paleta de Risco alimentar (ver globals.css). */
 .badge {
-  font-size: var(--text-label);
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: var(--space-2) var(--space-3);
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.75rem;
   border-radius: var(--radius-full);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-1);
   width: fit-content;
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.25;
+  margin-top: 1px;
 }
 
 .badgeDraft {
@@ -204,14 +230,17 @@
 }
 
 .btnSecondary {
-  background: transparent;
-  color: var(--color-text-muted);
-  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
 
 .btnSecondary:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--color-elevated);
+  border-color: var(--color-border-hover);
   color: var(--color-text);
+  transform: translateY(-1px);
 }
 
 .btnDanger {
@@ -240,6 +269,181 @@
   padding: var(--space-8);
 }
 
+.formShellLarge {
+  max-width: 1040px;
+  margin: 0 auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.formTwoCols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-8);
+  margin-bottom: var(--space-6);
+  align-items: start;
+}
+
+.colLeft, .colRight {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.formSectionDivider {
+  border-top: 1px solid var(--color-border);
+  margin: var(--space-6) 0 var(--space-6) 0;
+  padding-top: var(--space-6);
+}
+
+.formSectionTitle {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.brandField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.brandDropzone {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-elevated);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 195px;
+  user-select: none;
+}
+
+.brandDropzone:hover, .brandDropzoneActive {
+  border-color: var(--color-emerald);
+  background: rgba(16, 185, 129, 0.06);
+  box-shadow: 0 0 0 3px var(--color-emerald-dim);
+}
+
+.brandDropzoneIcon {
+  font-size: 2.2rem;
+  opacity: 0.85;
+}
+
+.brandDropzoneTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.brandDropzoneSubtitle {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.brandDropzoneMeta {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.brandPreviewWrapper {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-elevated);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 195px;
+  justify-content: center;
+}
+
+.brandPreviewBox {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  padding: var(--space-2);
+}
+
+.brandPreviewImg {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.brandActions {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.brandBtnAction {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.brandBtnAction:hover {
+  background: var(--color-elevated);
+  border-color: var(--color-border-hover);
+  transform: translateY(-1px);
+}
+
+.brandBtnRemove {
+  color: var(--color-danger);
+  border-color: var(--color-danger-border);
+}
+
+.brandBtnRemove:hover {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.brandHelpText {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+  margin-top: var(--space-1);
+}
+
 .formGroup {
   display: flex;
   flex-direction: column;
@@ -259,6 +463,7 @@
   border-radius: var(--radius-md);
   padding: var(--space-3) var(--space-4);
   font-size: var(--text-body);
+  font-family: inherit;
   color: var(--color-text);
   transition: border-color 0.2s ease;
   width: 100%;
@@ -404,6 +609,40 @@ input:checked + .slider:before {
   transform: translateX(24px);
 }
 
+/* Slider específico para Status Operacional (Verde = Ativo/Aberto, Vermelho = Inativo/Fechado) */
+.sliderOperational {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ef4444;
+  transition: 0.25s ease;
+  border-radius: var(--radius-full);
+}
+
+.sliderOperational:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.25s ease;
+  border-radius: var(--radius-full);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+input:checked + .sliderOperational {
+  background-color: #10b981;
+}
+
+input:checked + .sliderOperational:before {
+  transform: translateX(24px);
+}
+
 /* Modal Dialog */
 .dialogOverlay {
   position: fixed;
@@ -436,7 +675,8 @@ input:checked + .slider:before {
 .modalHeader {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: var(--space-3);
   padding-bottom: 1rem;
   margin-bottom: 1.25rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -450,6 +690,75 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  word-break: break-word;
+  flex: 1;
+}
+
+.modalCloseBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.modalCloseBtn:hover {
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.partnerSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.partnerHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.partnerInfoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+  font-size: var(--text-body);
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
+  padding-top: 1rem;
+}
+
+.partnerProductsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.phoneLink {
+  color: var(--color-accent, #2563EB);
+  text-decoration: none;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .detailSection {
@@ -507,6 +816,16 @@ input:checked + .slider:before {
   .btnPrimary:hover { transform: none; }
 }
 
+@media (max-width: 860px) {
+  .formTwoCols {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .formShellLarge {
+    padding: var(--space-6) var(--space-4);
+  }
+}
+
 @media (max-width: 768px) {
   .dashboardLayout {
     grid-template-columns: 1fr;
@@ -518,6 +837,48 @@ input:checked + .slider:before {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-4);
+  }
+  .dialogCard {
+    padding: var(--space-5) var(--space-4);
+    border-radius: var(--radius-md);
+  }
+}
+
+@media (max-width: 640px) {
+  .dialogOverlay {
+    padding: 0.75rem;
+  }
+  .dialogCard {
+    padding: 1.25rem 1rem;
+    max-width: 100%;
+    border-radius: var(--radius-md);
+  }
+  .modalTitle {
+    font-size: 1.15rem;
+  }
+  .modalActions {
+    flex-direction: column-reverse;
+    gap: 0.6rem;
+  }
+  .modalActions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+  }
+  .partnerInfoGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  .partnerProductsGrid {
+    grid-template-columns: 1fr;
+  }
+  .partnerSectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .partnerHeaderActions {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
 
@@ -557,10 +918,58 @@ input:checked + .slider:before {
   color: #334155;
 }
 
-:global(html[data-theme='light']) .formShell {
+:global(html[data-theme='light']) .formShell,
+:global(html[data-theme='light']) .formShellLarge {
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.08);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+:global(html[data-theme='light']) .formSectionTitle {
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .formSectionDivider {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+:global(html[data-theme='light']) .brandDropzone {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+:global(html[data-theme='light']) .brandDropzone:hover,
+:global(html[data-theme='light']) .brandDropzoneActive {
+  background: rgba(5, 150, 105, 0.05);
+  border-color: #059669;
+}
+
+:global(html[data-theme='light']) .brandDropzoneTitle {
+  color: #0f172a;
+}
+
+:global(html[data-theme='light']) .brandDropzoneMeta {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+:global(html[data-theme='light']) .brandPreviewWrapper {
+  background: #f8fafc;
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+:global(html[data-theme='light']) .brandPreviewBox {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+:global(html[data-theme='light']) .brandBtnAction {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+:global(html[data-theme='light']) .brandBtnAction:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
 }
 
 :global(html[data-theme='light']) .input,
@@ -626,6 +1035,18 @@ input:checked + .slider:before {
 
 :global(html[data-theme='light']) .slider {
   background-color: #cbd5e1;
+}
+
+:global(html[data-theme='light']) input:checked + .slider {
+  background-color: #10b981;
+}
+
+:global(html[data-theme='light']) .sliderOperational {
+  background-color: #ef4444;
+}
+
+:global(html[data-theme='light']) input:checked + .sliderOperational {
+  background-color: #10b981;
 }
 
 :global(html[data-theme='light']) .dialogOverlay {

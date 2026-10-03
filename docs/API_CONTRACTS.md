@@ -46,6 +46,24 @@
    - [POST /admin/reports](#post-adminreports)
    - [GET /admin/reports](#get-adminreports)
    - [PATCH /admin/reports/:id/status](#patch-adminreportsidstatus)
+13. [Moderação de Certificações e Laudos Técnicos](#13-moderação-de-certificações-e-laudos-técnicos)
+   - [GET /admin/certifications](#get-admincertifications)
+   - [PATCH /admin/certifications/:id/review](#patch-admincertificationsidreview)
+14. [Pedidos (Orders)](#14-pedidos-orders)
+   - [POST /orders](#post-orders)
+   - [GET /orders/me](#get-ordersme)
+   - [GET /orders/stream](#get-ordersstream)
+   - [GET /orders/:id](#get-ordersid)
+   - [GET /orders/partner/:partnerId](#get-orderspartnerpartnerid)
+   - [POST /orders/:id/cancel](#post-ordersidcancel)
+   - [PATCH /orders/:id/status](#patch-ordersidstatus)
+   - [POST /orders/:id/report-non-payment](#post-ordersidreport-non-payment)
+15. [Pagamentos e Split Marketplace (Payments)](#15-pagamentos-e-split-marketplace-payments)
+   - [POST /payments/checkout](#post-paymentscheckout)
+   - [GET /payments/order/:orderId](#get-paymentsorderorderid)
+   - [POST /payments/partner/:partnerId/financial-account](#post-paymentspartnerpartneridfinancial-account)
+   - [GET /payments/partner/:partnerId/financial-account](#get-paymentspartnerpartneridfinancial-account)
+   - [POST /payments/webhook/asaas](#post-paymentswebhookasaas)
 
 ---
 
@@ -216,6 +234,128 @@ Revoga o token JWT do usuário autenticado inserindo-o na blacklist. 🔒 **Aute
 curl -X POST http://localhost:3000/iam/logout \
   -H "Authorization: Bearer <seu-jwt-token>"
 ```
+
+---
+
+### `POST /iam/password-reset/request`
+
+Solicita a geração e envio por e-mail de um código OTP de recuperação de senha (válido por 15 minutos). **Público — sem autenticação.** Protegido contra enumeração de usuários (retorna 200 OK mesmo se o e-mail não existir na base).
+
+**Request Body:**
+```json
+{
+  "email": "usuario@exemplo.com"
+}
+```
+
+| Campo | Tipo | Obrigatório | Validação |
+|:------|:-----|:-----------:|:----------|
+| `email` | `string` | ✅ | Formato de e-mail válido. |
+
+**Response `200 OK`:**
+```json
+{
+  "message": "Se o endereço de e-mail estiver cadastrado em nossa plataforma, você receberá em instantes um código para redefinir sua senha."
+}
+```
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `400` | `"O e-mail é obrigatório."` | Campo ausente ou vazio |
+| `400` | `"Formato de e-mail inválido."` | Sintaxe de e-mail não compatível |
+| `429` | `"Muitas tentativas de recuperação de senha a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente."` | Limite de taxa excedido (máximo 3 requisições por IP a cada 15 minutos; cabeçalhos `X-RateLimit-*` e `Retry-After` presentes) |
+
+---
+
+### `POST /iam/password-reset/confirm`
+
+Valida o código OTP de 6 dígitos recebido por e-mail e define uma nova senha para a conta do usuário. **Público — sem autenticação.**
+
+**Request Body:**
+```json
+{
+  "email": "usuario@exemplo.com",
+  "code": "123456",
+  "newPassword": "NovaSenh@Forte123"
+}
+```
+
+| Campo | Tipo | Obrigatório | Validação |
+|:------|:-----|:-----------:|:----------|
+| `email` | `string` | ✅ | E-mail da conta do usuário. |
+| `code` | `string` | ✅ | Código numérico OTP de exatamente 6 dígitos. |
+| `newPassword` | `string` | ✅ | Mínimo 8 caracteres, maiúscula, minúscula, número e caractere especial. |
+
+**Response `200 OK`:**
+```json
+{
+  "message": "Senha redefinida com sucesso! Você já pode entrar com sua nova senha."
+}
+```
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `400` | `"O código de recuperação deve possuir 6 dígitos."` | Código com tamanho incorreto |
+| `400` | `"A nova senha deve ter no mínimo 8 caracteres..."` | Complexidade da senha insuficiente |
+| `400` | `"Código de recuperação inválido ou já utilizado."` | Código não confere ou já foi usado |
+| `400` | `"Este código de recuperação expirou. Por favor, solicite um novo código."` | Código com mais de 15 minutos |
+
+---
+
+### `POST /iam/email-verification/verify`
+
+Valida o código numérico OTP de 6 dígitos recebido por e-mail para confirmar a titularidade da conta. 🔒 **Autenticação obrigatória — Bearer Token.**
+
+**Request Body:**
+```json
+{
+  "code": "123456"
+}
+```
+
+| Campo | Tipo | Obrigatório | Validação |
+|:------|:-----|:-----------:|:----------|
+| `code` | `string` | ✅ | Código numérico OTP de exatamente 6 dígitos. |
+
+**Response `200 OK`:**
+```json
+{
+  "message": "Endereço de e-mail verificado com sucesso!"
+}
+```
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `401` | `"Token de autenticação não fornecido."` | Header Authorization ausente |
+| `400` | `"O código de verificação deve conter 6 dígitos."` | Código com tamanho ou formato inválido |
+| `400` | `"Código de verificação incorreto ou inexistente."` | Código não confere com o gerado |
+| `400` | `"Código de verificação expirado."` | Código emitido há mais de 15 minutos |
+
+---
+
+### `POST /iam/email-verification/resend`
+
+Solicita o reenvio de um novo código OTP de verificação para o e-mail do usuário autenticado. 🔒 **Autenticação obrigatória — Bearer Token.** Protegido por rate limiting configurável.
+
+**Request Body:**
+*(Nenhum)*
+
+**Response `200 OK`:**
+```json
+{
+  "message": "Novo código de verificação enviado por e-mail."
+}
+```
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `401` | `"Token de autenticação não fornecido."` | Header Authorization ausente |
+| `400` | `"E-mail já verificado."` | A conta já se encontra com status verificado |
+| `429` | `"Muitas tentativas de reenvio de código de verificação a partir deste endereço IP. Por favor, aguarde 15 minutos antes de tentar novamente."` | Limite de taxa excedido (máximo 3 requisições por IP a cada 15 minutos; cabeçalhos `X-RateLimit-*` e `Retry-After` presentes) |
 
 ---
 
@@ -415,17 +555,106 @@ Cadastra um novo produto no catálogo.
   "brand": "CeliFood",
   "ingredients": "Arroz integral, sal marinho.",
   "hasGluten": false,
-  "crossContamination": "Pode conter traços de soja."
+  "crossContamination": "Pode conter traços de soja.",
+  "partnerId": "uuid-do-parceiro",
+  "price": 12.50,
+  "category": "Biscoitos & Snacks",
+  "shortDescription": "Biscoito crocante sem glúten.",
+  "netContent": 150,
+  "unitOfMeasure": "g",
+  "sku": "BIS-ARR-150",
+  "ean": "7891234567890",
+  "commercialOrigin": "OWN_MANUFACTURE",
+  "mayContainTraces": "Pode conter soja e gergelim.",
+  "compositionNotes": "Assado em forno dedicado.",
+  "publicationStatus": "PUBLISHED",
+  "declaredAllergens": {
+    "GLUTEN": "FREE",
+    "CRUSTACEANS": "FREE",
+    "EGGS": "FREE",
+    "FISH": "FREE",
+    "PEANUTS": "FREE",
+    "SOY": "TRACES",
+    "MILK": "FREE",
+    "NUTS": "FREE",
+    "SESAME": "TRACES",
+    "SULFITES": "FREE"
+  },
+  "crossContaminationDetails": {
+    "riskLevel": "SHARED_FACILITY",
+    "isolationProtocols": "Linhas de envase separadas por sala limpa",
+    "sanitizationProtocol": "Higienização química com swab de alérgenos"
+  },
+  "dietaryFeatures": ["VEGAN", "ORGANIC", "NO_ADDED_SUGAR"],
+  "informationOrigin": "PARTNER_DECLARED",
+  "nutritionalInfo": {
+    "servingSize": "30g (3 biscoitos)",
+    "caloriesKcal": 110,
+    "carbohydratesG": 24,
+    "sugarsG": 0,
+    "addedSugarsG": 0,
+    "proteinsG": 2.1,
+    "totalFatG": 0.5,
+    "saturatedFatG": 0.1,
+    "transFatG": 0,
+    "dietaryFiberG": 1.2,
+    "sodiumMg": 45
+  },
+  "certifications": [
+    {
+      "certificationType": "ACELBRA",
+      "certificateNumber": "AC-2026-9981",
+      "issuingEntity": "ACELBRA Nacional",
+      "issuedAt": "2026-01-10T00:00:00.000Z",
+      "expiresAt": "2027-01-10T00:00:00.000Z"
+    }
+  ],
+  "images": [
+    {
+      "url": "https://cdn.example.com/pao-capa.webp",
+      "imageType": "PRODUCT",
+      "caption": "Foto do produto assado",
+      "displayOrder": 0,
+      "isCover": true
+    },
+    {
+      "url": "https://cdn.example.com/pao-rotulo.webp",
+      "imageType": "LABEL",
+      "caption": "Rótulo frontal legível",
+      "displayOrder": 1,
+      "isCover": false
+    }
+  ]
 }
 ```
 
 | Campo | Tipo | Obrigatório | Validação |
 |:------|:-----|:-----------:|:----------|
 | `name` | `string` | ✅ | Nome do produto |
+| `partnerId` | `string` | ✅ | ID do parceiro comercial proprietário |
 | `brand` | `string` | ❌ | Marca do produto |
-| `ingredients` | `string` | ❌ | Lista de ingredientes. Se vazio, status vira `PENDENTE_DE_ANALISE` |
-| `hasGluten` | `boolean` | ✅ | Declaração do fabricante se contém glúten |
-| `crossContamination` | `string` | ✅ | Traços declarados. Pode ser vazio. |
+| `ingredients` | `string` | ⚠️ | Obrigatório se `publicationStatus === 'PUBLISHED'` |
+| `hasGluten` | `boolean` | ❌ | Declaração se contém glúten (auto-sincronizada com `declaredAllergens.GLUTEN`) |
+| `crossContamination` | `string` | ❌ | Traços de ambiente declarados (texto legado) |
+| `price` | `number` | ❌ | Preço sugerido unitário |
+| `category` | `string` | ❌ | Categoria do produto |
+| `imageUrl` | `string` | ❌ | URL da imagem de capa (sincronizada com `images[isCover=true]`) |
+| `images` | `array` | ❌ | Lista de até 8 fotos classificadas (`PRODUCT`, `PACKAGING`, `LABEL`, `INGREDIENTS`, `NUTRITIONAL_INFO`, `CERTIFICATION`) |
+| `shortDescription` | `string` | ❌ | Breve descrição comercial |
+| `netContent` | `number` | ❌ | Quantidade / peso numérico líquido |
+| `unitOfMeasure` | `string` | ❌ | Unidade (`g`, `kg`, `ml`, `L`, `un`) |
+| `sku` | `string` | ❌ | Código de controle de estoque interno |
+| `ean` | `string` | ❌ | Código de barras EAN (8 a 14 dígitos numéricos) |
+| `commercialOrigin` | `string` | ❌ | `OWN_MANUFACTURE` (padrão) ou `THIRD_PARTY_RESELL` |
+| `mayContainTraces` | `string` | ❌ | Declaração textual de "Pode Conter..." (RDC 727/2022) |
+| `compositionNotes` | `string` | ❌ | Observações adicionais de composição |
+| `publicationStatus`| `string` | ❌ | `DRAFT`, `PUBLISHED` (padrão) ou `INACTIVE` |
+| `declaredAllergens`| `object` | ❌ | Matriz de 10 alérgenos da RDC 727 nos estados `FREE`, `CONTAINS`, `TRACES`, `NOT_INFORMED` |
+| `crossContaminationDetails` | `object` | ❌ | Isolamento fabril (`riskLevel`: `NONE`, `POSSIBLE`, `SHARED_FACILITY`, `NOT_APPLICABLE`), `isolationProtocols`, `sanitizationProtocol` |
+| `dietaryFeatures`  | `array`  | ❌ | Estilos de vida (`VEGAN`, `VEGETARIAN`, `ORGANIC`, `NO_ADDED_SUGAR`, `LOW_SODIUM`, `DAIRY_FREE`, `EGG_FREE`, `SOY_FREE`, `KOSHER`, `HALAL`) |
+| `informationOrigin`| `string` | ❌ | Origem dos dados: `PARTNER_DECLARED` (padrão) ou `VERIFIED_BY_CELILAC` |
+| `nutritionalInfo`  | `object` | ❌ | Informações nutricionais RDC 429 (`servingSize`, `caloriesKcal`, `carbohydratesG`, `sugarsG`, `addedSugarsG`, `proteinsG`, `totalFatG`, `saturatedFatG`, `transFatG`, `dietaryFiberG`, `sodiumMg`) |
+| `certifications`   | `array`  | ❌ | Selos e laudos (`certificationType`, `certificateNumber`, `issuingEntity`, `issuedAt`, `expiresAt`, `imageId`, `isVerified`) |
 
 **Response `201 Created`:**
 ```json
@@ -436,7 +665,75 @@ Cadastra um novo produto no catálogo.
   "ingredients": "Arroz integral, sal marinho.",
   "hasGluten": false,
   "crossContamination": "Pode conter traços de soja.",
-  "analysisStatus": "ANALISADO"
+  "analysisStatus": "ANALISADO",
+  "partnerId": "uuid-do-parceiro",
+  "price": 12.50,
+  "category": "Biscoitos & Snacks",
+  "imageUrl": "https://cdn.example.com/pao-capa.webp",
+  "shortDescription": "Biscoito crocante sem glúten.",
+  "netContent": 150,
+  "unitOfMeasure": "g",
+  "sku": "BIS-ARR-150",
+  "ean": "7891234567890",
+  "commercialOrigin": "OWN_MANUFACTURE",
+  "mayContainTraces": "Pode conter soja e gergelim.",
+  "compositionNotes": "Assado em forno dedicado.",
+  "publicationStatus": "PUBLISHED",
+  "declaredAllergens": {
+    "GLUTEN": "FREE",
+    "CRUSTACEANS": "FREE",
+    "EGGS": "FREE",
+    "FISH": "FREE",
+    "PEANUTS": "FREE",
+    "SOY": "TRACES",
+    "MILK": "FREE",
+    "NUTS": "FREE",
+    "SESAME": "TRACES",
+    "SULFITES": "FREE"
+  },
+  "crossContaminationDetails": {
+    "riskLevel": "SHARED_FACILITY",
+    "isolationProtocols": "Linhas de envase separadas por sala limpa",
+    "sanitizationProtocol": "Higienização química com swab de alérgenos"
+  },
+  "dietaryFeatures": ["VEGAN", "ORGANIC", "NO_ADDED_SUGAR"],
+  "informationOrigin": "PARTNER_DECLARED",
+  "nutritionalInfo": {
+    "servingSize": "30g (3 biscoitos)",
+    "caloriesKcal": 110,
+    "carbohydratesG": 24,
+    "sugarsG": 0,
+    "addedSugarsG": 0,
+    "proteinsG": 2.1,
+    "totalFatG": 0.5,
+    "saturatedFatG": 0.1,
+    "transFatG": 0,
+    "dietaryFiberG": 1.2,
+    "sodiumMg": 45
+  },
+  "certifications": [
+    {
+      "id": "uuid-do-selo",
+      "productId": "uuid-do-produto",
+      "certificationType": "ACELBRA",
+      "certificateNumber": "AC-2026-9981",
+      "issuingEntity": "ACELBRA Nacional",
+      "issuedAt": "2026-01-10T00:00:00.000Z",
+      "expiresAt": "2027-01-10T00:00:00.000Z",
+      "isVerified": false
+    }
+  ],
+  "images": [
+    {
+      "id": "uuid-da-imagem-1",
+      "productId": "uuid-do-produto",
+      "url": "https://cdn.example.com/pao-capa.webp",
+      "imageType": "PRODUCT",
+      "caption": "Foto do produto assado",
+      "displayOrder": 0,
+      "isCover": true
+    }
+  ]
 }
 ```
 
@@ -475,18 +772,74 @@ Busca produtos pelo nome ou marca, com suporte a paginação.
 
 ---
 
+### `POST /catalog/categories` 🔒
+Registra uma nova categoria de produtos. Utilizável imediatamente pelo parceiro criador (`PENDING_APPROVAL`, `RESTRICTED`).
+
+**Request Body:**
+```json
+{
+  "name": "Doces Artesanais Low Carb",
+  "partnerId": "uuid-do-parceiro"
+}
+```
+
+**Response `201 Created`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-da-categoria",
+    "name": "Doces Artesanais Low Carb",
+    "normalizedName": "DOCES ARTESANAIS LOW CARB",
+    "partnerId": "uuid-do-parceiro",
+    "status": "PENDING_APPROVAL",
+    "visibility": "RESTRICTED",
+    "createdAt": "2026-08-28T22:00:00.000Z",
+    "updatedAt": "2026-08-28T22:00:00.000Z"
+  }
+}
+```
+
+---
+
+### `GET /catalog/categories`
+Lista categorias disponíveis. Se informado `?partnerId=...`, retorna categorias globais aprovadas + categorias do parceiro. Sem query param ou com `?public=true`, retorna apenas categorias globais aprovadas.
+
+**Query Parameters:**
+| Parâmetro | Tipo | Descrição |
+|:----------|:-----|:----------|
+| `partnerId` | `string (UUID)` | Opcional. ID do estabelecimento do parceiro |
+| `public` | `boolean` | Opcional. Se `true`, força retorno exclusivo de categorias públicas aprovadas |
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-cat-1",
+      "name": "Padaria & Confeitaria",
+      "normalizedName": "PADARIA & CONFEITARIA",
+      "status": "APPROVED",
+      "visibility": "GLOBAL"
+    }
+  ]
+}
+```
+
+---
+
 ## 6. Avaliações (Social Proof)
 
 O módulo de avaliações permite que usuários deem uma nota (1-5) para a acurácia do rótulo do produto, validando de forma comunitária a segurança do mesmo.
 
 ### `POST /reviews`
 
-Cria ou atualiza a avaliação de um usuário para um produto (Upsert - limite de 1 por usuário). 🔒 *(autenticação necessária para produção)*
+Cria ou atualiza a avaliação de um usuário para um produto ou parceiro comercial (Upsert - limite de 1 por usuário por alvo). 🔒 *(Requer autenticação JWT e e-mail validado por código OTP)*
 
 **Request Body:**
 ```json
 {
-  "userId": "uuid-do-usuario",
   "productId": "uuid-do-produto",
   "rating": 5,
   "comment": "Rótulo parece seguro e completo."
@@ -495,8 +848,9 @@ Cria ou atualiza a avaliação de um usuário para um produto (Upsert - limite d
 
 | Campo | Tipo | Obrigatório | Validação |
 |:------|:-----|:-----------:|:----------|
-| `userId` | `string (UUID)` | ✅ | ID do usuário avaliador |
-| `productId` | `string (UUID)`| ✅ | ID do produto avaliado |
+| `userId` | `string (UUID)` | ❌ (opcional se autenticado via JWT) | ID do usuário avaliador |
+| `productId` | `string (UUID)`| ⚠️ (ou partnerId) | ID do produto avaliado |
+| `partnerId` | `string (UUID)`| ⚠️ (ou productId) | ID do parceiro avaliado |
 | `rating` | `integer`       | ✅ | Entre 1 e 5 |
 | `comment` | `string`       | ❌ | Comentário opcional |
 
@@ -515,7 +869,9 @@ Cria ou atualiza a avaliação de um usuário para um produto (Upsert - limite d
 **Erros possíveis:**
 | Status | `error` | Causa |
 |:-------|:--------|:------|
-| `400` | `"userId, productId e rating (1-5) são obrigatórios."` | Input inválido |
+| `400` | `"Os campos userId, rating (1-5) e pelo menos um de productId ou partnerId são obrigatórios."` | Input inválido |
+| `401` | `"Token de autenticação não fornecido."` | Ausência de token JWT |
+| `403` | `"É necessário validar seu e-mail com o código OTP antes de realizar esta ação."` | Usuário com `is_email_verified = false` |
 | `404` | `"Produto não encontrado no catálogo."` | O produto não existe |
 
 ---
@@ -565,9 +921,23 @@ Cadastra um novo perfil comercial de parceiro. Apenas para usuários com papel `
   "type": "RESTAURANT",
   "city": "São Paulo",
   "state": "SP",
-  "deliveryRegion": "Grande SP"
+  "deliveryRegion": "Grande SP",
+  "logoUrl": "data:image/webp;base64,..."
 }
 ```
+
+| Campo | Tipo | Obrigatório | Validação / Descrição |
+|:------|:-----|:-----------:|:----------------------|
+| `name` | `string` | ✅ | Nome comercial ou razão social |
+| `cnpj` | `string` | ❌ | Opcional (produtor artesanal/PF). Se informado, validado via Módulo 11 da Receita Federal |
+| `phone` | `string` | ✅ | Telefone no padrão internacional E.164 (ex: `+5511999998888`) |
+| `address` | `string` | ✅ | Endereço completo (georreferenciado via Google Maps no frontend) |
+| `type` | `string` | ✅ | `RESTAURANT`, `MARKET` ou `INDEPENDENT_PRODUCER` |
+| `city` | `string` | ❌ | Cidade (auto-preenchida via CEP) |
+| `state` | `string` | ❌ | Estado / UF (auto-preenchido via CEP) |
+| `deliveryRegion` | `string` | ❌ | Região de atendimento |
+| `logoUrl` | `string` | ❌ | Imagem da marca em Base64/WebP/PNG (até 5MB) |
+| `isDraft` | `boolean` | ❌ | Se `true`, salva como `DRAFT`. Por padrão (`false`/omitido), submete automaticamente para `PENDING_REVIEW` |
 
 **Response `201 Created`:**
 ```json
@@ -575,16 +945,17 @@ Cadastra um novo perfil comercial de parceiro. Apenas para usuários com papel `
   "id": "uuid-do-parceiro",
   "userId": "uuid-do-dono",
   "name": "Cantina Vegana Sem Glúten",
-  "cnpj": "12345678000195",
+  "cnpj": "12.345.678/0001-95",
   "description": "Pratos saudáveis livres de contaminação cruzada.",
   "address": "Av. Paulista, 1000",
   "phone": "11999998888",
   "type": "RESTAURANT",
-  "approvalStatus": "DRAFT",
+  "approvalStatus": "PENDING_REVIEW",
   "operationalStatus": "INACTIVE",
   "city": "São Paulo",
   "state": "SP",
-  "deliveryRegion": "Grande SP"
+  "deliveryRegion": "Grande SP",
+  "logoUrl": "data:image/webp;base64,..."
 }
 ```
 
@@ -601,7 +972,8 @@ Lista todos os parceiros comerciais vinculados ao usuário responsável logado.
     "userId": "uuid-do-dono",
     "name": "Cantina Vegana Sem Glúten",
     "approvalStatus": "DRAFT",
-    "operationalStatus": "INACTIVE"
+    "operationalStatus": "INACTIVE",
+    "logoUrl": "data:image/webp;base64,..."
   }
 ]
 ```
@@ -609,14 +981,15 @@ Lista todos os parceiros comerciais vinculados ao usuário responsável logado.
 ---
 
 ### `PUT /partners/:id` 🔒
-Atualiza os dados cadastrais do parceiro. Alterações críticas regridem o status de aprovação para `PENDING_REVIEW` automaticamente.
+Atualiza os dados cadastrais do parceiro. Alterações críticas regridem o status de aprovação para `PENDING_REVIEW` automaticamente. Alterações em `description` e `logoUrl` não regridem o status.
 
 **Request Body:**
 ```json
 {
   "name": "Novo Nome Cantina",
   "address": "Novo Endereço, 123",
-  "phone": "11988887777"
+  "phone": "11988887777",
+  "logoUrl": "data:image/webp;base64,..."
 }
 ```
 
@@ -1094,5 +1467,645 @@ Atualiza o status de uma denúncia.
   "updatedAt": "2026-08-03T19:05:00.000Z"
 }
 ```
+
+---
+
+### `PATCH /admin/users/:id/demote` 🔒 *(Restrito: ADMIN)*
+
+Remove o privilégio de Administrador de um usuário, retornando-o para a role `CELIACO`. O `profileEvaluationStatus` é resetado para `PENDING_EVALUATION`.
+
+**Restrições:**
+- Apenas ADMINs ativos podem executar esta ação.
+- O administrador não pode se auto-rebaixar.
+- Só pode ser aplicado a usuários que **já possuem role ADMIN**.
+
+**Path Parameter:**
+| Parâmetro | Tipo | Descrição |
+|:----------|:-----|:----------|
+| `id` | `string (UUID)` | ID do usuário ADMIN a ser rebaixado |
+
+**Response `200 OK`:**
+*(Corpo vazio)*
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `400` | `"Somente administradores ativos podem rebaixar usuários."` | Solicitante não é ADMIN ativo |
+| `400` | `"Um administrador não pode rebaixar a si mesmo."` | Auto-rebaixamento |
+| `400` | `"Usuário não encontrado."` | ID não existe |
+| `400` | `"Somente usuários com role ADMIN podem ser rebaixados."` | Alvo não é ADMIN |
+| `401` | `"Usuário não autenticado."` | Token ausente |
+
+---
+
+### `DELETE /admin/users/:id` 🔒 *(Restrito: ADMIN)*
+
+Remove permanentemente a conta de um usuário do sistema. Todos os dados vinculados (perfil alimentar, favoritos, avaliações, denúncias) são removidos em cascata pelo banco de dados. O e-mail ficará disponível para novo cadastro.
+
+**Restrições:**
+- Apenas ADMINs ativos podem executar esta ação.
+- O administrador não pode excluir a si mesmo.
+
+**Path Parameter:**
+| Parâmetro | Tipo | Descrição |
+|:----------|:-----|:----------|
+| `id` | `string (UUID)` | ID do usuário a ser excluído |
+
+**Response `200 OK`:**
+*(Corpo vazio)*
+
+**Erros possíveis:**
+| Status | `error` | Causa |
+|:-------|:--------|:------|
+| `400` | `"Somente administradores ativos podem excluir contas de usuários."` | Solicitante não é ADMIN ativo |
+| `400` | `"Um administrador não pode excluir a si mesmo."` | Auto-exclusão |
+| `400` | `"Usuário não encontrado."` | ID não existe |
+| `401` | `"Usuário não autenticado."` | Token ausente |
+
+---
+
+### `GET /admin/categories` 🔒 *(Restrito: ADMIN)*
+Lista categorias cadastradas para moderação administrativa.
+
+**Query Parameters:**
+| Parâmetro | Tipo | Descrição |
+|:----------|:-----|:----------|
+| `status` | `string` | Opcional (`PENDING_APPROVAL`, `APPROVED`, `REJECTED`) |
+| `visibility` | `string` | Opcional (`GLOBAL`, `RESTRICTED`) |
+| `partnerId` | `string (UUID)` | Opcional. Filtrar por parceiro criador |
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-da-categoria",
+      "name": "Doces Artesanais Low Carb",
+      "normalizedName": "DOCES ARTESANAIS LOW CARB",
+      "partnerId": "uuid-do-parceiro",
+      "status": "PENDING_APPROVAL",
+      "visibility": "RESTRICTED",
+      "rejectionReason": null,
+      "createdAt": "2026-08-28T22:00:00.000Z",
+      "updatedAt": "2026-08-28T22:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### `PATCH /admin/categories/:id/review` 🔒 *(Restrito: ADMIN)*
+Revisa e modera o status e visibilidade de uma categoria.
+
+**Request Body:**
+```json
+{
+  "action": "APPROVE_GLOBAL",
+  "rejectionReason": "Opcional se REJECT"
+}
+```
+*Ações suportadas:*
+- `APPROVE_GLOBAL`: Aprova a categoria tornando-a visível globalmente para todos os estabelecimentos e clientes.
+- `APPROVE_RESTRICTED`: Aprova a categoria mantendo-a restrita apenas ao parceiro criador.
+- `REJECT`: Rejeita a categoria com justificativa textual.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-da-categoria",
+    "name": "Doces Artesanais Low Carb",
+    "status": "APPROVED",
+    "visibility": "GLOBAL",
+    "updatedAt": "2026-08-28T22:05:00.000Z"
+  }
+}
+```
+
+---
+
+## 13. Moderação de Certificações e Laudos Técnicos
+
+Módulo administrativo para homologação e auditoria de laudos laboratoriais (glúten < 20ppm), selos ACELBRA, Selo Vegano SVB, Orgânico Brasil e certificações de alérgenos anexadas aos produtos.
+
+### `GET /admin/certifications` 🔒 *(Restrito: ADMIN)*
+Lista certificações e laudos técnicos para análise da equipe.
+
+**Query Parameters:**
+| Parâmetro | Tipo | Padrão | Descrição |
+|:----------|:-----|:-------|:----------|
+| `status` | `string` | `undefined` | `DECLARED_BY_PARTNER`, `VERIFIED_BY_CELILAC` ou `REJECTED` |
+| `productId` | `string` | `undefined` | Filtra por ID de produto específico |
+| `page` | `integer` | `1` | Página atual |
+| `limit` | `integer` | `20` | Quantidade de itens por página |
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "uuid-da-certificacao",
+        "productId": "uuid-do-produto",
+        "productName": "Pão Francês Sem Glúten",
+        "productBrand": "CeliBakery",
+        "partnerId": "uuid-do-parceiro",
+        "partnerName": "Padaria Artesanal Segura",
+        "certificationType": "ACELBRA",
+        "certifyingEntity": "ACELBRA Nacional",
+        "certificateCode": "ACEL-2026-991",
+        "validUntil": "2027-12-31",
+        "imageId": "uuid-da-imagem",
+        "imageUrl": "https://cdn.example.com/laudo-acelbra.jpg",
+        "verificationStatus": "DECLARED_BY_PARTNER",
+        "verificationNotes": null,
+        "createdAt": "2026-09-10T19:00:00.000Z",
+        "updatedAt": "2026-09-10T19:00:00.000Z"
+      }
+    ],
+    "total": 1,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 1
+  }
+}
+```
+
+---
+
+### `PATCH /admin/certifications/:id/review` 🔒 *(Restrito: ADMIN)*
+Homologa ou rejeita um selo ou laudo laboratorial, registrando auditoria imutável.
+
+**Request Body:**
+```json
+{
+  "action": "APPROVE",
+  "notes": "Laudo laboratorial verificado com resultado negativo para glúten (<5ppm)."
+}
+```
+*Ações suportadas:*
+- `APPROVE`: Homologa o laudo técnico, alterando o status para `VERIFIED_BY_CELILAC`. O produto passa a exibir o selo de segurança alimentar auditada (`AUDITED_BY_CELILAC`).
+- `REJECT`: Rejeita a certificação, exigindo `notes` com a justificativa obrigatória enviada ao parceiro.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-da-certificacao",
+    "productId": "uuid-do-produto",
+    "productName": "Pão Francês Sem Glúten",
+    "certificationType": "ACELBRA",
+    "verificationStatus": "VERIFIED_BY_CELILAC",
+    "verificationNotes": "Laudo laboratorial verificado com resultado negativo para glúten (<5ppm).",
+    "updatedAt": "2026-09-10T20:30:00.000Z"
+  },
+  "message": "Certificação homologada com sucesso."
+}
+```
+
+---
+
+## 14. Pedidos (Orders)
+
+Módulo responsável pela orquestração do ciclo de vida dos pedidos comerciais realizados por celíacos e pessoas com restrições alimentares junto aos estabelecimentos cadastrados.
+
+### `POST /orders` 🔒 *(Restrito: Usuário Autenticado - Consumidor)*
+Cria um novo pedido com validação biológica compulsória de alérgenos via `AllergenEngine`.
+
+**Request Body:**
+```json
+{
+  "partnerId": "uuid-do-parceiro",
+  "items": [
+    {
+      "productId": "uuid-do-produto",
+      "quantity": 2
+    }
+  ],
+  "deliveryAddress": "Rua das Flores, 123, Apto 402, São Paulo - SP",
+  "notes": "Favor embalar separadamente para evitar contato."
+}
+```
+
+**Response `201 Created`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-do-pedido",
+    "orderNumber": "ORD-1727680000000-1234",
+    "consumerId": "uuid-do-consumidor",
+    "partnerId": "uuid-do-parceiro",
+    "status": "CREATED",
+    "subtotal": 59.80,
+    "deliveryFee": 0.00,
+    "total": 59.80,
+    "deliveryAddress": "Rua das Flores, 123, Apto 402, São Paulo - SP",
+    "notes": "Favor embalar separadamente para evitar contato.",
+    "items": [
+      {
+        "id": "uuid-do-item",
+        "productId": "uuid-do-produto",
+        "productName": "Pão Francês Artesanal Sem Glúten",
+        "unitPrice": 29.90,
+        "quantity": 2,
+        "subtotal": 59.80
+      }
+    ],
+    "createdAt": "2026-09-30T10:00:00.000Z"
+  }
+}
+```
+
+**Erros de Domínio Conhecidos:**
+- `400 Bad Request`: `FOOD_SAFETY_RISK_BLOCK` — Quando um ou mais produtos contêm alérgenos ou contaminação incompatíveis com o perfil do consumidor:
+```json
+{
+  "success": false,
+  "error": "Item Pão Francês Tradicional possui risco de segurança alimentar (BLOCKED) incompatível com seu perfil de saúde."
+}
+```
+- `400 Bad Request`: `EMPTY_CART` — O carrinho não contém nenhum item.
+- `400 Bad Request`: `CROSS_PARTNER_ITEMS_FORBIDDEN` — Tentativa de incluir produtos de parceiros distintos no mesmo pedido.
+
+---
+
+### `GET /orders/me` 🔒 *(Restrito: Consumidor)*
+Retorna o histórico cronológico de todos os pedidos realizados pelo consumidor autenticado.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-do-pedido",
+      "orderNumber": "ORD-1727680000000-1234",
+      "partnerId": "uuid-do-parceiro",
+      "status": "PAID",
+      "total": 59.80,
+      "itemsCount": 2,
+      "createdAt": "2026-09-30T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### `GET /orders/:id` 🔒 *(Restrito: Dono do Pedido ou Parceiro Destinatário)*
+Retorna os detalhes completos de um pedido específico.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-do-pedido",
+    "orderNumber": "ORD-1727680000000-1234",
+    "consumerId": "uuid-do-consumidor",
+    "partnerId": "uuid-do-parceiro",
+    "status": "PREPARING",
+    "subtotal": 59.80,
+    "deliveryFee": 0.00,
+    "total": 59.80,
+    "deliveryAddress": "Rua das Flores, 123",
+    "items": [
+      {
+        "id": "uuid-do-item",
+        "productId": "uuid-do-produto",
+        "productName": "Pão Francês Artesanal Sem Glúten",
+        "unitPrice": 29.90,
+        "quantity": 2,
+        "subtotal": 59.80
+      }
+    ],
+    "isRefundEligible": false,
+    "createdAt": "2026-09-30T10:00:00.000Z"
+  }
+}
+```
+
+---
+
+### `GET /orders/partner/:partnerId` 🔒 *(Restrito: Dono do Estabelecimento)*
+Lista todos os pedidos recebidos pelo estabelecimento parceiro especificado.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid-do-pedido",
+      "orderNumber": "ORD-1727680000000-1234",
+      "consumerId": "uuid-do-consumidor",
+      "status": "PAID",
+      "total": 59.80,
+      "items": [...],
+      "createdAt": "2026-09-30T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### `POST /orders/:id/cancel` 🔒 *(Restrito: Consumidor ou Parceiro)*
+Cancela um pedido em andamento de acordo com a política de cancelamento e reembolso.
+
+**Request Body:**
+```json
+{
+  "reason": "Desisti da compra antes do início do preparo."
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-do-pedido",
+    "status": "CANCELLED",
+    "isRefundEligible": true,
+    "cancelledAt": "2026-09-30T10:15:00.000Z",
+    "cancelReason": "Desisti da compra antes do início do preparo."
+  },
+  "message": "Pedido cancelado com sucesso. Reembolso integral habilitado."
+}
+```
+
+---
+
+### `PATCH /orders/:id/status` 🔒 *(Restrito: Dono do Estabelecimento)*
+Promove o status do pedido no fluxo de preparação e entrega do parceiro.
+
+**Request Body:**
+```json
+{
+  "status": "PREPARING"
+}
+```
+*Transições válidas para parceiro:* `CONFIRMED`, `PREPARING`, `READY_FOR_PICKUP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `CANCELLED`.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-do-pedido",
+    "status": "PREPARING",
+    "updatedAt": "2026-09-30T10:20:00.000Z"
+  }
+}
+```
+
+---
+
+### `POST /orders/:id/report-non-payment` 🔒 *(Restrito: Dono do Estabelecimento)*
+Permite ao parceiro comercial reportar que o consumidor se recusou a efetuar o pagamento na entrega, não atendeu o entregador ou aplicou golpe/trote. O pedido é cancelado imediatamente, o pagamento marcado como falhado, a comissão de 12% da plataforma é zerada/estornada em favor do restaurante e o consumidor perde o direito de realizar novos pedidos na entrega (`can_pay_on_delivery = false`).
+
+**Request Body:**
+```json
+{
+  "reason": "CLIENT_REFUSED_PAYMENT",
+  "details": "Entregador aguardou 20 minutos no local e cliente se recusou a pagar."
+}
+```
+*Motivos válidos:* `CLIENT_REFUSED_PAYMENT`, `CLIENT_ABSENT`, `FRAUDULENT_ORDER`. `details` é opcional.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "message": "Denúncia registrada com sucesso. O pedido foi cancelado, a taxa da plataforma foi isentada e o consumidor foi restringido para novos pedidos na entrega.",
+  "data": {
+    "orderId": "uuid-do-pedido",
+    "status": "CANCELLED",
+    "reportId": "uuid-da-denuncia",
+    "waivedFee": 7.18
+  }
+}
+```
+
+---
+
+### `GET /orders/stream` 🔒 *(Server-Sent Events — SSE)*
+Canal HTTP persistente e unidirecional para recebimento de notificações em tempo real. Notifica o parceiro comercial instantaneamente quando o webhook Asaas confirmar o pagamento de um pedido (`order:payment_confirmed`) ou quando houver transição de status (`order:status_updated`).
+
+**Autenticação:**
+- Suporta cabeçalho `Authorization: Bearer <token>`, cookie HttpOnly `token` ou query param `?token=<jwt>` (para navegadores com `EventSource` nativo).
+- Parâmetro opcional: `?partnerId=uuid-do-parceiro` (valida se o usuário autenticado é proprietário ou admin).
+
+**Headers da Resposta:**
+- `Content-Type: text/event-stream`
+- `Cache-Control: no-cache, no-transform`
+- `Connection: keep-alive`
+- `X-Accel-Buffering: no`
+
+**Eventos Emitidos:**
+1. Handshake inicial:
+```http
+event: connected
+data: {"clientId":"sse_user123_...","partnerId":"uuid-do-parceiro","timestamp":"2026-09-30T14:00:00.000Z"}
+```
+
+2. Pagamento Confirmado (`order:payment_confirmed`):
+```http
+event: order:payment_confirmed
+data: {
+  "orderId": "uuid-do-pedido",
+  "partnerId": "uuid-do-parceiro",
+  "consumerId": "uuid-do-consumidor",
+  "totalAmount": 59.80,
+  "status": "PAID",
+  "confirmedAt": "2026-09-30T14:00:00.000Z"
+}
+```
+
+3. Atualização de Ciclo de Vida (`order:status_updated`):
+```http
+event: order:status_updated
+data: {
+  "orderId": "uuid-do-pedido",
+  "partnerId": "uuid-do-parceiro",
+  "consumerId": "uuid-do-consumidor",
+  "totalAmount": 59.80,
+  "status": "PREPARING",
+  "confirmedAt": "2026-09-30T14:10:00.000Z"
+}
+```
+
+4. Heartbeat (a cada 25s):
+```http
+: keep-alive
+```
+
+---
+
+## 15. Pagamentos e Split Marketplace (Payments)
+
+Módulo integrado ao gateway Asaas para processamento de cobranças (PIX com QR Code dinâmico e Copia-e-Cola, Cartão de Crédito), split automatizado de 12% da plataforma CeLiLac (padrão iFood) e liquidação em subcontas parceiras.
+
+### `POST /payments/checkout` 🔒 *(Restrito: Consumidor)*
+Gera a cobrança do pedido com split e retorna os dados de pagamento (QR Code PIX para online, ou confirmação direta para pagamento presencial na entrega).
+
+**Request Body (Online - PIX):**
+```json
+{
+  "orderId": "uuid-do-pedido",
+  "method": "PIX"
+}
+```
+
+**Request Body (Na Entrega - Dinheiro com troco):**
+```json
+{
+  "orderId": "uuid-do-pedido",
+  "method": "CASH_ON_DELIVERY",
+  "changeFor": 100.00
+}
+```
+
+**Request Body (Na Entrega - Maquininha Débito/Crédito):**
+```json
+{
+  "orderId": "uuid-do-pedido",
+  "method": "CARD_ON_DELIVERY"
+}
+```
+*Observação:* Para métodos presenciais (`CASH_ON_DELIVERY` e `CARD_ON_DELIVERY`), o consumidor deve ter `can_pay_on_delivery = true`. Caso tenha sido restringido anteriormente por não comparecimento ou recusa de pagamento, a API retornará `400 Bad Request` exigindo pagamento prévio online.
+
+**Response `201 Created` / `200 OK` (Idempotente):**
+```json
+{
+  "success": true,
+  "data": {
+    "paymentId": "uuid-do-pagamento",
+    "orderId": "uuid-do-pedido",
+    "status": "PENDING",
+    "method": "PIX",
+    "grossAmount": 59.80,
+    "platformFee": 7.18,
+    "netPartnerAmount": 50.63,
+    "pixQrCodeUrl": "https://api.asaas.com/qr/payload123",
+    "pixCopyPaste": "00020126580014br.gov.bcb.pix0136uuid-chave-pix520400005303986540559.805802BR5915CELILAC PAGAMENTOS6009SAO PAULO62070503***6304ABCD",
+    "expiresAt": "2026-09-30T11:00:00.000Z"
+  }
+}
+```
+
+---
+
+### `GET /payments/order/:orderId` 🔒 *(Restrito: Usuário Autenticado)*
+Consulta o estado de pagamento de um pedido em tempo real (usado para polling no checkout).
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-do-pagamento",
+    "orderId": "uuid-do-pedido",
+    "status": "PAID",
+    "method": "PIX",
+    "grossAmount": 59.80,
+    "paidAt": "2026-09-30T10:05:00.000Z"
+  }
+}
+```
+
+---
+
+### `POST /payments/partner/:partnerId/financial-account` 🔒 *(Restrito: Dono do Estabelecimento)*
+Configura a subconta financeira e a chave PIX do parceiro para recebimento dos repasses do marketplace.
+
+**Request Body:**
+```json
+{
+  "pixKey": "12.345.678/0001-90",
+  "pixKeyType": "CNPJ",
+  "bankCode": "260",
+  "agencyNumber": "0001",
+  "accountNumber": "1234567-8",
+  "accountType": "CHECKING"
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-da-subconta",
+    "partnerId": "uuid-do-parceiro",
+    "gatewaySubaccountId": "sub_asaas_12345",
+    "pixKey": "12.345.678/0001-90",
+    "pixKeyType": "CNPJ",
+    "isVerified": true,
+    "createdAt": "2026-09-30T09:00:00.000Z"
+  },
+  "message": "Subconta financeira configurada com sucesso."
+}
+```
+
+---
+
+### `GET /payments/partner/:partnerId/financial-account` 🔒 *(Restrito: Dono do Estabelecimento)*
+Consulta os dados cadastrados da conta bancária e subconta de repasses do parceiro.
+
+**Response `200 OK`:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid-da-subconta",
+    "partnerId": "uuid-do-parceiro",
+    "gatewaySubaccountId": "sub_asaas_12345",
+    "pixKey": "12.345.678/0001-90",
+    "pixKeyType": "CNPJ",
+    "bankCode": "260",
+    "isVerified": true
+  }
+}
+```
+
+---
+
+### `POST /payments/webhook/asaas` *(Endpoint Público com Validação de Assinatura)*
+Endpoint que recebe notificações assíncronas de cobranças e estornos da Asaas.
+
+**Eventos Processados:**
+- `PAYMENT_RECEIVED` ou `PAYMENT_CONFIRMED`: Transiciona o pagamento para `PAID` e promove o pedido correspondente para `PAID`.
+- `PAYMENT_REFUNDED`: Transiciona o pagamento para `REFUNDED` e registra estorno em `payment_refunds`.
+
+**Request Body Exemplo:**
+```json
+{
+  "event": "PAYMENT_RECEIVED",
+  "payment": {
+    "id": "pay_123456789",
+    "status": "RECEIVED",
+    "value": 59.80,
+    "netValue": 50.63,
+    "paymentDate": "2026-09-30"
+  }
+}
+```
+
+**Response `200 OK`:**
+```json
+{
+  "received": true
+}
+```
+
+
 
 

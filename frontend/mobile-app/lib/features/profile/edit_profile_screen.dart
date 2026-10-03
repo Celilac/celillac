@@ -147,13 +147,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 16),
-                  ...kAllergenCatalog.map(
+                  ...onboardingAllergens.map(
                     (item) => AllergenToggleTile(
-                      item: item,
-                      isSelected: _selected.containsKey(item.type),
-                      selectedSeverity: _selected[item.type],
-                      onToggle: () => _toggleAllergen(item.type),
-                      onSeveritySelected: (s) => _setSeverity(item.type, s),
+                      allergen: item,
+                      selectedSeverity: _selected[item],
+                      onToggle: () => _toggleAllergen(item),
+                      onSeveritySelected: (s) => _setSeverity(item, s),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -164,7 +163,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       style: TextStyle(fontSize: 12, color: AppColors.textMuted),
                     ),
                     value: _acceptsCrossContamination,
-                    activeColor: AppColors.primary,
+                    activeTrackColor: AppColors.primary,
                     onChanged: (val) => setState(() => _acceptsCrossContamination = val),
                   ),
                   const SizedBox(height: 30),

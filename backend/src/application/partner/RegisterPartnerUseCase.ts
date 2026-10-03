@@ -16,6 +16,8 @@ export interface RegisterPartnerDTO {
   city?:           string;
   state?:          string;
   deliveryRegion?: string;
+  logoUrl?:        string;
+  isDraft?:        boolean;
 }
 
 export interface PartnerResponseDTO {
@@ -34,6 +36,7 @@ export interface PartnerResponseDTO {
   city?:              string;
   state?:             string;
   deliveryRegion?:    string;
+  logoUrl?:           string;
 }
 
 export class RegisterPartnerUseCase {
@@ -49,12 +52,31 @@ export class RegisterPartnerUseCase {
       return Result.fail<PartnerResponseDTO>('Usuário não encontrado.');
     }
 
-    // 2. Verificar se o usuário tem o papel de PARCEIRO
-    if (user.role !== UserRole.PARCEIRO) {
-      return Result.fail<PartnerResponseDTO>('Apenas usuários com o papel de PARCEIRO podem cadastrar um perfil comercial.');
+    // 2. Verificar se o usuário tem o papel de PARCEIRO ou ADMIN
+    if (user.role !== UserRole.PARCEIRO && user.role !== UserRole.ADMIN) {
+      return Result.fail<PartnerResponseDTO>('Apenas usuários com o papel de PARCEIRO ou ADMINISTRADOR podem cadastrar um perfil comercial.');
     }
 
-    // 3. Criar o Parceiro (inicia como DRAFT e INACTIVE)
+    const isAdmin = user.role === UserRole.ADMIN;
+
+    // 3. Determinar o status inicial de aprovação:
+    // - Admin: Aprovado imediatamente (para testes e operação ágil)
+    // - isDraft === true: Permanece em Rascunho se explicitamente solicitado
+    // - Parceiro (padrão): Enviado imediatamente para análise e moderação (PENDING_REVIEW)
+    let initialApprovalStatus: PartnerApprovalStatus;
+    let initialOperationalStatus: PartnerOperationalStatus;
+
+    if (isAdmin) {
+      initialApprovalStatus = PartnerApprovalStatus.APPROVED;
+      initialOperationalStatus = PartnerOperationalStatus.ACTIVE;
+    } else if (dto.isDraft) {
+      initialApprovalStatus = PartnerApprovalStatus.DRAFT;
+      initialOperationalStatus = PartnerOperationalStatus.INACTIVE;
+    } else {
+      initialApprovalStatus = PartnerApprovalStatus.PENDING_REVIEW;
+      initialOperationalStatus = PartnerOperationalStatus.INACTIVE;
+    }
+
     const partnerResult = Partner.create({
       userId:            dto.userId,
       name:              dto.name,
@@ -66,8 +88,9 @@ export class RegisterPartnerUseCase {
       city:              dto.city,
       state:             dto.state,
       deliveryRegion:    dto.deliveryRegion,
-      approvalStatus:    PartnerApprovalStatus.DRAFT,
-      operationalStatus: PartnerOperationalStatus.INACTIVE,
+      logoUrl:           dto.logoUrl,
+      approvalStatus:    initialApprovalStatus,
+      operationalStatus: initialOperationalStatus,
     });
 
     if (partnerResult.isFailure) {
@@ -75,6 +98,15 @@ export class RegisterPartnerUseCase {
     }
 
     const partner = partnerResult.getValue();
+
+    // 4. Se tiver CNPJ informado, verificar se já existe outro parceiro cadastrado
+    if (partner.cnpj) {
+      const existingPartner = await this.partnerRepository.findByCnpj(partner.cnpj);
+      if (existingPartner) {
+        return Result.fail<PartnerResponseDTO>('Já existe um estabelecimento cadastrado com este CNPJ.');
+      }
+    }
+
     await this.partnerRepository.create(partner);
 
     return Result.ok<PartnerResponseDTO>({
@@ -93,6 +125,7 @@ export class RegisterPartnerUseCase {
       city:               partner.city,
       state:              partner.state,
       deliveryRegion:     partner.deliveryRegion,
+      logoUrl:            partner.logoUrl,
     });
   }
 }

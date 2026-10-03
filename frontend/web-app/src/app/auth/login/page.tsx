@@ -9,11 +9,25 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
+import { Header } from '@/components/layout/Header';
+import { PasswordEyeIcon } from '@/components/common/PasswordEyeIcon';
 
 // Decodifica o payload do JWT (sem verificar assinatura — só para extrair userId)
 function decodeJwtPayload(token: string): { sub?: string } {
   try {
-    return JSON.parse(atob(token.split('.')[1]));
+    const parts = token.split('.');
+    if (parts.length !== 3) return {};
+    let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) {
+      base64 += '=';
+    }
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
   } catch {
     return {};
   }
@@ -28,6 +42,7 @@ export default function LoginPage() {
   const [email,   setEmail]   = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,8 +53,11 @@ export default function LoginPage() {
       login(session.token, payload.sub ?? '');
       toast.success('Login realizado com sucesso!');
       router.push('/');
-    } catch (err) {
-      toast.error(err instanceof HttpError ? err.message : 'Erro ao entrar.', 'Erro ao entrar');
+    } catch (err: any) {
+      const isServerError = err instanceof HttpError && err.status >= 500;
+      const title = isServerError ? 'Serviço Indisponível' : 'Erro ao entrar';
+      const fallback = 'Não foi possível concluir o login. Verifique seus dados e tente novamente.';
+      toast.error(err instanceof HttpError ? err.message : fallback, title);
     } finally {
       setLoading(false);
     }
@@ -47,29 +65,7 @@ export default function LoginPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)' }}>
-      <header className="topbar">
-        <span className="topbar-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">
-            Celi<span>Lac</span>
-          </span>
-          <span className="brand-tagline">Vivendo bem a vida</span>
-        </span>
-        <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="btn btn-ghost"
-            aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
-            style={{ padding: '0.4rem 0.75rem' }}
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-          <Link href="/" className="btn btn-ghost" aria-label="Ir para a página inicial" style={{ padding: '0.4rem 0.75rem' }}>
-            🏠
-          </Link>
-        </nav>
-      </header>
+      <Header />
 
       <div className="auth-shell" style={{ flex: 1, minHeight: 0 }}>
         <div className="auth-split-card">
@@ -113,17 +109,42 @@ export default function LoginPage() {
                 </div>
 
                 <div className="field">
-                  <label className="field-label" htmlFor="login-password">Senha</label>
-                  <input
-                    id="login-password"
-                    type="password"
-                    className="field-input"
-                    placeholder="Sua senha"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-1)' }}>
+                    <label className="field-label" htmlFor="login-password" style={{ marginBottom: 0 }}>Senha</label>
+                    <Link
+                      href="/auth/forgot-password"
+                      id="forgot-password-link"
+                      style={{
+                        fontSize: '0.8125rem',
+                        color: 'var(--color-primary)',
+                        textDecoration: 'none',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Esqueceu a senha?
+                    </Link>
+                  </div>
+                  <div className="password-input-wrap">
+                    <input
+                      id="login-password"
+                      type={showPassword ? 'text' : 'password'}
+                      className="field-input password-input"
+                      placeholder="Sua senha"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoComplete="current-password"
+                    />
+                    <button
+                      type="button"
+                      className="password-visibility-toggle"
+                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      aria-pressed={showPassword}
+                      onClick={() => setShowPassword((current) => !current)}
+                    >
+                      <PasswordEyeIcon visible={showPassword} />
+                    </button>
+                  </div>
                 </div>
 
                 <button

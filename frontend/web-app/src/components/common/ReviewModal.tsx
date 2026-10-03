@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { reviewApi } from '@/api/reviews';
+import { apiClient } from '@/api/client';
+import { useToast } from '@/hooks/useToast';
 import styles from '../../app/partner/partner.module.css';
 
 interface ReviewModalProps {
@@ -22,12 +25,28 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
   targetName = 'Item',
   onSuccess,
 }) => {
-  const { token, isAuthenticated } = useAuth();
+  const { token, userId, isAuthenticated } = useAuth();
+  const toast = useToast();
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEmailVerified, setIsEmailVerified] = useState<boolean>(true);
+
+  React.useEffect(() => {
+    if (!isOpen || !token || !isAuthenticated) return;
+
+    apiClient.get<any>('/iam/me', token)
+      .then((user) => {
+        if (user && user.isEmailVerified === false) {
+          setIsEmailVerified(false);
+        } else {
+          setIsEmailVerified(true);
+        }
+      })
+      .catch(() => {});
+  }, [isOpen, token, isAuthenticated]);
 
   if (!isOpen) return null;
 
@@ -38,11 +57,17 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
       return;
     }
 
+    if (!isEmailVerified) {
+      setError('É obrigatório validar seu endereço de e-mail com o código OTP antes de enviar avaliações.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
       await reviewApi.submit(
         {
+          userId: userId || undefined,
           productId,
           partnerId,
           rating,
@@ -51,6 +76,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         token
       );
       setComment('');
+      toast.success('Avaliação enviada com sucesso!', 'Obrigado');
       onSuccess?.();
       onClose();
     } catch (err: any) {
@@ -70,7 +96,8 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.25rem', color: 'var(--color-text-muted)' }}
+            className={styles.modalCloseBtn}
+            aria-label="Fechar"
           >
             ✕
           </button>
@@ -79,6 +106,32 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
         <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', marginBottom: '1.5rem' }}>
           Compartilhe sua experiência de segurança alimentar com a comunidade CeLiLac.
         </p>
+
+        {!isEmailVerified && (
+          <div className={`${styles.alertBanner} ${styles.alertBannerWarning}`} style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>📩</span>
+              <div>
+                <strong>E-mail não verificado:</strong> Valide sua conta para habilitar avaliações.
+              </div>
+            </div>
+            <Link
+              href="/auth/verify-email?send=true"
+              style={{
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: '#ffffff',
+                background: 'var(--color-warning, #f59e0b)',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Validar Agora
+            </Link>
+          </div>
+        )}
 
         {error && (
           <div className={`${styles.alertBanner} ${styles.alertBannerDanger}`} style={{ marginBottom: '1rem' }}>
@@ -92,7 +145,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             <label className={styles.label} style={{ marginBottom: '0.5rem', display: 'block' }}>
               Sua Nota (1 a 5 estrelas)
             </label>
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <div
+              style={{ display: 'inline-flex', gap: '0.25rem', alignItems: 'center' }}
+              onMouseLeave={() => setHoverRating(0)}
+            >
               {[1, 2, 3, 4, 5].map((star) => {
                 const active = (hoverRating || rating) >= star;
                 return (
@@ -101,17 +157,25 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
                     type="button"
                     onClick={() => setRating(star)}
                     onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
+                    aria-label={`${star} estrelas`}
                     style={{
                       background: 'none',
                       border: 'none',
                       cursor: 'pointer',
-                      fontSize: '1.75rem',
-                      transition: 'transform 0.15s ease',
-                      transform: active ? 'scale(1.15)' : 'scale(1)',
+                      fontSize: '2rem',
+                      width: '42px',
+                      height: '42px',
+                      padding: 0,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      lineHeight: 1,
+                      filter: active ? 'none' : 'grayscale(100%) opacity(30%)',
+                      transition: 'filter 0.15s ease',
+                      userSelect: 'none',
                     }}
                   >
-                    {active ? '⭐' : '☆'}
+                    ⭐
                   </button>
                 );
               })}
@@ -129,7 +193,7 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', paddingTop: '0.5rem' }}>
+          <div className={styles.modalActions}>
             <button
               type="button"
               onClick={onClose}
@@ -139,10 +203,10 @@ export const ReviewModal: React.FC<ReviewModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isEmailVerified}
               className={`${styles.btn} ${styles.btnPrimary}`}
             >
-              {loading ? 'Enviando...' : 'Enviar Avaliação'}
+              {loading ? 'Enviando...' : !isEmailVerified ? 'Validação necessária' : 'Enviar Avaliação'}
             </button>
           </div>
         </form>

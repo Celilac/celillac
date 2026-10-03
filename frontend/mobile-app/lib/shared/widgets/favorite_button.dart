@@ -39,14 +39,14 @@ class _FavoriteButtonState extends State<FavoriteButton> {
         final targetId = widget.productId ?? widget.partnerId ?? '';
         await widget.apiClient.removeFavorite(targetId);
         setState(() => _isFavorite = false);
-        widget.onToggle?.(false);
+        widget.onToggle?.call(false);
       } else {
         await widget.apiClient.addFavorite(
           productId: widget.productId,
           partnerId: widget.partnerId,
         );
         setState(() => _isFavorite = true);
-        widget.onToggle?.(true);
+        widget.onToggle?.call(true);
       }
     } catch (e) {
       if (mounted) {

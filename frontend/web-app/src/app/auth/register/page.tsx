@@ -9,58 +9,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
+import { Header } from '@/components/layout/Header';
+import { PasswordEyeIcon } from '@/components/common/PasswordEyeIcon';
 
 const STRONG_PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
-
-function PasswordEyeIcon({ visible }: { visible: boolean }) {
-  if (visible) {
-    return (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M2 12C3.8 7.9 7.4 5 12 5C16.6 5 20.2 7.9 22 12C20.2 16.1 16.6 19 12 19C7.4 19 3.8 16.1 2 12Z"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.7" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M3 3L21 21"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10.6 10.7C10.2 11.1 10 11.5 10 12C10 13.1 10.9 14 12 14C12.5 14 12.9 13.8 13.3 13.4"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9.9 5.3C10.6 5.1 11.3 5 12 5C16.6 5 20.2 7.9 22 12C21.2 13.8 20.1 15.3 18.6 16.4"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M6 6.2C4.3 7.5 3 9.5 2 12C3.8 16.1 7.4 19 12 19C13.9 19 15.6 18.5 17 17.7"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -68,6 +20,7 @@ export default function RegisterPage() {
   const { theme, toggleTheme } = useTheme();
   const toast = useToast();
 
+  const [step, setStep] = useState<'ROLE_SELECTION' | 'FORM'>('ROLE_SELECTION');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -93,6 +46,11 @@ export default function RegisterPage() {
     Boolean(passwordStrengthMessage) ||
     Boolean(confirmPasswordMessage);
 
+  function handleSelectRole(selectedRole: 'CELIACO' | 'PARCEIRO') {
+    setRole(selectedRole);
+    setStep('FORM');
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -117,8 +75,8 @@ export default function RegisterPage() {
       
       const session = await iamApi.login({ email: normalizedEmail, password });
       login(session.token, user.id);
-      toast.success('Conta criada com sucesso!');
-      router.push('/profile');
+      toast.success('Conta criada com sucesso! Por favor, valide o código enviado para o seu e-mail.', 'Bem-vindo');
+      router.push('/auth/verify-email?recent=true');
     } catch (err) {
       toast.error(err instanceof HttpError ? err.message : 'Erro ao criar conta.', 'Erro ao criar conta');
     } finally {
@@ -128,29 +86,7 @@ export default function RegisterPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--color-bg)' }}>
-      <header className="topbar">
-        <span className="topbar-title" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={32} height={32} priority />
-          <span className="brand-wordmark">
-            Celi<span>Lac</span>
-          </span>
-          <span className="brand-tagline">Vivendo bem a vida</span>
-        </span>
-        <nav style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="btn btn-ghost"
-            aria-label={theme === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
-            style={{ padding: '0.4rem 0.75rem' }}
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-          <Link href="/" className="btn btn-ghost" aria-label="Ir para a página inicial" style={{ padding: '0.4rem 0.75rem' }}>
-            🏠
-          </Link>
-        </nav>
-      </header>
+      <Header />
 
       <div className="auth-shell" style={{ flex: 1, minHeight: 0 }}>
         <div className="auth-split-card">
@@ -175,121 +111,178 @@ export default function RegisterPage() {
                 <Image src="/brand/logo_with_transparent_background.png" alt="CeliLac" width={64} height={64} priority />
               </div>
 
-              <h1 className="auth-title">Criar conta</h1>
-              <p className="auth-subtitle">Configure seu perfil alimentar e coma com segurança.</p>
+              {step === 'ROLE_SELECTION' ? (
+                <div>
+                  <h1 className="auth-title">Criar conta</h1>
+                  <p className="auth-subtitle">Qual tipo de conta melhor descreve o seu objetivo?</p>
 
-              <form className="auth-form" onSubmit={handleSubmit} id="register-form">
-                <div className="field">
-                  <label className="field-label" htmlFor="register-fullname">Nome completo</label>
-                  <input
-                    id="register-fullname"
-                    type="text"
-                    className="field-input"
-                    placeholder="Seu Nome Completo"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                  />
-                </div>
-
-                <div className="field">
-                  <label className="field-label" htmlFor="register-email">E-mail</label>
-                  <input
-                    id="register-email"
-                    type="email"
-                    className="field-input"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-
-                <div className="field">
-                  <label className="field-label" htmlFor="register-password">Senha</label>
-                  <div className="password-input-wrap">
-                    <input
-                      id="register-password"
-                      type={showPassword ? 'text' : 'password'}
-                      className="field-input password-input"
-                      placeholder="Use uma senha forte"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={8}
-                      autoComplete="new-password"
-                      aria-invalid={Boolean(passwordStrengthMessage)}
-                    />
+                  <div className="role-options-list">
                     <button
                       type="button"
-                      className="password-visibility-toggle"
-                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                      aria-pressed={showPassword}
-                      onClick={() => setShowPassword((current) => !current)}
+                      id="select-role-celiaco"
+                      className="role-option-card"
+                      onClick={() => handleSelectRole('CELIACO')}
                     >
-                      <PasswordEyeIcon visible={showPassword} />
+                      <span className="role-option-icon" role="img" aria-label="Consumidor">🥗</span>
+                      <div className="role-option-body">
+                        <div className="role-option-title">
+                          <span>Consumidor / Perfil Alimentar</span>
+                          <span className="role-option-arrow">→</span>
+                        </div>
+                        <p className="role-option-desc">
+                          Tenho restrições alimentares (celíaco, intolerâncias, alergias) ou busco produtos e estabelecimentos seguros.
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      id="select-role-parceiro"
+                      className="role-option-card"
+                      onClick={() => handleSelectRole('PARCEIRO')}
+                    >
+                      <span className="role-option-icon" role="img" aria-label="Parceiro">🏪</span>
+                      <div className="role-option-body">
+                        <div className="role-option-title">
+                          <span>Parceiro / Fornecedor</span>
+                          <span className="role-option-arrow">→</span>
+                        </div>
+                        <p className="role-option-desc">
+                          Sou restaurante, padaria, produtor ou comércio e quero cadastrar estabelecimentos e opções seguras.
+                        </p>
+                      </div>
                     </button>
                   </div>
-                  <p className={passwordStrengthMessage ? 'field-error' : 'field-hint'}>
-                    {passwordStrengthMessage || 'Use 8+ caracteres com letra maiúscula, minúscula, número e símbolo.'}
+
+                  <p className="auth-footer-link">
+                    Já tem conta? <Link href="/auth/login">Entrar</Link>
                   </p>
                 </div>
-
-                <div className="field">
-                  <label className="field-label" htmlFor="register-confirm-password">Confirmar senha</label>
-                  <div className="password-input-wrap">
-                    <input
-                      id="register-confirm-password"
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      className="field-input password-input"
-                      placeholder="Repita sua senha"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      required
-                      minLength={8}
-                      autoComplete="new-password"
-                      aria-invalid={Boolean(confirmPasswordMessage)}
-                    />
+              ) : (
+                <div>
+                  <div className="role-header-banner">
+                    <div className="role-header-banner-role">
+                      <span>{role === 'CELIACO' ? '🥗' : '🏪'}</span>
+                      <span>{role === 'CELIACO' ? 'Conta Consumidor' : 'Conta Parceiro / Fornecedor'}</span>
+                    </div>
                     <button
                       type="button"
-                      className="password-visibility-toggle"
-                      aria-label={showConfirmPassword ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'}
-                      aria-pressed={showConfirmPassword}
-                      onClick={() => setShowConfirmPassword((current) => !current)}
+                      id="change-role-btn"
+                      className="role-header-banner-change"
+                      onClick={() => setStep('ROLE_SELECTION')}
                     >
-                      <PasswordEyeIcon visible={showConfirmPassword} />
+                      ← Alterar
                     </button>
                   </div>
-                  {confirmPasswordMessage ? <p className="field-error">{confirmPasswordMessage}</p> : null}
+
+                  <h1 className="auth-title">Criar conta</h1>
+                  <p className="auth-subtitle">
+                    {role === 'CELIACO'
+                      ? 'Configure seu perfil alimentar e coma com segurança.'
+                      : 'Cadastre seu acesso de parceiro e gerencie suas ofertas.'}
+                  </p>
+
+                  <form className="auth-form" onSubmit={handleSubmit} id="register-form">
+                    <div className="field">
+                      <label className="field-label" htmlFor="register-fullname">Nome completo</label>
+                      <input
+                        id="register-fullname"
+                        type="text"
+                        className="field-input"
+                        placeholder="Seu Nome Completo"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label className="field-label" htmlFor="register-email">E-mail</label>
+                      <input
+                        id="register-email"
+                        type="email"
+                        className="field-input"
+                        placeholder="seu@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        autoComplete="email"
+                      />
+                    </div>
+
+                    <div className="field">
+                      <label className="field-label" htmlFor="register-password">Senha</label>
+                      <div className="password-input-wrap">
+                        <input
+                          id="register-password"
+                          type={showPassword ? 'text' : 'password'}
+                          className="field-input password-input"
+                          placeholder="Use uma senha forte"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          minLength={8}
+                          autoComplete="new-password"
+                          aria-invalid={Boolean(passwordStrengthMessage)}
+                        />
+                        <button
+                          type="button"
+                          className="password-visibility-toggle"
+                          aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                          aria-pressed={showPassword}
+                          onClick={() => setShowPassword((current) => !current)}
+                        >
+                          <PasswordEyeIcon visible={showPassword} />
+                        </button>
+                      </div>
+                      <p className={passwordStrengthMessage ? 'field-error' : 'field-hint'}>
+                        {passwordStrengthMessage || 'Use 8+ caracteres com letra maiúscula, minúscula, número e símbolo.'}
+                      </p>
+                    </div>
+
+                    <div className="field">
+                      <label className="field-label" htmlFor="register-confirm-password">Confirmar senha</label>
+                      <div className="password-input-wrap">
+                        <input
+                          id="register-confirm-password"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          className="field-input password-input"
+                          placeholder="Repita sua senha"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                          minLength={8}
+                          autoComplete="new-password"
+                          aria-invalid={Boolean(confirmPasswordMessage)}
+                        />
+                        <button
+                          type="button"
+                          className="password-visibility-toggle"
+                          aria-label={showConfirmPassword ? 'Ocultar confirmação de senha' : 'Mostrar confirmação de senha'}
+                          aria-pressed={showConfirmPassword}
+                          onClick={() => setShowConfirmPassword((current) => !current)}
+                        >
+                          <PasswordEyeIcon visible={showConfirmPassword} />
+                        </button>
+                      </div>
+                      {confirmPasswordMessage ? <p className="field-error">{confirmPasswordMessage}</p> : null}
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="btn btn-em"
+                      id="register-submit"
+                      disabled={isSubmitDisabled}
+                      style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
+                    >
+                      {loading ? 'Criando conta…' : '✨ Criar minha conta'}
+                    </button>
+                  </form>
+
+                  <p className="auth-footer-link">
+                    Já tem conta? <Link href="/auth/login">Entrar</Link>
+                  </p>
                 </div>
-
-                <div className="field">
-                  <label className="field-label" htmlFor="register-role">Tipo de conta</label>
-                  <select
-                    id="register-role"
-                    className="field-input field-select"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as typeof role)}
-                  >
-                    <option value="CELIACO">Eu possuo restrições/Opto por comida saudável</option>
-                    <option value="PARCEIRO">Sou/Quero ser parceiro/fornecedor</option>
-                  </select>
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-em"
-                  id="register-submit"
-                  disabled={isSubmitDisabled}
-                  style={{ width: '100%', justifyContent: 'center' }}
-                >
-                  {loading ? 'Criando conta…' : '✨ Criar minha conta'}
-                </button>
-              </form>
-
-              <p className="auth-footer-link">
-                Já tem conta? <Link href="/auth/login">Entrar</Link>
-              </p>
+              )}
             </div>
           </div>
         </div>

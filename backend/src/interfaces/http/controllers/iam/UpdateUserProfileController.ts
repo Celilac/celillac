@@ -23,9 +23,14 @@ export class UpdateUserProfileController extends BaseController {
       gender,
       avatarUrl,
       whatsappPhone,
+      actorId: userId,
+      actorRole: (req as any).user?.role,
     });
 
     if (result.isFailure) {
+      if (result.getError().includes('Acesso negado')) {
+        return this.forbidden(res, result.getError());
+      }
       return this.badRequest(res, result.getError());
     }
 

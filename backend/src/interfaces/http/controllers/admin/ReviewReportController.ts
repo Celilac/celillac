@@ -8,11 +8,14 @@ export class ReviewReportController {
   async execute(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const { newStatus } = req.body;
+      const { newStatus, reason } = req.body;
+      const reviewerId = (req as any).user?.id || (req as any).user?.userId;
 
       const result = await this.useCase.execute({
         reportId: id,
         newStatus,
+        reviewerId,
+        reason,
       });
 
       if (result.isFailure) {

@@ -16,7 +16,7 @@ export class RegisterUserController extends BaseController {
   }
 
   protected async executeImpl(req: Request, res: Response): Promise<void> {
-    const { email, password, role } = req.body;
+    const { email, password, role, fullName } = req.body;
 
     // Validação de input de interface (não de domínio)
     if (!email || !password || !role) {
@@ -33,6 +33,7 @@ export class RegisterUserController extends BaseController {
       email,
       password,
       role: role as UserRole,
+      fullName: fullName ? String(fullName).trim() : undefined,
     });
 
     if (result.isFailure) {

@@ -31,6 +31,14 @@ function normalize(input: ToastInput, fallbackTitle?: string): ToastOptions {
   return input;
 }
 
+const DEFAULT_DURATIONS: Record<VariantType, number> = {
+  success: 2500,
+  info: 2500,
+  default: 2500,
+  warning: 3500,
+  error: 4000,
+};
+
 export function useToast() {
   const { enqueueSnackbar, closeSnackbar } = useSnackbar();
 
@@ -39,13 +47,14 @@ export function useToast() {
   const showToast = useCallback(
     (variant: VariantType, options: ToastOptions) => {
       const { description, title, actionLabel, onAction, persist, autoHideDuration } = options;
+      const resolvedDuration = persist ? undefined : (autoHideDuration ?? DEFAULT_DURATIONS[variant] ?? 2800);
       return enqueue(description as string, {
         variant,
         title,
         actionLabel,
         onAction,
         persist,
-        autoHideDuration,
+        autoHideDuration: resolvedDuration,
       });
     },
     [enqueue],

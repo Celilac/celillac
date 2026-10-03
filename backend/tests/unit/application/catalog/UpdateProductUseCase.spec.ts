@@ -25,7 +25,7 @@ describe('UpdateProductUseCase', () => {
   const mockAnotherPartner = Partner.create({
     userId: 'user-2',
     name: 'Confeitaria SemG',
-    cnpj: '12.345.678/0001-90',
+    cnpj: '12.345.678/0001-95',
     address: 'Rua das Flores, 124',
     description: 'Doces artesanais',
     phone: '1234-5678',

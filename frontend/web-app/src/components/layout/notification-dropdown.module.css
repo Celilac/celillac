@@ -1,0 +1,229 @@
+/* frontend/web-app/src/components/layout/notification-dropdown.module.css */
+
+.dropdownContainer {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  width: 380px;
+  max-width: 90vw;
+  background: var(--color-surface, #1e293b);
+  border: 1px solid var(--color-border, #334155);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdownHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border, #334155);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.titleArea {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text, #f1f5f9);
+  margin: 0;
+}
+
+.unreadPill {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  background: var(--color-emerald-dim, rgba(16, 185, 129, 0.15));
+  color: var(--color-emerald, #10b981);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+}
+
+.markAllBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted, #94a3b8);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.markAllBtn:hover {
+  color: var(--color-emerald, #10b981);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.notificationsList {
+  max-height: 380px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.notificationItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+  border-bottom: 1px solid var(--color-border, #334155);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  position: relative;
+  text-decoration: none;
+}
+
+.notificationItem:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.notificationItemUnread {
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.notificationItemUnread:hover {
+  background: rgba(16, 185, 129, 0.09);
+}
+
+.iconBox {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.contentBox {
+  flex: 1;
+  min-width: 0;
+}
+
+.notifTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text, #f1f5f9);
+  margin-bottom: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notifMessage {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #94a3b8);
+  line-height: 1.4;
+  margin: 0;
+  word-break: break-word;
+}
+
+.notifTime {
+  font-size: 0.7rem;
+  color: var(--color-text-subtle, #64748b);
+  margin-top: 0.35rem;
+}
+
+.unreadDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-emerald, #10b981);
+  box-shadow: 0 0 6px var(--color-emerald, #10b981);
+  flex-shrink: 0;
+}
+
+.emptyState {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.emptyIcon {
+  font-size: 2.25rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.6;
+}
+
+.emptyText {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.dropdownFooter {
+  padding: 0.65rem 1.25rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-top: 1px solid var(--color-border, #334155);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.clearBtn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-subtle, #64748b);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.clearBtn:hover {
+  color: #ef4444;
+}
+
+.statusIndicator {
+  font-size: 0.72rem;
+  color: var(--color-text-muted, #94a3b8);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.statusDotActive {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+}
+
+.statusDotInactive {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+@media (max-width: 767px) {
+  .dropdownContainer {
+    position: fixed;
+    top: 66px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: 420px;
+    margin-left: auto;
+    max-height: calc(100vh - 84px);
+    z-index: 9999;
+  }
+}

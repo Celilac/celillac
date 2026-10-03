@@ -49,6 +49,7 @@ describe('SuspendPartnerUseCase', () => {
       findById: jest.fn(),
       findAll: jest.fn(),
       save: jest.fn(),
+      delete: jest.fn(async (_id: string) => {}),
     };
     useCase = new SuspendPartnerUseCase(partnerRepository, userRepository);
   });

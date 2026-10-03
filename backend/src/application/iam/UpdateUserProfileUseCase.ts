@@ -2,6 +2,7 @@ import { IUserRepository } from '../../domain/iam/repositories/IUserRepository';
 import { Result } from '../../domain/Result';
 import { User } from '../../domain/iam/User';
 import { WhatsappPhone } from '../../domain/iam/value-objects/WhatsappPhone';
+import { BirthDate } from '../../domain/iam/value-objects/BirthDate';
 
 export interface UpdateUserProfileInput {
   userId: string;
@@ -10,23 +11,31 @@ export interface UpdateUserProfileInput {
   gender?: string;
   avatarUrl?: string;
   whatsappPhone?: string;
+  actorId?: string;
+  actorRole?: string;
 }
 
 export class UpdateUserProfileUseCase {
   constructor(private readonly userRepository: IUserRepository) {}
 
   async execute(input: UpdateUserProfileInput): Promise<Result<User>> {
+    // BOLA / IDOR Defense (A01): Apenas o próprio usuário ou administradores podem atualizar o perfil
+    if (input.actorId && input.actorId !== input.userId && input.actorRole !== 'ADMIN') {
+      return Result.fail<User>('Acesso negado: Você não possui permissão para modificar o perfil deste usuário.');
+    }
+
     const user = await this.userRepository.findById(input.userId);
     if (!user) {
       return Result.fail<User>('Usuário não encontrado.');
     }
 
     let parsedBirthDate: Date | undefined = undefined;
-    if (input.birthDate) {
-      parsedBirthDate = typeof input.birthDate === 'string' ? new Date(input.birthDate) : input.birthDate;
-      if (isNaN(parsedBirthDate.getTime())) {
-        return Result.fail<User>('Data de nascimento inválida.');
+    if (input.birthDate !== undefined) {
+      const birthDateRes = BirthDate.create(input.birthDate);
+      if (birthDateRes.isFailure) {
+        return Result.fail<User>(birthDateRes.getError());
       }
+      parsedBirthDate = birthDateRes.getValue()?.value;
     }
 
     let phoneVo: WhatsappPhone | undefined = undefined;

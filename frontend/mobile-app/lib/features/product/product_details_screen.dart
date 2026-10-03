@@ -128,10 +128,12 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           rating: rating,
           comment: commentController.text.trim(),
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Avaliação enviada com sucesso!')),
-        );
-        _loadData();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Avaliação enviada com sucesso!')),
+          );
+          _loadData();
+        }
       } catch (err) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -182,9 +184,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
           reason: reasonController.text.trim(),
           isFoodSafetyRisk: isFoodSafetyRisk,
         );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Denúncia enviada para análise.')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Denúncia enviada para análise.')),
+          );
+        }
       } catch (_) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

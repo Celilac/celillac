@@ -13,4 +13,11 @@ export abstract class Entity<T> {
   get id(): string {
     return this._id;
   }
+
+  public toJSON(): Record<string, any> {
+    return {
+      id: this._id,
+      ...this.props,
+    };
+  }
 }
