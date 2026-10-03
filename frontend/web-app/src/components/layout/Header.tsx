@@ -14,7 +14,7 @@ import { useNotifications } from '@/contexts/NotificationContext';
 import { NotificationDropdown } from './NotificationDropdown';
 
 export function Header() {
-  const { token, userId, isAuthenticated, logout } = useAuth();
+  const { token, userId, isAuthenticated, logout, isLoggingOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { unreadCount } = useNotifications();
   const router = useRouter();
@@ -91,11 +91,10 @@ export function Header() {
           setUserInfo(null);
           if (err instanceof HttpError && err.status === 401) {
             logout();
-            router.replace('/auth/login');
           }
         });
     }
-  }, [isAuthenticated, token, userId, logout, router]);
+  }, [isAuthenticated, token, userId, logout]);
 
   return (
     <>
@@ -295,10 +294,10 @@ export function Header() {
           {mounted && isAuthenticated && (
             <button
               type="button"
+              disabled={isLoggingOut}
               onClick={() => {
                 setMenuOpen(false);
                 logout();
-                router.replace('/auth/login');
               }}
               className="nav-logout-btn"
               id="btn-logout"

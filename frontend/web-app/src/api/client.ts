@@ -115,11 +115,12 @@ export const apiClient = {
   get: <T>(path: string, token?: string) =>
     request<T>(path, { method: 'GET', headers: token ? { Authorization: `Bearer ${token}` } : {} }),
 
-  post: <T>(path: string, body: unknown, token?: string) =>
+  post: <T>(path: string, body: unknown, token?: string, options?: RequestInit) =>
     request<T>(path, {
       method: 'POST',
       body: JSON.stringify(body),
       headers: token ? { Authorization: `Bearer ${token}` } : {},
+      ...options,
     }),
 
   put: <T>(path: string, body: unknown, token?: string) =>
