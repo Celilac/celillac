@@ -7,6 +7,7 @@
 //   ✅ Limpo explicitamente no logout (revogação via blacklist no backend)
 //
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import Image from 'next/image';
 import { iamApi } from '@/api/iam';
 
 const STORAGE_KEY_TOKEN  = 'celilac:token';
@@ -22,6 +23,7 @@ interface AuthContextValue extends AuthState {
   logout:          () => Promise<void>;
   isAuthenticated: boolean;
   isInitializing:  boolean;
+  isLoggingOut:    boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -73,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
   useEffect(() => {
     try {
@@ -118,20 +121,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     const tokenToRevoke = auth.token;
 
-    // 1. Limpeza IMEDIATA no cliente para resposta instantânea da interface
+    // 1. Ativa imediatamente o overlay para encobrir a tela e evitar tela zumbi ou header parcial
+    setIsLoggingOut(true);
+
+    // 2. Limpeza síncrona no cliente para resposta instantânea
     try {
       localStorage.removeItem(STORAGE_KEY_TOKEN);
       localStorage.removeItem(STORAGE_KEY_USERID);
     } catch { /* sem ação */ }
     setAuth({ token: null, userId: null });
 
-    // 2. Notifica o backend em segundo plano para revogação segura na blacklist
+    // 3. Notifica o backend em segundo plano com keepalive (não-bloqueante)
     if (tokenToRevoke) {
-      try {
-        await iamApi.logout(tokenToRevoke);
-      } catch {
-        // Silencia erros para garantir logout client-side incondicional
-      }
+      iamApi.logout(tokenToRevoke).catch(() => {});
+    }
+
+    // 4. Redirecionamento determinístico e limpo para /auth/login
+    // O breve timeout de 50ms permite ao React e navegador renderizarem o frame do overlay,
+    // e o window.location.replace purga o cache em memória do App Router do Next.js
+    if (typeof window !== 'undefined') {
+      setTimeout(() => {
+        window.location.replace('/auth/login');
+      }, 50);
     }
   }, [auth.token]);
 
@@ -143,8 +154,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         isAuthenticated: !!auth.token,
         isInitializing,
+        isLoggingOut,
       }}
     >
+      {isLoggingOut && (
+        <div className="logout-overlay" role="status" aria-live="polite">
+          <Image
+            src="/brand/logo_with_transparent_background.png"
+            alt="CeLiLac"
+            width={72}
+            height={72}
+            priority
+          />
+          <div className="logout-overlay-spinner" />
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.95rem', fontWeight: 500 }}>
+            Encerrando sessão...
+          </p>
+        </div>
+      )}
       {children}
     </AuthContext.Provider>
   );

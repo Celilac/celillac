@@ -641,14 +641,15 @@ function PartnerOrdersContent() {
           <div className={styles.emptyCard}>
             <p className={styles.emptyTitle}>Nenhum restaurante parceiro vinculado a esta conta.</p>
             <p className={styles.emptyText}>
-              Para visualizar a cozinha e despachar pedidos, faça login com a conta parceira de teste:
+              Para visualizar a cozinha e despachar pedidos, você precisa ter um estabelecimento comercial parceiro cadastrado.
             </p>
-            <div className={styles.credentialBox}>
-              <p><strong>E-mail:</strong> parceiro.restaurante@seed.celilac.dev</p>
-              <p><strong>Senha:</strong> Seed@123456</p>
+            <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }}>
+              <Link href="/partner/register" className={styles.financialButton}>
+                Cadastrar Estabelecimento
+              </Link>
             </div>
             <p className={styles.emptyText} style={{ marginTop: '1rem', fontSize: '0.85rem' }}>
-              Se você é um cliente celíaco fazendo pedidos, acesse <Link href="/orders" style={{ color: 'var(--color-primary, #059669)', textDecoration: 'underline' }}>Meus Pedidos</Link>.
+              Se você é um cliente fazendo pedidos, acesse <Link href="/orders" style={{ color: 'var(--color-primary, #059669)', textDecoration: 'underline' }}>Meus Pedidos</Link>.
             </p>
           </div>
         ) : (

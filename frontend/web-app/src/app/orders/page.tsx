@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
 import { ordersApi, OrderDTO } from '@/api/orders';
+import { apiClient } from '@/api/client';
 import styles from './orders.module.css';
 
 function MyOrdersContent() {
@@ -19,6 +20,7 @@ function MyOrdersContent() {
 
   const [orders, setOrders] = useState<OrderDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Estado do Modal de Cancelamento
   const [cancellingOrder, setCancellingOrder] = useState<OrderDTO | null>(null);
@@ -28,8 +30,20 @@ function MyOrdersContent() {
   const fetchOrders = useCallback(async () => {
     if (!token) return;
     try {
-      const data = await ordersApi.getMyOrders(token);
-      setOrders(data);
+      const [ordersRes, meRes] = await Promise.allSettled([
+        ordersApi.getMyOrders(token),
+        apiClient.get<{ role?: string }>('/iam/me', token),
+      ]);
+
+      if (ordersRes.status === 'fulfilled') {
+        setOrders(ordersRes.value);
+      } else {
+        toast.error(ordersRes.reason?.message || 'Erro ao buscar pedidos.', 'Erro');
+      }
+
+      if (meRes.status === 'fulfilled' && meRes.value?.role) {
+        setUserRole(meRes.value.role);
+      }
     } catch (err: any) {
       toast.error(err.message || 'Erro ao buscar pedidos.', 'Erro');
     } finally {
@@ -129,24 +143,59 @@ function MyOrdersContent() {
           <h1 className={styles.pageTitle}>
             📦 Meus Pedidos
           </h1>
-          <Link href="/public-partners" className={styles.payActionBtn}>
-            Fazer Novo Pedido
-          </Link>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            {(userRole === 'PARCEIRO' || userRole === 'ADMIN') && (
+              <Link
+                href="/partner/orders"
+                className={styles.partnerActionBtn}
+                title="Acessar painel e gerenciar pedidos recebidos pela sua cozinha"
+              >
+                <span>🍳</span> Pedidos da Cozinha
+              </Link>
+            )}
+            <Link href="/public-partners" className={styles.payActionBtn}>
+              Fazer Novo Pedido
+            </Link>
+          </div>
         </div>
 
         {orders.length === 0 ? (
           <div className={`${styles.orderCard} ${styles.emptyState}`}>
             <p className={styles.emptyText}>
-              Você ainda não realizou nenhum pedido no CeLiLac.
+              Você ainda não realizou nenhum pedido como cliente no CeLiLac.
             </p>
             <Link href="/public-partners" className={styles.payActionBtn}>
               Explorar Restaurantes Seguros
             </Link>
-            <div style={{ marginTop: '1.5rem', padding: '0.75rem 1rem', background: 'var(--color-bg)', borderRadius: '8px', border: '1px dashed var(--color-border)', maxWidth: '440px' }}>
-              <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', margin: 0, lineHeight: 1.4 }}>
-                💡 <strong>Dica para testes locais:</strong> Faça login com a conta <strong style={{ color: 'var(--color-primary, #059669)' }}>celiaco.classico@seed.celilac.dev</strong> (senha: <code>Seed@123456</code>) para visualizar os pedidos previamente semeados.
-              </p>
-            </div>
+
+            {(userRole === 'PARCEIRO' || userRole === 'ADMIN') && (
+              <div
+                style={{
+                  marginTop: '2rem',
+                  padding: '1.25rem 1.5rem',
+                  background: 'var(--color-bg)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--color-border)',
+                  maxWidth: '520px',
+                  margin: '2rem auto 0',
+                  textAlign: 'center',
+                }}
+              >
+                <div style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>🍳</div>
+                <div style={{ fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.35rem', fontSize: '1rem' }}>
+                  Você possui uma conta de parceiro comercial
+                </div>
+                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', margin: '0 0 1rem 0', lineHeight: 1.5 }}>
+                  Esta tela exibe os pedidos que você realiza como cliente. Para acompanhar, aceitar e despachar os pedidos recebidos pela cozinha do seu restaurante, acesse o painel da cozinha.
+                </p>
+                <Link
+                  href="/partner/orders"
+                  className={styles.partnerActionBtn}
+                >
+                  <span>🍳</span> Ir para Pedidos da Cozinha
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           <div className={styles.orderList}>

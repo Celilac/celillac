@@ -248,12 +248,8 @@ function PartnerFinancialPageContent() {
               Nenhum estabelecimento comercial vinculado a esta conta
             </p>
             <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem', fontSize: '1rem', maxWidth: '600px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
-              O Painel Financeiro e Repasses é exclusivo para estabelecimentos parceiros. Se você deseja testar este painel com a subconta e pedidos semeados, faça login com a conta do parceiro:
+              O Painel Financeiro e Repasses é exclusivo para estabelecimentos parceiros cadastrados no CeLiLac. Cadastre seu estabelecimento para gerenciar repasses, chave PIX e vendas.
             </p>
-            <div style={{ background: 'var(--color-elevated)', padding: '1.25rem 1.5rem', borderRadius: '12px', display: 'inline-block', marginBottom: '2rem', textAlign: 'left', border: '1px solid var(--color-border)' }}>
-              <div style={{ color: 'var(--color-text)', fontSize: '0.95rem' }}><strong>E-mail:</strong> parceiro.restaurante@seed.celilac.dev</div>
-              <div style={{ color: 'var(--color-text)', fontSize: '0.95rem', marginTop: '0.4rem' }}><strong>Senha:</strong> Seed@123456</div>
-            </div>
             <div>
               <Link href="/partner/register" className={styles.saveButton} style={{ display: 'inline-block', width: 'auto', padding: '0.85rem 2rem', textDecoration: 'none' }}>
                 Cadastrar Novo Estabelecimento

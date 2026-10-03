@@ -352,6 +352,36 @@ input, select, textarea { font-family: inherit; }
   display: none;
 }
 
+/* Overlay de encerramento de sessão suave */
+.logout-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.logout-overlay-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(16, 185, 129, 0.2);
+  border-top-color: var(--color-emerald, #10b981);
+  border-radius: 50%;
+  animation: logoutSpin 0.7s linear infinite;
+}
+
+@keyframes logoutSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Menu mobile — abaixo de 768px a navegação vira um painel empilhado
    por trás de um botão hambúrguer, com alvos de toque ≥44px. */
 .topbar-mobile-controls {
