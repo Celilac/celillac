@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { UserAvatar } from '@/components/common/UserAvatar';
 import { apiClient, HttpError } from '@/api/client';
-import { HomeIcon, DashboardIcon, BuildingIcon, BriefcaseIcon, ShieldIcon, UsersIcon, LogoutIcon, SunIcon, MoonIcon, MenuIcon, CloseIcon, BellIcon } from './icons';
+import { HomeIcon, DashboardIcon, BuildingIcon, BriefcaseIcon, ShieldIcon, UsersIcon, LogoutIcon, SunIcon, MoonIcon, MenuIcon, CloseIcon, BellIcon, PackageIcon, HeartIcon, ChefHatIcon } from './icons';
 import { AdminDrawer } from './AdminDrawer';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { NotificationDropdown } from './NotificationDropdown';
@@ -180,13 +180,13 @@ export function Header() {
 
           {mounted && isAuthenticated && (
             <Link href="/orders" className={navLinkClass('/orders')} onClick={() => setMenuOpen(false)}>
-              📦 Meus Pedidos
+              <PackageIcon /> Meus Pedidos
             </Link>
           )}
 
           {mounted && isAuthenticated && (
             <Link href="/favorites" className={navLinkClass('/favorites')} onClick={() => setMenuOpen(false)}>
-              ❤️ Favoritos
+              <HeartIcon /> Favoritos
             </Link>
           )}
 
@@ -217,7 +217,7 @@ export function Header() {
                   gap: '6px',
                 }}
               >
-                <span>🍳</span> Pedidos da Cozinha
+                <ChefHatIcon /> Pedidos da Cozinha
               </Link>
             </>
           )}

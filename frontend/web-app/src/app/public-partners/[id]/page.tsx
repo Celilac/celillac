@@ -16,6 +16,21 @@ import { ReviewsList } from '@/components/common/ReviewsList';
 import { ReportModal } from '@/components/common/ReportModal';
 import PartnerLocationMap from '@/components/common/PartnerLocationMap';
 import { formatDisplayPhone } from '@/utils/mask';
+import {
+  MessageSquareIcon,
+  ArrowLeftIcon,
+  AlertTriangleIcon,
+  InfoIcon,
+  FlagIcon,
+  MapPinIcon,
+  BuildingIcon,
+  PhoneIcon,
+  TruckIcon,
+  PackageIcon,
+  CookieIcon,
+  ExternalLinkIcon,
+  ShieldCheckIcon,
+} from '@/components/layout/icons';
 import styles from '../../partner/partner.module.css';
 
 interface PageProps {
@@ -145,7 +160,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
               }}
               title="Ver avaliações da comunidade"
             >
-              💬 Ver avaliações ↓
+              <MessageSquareIcon size={14} /> Ver avaliações
             </a>
             <button 
               type="button" 
@@ -168,14 +183,14 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                 transition: 'all 0.15s ease',
               }}
             >
-              ⬅️ Voltar ao Guia
+              <ArrowLeftIcon size={14} /> Voltar ao Guia
             </button>
           </div>
         </div>
 
         {partner.operationalStatus === 'TEMPORARILY_CLOSED' && (
           <div className={`${styles.alertBanner} ${styles.alertBannerWarning}`} style={{ marginBottom: '1.5rem' }}>
-            <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+            <AlertTriangleIcon size={22} style={{ color: '#f59e0b', flexShrink: 0 }} />
             <div>
               <strong>Temporariamente Fechado</strong>
               <p style={{ marginTop: 'var(--space-1)', fontSize: 'var(--text-label)' }}>
@@ -190,7 +205,9 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
             {/* Detalhes do parceiro com variáveis adaptativas de tema */}
             <div className={styles.card} style={{ gap: '0.85rem', padding: '1.25rem' }}>
               <div className={styles.partnerSectionHeader} style={{ marginBottom: 0 }}>
-                <h2 className={styles.sectionTitle} style={{ margin: 0, fontSize: '1.15rem' }}>ℹ️ Sobre o Estabelecimento</h2>
+                <h2 className={styles.sectionTitle} style={{ margin: 0, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <InfoIcon size={18} /> Sobre o Estabelecimento
+                </h2>
                 <div className={styles.partnerHeaderActions}>
                   <FavoriteButton partnerId={partner.id} />
                   <button
@@ -211,30 +228,42 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    🚩 Denunciar
+                    <FlagIcon size={13} /> Denunciar
                   </button>
                 </div>
               </div>
 
               <div className={styles.partnerInfoGrid} style={{ fontSize: '0.88rem', margin: 0 }}>
                 <div>
-                  <p style={{ margin: '0 0 0.35rem' }}><strong style={{ color: 'var(--color-text)' }}>📍 Endereço:</strong> {partner.address}</p>
-                  <p style={{ margin: 0 }}><strong style={{ color: 'var(--color-text)' }}>🌆 Cidade:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não informada'}</p>
+                  <p style={{ margin: '0 0 0.35rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <MapPinIcon size={15} style={{ color: 'var(--color-emerald, #10b981)', flexShrink: 0 }} />
+                    <span><strong style={{ color: 'var(--color-text)' }}>Endereço:</strong> {partner.address}</span>
+                  </p>
+                  <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <BuildingIcon size={15} style={{ color: 'var(--color-emerald, #10b981)', flexShrink: 0 }} />
+                    <span><strong style={{ color: 'var(--color-text)' }}>Cidade:</strong> {partner.city ? `${partner.city} - ${partner.state}` : 'Não informada'}</span>
+                  </p>
                 </div>
                 <div>
-                  <p style={{ margin: '0 0 0.35rem' }}>
-                    <strong style={{ color: 'var(--color-text)' }}>📞 Contato:</strong>{' '}
-                    <a
-                      href={`https://wa.me/${partner.phone?.replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.phoneLink}
-                      title="Clique para abrir no WhatsApp"
-                    >
-                      {formatDisplayPhone(partner.phone)}
-                    </a>
+                  <p style={{ margin: '0 0 0.35rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <PhoneIcon size={15} style={{ color: 'var(--color-emerald, #10b981)', flexShrink: 0 }} />
+                    <span>
+                      <strong style={{ color: 'var(--color-text)' }}>Contato:</strong>{' '}
+                      <a
+                        href={`https://wa.me/${partner.phone?.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={styles.phoneLink}
+                        title="Clique para abrir no WhatsApp"
+                      >
+                        {formatDisplayPhone(partner.phone)}
+                      </a>
+                    </span>
                   </p>
-                  <p style={{ margin: 0 }}><strong style={{ color: 'var(--color-text)' }}>🚗 Atendimento:</strong> {partner.deliveryRegion || 'Local'}</p>
+                  <p style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <TruckIcon size={15} style={{ color: 'var(--color-emerald, #10b981)', flexShrink: 0 }} />
+                    <span><strong style={{ color: 'var(--color-text)' }}>Atendimento:</strong> {partner.deliveryRegion || 'Local'}</span>
+                  </p>
                 </div>
               </div>
 
@@ -259,11 +288,13 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
 
             {/* Listagem de produtos ofertados */}
             <div style={{ marginTop: '1.25rem' }}>
-              <h2 className={styles.sectionTitle} style={{ marginBottom: '1rem' }}>📦 Produtos Ofertados ({products.length})</h2>
+              <h2 className={styles.sectionTitle} style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <PackageIcon size={18} /> Produtos Ofertados ({products.length})
+              </h2>
               
               {products.length === 0 ? (
                 <div className={styles.emptyState} style={{ padding: '3rem 1rem' }}>
-                  <span className={styles.emptyIcon}>🍪</span>
+                  <span className={styles.emptyIcon}><CookieIcon size={44} /></span>
                   <h3>Nenhum produto cadastrado para este estabelecimento</h3>
                   <p>Volte em breve para verificar novos lançamentos de produtos seguros.</p>
                 </div>
@@ -288,7 +319,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                             }}
                           >
                             {product.name}
-                            <span style={{ fontSize: '0.8rem', color: 'var(--color-emerald, #059669)' }}>↗</span>
+                            <ExternalLinkIcon size={12} style={{ color: 'var(--color-emerald, #059669)' }} />
                           </h3>
                         </Link>
                         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -329,13 +360,16 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                         if (isFree) return null;
 
                         return (
-                          <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-warning)', fontStyle: 'italic' }}>
-                            ⚠️ Traços: {(() => {
-                              const raw = product.crossContamination || '';
-                              if (raw === 'TRACES' || raw === 'TRACOS') return 'Pode conter traços (Alerta preventivo no rótulo)';
-                              if (raw === 'SHARED_EQUIPMENT' || raw === 'MAQUINARIO_COMPARTILHADO') return 'Compartilha maquinário / linhas de produção';
-                              return raw;
-                            })()}
+                          <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-warning)', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <AlertTriangleIcon size={14} style={{ color: 'var(--color-warning)', flexShrink: 0 }} />
+                            <span>
+                              Traços: {(() => {
+                                const raw = product.crossContamination || '';
+                                if (raw === 'TRACES' || raw === 'TRACOS') return 'Pode conter traços (Alerta preventivo no rótulo)';
+                                if (raw === 'SHARED_EQUIPMENT' || raw === 'MAQUINARIO_COMPARTILHADO') return 'Compartilha maquinário / linhas de produção';
+                                return raw;
+                              })()}
+                            </span>
                           </p>
                         );
                       })()}
@@ -357,7 +391,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                             transition: 'all 0.15s ease',
                           }}
                         >
-                          📦 Ver Detalhes do Produto
+                          <PackageIcon size={14} /> Ver Detalhes do Produto
                         </Link>
                       </div>
                     </div>
@@ -369,7 +403,9 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
 
           <aside className={styles.sidePanel}>
             <div className={styles.card} style={{ gap: '1rem' }}>
-              <h2 className={styles.sectionTitle}>🛡️ Certificação CeLiLac</h2>
+              <h2 className={styles.sectionTitle} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ShieldCheckIcon size={18} /> Certificação CeLiLac
+              </h2>
               <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
                 <Image src="/brand/logo_with_transparent_background.png" alt="Selo" width={100} height={100} />
                 <h3 className={styles.partnerName} style={{ marginTop: '1rem', fontSize: 'var(--text-title)', fontWeight: '700' }}>Parceiro Homologado</h3>

@@ -9,6 +9,7 @@ import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Header } from '@/components/layout/Header';
+import { SearchIcon, BuildingIcon, AlertTriangleIcon } from '@/components/layout/icons';
 import { foodProfileApi } from '@/api/food-profile';
 import { apiClient } from '@/api/client';
 import {
@@ -147,7 +148,7 @@ export default function Home() {
                 textDecoration: 'none',
               }}
             >
-              🔍 Analisador de Produtos (Dashboard) →
+              <SearchIcon size={16} /> Analisador de Produtos (Dashboard) →
             </Link>
             <Link
               href="/public-partners"
@@ -166,7 +167,7 @@ export default function Home() {
               }}
               title="Descubra estabelecimentos homologados e alimentos seguros"
             >
-              🏢 Descobrir Locais & Produtos
+              <BuildingIcon size={16} /> Descobrir Locais & Produtos
             </Link>
           </div>
         </div>
@@ -266,7 +267,9 @@ export default function Home() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
                           <span
                             style={{
-                              display: 'inline-block',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
                               padding: '0.2rem 0.55rem',
                               borderRadius: 'var(--radius-sm)',
                               fontSize: '0.75rem',
@@ -276,7 +279,7 @@ export default function Home() {
                               border: '1px solid var(--color-warning-border)',
                             }}
                           >
-                            ⚠️ Perfil Incompleto
+                            <AlertTriangleIcon size={12} /> Perfil Incompleto
                           </span>
                         </div>
                         <p style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
@@ -454,12 +457,12 @@ export default function Home() {
             >
               <div
                 style={{
-                  fontSize: '2rem',
                   marginBottom: '0.75rem',
-                  opacity: 0.8,
+                  display: 'flex',
+                  justifyContent: 'center',
                 }}
               >
-                🔎
+                <SearchIcon size={36} style={{ color: 'var(--color-text-muted)' }} />
               </div>
               <p style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--color-text)', marginBottom: '0.35rem' }}>
                 Nenhuma verificação recente

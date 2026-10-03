@@ -3,10 +3,23 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { partnerApi, PartnerSummary } from '@/api/partner';
+import { HttpError } from '@/api/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
-import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
+import {
+  ShieldCheckIcon,
+  MapPinIcon,
+  PhoneIcon,
+  BriefcaseIcon,
+  EyeIcon,
+  CheckIcon,
+  XCircleIcon,
+  BanIcon,
+  RefreshCwIcon,
+  StoreIcon,
+  TruckIcon,
+} from '@/components/layout/icons';
 import PartnerLocationMap from '@/components/common/PartnerLocationMap';
 import { formatDisplayPhone, maskCnpj } from '@/utils/mask';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
@@ -187,7 +200,7 @@ export default function AdminPartnersPage() {
         <div className={styles.grid}>
           {partners.length === 0 ? (
             <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>🛡️</span>
+              <ShieldCheckIcon size={44} style={{ color: 'var(--color-text-muted)' }} />
               <h2>Nenhum parceiro comercial cadastrado no sistema</h2>
             </div>
           ) : (
@@ -201,9 +214,18 @@ export default function AdminPartnersPage() {
                   <p className={styles.partnerDescription}>{partner.description || 'Sem descrição cadastrada.'}</p>
                   
                   <div className={styles.partnerMeta}>
-                    <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
-                    <span className={styles.metaItem}>📞 {formatDisplayPhone(partner.phone)}</span>
-                    <span className={styles.metaItem}>💼 {translatePartnerType(partner.type)}</span>
+                    <span className={styles.metaItem}>
+                      <MapPinIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                      {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}
+                    </span>
+                    <span className={styles.metaItem}>
+                      <PhoneIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                      {formatDisplayPhone(partner.phone)}
+                    </span>
+                    <span className={styles.metaItem}>
+                      <BriefcaseIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                      {translatePartnerType(partner.type)}
+                    </span>
                   </div>
 
                   {partner.approvalStatus === 'REJECTED' && partner.rejectionReason && (
@@ -223,10 +245,10 @@ export default function AdminPartnersPage() {
                   <button
                     type="button"
                     className={`${styles.btn} ${styles.btnSecondary}`}
-                    style={{ flex: '1 1 100%', marginBottom: '0.25rem' }}
+                    style={{ flex: '1 1 100%', marginBottom: '0.25rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                     onClick={() => setDetailPartner(partner)}
                   >
-                    👁️ Ver Detalhes do Parceiro
+                    <EyeIcon size={15} /> Ver Detalhes do Parceiro
                   </button>
 
                   {partner.approvalStatus === 'PENDING_REVIEW' && (
@@ -234,22 +256,22 @@ export default function AdminPartnersPage() {
                       <button 
                         type="button" 
                         className={`${styles.btn} ${styles.btnPrimary}`} 
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} 
                         onClick={() => handleApprove(partner.id)}
                         disabled={updating}
                         id={`approve-${partner.id}`}
                       >
-                        ✔️ Aprovar
+                        <CheckIcon size={15} /> Aprovar
                       </button>
                       <button 
                         type="button" 
                         className={`${styles.btn} ${styles.btnDanger}`} 
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} 
                         onClick={() => openModal(partner, 'REJECT')}
                         disabled={updating}
                         id={`reject-${partner.id}`}
                       >
-                        ❌ Rejeitar
+                        <XCircleIcon size={15} /> Rejeitar
                       </button>
                     </>
                   )}
@@ -258,12 +280,12 @@ export default function AdminPartnersPage() {
                     <button 
                       type="button" 
                       className={`${styles.btn} ${styles.btnDanger}`} 
-                      style={{ flex: 1 }}
+                      style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} 
                       onClick={() => openModal(partner, 'SUSPEND')}
                       disabled={updating}
                       id={`suspend-${partner.id}`}
                     >
-                      🚫 Suspender Estabelecimento
+                      <BanIcon size={15} /> Suspender Estabelecimento
                     </button>
                   )}
 
@@ -271,12 +293,12 @@ export default function AdminPartnersPage() {
                     <button 
                       type="button" 
                       className={`${styles.btn} ${styles.btnPrimary}`} 
-                      style={{ flex: 1 }}
+                      style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }} 
                       onClick={() => handleReactivate(partner.id)}
                       disabled={updating}
                       id={`reactivate-${partner.id}`}
                     >
-                      🔄 Reativar Cadastro
+                      <RefreshCwIcon size={15} /> Reativar Cadastro
                     </button>
                   )}
 
@@ -304,18 +326,18 @@ export default function AdminPartnersPage() {
             >
               <div className={styles.modalHeader}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <h2 id="detail-partner-heading" className={styles.modalTitle}>
-                    🏬 {detailPartner.name}
+                  <h2 id="detail-partner-heading" className={styles.modalTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <StoreIcon size={20} style={{ color: 'var(--color-primary)' }} /> {detailPartner.name}
                   </h2>
                   {getStatusLabel(detailPartner.approvalStatus)}
                 </div>
                 <button
                   type="button"
                   onClick={() => setDetailPartner(null)}
-                  style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', opacity: 0.7 }}
+                  style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', opacity: 0.7 }}
                   aria-label="Fechar"
                 >
-                  ✖️
+                  ✕
                 </button>
               </div>
 
@@ -357,7 +379,9 @@ export default function AdminPartnersPage() {
                 </div>
 
                 <div className={styles.detailBox}>
-                  <span className={styles.detailLabel}>📍 Endereço Completo</span>
+                  <span className={styles.detailLabel} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <MapPinIcon size={14} /> Endereço Completo
+                  </span>
                   <p className={styles.detailValue} style={{ marginTop: '0.25rem' }}>{detailPartner.address}</p>
 
                   <div style={{ marginTop: '0.75rem' }}>
@@ -373,7 +397,9 @@ export default function AdminPartnersPage() {
                 </div>
 
                 <div className={styles.detailBox}>
-                  <span className={styles.detailLabel}>🚚 Região de Atendimento / Entrega</span>
+                  <span className={styles.detailLabel} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <TruckIcon size={14} /> Região de Atendimento / Entrega
+                  </span>
                   <p className={styles.detailValue} style={{ marginTop: '0.25rem' }}>{detailPartner.deliveryRegion || 'Local'}</p>
                 </div>
 
@@ -398,18 +424,20 @@ export default function AdminPartnersPage() {
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnPrimary}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                       onClick={() => handleApprove(detailPartner.id)}
                       disabled={updating}
                     >
-                      ✔️ Aprovar Cadastro
+                      <CheckIcon size={15} /> Aprovar Cadastro
                     </button>
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnDanger}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                       onClick={() => openModal(detailPartner, 'REJECT')}
                       disabled={updating}
                     >
-                      ❌ Rejeitar
+                      <XCircleIcon size={15} /> Rejeitar
                     </button>
                   </>
                 )}

@@ -208,7 +208,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                       id: `sync_order_${order.id}`,
                       orderId: order.id,
                       partnerId: partner.id,
-                      title: `🍳 Novo Pedido em ${partner.name}!`,
+                      title: `Novo Pedido em ${partner.name}!`,
                       message: `Pedido #${shortId} (R$ ${formattedTotal}) aguarda aceite em ${partner.name}.`,
                       timestamp: new Date().toISOString(),
                       read: false,
@@ -284,13 +284,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           addNotification({
             orderId: payload.orderId,
             partnerId: payload.partnerId,
-            title: `🍳 Novo Pedido Recebido${partnerLocation}!`,
+            title: `Novo Pedido Recebido${partnerLocation}!`,
             message: `Pedido #${shortId} no valor de R$ ${formattedTotal} recebido${partnerLocation}.`,
             targetUrl,
             type: 'NEW_ORDER',
           });
 
-          toast.info(`Novo pedido recebido${partnerLocation}! #${shortId} • R$ ${formattedTotal}`, 'Novo Pedido! 🔔');
+          toast.info(`Novo pedido recebido${partnerLocation}! #${shortId} • R$ ${formattedTotal}`, 'Novo Pedido!');
         } catch (err) {
           console.error('[NotificationContext] Erro ao parsear order:payment_confirmed:', err);
         }
@@ -311,32 +311,32 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
             switch (payload.status) {
               case 'CONFIRMED':
-                title = '✅ Pedido Aceito!';
+                title = 'Pedido Aceito!';
                 message = `Seu pedido #${shortId} foi aceito pelo restaurante.`;
                 type = 'ORDER_CONFIRMED';
                 break;
               case 'PREPARING':
-                title = '🔥 Pedido em Preparo!';
+                title = 'Pedido em Preparo!';
                 message = `Seu pedido #${shortId} começou a ser preparado com segurança.`;
                 type = 'PREPARING';
                 break;
               case 'READY_FOR_PICKUP':
-                title = '📦 Pedido Pronto!';
+                title = 'Pedido Pronto!';
                 message = `Seu pedido #${shortId} está pronto para retirada.`;
                 type = 'READY';
                 break;
               case 'OUT_FOR_DELIVERY':
-                title = '🛵 Saiu para Entrega!';
+                title = 'Saiu para Entrega!';
                 message = `O entregador está a caminho com seu pedido #${shortId}.`;
                 type = 'DELIVERY';
                 break;
               case 'DELIVERED':
-                title = '🏁 Pedido Entregue!';
+                title = 'Pedido Entregue!';
                 message = `Seu pedido #${shortId} foi entregue com sucesso. Bom apetite!`;
                 type = 'DELIVERED';
                 break;
               case 'CANCELLED':
-                title = '❌ Pedido Cancelado';
+                title = 'Pedido Cancelado';
                 message = `O pedido #${shortId} foi cancelado.`;
                 type = 'CANCELLED';
                 break;
@@ -350,7 +350,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
               type,
             });
 
-            toast.info(message, `${title} 🔔`);
+            toast.info(message, title);
           } else {
             // Notificação para o Parceiro (ex: novo pedido com pagamento na entrega ou cancelamento)
             const partnerLocation = payload.partnerName ? ` em ${payload.partnerName}` : '';
@@ -363,17 +363,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
               addNotification({
                 orderId: payload.orderId,
                 partnerId: payload.partnerId,
-                title: `💵 Novo Pedido na Entrega${partnerLocation}!`,
+                title: `Novo Pedido na Entrega${partnerLocation}!`,
                 message: `Pedido #${shortId} (R$ ${formattedTotal}) confirmado para pagamento na entrega${partnerLocation}.`,
                 targetUrl,
                 type: 'NEW_ORDER',
               });
-              toast.info(`Novo pedido na entrega recebido${partnerLocation}! #${shortId}`, 'Novo Pedido! 🔔');
+              toast.info(`Novo pedido na entrega recebido${partnerLocation}! #${shortId}`, 'Novo Pedido!');
             } else if (payload.status === 'CANCELLED') {
               addNotification({
                 orderId: payload.orderId,
                 partnerId: payload.partnerId,
-                title: '⚠️ Pedido Cancelado',
+                title: 'Pedido Cancelado',
                 message: `O pedido #${shortId} foi cancelado${partnerLocation}.`,
                 targetUrl,
                 type: 'CANCELLED',

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { reviewApi, ReviewDTO } from '@/api/reviews';
 import { apiClient } from '@/api/client';
 import { ReviewModal } from './ReviewModal';
+import { MessageSquareIcon, StarIcon, EditIcon } from '@/components/layout/icons';
 import styles from '../../app/partner/partner.module.css';
 
 interface ReviewsListProps {
@@ -101,11 +102,12 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--color-border)' }}>
         <div>
-          <h4 className={styles.sectionTitle} style={{ marginBottom: '0.25rem' }}>
-            💬 Avaliações da Comunidade
+          <h4 className={styles.sectionTitle} style={{ marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <MessageSquareIcon size={18} style={{ color: 'var(--color-emerald)' }} />
+            Avaliações da Comunidade
           </h4>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 'var(--text-body)', color: 'var(--color-text-muted)' }}>
-            <span style={{ fontSize: '1.25rem', color: '#f59e0b' }}>⭐</span>
+            <StarIcon size={18} filled style={{ color: '#f59e0b' }} />
             <strong style={{ fontSize: '1.25rem', color: 'var(--color-text)' }}>{averageRating}</strong>
             <span>({safeReviews.length} {safeReviews.length === 1 ? 'avaliação' : 'avaliações'})</span>
           </div>
@@ -115,9 +117,9 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
           type="button"
           onClick={handleOpenReview}
           className={`${styles.btn} ${styles.btnPrimary}`}
-          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+          style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
         >
-          ✍️ Avaliar
+          <EditIcon size={16} /> Avaliar
         </button>
       </div>
 
@@ -127,7 +129,9 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
         </p>
       ) : safeReviews.length === 0 ? (
         <div className={styles.emptyState} style={{ padding: '2rem 1rem' }}>
-          <span className={styles.emptyIcon}>⭐</span>
+          <span className={styles.emptyIcon}>
+            <StarIcon size={32} style={{ color: 'var(--color-text-muted)' }} />
+          </span>
           <p style={{ fontSize: 'var(--text-body)' }}>Nenhuma avaliação enviada ainda. Seja o primeiro a avaliar!</p>
         </div>
       ) : (
@@ -153,8 +157,10 @@ export const ReviewsList: React.FC<ReviewsListProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ color: '#f59e0b', fontSize: '0.9rem' }}>
-                    {'⭐'.repeat(starCount)}{'☆'.repeat(5 - starCount)}
+                  <div style={{ display: 'inline-flex', gap: '2px', color: '#f59e0b' }}>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <StarIcon key={i} size={15} filled={i <= starCount} />
+                    ))}
                   </div>
                   {formattedDate && (
                     <span style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>

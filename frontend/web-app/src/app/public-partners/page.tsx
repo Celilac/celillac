@@ -9,6 +9,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Header } from '@/components/layout/Header';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
+import {
+  BuildingIcon,
+  PackageIcon,
+  SearchIcon,
+  InfoIcon,
+  MapPinIcon,
+  BriefcaseIcon,
+  AlertTriangleIcon,
+  CookieIcon,
+  ShoppingCartIcon,
+} from '@/components/layout/icons';
 import styles from './public-partners.module.css';
 
 function PublicPartnersContent() {
@@ -101,7 +112,9 @@ function PublicPartnersContent() {
             }}
             id="tab-filter-partners"
           >
-            🏢 Estabelecimentos ({partners.length})
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <BuildingIcon size={16} /> Estabelecimentos ({partners.length})
+            </span>
           </button>
           <button
             type="button"
@@ -114,14 +127,16 @@ function PublicPartnersContent() {
             }}
             id="tab-filter-products"
           >
-            📦 Produtos Ofertados ({products.length})
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <PackageIcon size={16} /> Produtos Ofertados ({products.length})
+            </span>
           </button>
         </div>
 
         {/* Buscador com metadados adaptativos */}
         <div className={styles.searchSection}>
           <div className={styles.searchCard}>
-            <span className={styles.searchIcon}>🔍</span>
+            <span className={styles.searchIcon}><SearchIcon size={18} /></span>
             <input
               type="text"
               className={styles.input}
@@ -187,7 +202,7 @@ function PublicPartnersContent() {
               flexWrap: 'wrap',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', color: 'var(--color-text)' }}>
-                <span>💡</span>
+                <InfoIcon size={16} style={{ color: 'var(--color-primary, #10b981)', flexShrink: 0 }} />
                 <span>Procurando itens específicos? Você pode navegar por todos os produtos homologados cadastrados de uma vez só.</span>
               </div>
               <button
@@ -207,14 +222,14 @@ function PublicPartnersContent() {
                   gap: '6px',
                 }}
               >
-                📦 Ver Todos os Produtos ({products.length})
+                <PackageIcon size={15} /> Ver Todos os Produtos ({products.length})
               </button>
             </div>
 
             <div className={styles.partnersGrid}>
             {filteredPartners.length === 0 ? (
               <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>🔍</span>
+                <span className={styles.emptyIcon}><SearchIcon size={44} /></span>
                 <h2>Nenhum parceiro encontrado</h2>
                 <p>Tente alterar sua busca para localizar outros estabelecimentos homologados.</p>
               </div>
@@ -242,13 +257,13 @@ function PublicPartnersContent() {
                     <p className={styles.partnerDescription}>{partner.description || 'Sem descrição cadastrada.'}</p>
 
                     <div className={styles.partnerMeta}>
-                      <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
-                      <span className={styles.metaItem}>💼 {translatePartnerType(partner.type)}</span>
+                      <span className={styles.metaItem}><MapPinIcon size={14} /> {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
+                      <span className={styles.metaItem}><BriefcaseIcon size={14} /> {translatePartnerType(partner.type)}</span>
                     </div>
 
                     {partner.operationalStatus === 'TEMPORARILY_CLOSED' && (
                       <div className={styles.statusNotice}>
-                        <span>⚠️</span>
+                        <AlertTriangleIcon size={15} style={{ color: '#f59e0b' }} />
                         <strong>Temporariamente Fechado</strong>
                       </div>
                     )}
@@ -261,7 +276,7 @@ function PublicPartnersContent() {
                       onClick={() => router.push(`/public-partners/${partner.id}`)}
                       id={`view-public-partner-${partner.id}`}
                     >
-                      🔍 Ver Perfil Completo
+                      <SearchIcon size={15} /> Ver Perfil Completo
                     </button>
                   </div>
                 </section>
@@ -274,7 +289,7 @@ function PublicPartnersContent() {
           <div className={styles.productsGrid}>
             {filteredProducts.length === 0 ? (
               <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>🍪</span>
+                <span className={styles.emptyIcon}><CookieIcon size={44} /></span>
                 <h2>Nenhum produto encontrado</h2>
                 <p>Tente buscar por outro termo, ingrediente ou categoria de alimento seguro.</p>
               </div>
@@ -312,7 +327,7 @@ function PublicPartnersContent() {
                       <div className={styles.productPartnerTag}>
                         <span>Marca: <strong>{product.brand}</strong></span>
                         {partnerName && (
-                          <span> · 🏢 <strong>{partnerName}</strong></span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}> · <BuildingIcon size={13} /> <strong>{partnerName}</strong></span>
                         )}
                       </div>
 
@@ -355,7 +370,7 @@ function PublicPartnersContent() {
                           gap: '0.4rem',
                         }}
                       >
-                        🛒 Ver Detalhes / Comprar
+                        <ShoppingCartIcon size={15} /> Ver Detalhes / Comprar
                       </Link>
                     </div>
                   </section>

@@ -8,23 +8,22 @@ export interface CountryOption {
   code: string;
   name: string;
   ddi: string;
-  flag: string;
 }
 
 export const COUNTRIES: CountryOption[] = [
-  { code: 'BR', name: 'Brasil', ddi: '+55', flag: '🇧🇷' },
-  { code: 'PT', name: 'Portugal', ddi: '+351', flag: '🇵🇹' },
-  { code: 'US', name: 'Estados Unidos / Canadá', ddi: '+1', flag: '🇺🇸' },
-  { code: 'ES', name: 'Espanha', ddi: '+34', flag: '🇪🇸' },
-  { code: 'AR', name: 'Argentina', ddi: '+54', flag: '🇦🇷' },
-  { code: 'UY', name: 'Uruguai', ddi: '+598', flag: '🇺🇾' },
-  { code: 'CL', name: 'Chile', ddi: '+56', flag: '🇨🇱' },
-  { code: 'PY', name: 'Paraguai', ddi: '+595', flag: '🇵🇾' },
-  { code: 'GB', name: 'Reino Unido', ddi: '+44', flag: '🇬🇧' },
-  { code: 'FR', name: 'França', ddi: '+33', flag: '🇫🇷' },
-  { code: 'DE', name: 'Alemanha', ddi: '+49', flag: '🇩🇪' },
-  { code: 'IT', name: 'Itália', ddi: '+39', flag: '🇮🇹' },
-  { code: 'OTHER', name: 'Outro País', ddi: '+', flag: '🌐' },
+  { code: 'BR', name: 'Brasil', ddi: '+55' },
+  { code: 'PT', name: 'Portugal', ddi: '+351' },
+  { code: 'US', name: 'Estados Unidos / Canadá', ddi: '+1' },
+  { code: 'ES', name: 'Espanha', ddi: '+34' },
+  { code: 'AR', name: 'Argentina', ddi: '+54' },
+  { code: 'UY', name: 'Uruguai', ddi: '+598' },
+  { code: 'CL', name: 'Chile', ddi: '+56' },
+  { code: 'PY', name: 'Paraguai', ddi: '+595' },
+  { code: 'GB', name: 'Reino Unido', ddi: '+44' },
+  { code: 'FR', name: 'França', ddi: '+33' },
+  { code: 'DE', name: 'Alemanha', ddi: '+49' },
+  { code: 'IT', name: 'Itália', ddi: '+39' },
+  { code: 'INT', name: 'Outro País', ddi: '+' },
 ];
 
 interface Props {
@@ -117,7 +116,7 @@ export default function InternationalPhoneInput({
               value={country.ddi}
               style={{ backgroundColor: 'var(--color-surface, #101C23)', color: 'var(--color-text, #ffffff)' }}
             >
-              {country.flag} {country.ddi}
+              {country.code} ({country.ddi})
             </option>
           ))}
         </select>

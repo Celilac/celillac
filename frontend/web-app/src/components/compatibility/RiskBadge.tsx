@@ -1,11 +1,13 @@
 // frontend/web-app/src/components/compatibility/RiskBadge.tsx
 // ⚠️ REGRA: o riskLevel vem SEMPRE do Backend — nunca calculado no frontend.
+import React from 'react';
 import type { RiskLevel } from '@/api/compatibility';
+import { StatusDot, ShieldCheckIcon, AlertTriangleIcon } from '@/components/layout/icons';
 
 export type ExtendedRiskLevel = RiskLevel | 'INDETERMINATE';
 
 export interface RiskConfig {
-  icon: string;
+  color: 'green' | 'yellow' | 'orange' | 'red' | 'gray';
   label: string;
   description: string;
   cssClass: string;
@@ -13,37 +15,37 @@ export interface RiskConfig {
 
 const RISK_CONFIG: Record<ExtendedRiskLevel, RiskConfig> = {
   SAFE: {
-    icon: '🟢',
+    color: 'green',
     label: 'COMPATÍVEL',
     description: 'Compatível com as informações disponíveis.',
     cssClass: 'statusSafe',
   },
   WARNING: {
-    icon: '🟡',
+    color: 'yellow',
     label: 'ATENÇÃO',
     description: 'Possível risco de contaminação cruzada ou restrição moderada.',
     cssClass: 'statusWarning',
   },
   DANGER: {
-    icon: '🟠',
+    color: 'orange',
     label: 'RISCO ALTO',
     description: 'Risco relevante identificado para o seu perfil.',
     cssClass: 'statusDanger',
   },
   BLOCKED: {
-    icon: '🔴',
+    color: 'red',
     label: 'INCOMPATÍVEL',
     description: 'Contém ingrediente conflitante com seu perfil.',
     cssClass: 'statusBlocked',
   },
   UNEVALUATED: {
-    icon: '⚪',
+    color: 'gray',
     label: 'PERFIL INCOMPLETO',
     description: 'Perfil alimentar não configurado para cálculo de compatibilidade.',
     cssClass: 'statusWarning',
   },
   INDETERMINATE: {
-    icon: '⚪',
+    color: 'gray',
     label: 'INDETERMINADO',
     description: 'Informações insuficientes para garantir compatibilidade.',
     cssClass: 'statusWarning',
@@ -90,7 +92,7 @@ export function RiskBadge({
             fontSize: '0.875rem',
           }}
         >
-          <span aria-hidden="true">{config.icon}</span>
+          <StatusDot color={config.color} size={10} />
           {showLabel && <span>{config.label}</span>}
         </span>
 
@@ -99,7 +101,7 @@ export function RiskBadge({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '5px',
               padding: '3px 8px',
               borderRadius: '999px',
               fontSize: '0.75rem',
@@ -110,7 +112,7 @@ export function RiskBadge({
             }}
             title="Produto com laudo técnico ou certificação homologada pela equipe CeLiLac"
           >
-            🛡️ Auditado CeLiLac
+            <ShieldCheckIcon size={14} style={{ color: '#047857' }} /> Auditado CeLiLac
           </span>
         )}
 
@@ -119,7 +121,7 @@ export function RiskBadge({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px',
+              gap: '5px',
               padding: '3px 8px',
               borderRadius: '999px',
               fontSize: '0.75rem',
@@ -130,7 +132,7 @@ export function RiskBadge({
             }}
             title="Divergência detectada entre a declaração do parceiro e o texto de ingredientes"
           >
-            ⚠️ Divergência
+            <AlertTriangleIcon size={14} style={{ color: '#dc2626' }} /> Divergência
           </span>
         )}
       </div>

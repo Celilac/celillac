@@ -22,6 +22,26 @@ import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { CreateProductModal } from '@/components/common/CreateProductModal';
 import { translateReasoning, translateConflictReason, translatePartnerType } from '@/utils/compatibilityTranslator';
 import { saveRecentCheck } from '@/services/recentChecks';
+import {
+  PackageIcon,
+  ChefHatIcon,
+  BuildingIcon,
+  BriefcaseIcon,
+  MailIcon,
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  ClockIcon,
+  EditIcon,
+  PlusIcon,
+  SearchIcon,
+  FlaskIcon,
+  RefreshIcon,
+  GlobeIcon,
+  WheatIcon,
+  ShieldCheckIcon,
+  LeafIcon,
+  StatusDot,
+} from '@/components/layout/icons';
 import styles from './dashboard.module.css';
 
 interface ReportWithName extends CompatibilityResponse {
@@ -38,27 +58,27 @@ interface RestrictionItem {
 }
 
 const ALLERGEN_LABELS: Record<string, string> = {
-  GLUTEN: '🌾 Glúten',
-  LACTOSE: '🥛 Lactose',
-  NUTS: '🥜 Castanhas / Amendoim',
-  SOY: '🫘 Soja',
-  EGGS: '🥚 Ovos',
-  SHELLFISH: '🦐 Frutos do Mar',
-  FISH: '🐟 Peixes',
-  SESAME: '🌱 Gergelim',
-  OTHER: '⚠️ Outro',
+  GLUTEN: 'Glúten',
+  LACTOSE: 'Lactose',
+  NUTS: 'Castanhas / Amendoim',
+  SOY: 'Soja',
+  EGGS: 'Ovos',
+  SHELLFISH: 'Frutos do Mar',
+  FISH: 'Peixes',
+  SESAME: 'Gergelim',
+  OTHER: 'Outro',
 };
 
 // Cores acompanham a mesma escala de gravidade do veredito do AllergenEngine
 // (ver DESIGN.md) — reforça que vermelho/laranja/amarelo/verde significam a
 // mesma coisa em toda a aplicação, seja no veredito de um produto ou na
 // severidade da própria restrição do usuário.
-const SEVERITY_BADGES: Record<string, { label: string; bg: string; color: string; border: string }> = {
-  FATAL: { label: '🔴 Fatal (Celíaco)', bg: 'var(--color-blocked-bg)', color: 'var(--color-blocked)', border: 'var(--color-blocked-border)' },
-  HIGH: { label: '🟠 Risco Alto', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
-  MEDIUM: { label: '🟡 Risco Médio', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
-  LOW: { label: '🟢 Risco Baixo', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
-  LIFESTYLE: { label: '🟣 Estilo de Vida', bg: 'var(--color-status-suspended-bg)', color: 'var(--color-status-suspended)', border: 'var(--color-status-suspended-border)' },
+const SEVERITY_BADGES: Record<string, { label: string; dot: 'red' | 'orange' | 'yellow' | 'green' | 'purple'; bg: string; color: string; border: string }> = {
+  FATAL: { label: 'Fatal (Celíaco)', dot: 'red', bg: 'var(--color-blocked-bg)', color: 'var(--color-blocked)', border: 'var(--color-blocked-border)' },
+  HIGH: { label: 'Risco Alto', dot: 'orange', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
+  MEDIUM: { label: 'Risco Médio', dot: 'yellow', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
+  LOW: { label: 'Risco Baixo', dot: 'green', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+  LIFESTYLE: { label: 'Estilo de Vida', dot: 'purple', bg: 'var(--color-status-suspended-bg)', color: 'var(--color-status-suspended)', border: 'var(--color-status-suspended-border)' },
 };
 
 export default function DashboardPage() {
@@ -314,8 +334,9 @@ export default function DashboardPage() {
         {mounted && !isEmailVerified && (
           <div className={`${styles.banner} ${styles.bannerDanger}`}>
             <div style={{ flex: 1, minWidth: '240px' }}>
-              <strong style={{ fontSize: 'var(--text-title)', display: 'block', marginBottom: 'var(--space-1)' }}>
-                📩 Verifique seu e-mail para desbloquear todas as funções
+              <strong style={{ fontSize: 'var(--text-title)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: 'var(--space-1)' }}>
+                <MailIcon size={18} style={{ color: 'var(--color-danger)' }} />
+                <span>Verifique seu e-mail para desbloquear todas as funções</span>
               </strong>
               <span style={{ fontSize: 'var(--text-body)' }}>
                 Enviamos um código de verificação para o seu e-mail. Confirme seu e-mail para garantir a segurança da sua conta.
@@ -331,8 +352,9 @@ export default function DashboardPage() {
         {mounted && isProfileIncomplete && userRole === 'CELIACO' && (
           <div className={`${styles.banner} ${styles.bannerWarning}`}>
             <div style={{ flex: 1, minWidth: '240px' }}>
-              <strong style={{ fontSize: 'var(--text-title)', display: 'block', marginBottom: 'var(--space-1)' }}>
-                ⚠️ Perfil Alimentar Incompleto
+              <strong style={{ fontSize: 'var(--text-title)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: 'var(--space-1)' }}>
+                <AlertTriangleIcon size={18} style={{ color: 'var(--color-warning)' }} />
+                <span>Perfil Alimentar Incompleto</span>
               </strong>
               <span style={{ fontSize: 'var(--text-body)' }}>
                 Seu perfil alimentar ainda não possui restrições configuradas. A análise de compatibilidade alimentar será limitada até que você configure seu perfil.
@@ -368,11 +390,11 @@ export default function DashboardPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.75rem',
                 boxShadow: '0 4px 12px rgba(16, 185, 129, 0.35)',
                 flexShrink: 0,
+                color: '#ffffff',
               }}>
-                🍳
+                <ChefHatIcon size={28} />
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -427,7 +449,8 @@ export default function DashboardPage() {
                   boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)',
                 }}
               >
-                <span>🍳 Ver Pedidos da Cozinha</span>
+                <ChefHatIcon size={18} />
+                <span>Ver Pedidos da Cozinha</span>
                 <span>➔</span>
               </Link>
             </div>
@@ -443,8 +466,9 @@ export default function DashboardPage() {
             <section className={styles.card} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem' }}>
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                  <h2 className={styles.cardTitle} style={{ margin: 0, fontSize: '1.15rem' }}>
-                    🏭 {userPartners.length > 1 ? `Meus Estabelecimentos (${userPartners.length})` : 'Meu Estabelecimento & Produção'}
+                  <h2 className={styles.cardTitle} style={{ margin: 0, fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <BuildingIcon size={20} />
+                    <span>{userPartners.length > 1 ? `Meus Estabelecimentos (${userPartners.length})` : 'Meu Estabelecimento & Produção'}</span>
                   </h2>
                   <Link
                     href="/partner"
@@ -452,9 +476,13 @@ export default function DashboardPage() {
                     style={{
                       fontSize: 'var(--text-label)',
                       padding: '0.35rem 0.75rem',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
                     }}
                   >
-                    💼 Meus Negócios
+                    <BriefcaseIcon size={14} />
+                    <span>Meus Negócios</span>
                   </Link>
                 </div>
 
@@ -482,8 +510,21 @@ export default function DashboardPage() {
                         color: userPartners[0].approvalStatus === 'APPROVED' ? 'var(--color-safe)' : 'var(--color-warning)',
                         border: `1px solid ${userPartners[0].approvalStatus === 'APPROVED' ? 'var(--color-safe-border)' : 'var(--color-warning-border)'}`,
                         whiteSpace: 'nowrap',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
                       }}>
-                        {userPartners[0].approvalStatus === 'APPROVED' ? '✅ Homologado' : '⏳ Em Avaliação'}
+                        {userPartners[0].approvalStatus === 'APPROVED' ? (
+                          <>
+                            <CheckCircleIcon size={12} />
+                            <span>Homologado</span>
+                          </>
+                        ) : (
+                          <>
+                            <ClockIcon size={12} />
+                            <span>Em Avaliação</span>
+                          </>
+                        )}
                       </span>
                     </div>
 
@@ -491,8 +532,10 @@ export default function DashboardPage() {
                       <strong>Ramo:</strong> {translatePartnerType(userPartners[0].type)} • <strong>Região:</strong> {userPartners[0].deliveryRegion || userPartners[0].city || 'Local'}
                     </p>
 
-                    <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', margin: 0 }}>
-                      <strong>Status Operacional:</strong> {userPartners[0].operationalStatus === 'ACTIVE' ? '🟢 Aberto' : '🟡 Temporariamente Fechado'}
+                    <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', margin: 0, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <strong>Status Operacional:</strong>
+                      <StatusDot color={userPartners[0].operationalStatus === 'ACTIVE' ? 'green' : 'yellow'} size={8} />
+                      <span>{userPartners[0].operationalStatus === 'ACTIVE' ? 'Aberto' : 'Temporariamente Fechado'}</span>
                     </p>
                   </div>
                 ) : userPartners.length > 1 ? (
@@ -533,20 +576,26 @@ export default function DashboardPage() {
                               color: pt.approvalStatus === 'APPROVED' ? 'var(--color-safe)' : 'var(--color-warning)',
                               border: `1px solid ${pt.approvalStatus === 'APPROVED' ? 'var(--color-safe-border)' : 'var(--color-warning-border)'}`,
                               whiteSpace: 'nowrap',
+                              display: 'inline-flex',
+                              alignItems: 'center',
                             }}>
-                              {pt.approvalStatus === 'APPROVED' ? '✅' : '⏳'}
+                              {pt.approvalStatus === 'APPROVED' ? <CheckCircleIcon size={11} /> : <ClockIcon size={11} />}
                             </span>
                           </div>
-                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                            {translatePartnerType(pt.type)} • {pt.city || 'Local'} • {pt.operationalStatus === 'ACTIVE' ? '🟢 Aberto' : '🟡 Fechado'}
+                          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span>{translatePartnerType(pt.type)} • {pt.city || 'Local'} •</span>
+                            <StatusDot color={pt.operationalStatus === 'ACTIVE' ? 'green' : 'yellow'} size={7} />
+                            <span>{pt.operationalStatus === 'ACTIVE' ? 'Aberto' : 'Fechado'}</span>
                           </p>
                         </div>
 
                         <Link
                           href={`/partner/${pt.id}`}
                           className={styles.btnManagePartner}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                         >
-                          ⚙️ Gerenciar
+                          <EditIcon size={12} />
+                          <span>Gerenciar</span>
                         </Link>
                       </div>
                     ))}
@@ -564,16 +613,18 @@ export default function DashboardPage() {
                     <Link
                       href={`/partner/${userPartners[0].id}`}
                       className="btn btn-em"
-                      style={{ fontSize: 'var(--text-label)', padding: '0.5rem 1rem', textDecoration: 'none' }}
+                      style={{ fontSize: 'var(--text-label)', padding: '0.5rem 1rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                     >
-                      ⚙️ Gerenciar Estabelecimento
+                      <EditIcon size={13} />
+                      <span>Gerenciar Estabelecimento</span>
                     </Link>
                     <Link
                       href="/partner/register"
                       className="btn btn-ghost"
-                      style={{ fontSize: 'var(--text-label)', padding: '0.5rem 0.85rem', textDecoration: 'none' }}
+                      style={{ fontSize: 'var(--text-label)', padding: '0.5rem 0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                     >
-                      ➕ Novo Estabelecimento
+                      <PlusIcon size={13} />
+                      <span>Novo Estabelecimento</span>
                     </Link>
                   </div>
                 ) : userPartners.length > 1 ? (
@@ -581,16 +632,18 @@ export default function DashboardPage() {
                     <Link
                       href="/partner"
                       className="btn btn-em"
-                      style={{ fontSize: 'var(--text-label)', padding: '0.5rem 1rem', textDecoration: 'none' }}
+                      style={{ fontSize: 'var(--text-label)', padding: '0.5rem 1rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                     >
-                      💼 Gerenciar Todos ({userPartners.length})
+                      <BriefcaseIcon size={13} />
+                      <span>Gerenciar Todos ({userPartners.length})</span>
                     </Link>
                     <Link
                       href="/partner/register"
                       className="btn btn-ghost"
-                      style={{ fontSize: 'var(--text-label)', padding: '0.5rem 0.85rem', textDecoration: 'none' }}
+                      style={{ fontSize: 'var(--text-label)', padding: '0.5rem 0.85rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                     >
-                      ➕ Novo Estabelecimento
+                      <PlusIcon size={13} />
+                      <span>Novo Estabelecimento</span>
                     </Link>
                   </div>
                 ) : (
@@ -599,7 +652,8 @@ export default function DashboardPage() {
                     className="btn btn-em"
                     style={{ fontSize: 'var(--text-label)', padding: '0.6rem 1.2rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                   >
-                    🏪 Cadastrar Meu Estabelecimento
+                    <BuildingIcon size={14} />
+                    <span>Cadastrar Meu Estabelecimento</span>
                   </Link>
                 )}
               </div>
@@ -610,7 +664,10 @@ export default function DashboardPage() {
             /* =================================================== */
             <section className={styles.card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '12px' }}>
-                <h2 className={styles.cardTitle} style={{ margin: 0, minWidth: 0, flex: 1 }}>🥗 Meu Perfil Alimentar</h2>
+                <h2 className={styles.cardTitle} style={{ margin: 0, minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <LeafIcon size={18} style={{ color: 'var(--color-emerald)' }} />
+                  <span>Meu Perfil Alimentar</span>
+                </h2>
                 {mounted && isAuthenticated && (
                   <Link
                     href="/profile"
@@ -672,8 +729,10 @@ export default function DashboardPage() {
                               alignItems: 'center',
                               justifyContent: 'center',
                               lineHeight: 1.2,
+                              gap: '6px',
                             }}>
-                              {badgeInfo.label}
+                              <StatusDot color={badgeInfo.dot} size={7} />
+                              <span>{badgeInfo.label}</span>
                             </span>
                           </div>
                         );
@@ -693,9 +752,15 @@ export default function DashboardPage() {
                       lineHeight: 1.4,
                     }}>
                       {acceptsCrossContamination ? (
-                        <span>⚠️ <strong style={{ color: 'var(--color-text)' }}>Contaminação Cruzada:</strong> Aceita risco de traços.</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <AlertTriangleIcon size={16} />
+                          <span><strong style={{ color: 'var(--color-text)' }}>Contaminação Cruzada:</strong> Aceita risco de traços.</span>
+                        </span>
                       ) : (
-                        <span>🛡️ <strong style={{ color: 'var(--color-text)' }}>Contaminação Cruzada:</strong> Bloqueada (Segurança Máxima).</span>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <ShieldCheckIcon size={16} />
+                          <span><strong style={{ color: 'var(--color-text)' }}>Contaminação Cruzada:</strong> Bloqueada (Segurança Máxima).</span>
+                        </span>
                       )}
                     </div>
                   </div>
@@ -722,8 +787,9 @@ export default function DashboardPage() {
           {userRole === 'PARCEIRO' ? (
             <section className={styles.card} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem' }}>
               <div>
-                <h2 className={styles.cardTitle} style={{ margin: '0 0 var(--space-2) 0', fontSize: '1.15rem' }}>
-                  📦 Publicação & Catálogo
+                <h2 className={styles.cardTitle} style={{ margin: '0 0 var(--space-2) 0', fontSize: '1.15rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <PackageIcon size={20} />
+                  <span>Publicação & Catálogo</span>
                 </h2>
 
                 <p style={{ fontSize: 'var(--text-body)', color: 'var(--color-text-muted)', margin: '0 0 1.25rem 0', lineHeight: 1.5 }}>
@@ -751,7 +817,7 @@ export default function DashboardPage() {
                   }}
                   id="dashboard-publish-product-btn"
                 >
-                  <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>➕</span>
+                  <PlusIcon size={16} />
                   <span>Publicar Novo Produto no Catálogo</span>
                 </button>
               </div>
@@ -790,7 +856,10 @@ export default function DashboardPage() {
             /* VISÃO CONSUMIDOR: Card 2 - Buscador & Analisador    */
             /* =================================================== */
             <section className={styles.card}>
-              <h2 className={styles.cardTitle}>🔍 Analisar Produto</h2>
+              <h2 className={styles.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <SearchIcon size={18} />
+                <span>Analisar Produto</span>
+              </h2>
 
               <form className={styles.searchForm} onSubmit={handleSearch}>
                 <input
@@ -813,10 +882,11 @@ export default function DashboardPage() {
               </form>
 
               {mounted && !isAuthenticated && (
-                <p style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>
-                  ⚠️ Faça{' '}
-                  <Link href="/auth/login" style={{ color: 'var(--color-emerald)' }}>login</Link>{' '}
-                  para verificar compatibilidade com seu perfil.
+                <p style={{ marginTop: 'var(--space-3)', fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <AlertTriangleIcon size={14} style={{ color: 'var(--color-warning)' }} />
+                  <span>
+                    Faça <Link href="/auth/login" style={{ color: 'var(--color-emerald)' }}>login</Link> para verificar compatibilidade com seu perfil.
+                  </span>
                 </p>
               )}
 
@@ -861,10 +931,11 @@ export default function DashboardPage() {
                               flexShrink: 0,
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '4px',
+                              gap: '5px',
                             }}
                           >
-                            📦 Ver Detalhes
+                            <PackageIcon size={14} />
+                            <span>Ver Detalhes</span>
                           </Link>
                         </div>
 
@@ -880,16 +951,18 @@ export default function DashboardPage() {
                               <RiskBadge riskLevel={productReport.riskLevel} showDescription={true} />
                             ) : isCheckingThis ? (
                               <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                                ⏳ Analisando compatibilidade…
+                                <ClockIcon size={14} />
+                                <span>Analisando compatibilidade…</span>
                               </span>
                             ) : (
                               <button
                                 type="button"
                                 onClick={() => checkProductCompatibility(product)}
                                 className="btn btn-em"
-                                style={{ fontSize: 'var(--text-label)', padding: 'var(--space-2) var(--space-4)' }}
+                                style={{ fontSize: 'var(--text-label)', padding: 'var(--space-2) var(--space-4)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                               >
-                                🧪 Checar Compatibilidade
+                                <FlaskIcon size={14} />
+                                <span>Checar Compatibilidade</span>
                               </button>
                             )}
                           </div>
@@ -922,7 +995,17 @@ export default function DashboardPage() {
                                 e.currentTarget.style.color = 'var(--color-text-muted)';
                               }}
                             >
-                              {isCheckingThis ? '⏳ Atualizando…' : '🔄 Reavaliar'}
+                              {isCheckingThis ? (
+                                <>
+                                  <ClockIcon size={12} />
+                                  <span>Atualizando…</span>
+                                </>
+                              ) : (
+                                <>
+                                  <RefreshIcon size={12} />
+                                  <span>Reavaliar</span>
+                                </>
+                              )}
                             </button>
                           )}
                         </div>
@@ -933,8 +1016,9 @@ export default function DashboardPage() {
                               {translateReasoning(productReport.reasoning)}
                             </p>
                             {productReport.conflicts?.map((c, index) => (
-                              <p key={index} style={{ margin: '4px 0 0 0', fontSize: 'var(--text-label)', color: 'var(--color-danger)' }}>
-                                ⚠️ {translateConflictReason(c.reason)}
+                              <p key={index} style={{ margin: '4px 0 0 0', fontSize: 'var(--text-label)', color: 'var(--color-danger)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <AlertTriangleIcon size={13} />
+                                <span>{translateConflictReason(c.reason)}</span>
                               </p>
                             ))}
                           </div>
@@ -972,9 +1056,13 @@ export default function DashboardPage() {
                       fontSize: '0.9rem',
                       fontWeight: 600,
                       cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
                     }}
                   >
-                    📦 Meus Produtos Fabricados ({partnerProducts.length})
+                    <PackageIcon size={16} />
+                    <span>Meus Produtos Fabricados ({partnerProducts.length})</span>
                   </button>
 
                   <button
@@ -989,15 +1077,20 @@ export default function DashboardPage() {
                       fontSize: '0.9rem',
                       fontWeight: 600,
                       cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
                     }}
                   >
-                    🌐 Catálogo Geral ({publishedProducts.length})
+                    <GlobeIcon size={16} />
+                    <span>Catálogo Geral ({publishedProducts.length})</span>
                   </button>
                 </div>
               ) : (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <h2 style={{ fontSize: 'var(--text-title)', fontWeight: 600, color: 'var(--color-text)', margin: 0 }}>
-                    📦 Produtos Publicados
+                  <h2 style={{ fontSize: 'var(--text-title)', fontWeight: 600, color: 'var(--color-text)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <PackageIcon size={18} />
+                    <span>Produtos Publicados</span>
                   </h2>
                   <span style={{
                     fontSize: 'var(--text-label)',
@@ -1091,12 +1184,12 @@ export default function DashboardPage() {
                   gap: 'var(--space-6)',
                 }}>
                   {displayList.map((product) => {
-                    const statusInfo: Record<string, { label: string; bg: string; color: string; border: string }> = {
-                      ANALISADO: { label: '✅ Analisado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
-                      APPROVED: { label: '✅ Aprovado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
-                      PENDENTE_DE_ANALISE: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
-                      PENDING_ANALYSIS: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
-                      FLAGGED: { label: '⚠️ Sinalizado', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
+                    const statusInfo: Record<string, { label: string; dot: 'green' | 'yellow' | 'red'; bg: string; color: string; border: string }> = {
+                      ANALISADO: { label: 'Analisado', dot: 'green', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+                      APPROVED: { label: 'Aprovado', dot: 'green', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+                      PENDENTE_DE_ANALISE: { label: 'Pendente', dot: 'yellow', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
+                      PENDING_ANALYSIS: { label: 'Pendente', dot: 'yellow', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
+                      FLAGGED: { label: 'Sinalizado', dot: 'red', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
                     };
                     const status = statusInfo[product.analysisStatus] || statusInfo['PENDENTE_DE_ANALISE'];
 
@@ -1192,8 +1285,12 @@ export default function DashboardPage() {
                                   border: `1px solid ${status.border}`,
                                   whiteSpace: 'nowrap',
                                   flexShrink: 0,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
                                 }}>
-                                  {status.label}
+                                  <StatusDot color={status.dot} size={7} />
+                                  <span>{status.label}</span>
                                 </span>
                               </div>
                             </div>
@@ -1227,9 +1324,10 @@ export default function DashboardPage() {
                                 border: '1px solid var(--color-blocked-border, rgba(239, 68, 68, 0.3))',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '4px',
+                                gap: '5px',
                               }}>
-                                🌾 Contém Glúten
+                                <WheatIcon size={13} />
+                                <span>Contém Glúten</span>
                               </span>
                             ) : (
                               <span style={{
@@ -1242,9 +1340,10 @@ export default function DashboardPage() {
                                 border: '1px solid var(--color-safe-border)',
                                 display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '4px',
+                                gap: '5px',
                               }}>
-                                ✨ Sem Glúten
+                                <ShieldCheckIcon size={13} />
+                                <span>Sem Glúten</span>
                               </span>
                             )}
 
@@ -1273,9 +1372,10 @@ export default function DashboardPage() {
                                   border: '1px solid var(--color-warning-border)',
                                   display: 'inline-flex',
                                   alignItems: 'center',
-                                  gap: '4px',
+                                  gap: '5px',
                                 }}>
-                                  ⚠️ Contaminação Cruzada
+                                  <AlertTriangleIcon size={13} />
+                                  <span>Contaminação Cruzada</span>
                                 </span>
                               );
                             })()}

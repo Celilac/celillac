@@ -2,6 +2,7 @@
 'use client';
 
 import React from 'react';
+import { MapPinIcon, CompassIcon, ExternalLinkIcon } from '@/components/layout/icons';
 
 interface Props {
   address?: string;
@@ -49,7 +50,7 @@ export default function PartnerLocationMap({
           color: 'var(--color-text-muted, #64748B)',
         }}
       >
-        <span style={{ fontSize: '2rem' }}>📍</span>
+        <MapPinIcon size={32} style={{ color: '#2563EB' }} />
         <p style={{ margin: 0, fontWeight: 500, fontSize: '0.925rem', color: 'var(--color-text, #334155)' }}>
           Pré-visualização da Localização no Mapa
         </p>
@@ -105,7 +106,7 @@ export default function PartnerLocationMap({
           }}
         >
           <span style={{ color: 'var(--color-text-muted, #94A3B8)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <span>🗺️</span> <strong>Localização Georreferenciada</strong>
+            <MapPinIcon size={16} style={{ color: '#2563EB' }} /> <strong>Localização Georreferenciada</strong>
           </span>
 
           <a
@@ -129,7 +130,9 @@ export default function PartnerLocationMap({
               transition: 'opacity 0.2s, transform 0.15s ease',
             }}
           >
-            <span>🧭</span> Abrir no Google Maps ↗
+            <CompassIcon size={16} />
+            <span>Abrir no Google Maps</span>
+            <ExternalLinkIcon size={13} />
           </a>
         </div>
       )}

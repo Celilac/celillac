@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { reportApi, ReportReason } from '@/api/reports';
 import { apiClient } from '@/api/client';
+import { FlagIcon, MailIcon, AlertTriangleIcon, CheckCircleIcon, CloseIcon } from '@/components/layout/icons';
 import styles from '../../app/partner/partner.module.css';
 
 interface ReportModalProps {
@@ -91,8 +92,9 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     <div className={styles.dialogOverlay}>
       <div className={styles.dialogCard} style={{ maxWidth: '540px' }}>
         <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle} style={{ color: 'var(--color-status-rejected)' }}>
-            🚩 Denunciar {targetName}
+          <h3 className={styles.modalTitle} style={{ color: 'var(--color-status-rejected)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FlagIcon size={18} style={{ color: 'var(--color-status-rejected)' }} />
+            Denunciar {targetName}
           </h3>
           <button
             type="button"
@@ -100,7 +102,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             className={styles.modalCloseBtn}
             aria-label="Fechar"
           >
-            ✕
+            <CloseIcon size={16} />
           </button>
         </div>
 
@@ -111,7 +113,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         {!isEmailVerified && (
           <div className={`${styles.alertBanner} ${styles.alertBannerWarning}`} style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span>📩</span>
+              <MailIcon size={18} style={{ color: 'var(--color-warning)' }} />
               <div>
                 <strong>E-mail não verificado:</strong> Valide sua conta para enviar denúncias.
               </div>
@@ -135,15 +137,15 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         )}
 
         {error && (
-          <div className={`${styles.alertBanner} ${styles.alertBannerDanger}`} style={{ marginBottom: '1rem' }}>
-            <span>⚠️</span>
+          <div className={`${styles.alertBanner} ${styles.alertBannerDanger}`} style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertTriangleIcon size={18} style={{ color: 'var(--color-danger)' }} />
             <div>{error}</div>
           </div>
         )}
 
         {successMsg ? (
           <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-            <span style={{ fontSize: '3rem' }}>✅</span>
+            <CheckCircleIcon size={48} style={{ color: 'var(--color-emerald)', display: 'inline-block' }} />
             <h4 className={styles.partnerName} style={{ marginTop: '1rem' }}>
               Denúncia enviada com sucesso!
             </h4>
@@ -205,8 +207,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               />
             </div>
 
-            <div className={`${styles.alertBanner} ${styles.alertBannerWarning}`}>
-              <span>⚠️</span>
+            <div className={`${styles.alertBanner} ${styles.alertBannerWarning}`} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertTriangleIcon size={18} style={{ color: 'var(--color-warning)' }} />
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: 'var(--text-label)' }}>
                 <input
                   type="checkbox"

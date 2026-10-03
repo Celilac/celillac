@@ -3,6 +3,25 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { ProductImageDTO, ProductImageType } from '@/api/catalog';
 import { compressImage, validateImageFile } from '@/utils/image';
+import {
+  CameraIcon,
+  PackageIcon,
+  TagIcon,
+  BowlIcon,
+  ChartBarIcon,
+  MedalIcon,
+  LinkIcon,
+  CloseIcon,
+  DownloadIcon,
+  AlertTriangleIcon,
+  StarIcon,
+  CheckCircleIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  TrashIcon,
+  ShieldCheckIcon,
+  InfoIcon,
+} from '@/components/layout/icons';
 
 interface ProductImageGalleryUploaderProps {
   images: ProductImageDTO[];
@@ -11,45 +30,39 @@ interface ProductImageGalleryUploaderProps {
   disabled?: boolean;
 }
 
-const IMAGE_TYPE_LABELS: Record<ProductImageType, { label: string; icon: string; bg: string; color: string; border: string }> = {
+const IMAGE_TYPE_LABELS: Record<ProductImageType, { label: string; bg: string; color: string; border: string }> = {
   PRODUCT: {
     label: 'Foto do Produto',
-    icon: '📸',
     bg: 'rgba(99, 102, 241, 0.15)',
     color: '#818cf8',
     border: 'rgba(99, 102, 241, 0.35)',
   },
   PACKAGING: {
     label: 'Embalagem Fechada',
-    icon: '📦',
     bg: 'rgba(148, 163, 184, 0.15)',
     color: '#cbd5e1',
     border: 'rgba(148, 163, 184, 0.35)',
   },
   LABEL: {
     label: 'Rótulo Frontal',
-    icon: '🏷️',
     bg: 'rgba(16, 185, 129, 0.15)',
     color: '#34d399',
     border: 'rgba(16, 185, 129, 0.35)',
   },
   INGREDIENTS: {
     label: 'Ingredientes & Alérgenos',
-    icon: '🥣',
     bg: 'rgba(245, 158, 11, 0.15)',
     color: '#fbbf24',
     border: 'rgba(245, 158, 11, 0.35)',
   },
   NUTRITIONAL_INFO: {
     label: 'Tabela Nutricional',
-    icon: '📊',
     bg: 'rgba(56, 189, 248, 0.15)',
     color: '#38bdf8',
     border: 'rgba(56, 189, 248, 0.35)',
   },
   CERTIFICATION: {
     label: 'Laudo / Certificação',
-    icon: '🏅',
     bg: 'rgba(52, 211, 153, 0.15)',
     color: '#6ee7b7',
     border: 'rgba(52, 211, 153, 0.35)',
@@ -275,7 +288,7 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
         <div>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem', fontWeight: 700, margin: 0 }}>
-            <span>📸</span>
+            <CameraIcon size={18} style={{ color: '#10b981' }} />
             <span>Galeria de Imagens & Rótulos</span>
           </label>
           <p style={{ margin: '2px 0 0 0', fontSize: '0.74rem', color: 'var(--color-text-muted)' }}>
@@ -310,9 +323,22 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
               cursor: 'pointer',
               padding: '2px 4px',
               textDecoration: 'underline',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
             }}
           >
-            {showUrlInput ? '✕ Ocultar link URL' : '🔗 Adicionar via URL'}
+            {showUrlInput ? (
+              <>
+                <CloseIcon size={13} />
+                <span>Ocultar link URL</span>
+              </>
+            ) : (
+              <>
+                <LinkIcon size={13} />
+                <span>Adicionar via URL</span>
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -362,7 +388,7 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
           >
             {Object.entries(IMAGE_TYPE_LABELS).map(([type, meta]) => (
               <option key={type} value={type}>
-                {meta.icon} {meta.label}
+                {meta.label}
               </option>
             ))}
           </select>
@@ -458,11 +484,10 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '1.4rem',
                   color: '#10b981',
                 }}
               >
-                📥
+                <DownloadIcon size={22} />
               </div>
               <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)' }}>
                 Arraste fotos aqui ou <span style={{ color: '#10b981', textDecoration: 'underline' }}>clique para escolher</span>
@@ -490,7 +515,10 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
             justifyContent: 'space-between',
           }}
         >
-          <span>⚠️ {generalError}</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <AlertTriangleIcon size={14} />
+            <span>{generalError}</span>
+          </span>
           <button
             type="button"
             onClick={() => setGeneralError(null)}
@@ -573,7 +601,8 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
                         letterSpacing: '0.02em',
                       }}
                     >
-                      ⭐ CAPA PRINCIPAL
+                      <StarIcon size={12} filled />
+                      <span>CAPA PRINCIPAL</span>
                     </div>
                   )}
 
@@ -624,7 +653,7 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
                           value={type}
                           style={{ background: 'var(--color-surface, #ffffff)', color: 'var(--color-text)' }}
                         >
-                          {meta.icon} {meta.label}
+                          {meta.label}
                         </option>
                       ))}
                     </select>
@@ -665,16 +694,18 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '3px',
+                          gap: '4px',
                           padding: '2px 4px',
                         }}
                         title="Tornar imagem de capa principal do catálogo"
                       >
-                        ☆ Tornar Capa
+                        <StarIcon size={13} />
+                        <span>Tornar Capa</span>
                       </button>
                     ) : (
-                      <span style={{ fontSize: '0.72rem', color: '#f59e0b', fontWeight: 700 }}>
-                        ✓ Capa Atual
+                      <span style={{ fontSize: '0.72rem', color: '#f59e0b', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <CheckCircleIcon size={13} />
+                        <span>Capa Atual</span>
                       </span>
                     )}
 
@@ -690,12 +721,14 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
                           borderRadius: '4px',
                           color: index === 0 ? '#475569' : '#cbd5e1',
                           cursor: index === 0 ? 'not-allowed' : 'pointer',
-                          padding: '2px 6px',
-                          fontSize: '0.7rem',
+                          padding: '3px 6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                         title="Mover foto para esquerda"
                       >
-                        ◀
+                        <ArrowLeftIcon size={12} />
                       </button>
 
                       <button
@@ -708,12 +741,14 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
                           borderRadius: '4px',
                           color: index === images.length - 1 ? '#475569' : '#cbd5e1',
                           cursor: index === images.length - 1 ? 'not-allowed' : 'pointer',
-                          padding: '2px 6px',
-                          fontSize: '0.7rem',
+                          padding: '3px 6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                         title="Mover foto para direita"
                       >
-                        ▶
+                        <ArrowRightIcon size={12} />
                       </button>
 
                       <button
@@ -725,12 +760,14 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
                           borderRadius: '4px',
                           color: '#f87171',
                           cursor: 'pointer',
-                          padding: '2px 6px',
-                          fontSize: '0.7rem',
+                          padding: '3px 6px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                         }}
                         title="Remover imagem"
                       >
-                        🗑️
+                        <TrashIcon size={13} />
                       </button>
                     </div>
                   </div>
@@ -753,8 +790,12 @@ export const ProductImageGalleryUploader: React.FC<ProductImageGalleryUploaderPr
           gap: '8px',
         }}
       >
-        <span style={{ fontSize: '1.1rem' }}>
-          {hasLabelOrIngredients ? '🛡️' : '💡'}
+        <span style={{ display: 'inline-flex', alignItems: 'center', marginTop: 2 }}>
+          {hasLabelOrIngredients ? (
+            <ShieldCheckIcon size={18} style={{ color: '#10b981' }} />
+          ) : (
+            <InfoIcon size={18} style={{ color: '#38bdf8' }} />
+          )}
         </span>
         <div style={{ fontSize: '0.74rem', lineHeight: 1.45, color: hasLabelOrIngredients ? '#34d399' : '#93c5fd' }}>
           {hasLabelOrIngredients ? (

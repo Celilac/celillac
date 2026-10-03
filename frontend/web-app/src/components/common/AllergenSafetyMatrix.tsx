@@ -2,26 +2,37 @@
 // frontend/web-app/src/components/common/AllergenSafetyMatrix.tsx
 import React from 'react';
 import { AllergenPresence } from '@/api/catalog';
+import {
+  WheatIcon,
+  MilkIcon,
+  LeafIcon,
+  EggIcon,
+  NutIcon,
+  FishIcon,
+  ShellfishIcon,
+  BowlIcon,
+  CheckCircleIcon,
+} from '@/components/layout/icons';
 
 export interface AllergenItemConfig {
   key: string;
   name: string;
   category: string;
-  icon: string;
+  icon: React.ReactNode;
   description: string;
 }
 
 export const ALLERGEN_CATALOG_LIST: AllergenItemConfig[] = [
-  { key: 'GLUTEN', name: 'Glúten', category: 'Cereais', icon: '🌾', description: 'Trigo, centeio, cevada, aveia e derivados' },
-  { key: 'MILK', name: 'Leite', category: 'Laticínios', icon: '🥛', description: 'Leite de vaca, lactose, caseína e derivados' },
-  { key: 'SOY', name: 'Soja', category: 'Leguminosas', icon: '🌱', description: 'Grãos, lecitina de soja, proteína vegetal' },
-  { key: 'EGGS', name: 'Ovos', category: 'Proteínas', icon: '🥚', description: 'Clara, gema, albumina e derivados' },
-  { key: 'PEANUTS', name: 'Amendoim', category: 'Oleaginosas', icon: '🥜', description: 'Amendoim in natura, óleo, pasta e derivados' },
-  { key: 'TREE_NUTS', name: 'Castanhas & Nozes', category: 'Oleaginosas', icon: '🌰', description: 'Amêndoas, nozes, avelãs, castanha-de-caju, pistache' },
-  { key: 'FISH', name: 'Peixes', category: 'Pescados', icon: '🐟', description: 'Todas as espécies de peixes e derivados' },
-  { key: 'CRUSTACEANS', name: 'Crustáceos', category: 'Frutos do Mar', icon: '🦐', description: 'Camarão, siri, caranguejo, lagosta' },
-  { key: 'WHEAT', name: 'Trigo', category: 'Cereais', icon: '🥖', description: 'Alergia a proteínas específicas do grão de trigo' },
-  { key: 'SESAME', name: 'Gergelim', category: 'Sementes', icon: '🥯', description: 'Sementes de gergelim, óleo e tahine' },
+  { key: 'GLUTEN', name: 'Glúten', category: 'Cereais', icon: <WheatIcon size={20} style={{ color: '#d97706' }} />, description: 'Trigo, centeio, cevada, aveia e derivados' },
+  { key: 'MILK', name: 'Leite', category: 'Laticínios', icon: <MilkIcon size={20} style={{ color: '#0284c7' }} />, description: 'Leite de vaca, lactose, caseína e derivados' },
+  { key: 'SOY', name: 'Soja', category: 'Leguminosas', icon: <LeafIcon size={20} style={{ color: '#16a34a' }} />, description: 'Grãos, lecitina de soja, proteína vegetal' },
+  { key: 'EGGS', name: 'Ovos', category: 'Proteínas', icon: <EggIcon size={20} style={{ color: '#eab308' }} />, description: 'Clara, gema, albumina e derivados' },
+  { key: 'PEANUTS', name: 'Amendoim', category: 'Oleaginosas', icon: <NutIcon size={20} style={{ color: '#b45309' }} />, description: 'Amendoim in natura, óleo, pasta e derivados' },
+  { key: 'TREE_NUTS', name: 'Castanhas & Nozes', category: 'Oleaginosas', icon: <NutIcon size={20} style={{ color: '#92400e' }} />, description: 'Amêndoas, nozes, avelãs, castanha-de-caju, pistache' },
+  { key: 'FISH', name: 'Peixes', category: 'Pescados', icon: <FishIcon size={20} style={{ color: '#2563eb' }} />, description: 'Todas as espécies de peixes e derivados' },
+  { key: 'CRUSTACEANS', name: 'Crustáceos', category: 'Frutos do Mar', icon: <ShellfishIcon size={20} style={{ color: '#ea580c' }} />, description: 'Camarão, siri, caranguejo, lagosta' },
+  { key: 'WHEAT', name: 'Trigo', category: 'Cereais', icon: <WheatIcon size={20} style={{ color: '#d97706' }} />, description: 'Alergia a proteínas específicas do grão de trigo' },
+  { key: 'SESAME', name: 'Gergelim', category: 'Sementes', icon: <BowlIcon size={20} style={{ color: '#ca8a04' }} />, description: 'Sementes de gergelim, óleo e tahine' },
 ];
 
 interface AllergenSafetyMatrixProps {
@@ -216,7 +227,8 @@ export const AllergenSafetyMatrix: React.FC<AllergenSafetyMatrixProps> = ({
             }}
             title="Define todos os alérgenos pendentes como 'Não Contém'"
           >
-            ✓ Marcar Pendentes como Livres
+            <CheckCircleIcon size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+            Marcar Pendentes como Livres
           </button>
           <button
             type="button"

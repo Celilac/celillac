@@ -5,7 +5,15 @@ import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { useAuth } from '@/contexts/AuthContext';
 import { favoriteApi, FavoriteDTO } from '@/api/favorites';
-import { TrashIcon } from '@/components/layout/icons';
+import {
+  TrashIcon,
+  HeartIcon,
+  SearchIcon,
+  BuildingIcon,
+  PackageIcon,
+  EyeIcon,
+  ClockIcon,
+} from '@/components/layout/icons';
 import styles from '../partner/partner.module.css';
 
 export default function FavoritesPage() {
@@ -90,7 +98,10 @@ export default function FavoritesPage() {
         <div className={styles.header}>
           <div className={styles.titleArea}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-              <span className={`${styles.badge} ${styles.badgeRejected}`}>❤️ Seus Salvos</span>
+              <span className={`${styles.badge} ${styles.badgeRejected}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                <HeartIcon size={14} filled style={{ color: '#ef4444' }} />
+                <span>Seus Salvos</span>
+              </span>
             </div>
             <h1 className={styles.title}>Meus Favoritos</h1>
             <p className={styles.subtitle}>
@@ -131,16 +142,19 @@ export default function FavoritesPage() {
         <div className={styles.grid}>
           {filteredFavorites.length === 0 ? (
             <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>❤️</span>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                <HeartIcon size={48} filled style={{ color: '#ef4444', opacity: 0.8 }} />
+              </div>
               <h2>Nenhum favorito encontrado</h2>
               <p>Você ainda não salvou nenhum item nos favoritos. Explore o catálogo para salvar seus preferidos!</p>
               <button
                 type="button"
                 className={`${styles.btn} ${styles.btnPrimary}`}
                 onClick={() => router.push('/dashboard')}
-                style={{ marginTop: '1rem' }}
+                style={{ marginTop: '1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                🔍 Explorar Produtos
+                <SearchIcon size={16} />
+                <span>Explorar Produtos</span>
               </button>
             </div>
           ) : (
@@ -149,15 +163,25 @@ export default function FavoritesPage() {
               const targetId = fav.partnerId || fav.productId || '';
               const title = fav.partner?.name || fav.product?.name || 'Item Favorito';
               const subtitle = isPartner
-                ? `${fav.partner?.type === 'RESTAURANT' ? '🍽️ Restaurante/Lanchonete' : fav.partner?.type === 'MARKET' ? '🛒 Mercado/Empório' : '👩‍🍳 Produtor Artesanal'} • ${fav.partner?.city || 'Brasil'}`
+                ? `${fav.partner?.type === 'RESTAURANT' ? 'Restaurante / Lanchonete' : fav.partner?.type === 'MARKET' ? 'Mercado / Empório' : 'Produtor Artesanal'} • ${fav.partner?.city || 'Brasil'}`
                 : fav.product?.brand ? `Marca: ${fav.product.brand}` : 'Sem marca informada';
 
               return (
                 <section key={fav.id} className={styles.card}>
                   <div className={styles.cardContent}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                      <span className={`${styles.badge} ${isPartner ? styles.badgePending : styles.badgeApproved}`}>
-                        {isPartner ? '🏢 Parceiro' : '📦 Produto'}
+                      <span className={`${styles.badge} ${isPartner ? styles.badgePending : styles.badgeApproved}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        {isPartner ? (
+                          <>
+                            <BuildingIcon size={13} />
+                            <span>Parceiro</span>
+                          </>
+                        ) : (
+                          <>
+                            <PackageIcon size={13} />
+                            <span>Produto</span>
+                          </>
+                        )}
                       </span>
                       {!isPartner && fav.product?.category && (
                         <span className={styles.badge} style={{ background: 'var(--color-elevated)', color: 'var(--color-text-muted)' }}>
@@ -174,8 +198,9 @@ export default function FavoritesPage() {
                     </p>
 
                     <div className={styles.partnerMeta}>
-                      <span className={styles.metaItem}>
-                        📅 Salvo em {new Date(fav.createdAt).toLocaleDateString('pt-BR')}
+                      <span className={styles.metaItem} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <ClockIcon size={13} />
+                        <span>Salvo em {new Date(fav.createdAt).toLocaleDateString('pt-BR')}</span>
                       </span>
                     </div>
                   </div>
@@ -186,16 +211,20 @@ export default function FavoritesPage() {
                         type="button"
                         className={`${styles.btn} ${styles.btnPrimary}`}
                         onClick={() => router.push(`/public-partners/${fav.partnerId}`)}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                       >
-                        🔍 Ver Perfil
+                        <EyeIcon size={15} />
+                        <span>Ver Perfil</span>
                       </button>
                     ) : (
                       <button
                         type="button"
                         className={`${styles.btn} ${styles.btnPrimary}`}
                         onClick={() => router.push(`/products/${fav.productId}`)}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                       >
-                        📦 Ver Detalhes
+                        <PackageIcon size={15} />
+                        <span>Ver Detalhes</span>
                       </button>
                     )}
                     <button
