@@ -7,12 +7,14 @@
 
 ## [WF-01] Nova Funcionalidade (Feature)
 1. **Analise:** Ler `docs/PRD.md`, `docs/DOMAIN_MODEL.md` e `docs/ARCHITECTURE.md`.
-2. **Plano:** Criar `docs/plans/FEAT-XXX.md` detalhando mudanças em cada camada da Clean Arch.
-3. **Domínio:** Definir Entidades e Value Objects no `domain/`.
-4. **Testes:** Criar testes unitários em `backend/tests/unit` (TDD).
-5. **Implementação:** Seguir a regra de dependência (domain ← application ← infrastructure ← interfaces).
-6. **Validação:** Rodar `npm test` e `npm run build`.
-7. **Entrega:** Atualizar `docs/features/`, `README.md`, `CHANGELOG.md`, `docs/API_CONTRACTS.md` sem duplicar `DOMAIN_MODEL.md`.
+2. **Plano Obrigatório:** No Antigravity IDE, criar exclusivamente o artefato nativo `plano_de_implementacao.md` com `RequestFeedback: true` e aguardar aprovação humana. No Claude Code, criar `PLAN.md`.
+3. **Branch Isolada Obrigatória:** Puxar a `develop` atualizada (`git checkout develop && git pull origin develop`) e criar nova branch `feat/<nome-da-feature>`. É PROIBIDO commitar features diretamente na `develop`.
+4. **Domínio:** Definir Entidades e Value Objects no `domain/`.
+5. **Testes:** Criar testes unitários em `backend/tests/unit` (TDD).
+6. **Implementação:** Seguir a regra de dependência (domain ← application ← infrastructure ← interfaces).
+7. **Validação & Auto-Cura:** Executar `node scripts/agent-verify.mjs` (ou `npm run verify`). Se houver qualquer erro em compilação, testes, paridade ou rotas, **NÃO pare para perguntar**: aplique a correção imediatamente e re-execute até obter 100% verde.
+8. **E2E Visual:** Se alterou telas no frontend, validar o fluxo no navegador via subagente (`browser_subagent`).
+9. **Entrega & Pull Request:** Atualizar `docs/features/`, `README.md`, `CHANGELOG.md`, `docs/API_CONTRACTS.md` sem duplicar `DOMAIN_MODEL.md`. Abrir PR da branch da feature para a `develop`.
 
 ---
 
@@ -27,10 +29,11 @@
 
 ## [WF-03] Correção de Bug
 1. **Reproduzir:** Analisar logs ou código existente para isolar o problema.
-2. **Teste falho:** Criar teste unitário que reproduz e falha com o bug.
-3. **Corrigir:** A menor alteração possível para não causar regressões.
-4. **Validar:** Rodar testes em toda a suíte (`npm test`) para confirmar que passou.
-5. **Explicar:** Descrever a causa raiz e a correção no relatório final.
+2. **Tocar Direto:** Em bugs e fixes, o Agente tem autonomia imediata sem necessidade de plano prévio.
+3. **Teste falho:** Criar ou ajustar teste unitário que reproduz o problema e evita regressões.
+4. **Corrigir:** A menor alteração possível para restaurar a estabilidade.
+5. **Validação & Auto-Cura:** Rodar `node scripts/agent-verify.mjs`. Se outro teste quebrar ou aparecer erro correlato, corrigir e re-testar autonomamente até aprovação completa.
+6. **Explicar:** Descrever de forma concisa a causa raiz, a correção e o que foi sanado na auto-cura.
 
 ---
 

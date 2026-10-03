@@ -175,7 +175,7 @@ describe('ReportOrderNonPaymentUseCase', () => {
     expect(result.isSuccess).toBe(true);
     const output = result.getValue();
     expect(output.orderStatus).toBe(OrderStatus.CANCELLED);
-    expect(output.consumerBlockedFromDeliveryPayment).toBe(true);
+    expect(output.consumerBlockedFromDeliveryPayment).toBe(false); // Submetido para auditoria do ADMIN
     expect(output.platformFeeWaived).toBe(true);
     expect(output.reportId).toBeDefined();
 
@@ -188,8 +188,7 @@ describe('ReportOrderNonPaymentUseCase', () => {
     expect(payment.platformFeeAmount).toBe(0); // Taxa CeLiLac zerada!
 
     expect(reportRepository.save).toHaveBeenCalled();
-    expect(consumerRepository.save).toHaveBeenCalled();
-    expect(consumer.canPayOnDelivery).toBe(false); // Revogado!
+    expect(consumer.canPayOnDelivery).toBe(true); // Intacto até averiguação e aceite formal do ADMIN!
 
     expect(notificationService.notifyOrderStatusChanged).toHaveBeenCalledTimes(2);
     expect(auditLogRepository.save).toHaveBeenCalled();

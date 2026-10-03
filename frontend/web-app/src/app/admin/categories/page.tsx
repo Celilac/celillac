@@ -440,31 +440,49 @@ export default function AdminCategoriesPage() {
                     </div>
 
                     {/* Botões de Ação de Moderação */}
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                       <button
                         type="button"
                         onClick={() => handleReviewAction(cat, { action: 'APPROVE_GLOBAL' })}
                         disabled={updating || (isApproved && isGlobal)}
-                        className="btn btn-primary"
+                        className={`btn ${isApproved && isGlobal ? 'btn-action-active-global' : 'btn-primary'}`}
                         style={{
                           fontSize: '0.8rem',
                           padding: '0.4rem 0.85rem',
-                          background: isApproved && isGlobal ? 'rgba(59, 130, 246, 0.2)' : undefined,
+                          borderRadius: '0.75rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
                         }}
-                        title="Torna a categoria pública para todos os parceiros e clientes"
+                        title={
+                          isApproved && isGlobal
+                            ? 'Esta categoria já possui visibilidade global pública'
+                            : 'Torna a categoria pública para todos os parceiros e clientes'
+                        }
                       >
-                        🌍 Tornar Global
+                        🌍 {isApproved && isGlobal ? 'Global Ativa' : 'Tornar Global'}
                       </button>
 
                       <button
                         type="button"
                         onClick={() => handleReviewAction(cat, { action: 'APPROVE_RESTRICTED' })}
                         disabled={updating || (isApproved && !isGlobal)}
-                        className="btn btn-secondary"
-                        style={{ fontSize: '0.8rem', padding: '0.4rem 0.85rem' }}
-                        title="Aprova apenas para o parceiro criador utilizar"
+                        className={`btn ${isApproved && !isGlobal ? 'btn-action-active-restricted' : 'btn-secondary'}`}
+                        style={{
+                          fontSize: '0.8rem',
+                          padding: '0.4rem 0.85rem',
+                          borderRadius: '0.75rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                        }}
+                        title={
+                          isApproved && !isGlobal
+                            ? 'Esta categoria já está aprovada exclusivamente para o criador'
+                            : 'Aprova apenas para o parceiro criador utilizar'
+                        }
                       >
-                        🔒 Aprovar Restrita
+                        🔒 {isApproved && !isGlobal ? 'Restrita Ativa' : 'Aprovar Restrita'}
                       </button>
 
                       {!isRejected && (

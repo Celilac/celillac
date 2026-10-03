@@ -128,6 +128,7 @@ export default function AdminReportsPage() {
   function requestActionConfirmation(report: ReportDTO, action: 'RESOLVE' | 'DISMISS' | 'IN_REVIEW' | 'REOPEN') {
     setAdminJustification('');
     const protocol = `#${report.id.substring(0, 8)}`;
+    const isOrderIncident = !!report.targetUserId || !!report.orderId;
 
     if (action === 'RESOLVE') {
       setConfirmModal({
@@ -135,8 +136,12 @@ export default function AdminReportsPage() {
         protocol,
         action: 'RESOLVE',
         targetStatus: 'RESOLVED',
-        title: `Resolver Denúncia ${protocol}`,
-        description: 'Confirma que a denúncia foi devidamente analisada e as providências cabíveis foram tomadas?',
+        title: isOrderIncident
+          ? `Aceitar Denúncia e Bloquear Pagamento na Entrega ${protocol}`
+          : `Resolver Denúncia ${protocol}`,
+        description: isOrderIncident
+          ? 'Após avaliar as circunstâncias e averiguar a declaração da loja, você confirma o não pagamento? O consumidor será bloqueado para compras na entrega (podendo pagar apenas via PIX ou Cartão online).'
+          : 'Confirma que a denúncia foi devidamente analisada e as providências cabíveis foram tomadas?',
         isFoodSafetyRisk: report.isFoodSafetyRisk,
       });
     } else if (action === 'DISMISS') {
@@ -145,8 +150,12 @@ export default function AdminReportsPage() {
         protocol,
         action: 'DISMISS',
         targetStatus: 'DISMISSED',
-        title: `Descartar Denúncia ${protocol}`,
-        description: 'Tem certeza que deseja descartar esta denúncia? O relato será arquivado como improcedente.',
+        title: isOrderIncident
+          ? `Descartar Denúncia (Sem Bloqueio ao Consumidor) ${protocol}`
+          : `Descartar Denúncia ${protocol}`,
+        description: isOrderIncident
+          ? 'A ocorrência da loja foi avaliada como improcedente ou inconclusiva. O consumidor NÃO sofrerá restrições de pagamento na entrega (e qualquer restrição anterior será liberada).'
+          : 'Tem certeza que deseja descartar esta denúncia? O relato será arquivado como improcedente.',
         isFoodSafetyRisk: report.isFoodSafetyRisk,
       });
     } else if (action === 'IN_REVIEW') {
@@ -213,9 +222,21 @@ export default function AdminReportsPage() {
         return 'Contaminação Cruzada Incorreta';
       case ReportReason.INCORRECT_INGREDIENTS:
         return 'Ingredientes Divergentes';
+      case ReportReason.CLIENT_REFUSED_PAYMENT:
+        return 'Recusa de Pagamento na Entrega';
+      case ReportReason.CLIENT_ABSENT:
+        return 'Cliente Ausente no Local';
+      case ReportReason.FRAUDULENT_ORDER:
+        return 'Pedido Fraudulento / Trote';
+      case ReportReason.ADDRESS_UNREACHABLE:
+        return 'Endereço Inacessível / Incorreto';
+      case ReportReason.CLIENT_REQUESTED_CANCELLATION:
+        return 'Cancelamento Solicitado pelo Cliente';
+      case ReportReason.OUT_OF_STOCK:
+        return 'Item Esgotado no Restaurante';
       case ReportReason.OTHER:
       default:
-        return 'Outra Irregularidade';
+        return 'Outra Ocorrência';
     }
   };
 
@@ -444,7 +465,7 @@ export default function AdminReportsPage() {
                         {getStatusBadge(report.status)}
                       </div>
 
-                      {/* Flag de Risco Alimentar Prioritário (RN-CONSUMER-15) */}
+                      {/* Flag de Risco Alimentar Prioritário (RN-CONSUMER-15) ou Ocorrência em Pedido */}
                       {isRisk ? (
                         <div style={{
                           marginTop: '0.85rem',
@@ -460,6 +481,22 @@ export default function AdminReportsPage() {
                           gap: '0.5rem',
                         }}>
                           <span>🚨 ALERTA CRÍTICO: RISCO À SEGURANÇA ALIMENTAR</span>
+                        </div>
+                      ) : report.targetUserId || report.orderId ? (
+                        <div style={{
+                          marginTop: '0.85rem',
+                          background: 'rgba(234, 179, 8, 0.12)',
+                          border: '1px solid rgba(234, 179, 8, 0.3)',
+                          padding: '0.55rem 0.85rem',
+                          borderRadius: '8px',
+                          color: '#eab308',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem',
+                        }}>
+                          <span>🛒 AUDITORIA DE NÃO PAGAMENTO / PEDIDO PRESENCIAL</span>
                         </div>
                       ) : (
                         <div style={{
@@ -484,15 +521,25 @@ export default function AdminReportsPage() {
                         border: '1px solid var(--color-border)',
                       }}>
                         <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: 700, display: 'block', marginBottom: '0.25rem' }}>
-                          Relato do Consumidor:
+                          {report.targetUserId || report.orderId ? 'Declaração da Loja / Parceiro Comercial:' : 'Relato do Consumidor:'}
                         </span>
                         <p style={{ margin: 0, fontSize: '0.925rem', color: 'var(--color-text)', lineHeight: '1.55', whiteSpace: 'pre-wrap' }}>
-                          {report.details ? `"${report.details}"` : <em>Nenhuma observação textual foi fornecida pelo consumidor.</em>}
+                          {report.details ? `"${report.details}"` : <em>Nenhuma observação textual foi fornecida.</em>}
                         </p>
                       </div>
 
                       {/* Metadados */}
                       <div className={styles.partnerMeta} style={{ marginTop: '0.85rem' }}>
+                        {report.orderId && (
+                          <span className={styles.metaItem}>
+                            📦 <strong>Pedido:</strong> <code>#{report.orderId.substring(0, 12)}…</code>
+                          </span>
+                        )}
+                        {report.targetUserId && (
+                          <span className={styles.metaItem}>
+                            👤 <strong>Consumidor Alvo:</strong> <code>{report.targetUserId.substring(0, 12)}…</code>
+                          </span>
+                        )}
                         {report.productId && (
                           <span className={styles.metaItem}>
                             📦 <strong>Produto ID:</strong>{' '}
@@ -510,7 +557,7 @@ export default function AdminReportsPage() {
                           </span>
                         )}
                         <span className={styles.metaItem}>
-                          👤 <strong>Relator:</strong> <code>{report.reporterId.substring(0, 12)}…</code>
+                          📝 <strong>Relator:</strong> <code>{report.reporterId.substring(0, 12)}…</code>
                         </span>
                       </div>
                     </div>
@@ -677,12 +724,24 @@ export default function AdminReportsPage() {
                     <span className={styles.detailLabel}>ID do Relator</span>
                     <p className={styles.detailValue}>{detailReport.reporterId}</p>
                   </div>
+                  {detailReport.orderId && (
+                    <div className={styles.detailGroup}>
+                      <span className={styles.detailLabel}>Pedido Associado</span>
+                      <p className={styles.detailValue}><code>#{detailReport.orderId}</code></p>
+                    </div>
+                  )}
+                  {detailReport.targetUserId && (
+                    <div className={styles.detailGroup}>
+                      <span className={styles.detailLabel}>Consumidor Denunciado</span>
+                      <p className={styles.detailValue}><code>{detailReport.targetUserId}</code></p>
+                    </div>
+                  )}
                   <div className={styles.detailGroup}>
                     <span className={styles.detailLabel}>Produto Alvo</span>
                     <p className={styles.detailValue}>{detailReport.productId || 'N/A'}</p>
                   </div>
                   <div className={styles.detailGroup}>
-                    <span className={styles.detailLabel}>Parceiro Alvo</span>
+                    <span className={styles.detailLabel}>Parceiro Alvo / Relator</span>
                     <p className={styles.detailValue}>{detailReport.partnerId || 'N/A'}</p>
                   </div>
                   <div className={styles.detailGroup}>
@@ -691,6 +750,21 @@ export default function AdminReportsPage() {
                   </div>
                 </div>
               </div>
+
+              {detailReport.targetUserId && (
+                <div style={{
+                  marginTop: '1.25rem',
+                  padding: '1rem',
+                  borderRadius: '8px',
+                  background: 'rgba(234, 179, 8, 0.08)',
+                  border: '1px solid rgba(234, 179, 8, 0.25)',
+                  fontSize: '0.85rem',
+                  color: 'var(--color-text)',
+                  lineHeight: '1.5',
+                }}>
+                  ⚖️ <strong>Regra de Auditoria Administrativa:</strong> O consumidor só é bloqueado para pagamentos na entrega se você aceitar formalmente a denúncia da loja clicando em <em>"Aprovar & Resolver"</em>. Se julgar a denúncia improcedente ou justificada, clique em <em>"Descartar"</em> para manter o consumidor livre de restrições.
+                </div>
+              )}
 
               <div style={{ marginTop: '1.75rem', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                 {detailReport.status === 'PENDING' && (

@@ -129,17 +129,27 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 📱 App Mobile (Flutter) | ✅ Implementado | [`docs/features/mobile-app.md`](docs/features/mobile-app.md) |
 | 🛡️ Segurança, Anti-Bot & Anti-DDoS | ✅ Implementado | [`docs/features/security-hardening.md`](docs/features/security-hardening.md) |
 | 💵 Pagamento na Entrega & Proteção Contra Fraude | ✅ Implementado | [`docs/features/delivery-payment-and-fraud-protection.md`](docs/features/delivery-payment-and-fraud-protection.md) |
+| 🔄 Autonomia de Testes & Auto-Cura | ✅ Implementado | [`docs/features/autonomous-testing-protocol.md`](docs/features/autonomous-testing-protocol.md) |
 
 ---
 
-## 🧪 Testes
+## 🧪 Testes e Validação Autônoma
 
 ```bash
-cd backend
-npm test
+# Validação completa em pirâmide (Backend Typecheck + 87 suítes Jest + Paridade + Frontend Typecheck + Smoke Tests)
+npm run verify           # ou node scripts/agent-verify.mjs
+
+# Execução rápida (apenas backend)
+npm run verify:quick     # ou node scripts/agent-verify.mjs --quick
+
+# Smoke tests HTTP contra a API em execução
+npm run test:smoke       # ou node scripts/test-api-smoke.mjs
+
+# Apenas testes unitários Jest
+cd backend && npm test
 ```
 
-**82 suítes de teste | 512 casos**, cobrindo domínio, casos de uso, controllers, middlewares de segurança e o Motor de Alérgenos:
+**87 suítes de teste | 592 casos 100% aprovados**, cobrindo domínio, casos de uso, controllers, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|

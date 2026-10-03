@@ -194,15 +194,15 @@ export default function ProductDetailsPage({ params }: PageProps) {
     <div>
       <Header />
 
-      <main className={styles.container} style={{ maxWidth: '900px', margin: '0 auto', padding: '2rem 1rem' }}>
-        <div style={{ marginBottom: '1.5rem' }}>
+      <main className={styles.container} style={{ maxWidth: '900px', width: '100%', boxSizing: 'border-box', margin: '0 auto', padding: '2rem 1rem' }}>
+        <div style={{ width: '100%', marginBottom: '1.5rem' }}>
           <Link href="/dashboard" style={{ color: 'var(--color-emerald)', textDecoration: 'none', fontWeight: 600 }}>
             ← Voltar ao Dashboard
           </Link>
         </div>
 
         {/* Card Principal do Produto */}
-        <div className={styles.card} style={{ marginBottom: '2rem' }}>
+        <div className={styles.card} style={{ width: '100%', boxSizing: 'border-box', marginBottom: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
               <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
@@ -387,6 +387,8 @@ export default function ProductDetailsPage({ params }: PageProps) {
                     </button>
                     <input
                       type="number"
+                      inputMode="numeric"
+                      aria-label="Quantidade"
                       className={styles.quantityInput}
                       value={quantity}
                       min={1}
@@ -396,6 +398,10 @@ export default function ProductDetailsPage({ params }: PageProps) {
                         if (!isNaN(val) && val >= 1 && val <= 50) {
                           setQuantity(val);
                         }
+                      }}
+                      onBlur={() => {
+                        if (!quantity || quantity < 1) setQuantity(1);
+                        else if (quantity > 50) setQuantity(50);
                       }}
                       disabled={submittingOrder}
                     />

@@ -31,8 +31,8 @@
 ## Regras Críticas
 
 1. **Proteção Financeira do Parceiro:** Se um pedido na entrega for denunciado por recusa de pagamento ou ausência, o pedido é cancelado (`CANCELLED`), o pagamento marcado como falhado (`FAILED`) e a comissão da plataforma (12%) é estornada/zerada.
-2. **Mitigação Automática de Fraude:** O consumidor perde imediatamente a prerrogativa de pagar na entrega (`canPayOnDelivery = false`), sendo obrigado a pagar online (PIX ou Cartão de Crédito) em compras futuras.
-3. **Auditoria e Notificações:** Toda ocorrência é registrada no log de segurança (`ORDER_PAYMENT_REFUSED_ON_DELIVERY`) e propaga notificações via SSE para atualização em tempo real dos painéis web.
+2. **Auditoria Obrigatória do Administrador:** Ao ser denunciado pelo estabelecimento, o caso é registrado na fila de auditoria com status `PENDING`. O bloqueio do consumidor para pagamentos presenciais (`canPayOnDelivery = false`) não é automático: ele só ocorre se o Administrador avaliar as circunstâncias, averiguar a declaração da loja e aceitar formalmente a denúncia (`RESOLVED`) no painel `/admin/reports`. Se a denúncia for julgada improcedente ou justificada e for descartada (`DISMISSED`), o consumidor permanece livre de restrições (e qualquer bloqueio prévio é restaurado).
+3. **Auditoria e Notificações:** Toda ocorrência e parecer da moderação é registrado no histórico permanente de auditoria (`audit_logs`) e no log de segurança (`ORDER_PAYMENT_REFUSED_ON_DELIVERY`), além de propagar notificações SSE para atualização em tempo real.
 
 ## Testes
 

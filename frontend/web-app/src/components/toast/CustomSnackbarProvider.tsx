@@ -18,9 +18,9 @@ export function CustomSnackbarProvider({ children }: { children: React.ReactNode
   return (
     <SnackbarProvider
       ref={providerRef}
-      maxSnack={3}
+      maxSnack={2}
       anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      autoHideDuration={5000}
+      autoHideDuration={2800}
       preventDuplicate
       action={(key) => (
         <button
