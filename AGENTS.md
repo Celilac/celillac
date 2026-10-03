@@ -138,27 +138,36 @@ O Agente DEVE adaptar seu comportamento de acordo com o tipo da tarefa solicitad
 ## 🔄 Protocolo de Autonomia de Testes e Auto-Cura (Self-Healing Loop)
 > **Diretiva Sagrada:** *"Encontrou um problema? Corriga. Achou um bug? Resolva."*
 
-Após qualquer implementação de funcionalidade ou correção de bug, o Agente DEVE testar autonomamente o sistema antes de considerar a tarefa entregue. O Agente opera sob um **ciclo contínuo de auto-cura**:
+Após qualquer implementação de funcionalidade ou correção de bug, o Agente DEVE testar autonomamente o sistema antes de considerar a tarefa entregue. O Agente opera sob um **ciclo controlado de auto-cura**:
 
 1. **Dever de Testar Pós-Alteração:**
    - O Agente DEVE rodar a bateria de validação usando o orquestrador autônomo: `node scripts/agent-verify.mjs` (ou `npm run verify` / `npm run verify:quick`).
    - Se a alteração envolver telas ou componentes no `frontend/web-app`, o Agente DEVE acionar o `browser_subagent` na URL local (`http://localhost:3001`), navegar pelo fluxo afetado, verificar a ausência de exceções no console do navegador e inspecionar a interface.
 
-2. **Princípio de Resolução Autônoma (Não Pare para Perguntar):**
+2. **Princípio de Resolução Autônoma & Limite de Tentativas (Cap de 3 Iterações):**
    - Se qualquer camada acusar erro (falha de compilação TypeScript, erro de teste unitário Jest, quebra de rota no Smoke Test HTTP ou bug visual/console no navegador):
-   - **O Agente está TERMINANTEMENTE PROIBIDO de interromper a execução para relatar o problema ou pedir orientações se tiver capacidade técnica de corrigi-lo.**
    - O Agente DEVE:
      1. Isolar a causa raiz do erro a partir dos logs e stack traces.
-     2. Aplicar a correção cirúrgica imediatamente no código, esquema ou componente.
+     2. Aplicar a correção cirúrgica na implementação interna.
      3. Re-executar os testes relevantes.
-     4. Repetir o ciclo até atingir **100% verde**.
+   - **Trava de Loop Infinito (Máximo 3 Iterações):** O ciclo de auto-cura é limitado a **no máximo 3 tentativas consecutivas**. Se após a 3ª iteração o sistema ainda não estiver 100% verde, o Agente está **TERMINANTEMENTE PROIBIDO** de continuar tentando em looping. Ele DEVE reverter as alterações que causaram regressão (`git checkout -- .`) e reportar um diagnóstico claro ao usuário solicitando intervenção humana.
 
-3. **Fronteiras de Segurança (Quando Parar):**
-   - O Agente tem autonomia irrestrita para corrigir qualquer bug de lógica, UI, tipagem, integração de rotas e banco local.
-   - Apenas interrompa o fluxo para intervenção humana se a correção exigir:
-     - Alterar regras críticas de proteção de saúde alimentar celíaca (`ALLERGEN_ENGINE`).
-     - Modificar mecanismos centrais de autenticação/criptografia que firam as políticas de segurança.
-     - Operações destrutivas com perda irreversível de dados.
+3. **Fronteiras Estritas de Blast Radius (O que PODE e o que NÃO PODE ser alterado):**
+   - ✅ **O que o Agente PODE alterar autonomamente:**
+     - Implementação interna de funções auxiliares, controllers, use cases e componentes criados/afetados pela tarefa.
+     - Correção de erros de tipagem estática do TypeScript (interfaces internas, generics, imports).
+     - Correção de sintaxe, seletores CSS, alinhamentos e responsividade no Frontend.
+     - Ajuste do payload ou headers enviados pelo cliente quando a API exigir parâmetros válidos.
+   - 🚫 **O que é TERMINANTEMENTE PROIBIDO sem autorização humana expressa:**
+     - **Proibido flexibilizar asserções de testes:** É proibido alterar os `expect()` ou `assert()` de testes existentes para deixá-los mais permissivos apenas para fazê-los passar.
+     - **Proibido alterar contratos públicos de API:** Proibido modificar parâmetros obrigatórios, status codes de sucesso ou schemas de retorno em endpoints públicos sem atualização formal de `docs/API_CONTRACTS.md`.
+     - **Proibido enfraquecer segurança:** Proibido desativar, enfraquecer ou contornar validações de middlewares (CORS, Rate Limit, BotBlocker, Auth, Zod DTOs) ou criar backdoors sob pretexto de testes.
+     - **Proibido alterar regras biológicas:** Qualquer alteração no `ALLERGEN_ENGINE` permanece bloqueada.
+     - **Proibido alterar migrations ou schemas de banco já consolidados.**
+
+4. **Comportamento em CI vs Local (Strict Fail):**
+   - **Em Ambientes de CI (GitHub Actions / Pipelines):** Smoke tests HTTP e testes de integração operam em modo **Strict Fail**. Qualquer timeout, recusa de conexão ou indisponibilidade da API gera `exit 1` e interrompe o build imediatamente. A tolerância offline é bloqueada em CI.
+   - **Em Ambiente Local de Desenvolvimento:** A tolerância offline (`--allow-offline`) só é permitida quando explicitada pelo desenvolvedor (`npm run verify:offline`), emitindo aviso de que a validação de rede foi ignorada.
 
 ## 🛡️ Regra de Resiliência de Deploy e Prevenção de Falhas na VPS (Zero 502 Bad Gateway)
 Para evitar que o backend entre em crash após o deploy na VPS (o que causa `502 Bad Gateway` no Traefik e a mensagem "Erro ao entrar" no frontend), o Agente DEVE cumprir rigorosamente:

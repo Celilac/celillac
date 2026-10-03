@@ -98,7 +98,8 @@ async function main() {
   console.log(`\n${colors.cyan}${colors.bold}=== CeLiLac API Smoke Test Runner ===${colors.reset}`);
   console.log(`${colors.gray}Alvo: ${BASE_URL}${colors.reset}\n`);
 
-  const allowOffline = args.includes('--allow-offline');
+  const isCI = Boolean(process.env.CI || process.env.CONTINUOUS_INTEGRATION || process.env.GITHUB_ACTIONS);
+  const allowOffline = !isCI && args.includes('--allow-offline');
   const results = [];
 
   // 1. Healthcheck
@@ -106,12 +107,28 @@ async function main() {
     expectedStatus: [200, 503], // 503 se o DB estiver iniciando
   });
 
-  if (!healthRes.success && (healthRes.error?.cause?.code === 'ECONNREFUSED' || healthRes.error?.message?.includes('ECONNREFUSED'))) {
+  const isOffline = !healthRes.success && (
+    healthRes.error?.cause?.code === 'ECONNREFUSED' ||
+    healthRes.error?.message?.includes('ECONNREFUSED') ||
+    healthRes.error?.cause?.code === 'UND_ERR_CONNECT_TIMEOUT'
+  );
+
+  if (isOffline) {
     if (allowOffline) {
       console.log(`\n${colors.yellow}${colors.bold}⚠ [AVISO] Servidor backend offline em ${BASE_URL}.${colors.reset}`);
-      console.log(`${colors.gray}Smoke tests HTTP foram pulados pois o servidor backend não está ativo.${colors.reset}`);
+      console.log(`${colors.gray}Smoke tests HTTP foram pulados pois a flag '--allow-offline' foi informada.${colors.reset}`);
       console.log(`${colors.gray}Para validar endpoints ao vivo, execute 'npm run dev' em backend/ e repita a verificação.${colors.reset}\n`);
       process.exitCode = 0;
+      return;
+    } else {
+      if (isCI) {
+        console.error(`\n${colors.red}${colors.bold}🚨 [CI STRICT FAIL]: A API está inacessível em ${BASE_URL}.${colors.reset}`);
+        console.error(`${colors.red}Em pipelines de CI, a tolerância offline é expressamente proibida.${colors.reset}\n`);
+      } else {
+        console.error(`\n${colors.red}${colors.bold}✖ [ERRO]: Backend offline em ${BASE_URL}.${colors.reset}`);
+        console.error(`${colors.gray}Inicie o servidor com 'npm run dev' em backend/ ou passe '--allow-offline' para checagem puramente estática local.${colors.reset}\n`);
+      }
+      process.exitCode = 1;
       return;
     }
   }

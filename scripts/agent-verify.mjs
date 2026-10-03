@@ -23,6 +23,8 @@ const isSmokeOnly = args.includes('--smoke');
 const isFull = args.includes('--full');
 const isFrontendOnly = args.includes('--frontend');
 const isBackendOnly = args.includes('--backend');
+const allowOffline = args.includes('--allow-offline');
+const isCI = Boolean(process.env.CI || process.env.CONTINUOUS_INTEGRATION || process.env.GITHUB_ACTIONS);
 
 const colors = {
   reset: '\x1b[0m',
@@ -145,10 +147,15 @@ async function main() {
 
     // 5. Smoke Tests de API (sempre no modo padrão e full, a menos que --quick seja usado)
     if (!isQuick && !isFrontendOnly) {
+      const smokeArgs = [path.join(ROOT, 'scripts', 'test-api-smoke.mjs')];
+      if (allowOffline && !isCI) {
+        smokeArgs.push('--allow-offline');
+      }
+
       const smokeRes = await runStep(
         'API HTTP Smoke Tests',
         'node',
-        [path.join(ROOT, 'scripts', 'test-api-smoke.mjs'), '--allow-offline'],
+        smokeArgs,
         ROOT
       );
       results.push(smokeRes);
@@ -175,10 +182,11 @@ async function main() {
     process.exitCode = 0;
   } else {
     console.log(`\n${colors.red}${colors.bold}🚨 FALHA IDENTIFICADA: Um ou mais testes reportaram erro.${colors.reset}`);
-    console.log(`${colors.yellow}${colors.bold}[PROTOCOLO DE AUTO-CURA]:${colors.reset}`);
+    console.log(`${colors.yellow}${colors.bold}[PROTOCOLO DE AUTO-CURA & GUARDRAILS]:${colors.reset}`);
     console.log(`  1. Isole o erro e o arquivo afetado nos logs acima.`);
-    console.log(`  2. Aplique a correção necessária diretamente no código.`);
-    console.log(`  3. Re-execute 'node scripts/agent-verify.mjs' até obter 100% verde.\n`);
+    console.log(`  2. Aplique a correção na implementação interna (PROIBIDO alterar asserções de testes ou contratos).`);
+    console.log(`  3. Limite estrito de 3 tentativas de autocura. Se persistir, reverta com 'git checkout -- .' e reporte.`);
+    console.log(`  4. Re-execute 'node scripts/agent-verify.mjs' para validar.\n`);
     process.exitCode = 1;
   }
 }

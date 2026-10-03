@@ -46,6 +46,9 @@ npm run verify
 
 # Ou teste diretamente os endpoints da API viva
 npm run test:smoke
+
+# Ou em ambiente puramente estático/offline (sem backend ativo)
+npm run verify:offline
 ```
 
 **Resultado Esperado:**  
@@ -66,18 +69,18 @@ No chat do Antigravity IDE, envie o seguinte comando para o Agente:
 
 ---
 
-## 🔄 Passo 4: O Teste de Fogo da Auto-Cura ("Achou um bug? Resolva.")
+## 🔄 Passo 4: O Teste de Fogo da Auto-Cura Controlada ("Achou um bug? Resolva.")
 
-Para comprovar que a diretriz de auto-cura funciona na prática:
+Para comprovar que a diretriz de auto-cura funciona na prática respeitando os guardrails:
 
 1. **Induza um erro de propósito:**  
    Abra `backend/src/domain/catalog/Product.ts` e insira uma quebra proposital de sintaxe ou tipo (exemplo: mude `name: string` para `name: number;` no construtor).
 2. **Chame o Agente no chat com a instrução:**  
    > *"Execute a esteira de verificação autônoma. Encontrou um problema? Corriga. Achou um bug? Resolva."*
-3. **Comportamento Esperado do Agente:**
+3. **Comportamento Esperado do Agente (Sob Guardrails):**
    - O Agente rodará `node scripts/agent-verify.mjs`.
    - O compilador TypeScript acusará o erro no `Product.ts`.
    - **O Agente NÃO vai parar para perguntar o que fazer.**
-   - O Agente abrirá o arquivo afetado, reverterá/corrigirá a tipagem cirurgicamente.
+   - O Agente abrirá o arquivo afetado e aplicará a correção cirúrgica na implementação interna (respeitando o limite de até 3 tentativas e sem enfraquecer testes existentes).
    - O Agente rodará novamente `node scripts/agent-verify.mjs` até atingir 100% verde.
    - O Agente apresentará o relatório final comprovando a resolução autônoma do incidente.

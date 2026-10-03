@@ -21,6 +21,8 @@ O agente de IA opera em um sandbox isolado. Ele tem acesso apenas ao que é estr
 7. ⚠️ Realizar Deploy em qualquer ambiente.
 8. ⚠️ Conectar ou ler dados de ambiente de produção.
 9. ⚠️ Remover testes da suíte ou reduzir threshold de cobertura.
+10. ⚠️ Alterar ou flexibilizar asserções (`expect`/`assert`) de testes existentes para forçar aprovação no Self-Healing Loop.
+11. ⚠️ Exceder 3 iterações consecutivas de autocura técnica sem intervenção humana (obriga rollback e relatório).
 
 
 ## Proteção de Dados
