@@ -14,34 +14,51 @@ import { UserAvatar } from '@/components/common/UserAvatar';
 import { HttpError } from '@/api/client';
 import { validateImageFile, compressImage as compressBrandImage } from '@/utils/image';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
+import {
+  BuildingIcon,
+  CrownIcon,
+  UserIcon,
+  StatusDot,
+  ChartBarIcon,
+  BriefcaseIcon,
+  MailIcon,
+  AlertTriangleIcon,
+  MapPinIcon,
+  EditIcon,
+  CameraIcon,
+  RefreshIcon,
+  TrashIcon,
+  InfoIcon,
+  PlusIcon,
+} from '@/components/layout/icons';
 import partnerStyles from '../partner/partner.module.css';
 
 const ALLERGEN_OPTIONS = [
-  { value: 'GLUTEN',    label: '🌾 Glúten (Celíaco)' },
-  { value: 'LACTOSE',   label: '🥛 Lactose' },
-  { value: 'NUTS',      label: '🥜 Castanhas / Amendoim' },
-  { value: 'SOY',       label: '🫘 Soja' },
-  { value: 'EGGS',      label: '🥚 Ovos' },
-  { value: 'SHELLFISH', label: '🦐 Frutos do Mar' },
-  { value: 'FISH',      label: '🐟 Peixes' },
-  { value: 'SESAME',    label: '🌱 Gergelim' },
-  { value: 'OTHER',     label: '⚠️ Outro' },
+  { value: 'GLUTEN',    label: 'Glúten (Celíaco)' },
+  { value: 'LACTOSE',   label: 'Lactose' },
+  { value: 'NUTS',      label: 'Castanhas / Amendoim' },
+  { value: 'SOY',       label: 'Soja' },
+  { value: 'EGGS',      label: 'Ovos' },
+  { value: 'SHELLFISH', label: 'Frutos do Mar' },
+  { value: 'FISH',      label: 'Peixes' },
+  { value: 'SESAME',    label: 'Gergelim' },
+  { value: 'OTHER',     label: 'Outro' },
 ];
 
 const SEVERITY_OPTIONS = [
-  { value: 'LIFESTYLE', label: '🟣 Estilo de Vida' },
-  { value: 'LOW',       label: '🟢 Severidade Baixa' },
-  { value: 'MEDIUM',    label: '🟡 Severidade Média' },
-  { value: 'HIGH',      label: '🟠 Severidade Alta' },
-  { value: 'FATAL',     label: '🔴 Fatal (Celíaco)' },
+  { value: 'LIFESTYLE', label: 'Estilo de Vida' },
+  { value: 'LOW',       label: 'Severidade Baixa' },
+  { value: 'MEDIUM',    label: 'Severidade Média' },
+  { value: 'HIGH',      label: 'Severidade Alta' },
+  { value: 'FATAL',     label: 'Fatal (Celíaco)' },
 ];
 
 const RESTRICTION_TYPE_OPTIONS = [
-  { value: 'ALLERGY',            label: '⚠️ Alergia' },
-  { value: 'INTOLERANCE',        label: '🥛 Intolerância' },
-  { value: 'MEDICAL_RESTRICTION',label: '🏥 Restrição Médica' },
-  { value: 'DIETARY_PREFERENCE', label: '🥗 Preferência' },
-  { value: 'LIFESTYLE',          label: '🌱 Estilo de Vida' },
+  { value: 'ALLERGY',            label: 'Alergia' },
+  { value: 'INTOLERANCE',        label: 'Intolerância' },
+  { value: 'MEDICAL_RESTRICTION',label: 'Restrição Médica' },
+  { value: 'DIETARY_PREFERENCE', label: 'Preferência Alimentar' },
+  { value: 'LIFESTYLE',          label: 'Estilo de Vida' },
 ];
 
 const GENDER_OPTIONS = [
@@ -638,10 +655,22 @@ export default function ProfilePage() {
               gap: '4px',
               whiteSpace: 'nowrap',
             }}>
-              {userRole === 'PARCEIRO' ? '🏢 Parceiro Comercial' : userRole === 'ADMIN' ? '👑 Administrador' : '👤 Consumidor'}
+              {userRole === 'PARCEIRO' ? (
+                <>
+                  <BuildingIcon size={14} /> Parceiro Comercial
+                </>
+              ) : userRole === 'ADMIN' ? (
+                <>
+                  <CrownIcon size={14} /> Administrador
+                </>
+              ) : (
+                <>
+                  <UserIcon size={14} /> Consumidor
+                </>
+              )}
             </span>
-            <span className={`profile-status-badge ${isApproved ? 'is-approved' : 'is-pending'}`} style={{ whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              {isApproved ? '✅ Perfil aprovado' : '⏳ Pendente de avaliação'}
+            <span className={`profile-status-badge ${isApproved ? 'is-approved' : 'is-pending'}`} style={{ whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <StatusDot color={isApproved ? 'green' : 'yellow'} /> {isApproved ? 'Perfil aprovado' : 'Pendente de avaliação'}
             </span>
           </div>
         </div>
@@ -669,10 +698,9 @@ export default function ProfilePage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '1.5rem',
                 flexShrink: 0,
               }}>
-                🏢
+                <BuildingIcon size={24} style={{ color: '#818cf8' }} />
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
@@ -689,9 +717,9 @@ export default function ProfilePage() {
                     fontWeight: 700,
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '4px',
+                    gap: '6px',
                   }}>
-                    {isApproved ? '✅' : '⏳'} {isApproved ? 'Aprovado' : 'Pendente de avaliação'}
+                    <StatusDot color={isApproved ? 'green' : 'yellow'} /> {isApproved ? 'Aprovado' : 'Pendente de avaliação'}
                   </span>
                 </div>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>
@@ -717,7 +745,7 @@ export default function ProfilePage() {
                   boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
                 }}
               >
-                📊 Dashboard & Catálogo
+                <ChartBarIcon size={16} /> Dashboard & Catálogo
               </Link>
               <Link
                 href="/partner"
@@ -736,7 +764,7 @@ export default function ProfilePage() {
                   boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)',
                 }}
               >
-                💼 Estabelecimentos
+                <BriefcaseIcon size={16} /> Estabelecimentos
               </Link>
             </div>
           </div>
@@ -762,10 +790,9 @@ export default function ProfilePage() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.5rem',
               flexShrink: 0,
             }}>
-              👑
+              <CrownIcon size={24} style={{ color: '#facc15' }} />
             </div>
             <div>
               <strong style={{ fontSize: '1.05rem', color: theme === 'dark' ? '#f8fafc' : '#0f172a', display: 'block', marginBottom: '4px' }}>
@@ -802,9 +829,7 @@ export default function ProfilePage() {
               }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '1.2rem' }}>
-                      {consumerStatus === 'INATIVO' ? '🔴' : '🟢'}
-                    </span>
+                    <StatusDot color={consumerStatus === 'INATIVO' ? 'red' : 'green'} size={10} />
                     <strong style={{ fontSize: '1rem', color: theme === 'dark' ? '#f8fafc' : '#0f172a' }}>
                       {`Status do Consumidor: ${consumerStatus === 'INATIVO' ? 'INATIVO' : 'ATIVO'}`}
                     </strong>
@@ -838,8 +863,8 @@ export default function ProfilePage() {
                 flexWrap: 'wrap' as const,
               }}>
                 <div>
-                  <strong style={{ fontSize: '1rem', display: 'block', marginBottom: '4px' }}>
-                    📩 Verifique seu e-mail para desbloquear todas as funções
+                  <strong style={{ fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                    <MailIcon size={18} /> Verifique seu e-mail para desbloquear todas as funções
                   </strong>
                   <span style={{ fontSize: '0.85rem', color: theme === 'dark' ? '#94a3b8' : '#64748b' }}>
                     Enviamos um código de verificação para o seu e-mail. Confirme seu e-mail para garantir a segurança da sua conta.
@@ -983,8 +1008,8 @@ export default function ProfilePage() {
                 {rows.map((row, idx) => (
                   <div key={idx} className="allergen-cardlet">
                     <div className="allergen-cardlet-header">
-                      <span className="allergen-cardlet-index">
-                        ⚠️ Restrição #{idx + 1}
+                      <span className="allergen-cardlet-index" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <AlertTriangleIcon size={14} style={{ color: 'var(--color-warning)' }} /> Restrição #{idx + 1}
                       </span>
                       {rows.length > 1 && (
                         <button
@@ -1060,7 +1085,7 @@ export default function ProfilePage() {
                           alignItems: 'center',
                           gap: '8px',
                         }}>
-                          <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+                          <AlertTriangleIcon size={20} style={{ color: 'var(--color-danger)', flexShrink: 0 }} />
                           <span>
                             <strong>Incompatibilidade Clínica:</strong> Alergias exigem severidade Média, Alta ou Fatal. Para severidade Baixa ou Estilo de Vida, altere o Tipo de Condição para <strong>Intolerância</strong>, <strong>Restrição Médica</strong> ou <strong>Preferência</strong>.
                           </span>
@@ -1161,8 +1186,8 @@ export default function ProfilePage() {
                         <strong style={{ fontSize: '0.95rem', color: 'var(--color-text)', display: 'block', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                           {currentPartner.name}
                         </strong>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                          📍 {currentPartner.address ? `${currentPartner.address} • ` : ''}{currentPartner.city ? `${currentPartner.city}/${currentPartner.state}` : translatePartnerType(currentPartner.type)}
+                        <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <MapPinIcon size={13} style={{ color: 'var(--color-emerald)' }} /> {currentPartner.address ? `${currentPartner.address} • ` : ''}{currentPartner.city ? `${currentPartner.city}/${currentPartner.state}` : translatePartnerType(currentPartner.type)}
                         </span>
                       </div>
                       <Link
@@ -1177,9 +1202,12 @@ export default function ProfilePage() {
                           background: 'rgba(99, 102, 241, 0.12)',
                           whiteSpace: 'nowrap',
                           border: '1px solid rgba(99, 102, 241, 0.25)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
                         }}
                       >
-                        ✏️ Editar dados
+                        <EditIcon size={12} /> Editar dados
                       </Link>
                     </div>
 
@@ -1209,7 +1237,7 @@ export default function ProfilePage() {
                         }}
                         style={{ minHeight: '170px' }}
                       >
-                        <span className={partnerStyles.brandDropzoneIcon}>🖼️</span>
+                        <span className={partnerStyles.brandDropzoneIcon}><CameraIcon size={36} /></span>
                         <span className={partnerStyles.brandDropzoneTitle}>Adicione a marca do negócio</span>
                         <span className={partnerStyles.brandDropzoneSubtitle}>Arraste uma imagem ou clique para selecionar</span>
                         <span className={partnerStyles.brandDropzoneMeta}>PNG, JPG ou WebP • Máx. 5 MB</span>
@@ -1229,22 +1257,25 @@ export default function ProfilePage() {
                             type="button"
                             className={partnerStyles.brandBtnAction}
                             onClick={() => brandFileInputRef.current?.click()}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                           >
-                            🔄 Alterar imagem
+                            <RefreshIcon size={14} /> Alterar imagem
                           </button>
                           <button
                             type="button"
                             className={`${partnerStyles.brandBtnAction} ${partnerStyles.brandBtnRemove}`}
                             onClick={handleRemoveBrandLogo}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                           >
-                            🗑️ Remover
+                            <TrashIcon size={14} /> Remover
                           </button>
                         </div>
                       </div>
                     )}
 
-                    <p className={partnerStyles.brandHelpText} style={{ marginTop: '10px' }}>
-                      💡 A alteração da marca não afeta o status de aprovação comercial. Clique em <strong>&quot;Salvar alterações&quot;</strong> para aplicar.
+                    <p className={partnerStyles.brandHelpText} style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <InfoIcon size={15} style={{ color: 'var(--color-primary)', flexShrink: 0 }} />
+                      <span>A alteração da marca não afeta o status de aprovação comercial. Clique em <strong>&quot;Salvar alterações&quot;</strong> para aplicar.</span>
                     </p>
                   </div>
                 ) : (
@@ -1255,7 +1286,7 @@ export default function ProfilePage() {
                     border: '1px dashed var(--color-border)',
                     borderRadius: '12px',
                   }}>
-                    <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>🏢</span>
+                    <BuildingIcon size={36} style={{ display: 'block', margin: '0 auto 8px', color: 'var(--color-text-muted)' }} />
                     <strong style={{ fontSize: '1rem', color: 'var(--color-text)', display: 'block', marginBottom: '4px' }}>
                       Nenhum estabelecimento cadastrado
                     </strong>
@@ -1277,7 +1308,7 @@ export default function ProfilePage() {
                         textDecoration: 'none',
                       }}
                     >
-                      ➕ Cadastrar Estabelecimento
+                      <PlusIcon size={16} /> Cadastrar Estabelecimento
                     </Link>
                   </div>
                 )}
@@ -1344,9 +1375,15 @@ export default function ProfilePage() {
               >
                 {loadingConsumerStatus
                   ? 'Processando…'
-                  : consumerStatus === 'INATIVO'
-                    ? '🟢 Reativar participação'
-                    : '🔴 Desativar participação'}
+                  : consumerStatus === 'INATIVO' ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <StatusDot color="green" size={10} /> Reativar participação
+                    </span>
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <StatusDot color="red" size={10} /> Desativar participação
+                    </span>
+                  )}
               </button>
             </div>
           </section>

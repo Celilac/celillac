@@ -3,6 +3,7 @@
 import React, { useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotifications, AppNotification } from '@/contexts/NotificationContext';
+import { ChefHatIcon, CheckCircleIcon, FireIcon, PackageIcon, BikeIcon, FinishFlagIcon, XCircleIcon, BellIcon } from './icons';
 import styles from './notification-dropdown.module.css';
 
 interface NotificationDropdownProps {
@@ -28,24 +29,24 @@ function formatRelativeTime(isoString: string): string {
   }
 }
 
-function getIconForType(type: AppNotification['type']): string {
+function getIconForType(type: AppNotification['type']): React.ReactNode {
   switch (type) {
     case 'NEW_ORDER':
-      return '🍳';
+      return <ChefHatIcon size={18} style={{ color: 'var(--color-emerald)' }} />;
     case 'ORDER_CONFIRMED':
-      return '✅';
+      return <CheckCircleIcon size={18} style={{ color: 'var(--color-emerald)' }} />;
     case 'PREPARING':
-      return '🔥';
+      return <FireIcon size={18} style={{ color: 'var(--color-warning)' }} />;
     case 'READY':
-      return '📦';
+      return <PackageIcon size={18} style={{ color: '#3b82f6' }} />;
     case 'DELIVERY':
-      return '🛵';
+      return <BikeIcon size={18} style={{ color: 'var(--color-emerald)' }} />;
     case 'DELIVERED':
-      return '🏁';
+      return <FinishFlagIcon size={18} style={{ color: 'var(--color-emerald)' }} />;
     case 'CANCELLED':
-      return '❌';
+      return <XCircleIcon size={18} style={{ color: 'var(--color-danger)' }} />;
     default:
-      return '🔔';
+      return <BellIcon size={18} style={{ color: 'var(--color-text-muted)' }} />;
   }
 }
 
@@ -162,7 +163,9 @@ export function NotificationDropdown({ isOpen, onClose }: NotificationDropdownPr
       <div className={styles.notificationsList}>
         {notifications.length === 0 ? (
           <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>🔔</div>
+            <div className={styles.emptyIcon}>
+              <BellIcon size={32} style={{ color: 'var(--color-text-muted)' }} />
+            </div>
             <p className={styles.emptyText}>Nenhuma notificação no momento.</p>
             <small style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.25rem', display: 'block' }}>
               Atualizações de pedidos e entregas aparecerão aqui em tempo real.

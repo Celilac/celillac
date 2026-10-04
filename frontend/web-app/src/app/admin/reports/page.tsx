@@ -8,6 +8,27 @@ import { useToast } from '@/hooks/useToast';
 import { apiClient, HttpError } from '@/api/client';
 import { reportApi, ReportDTO, ReportReason } from '@/api/reports';
 import { Header } from '@/components/layout/Header';
+import {
+  StatusDot,
+  LockIcon,
+  HomeIcon,
+  ShieldCheckIcon,
+  AlertTriangleIcon,
+  ClockIcon,
+  SearchIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  PackageIcon,
+  UserIcon,
+  StoreIcon,
+  FileTextIcon,
+  EyeIcon,
+  CheckIcon,
+  RefreshCwIcon,
+  ScaleIcon,
+  InfoIcon,
+  ShoppingCartIcon,
+} from '@/components/layout/icons';
 import styles from '../../partner/partner.module.css';
 
 interface ConfirmModalState {
@@ -243,13 +264,29 @@ export default function AdminReportsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING':
-        return <span className={`${styles.badge} ${styles.badgePending}`}>⏳ Pendente</span>;
+        return (
+          <span className={`${styles.badge} ${styles.badgePending}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <StatusDot color="yellow" size={7} /> Pendente
+          </span>
+        );
       case 'IN_REVIEW':
-        return <span className={`${styles.badge}`} style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)' }}>🔍 Em Análise</span>;
+        return (
+          <span className={`${styles.badge}`} style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <StatusDot color="blue" size={7} /> Em Análise
+          </span>
+        );
       case 'RESOLVED':
-        return <span className={`${styles.badge} ${styles.badgeApproved}`}>✅ Resolvida</span>;
+        return (
+          <span className={`${styles.badge} ${styles.badgeApproved}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <StatusDot color="green" size={7} /> Resolvida
+          </span>
+        );
       case 'DISMISSED':
-        return <span className={`${styles.badge} ${styles.badgeRejected}`}>❌ Descartada</span>;
+        return (
+          <span className={`${styles.badge} ${styles.badgeRejected}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <StatusDot color="red" size={7} /> Descartada
+          </span>
+        );
       default:
         return <span className={`${styles.badge} ${styles.badgeDraft}`}>{status}</span>;
     }
@@ -287,7 +324,9 @@ export default function AdminReportsPage() {
             borderRadius: '16px',
             boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
           }}>
-            <span style={{ fontSize: '3.5rem', display: 'block', marginBottom: '1rem' }}>🔒</span>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+              <LockIcon size={52} style={{ color: 'var(--color-danger)' }} />
+            </div>
             <h1 style={{ color: 'var(--color-danger)', fontSize: '1.75rem', marginBottom: '0.75rem' }}>
               Acesso Negado (403 Forbidden)
             </h1>
@@ -295,8 +334,8 @@ export default function AdminReportsPage() {
               Esta página é estritamente reservada aos Administradores do CeLiLac. Sua conta não possui os privilégios necessários para visualizar ou gerenciar denúncias alimentares.
             </p>
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <Link href="/dashboard" className="btn btn-em" style={{ padding: '0.65rem 1.5rem', textDecoration: 'none' }}>
-                🏠 Voltar ao Dashboard
+              <Link href="/dashboard" className="btn btn-em" style={{ padding: '0.65rem 1.5rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <HomeIcon size={16} /> Voltar ao Dashboard
               </Link>
             </div>
           </div>
@@ -321,8 +360,8 @@ export default function AdminReportsPage() {
         <div className={styles.header} style={{ marginBottom: '1.5rem' }}>
           <div className={styles.titleArea}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
-              <span className={`${styles.badge}`} style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-                🛡️ Painel de Segurança Alimentar
+              <span className={`${styles.badge}`} style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <ShieldCheckIcon size={14} /> Painel de Segurança Alimentar
               </span>
             </div>
             <h1 className={styles.title}>Moderação de Denúncias Alimentares</h1>
@@ -345,22 +384,30 @@ export default function AdminReportsPage() {
           </div>
 
           <div style={{ background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.25)', padding: '1rem 1.25rem', borderRadius: '12px' }}>
-            <span style={{ fontSize: '0.8rem', color: '#f87171', fontWeight: 700 }}>🚨 RISCO ALIMENTAR (RN-15)</span>
+            <span style={{ fontSize: '0.8rem', color: '#f87171', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <AlertTriangleIcon size={13} /> RISCO ALIMENTAR (RN-15)
+            </span>
             <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#f87171', marginTop: '0.2rem' }}>{riskCount}</div>
           </div>
 
           <div style={{ background: 'rgba(234, 179, 8, 0.08)', border: '1px solid rgba(234, 179, 8, 0.25)', padding: '1rem 1.25rem', borderRadius: '12px' }}>
-            <span style={{ fontSize: '0.8rem', color: '#eab308', fontWeight: 700 }}>⏳ PENDENTES</span>
+            <span style={{ fontSize: '0.8rem', color: '#eab308', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <ClockIcon size={13} /> PENDENTES
+            </span>
             <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#eab308', marginTop: '0.2rem' }}>{pendingCount}</div>
           </div>
 
           <div style={{ background: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.25)', padding: '1rem 1.25rem', borderRadius: '12px' }}>
-            <span style={{ fontSize: '0.8rem', color: '#3b82f6', fontWeight: 700 }}>🔍 EM ANÁLISE</span>
+            <span style={{ fontSize: '0.8rem', color: '#3b82f6', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <SearchIcon size={13} /> EM ANÁLISE
+            </span>
             <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#3b82f6', marginTop: '0.2rem' }}>{inReviewCount}</div>
           </div>
 
           <div style={{ background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.25)', padding: '1rem 1.25rem', borderRadius: '12px' }}>
-            <span style={{ fontSize: '0.8rem', color: '#22c55e', fontWeight: 700 }}>✅ RESOLVIDAS</span>
+            <span style={{ fontSize: '0.8rem', color: '#22c55e', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <CheckCircleIcon size={13} /> RESOLVIDAS
+            </span>
             <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#22c55e', marginTop: '0.2rem' }}>{resolvedCount}</div>
           </div>
         </div>
@@ -382,18 +429,19 @@ export default function AdminReportsPage() {
           <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
             {[
               { id: 'ALL', label: 'Todas' },
-              { id: 'PENDING', label: '⏳ Pendentes' },
-              { id: 'IN_REVIEW', label: '🔍 Em Análise' },
-              { id: 'RESOLVED', label: '✅ Resolvidas' },
-              { id: 'DISMISSED', label: '❌ Descartadas' },
+              { id: 'PENDING', label: 'Pendentes', icon: <ClockIcon size={13} /> },
+              { id: 'IN_REVIEW', label: 'Em Análise', icon: <SearchIcon size={13} /> },
+              { id: 'RESOLVED', label: 'Resolvidas', icon: <CheckCircleIcon size={13} /> },
+              { id: 'DISMISSED', label: 'Descartadas', icon: <XCircleIcon size={13} /> },
             ].map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setStatusFilter(tab.id)}
                 className={`${styles.btn} ${statusFilter === tab.id ? styles.btnPrimary : styles.btnSecondary}`}
-                style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem', borderRadius: '999px' }}
+                style={{ padding: '0.45rem 0.85rem', fontSize: '0.85rem', borderRadius: '999px', display: 'inline-flex', alignItems: 'center', gap: 5 }}
               >
+                {tab.icon}
                 {tab.label}
               </button>
             ))}
@@ -413,9 +461,12 @@ export default function AdminReportsPage() {
                 color: riskFilter === 'RISK_ONLY' ? '#f87171' : 'var(--color-text)',
                 border: riskFilter === 'RISK_ONLY' ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid var(--color-border)',
                 fontWeight: 600,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
               }}
             >
-              🚨 {riskFilter === 'RISK_ONLY' ? 'Exibindo: Apenas Risco Alimentar' : 'Filtrar Risco Alimentar (RN-15)'}
+              <AlertTriangleIcon size={14} /> {riskFilter === 'RISK_ONLY' ? 'Exibindo: Apenas Risco Alimentar' : 'Filtrar Risco Alimentar (RN-15)'}
             </button>
           </div>
         </div>
@@ -427,7 +478,7 @@ export default function AdminReportsPage() {
           <div className={styles.grid}>
             {reports.length === 0 ? (
               <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>🛡️</span>
+                <ShieldCheckIcon size={44} style={{ color: 'var(--color-text-muted)' }} />
                 <h2>Nenhuma denúncia encontrada</h2>
                 <p style={{ color: 'var(--color-text-muted)', marginTop: '0.5rem' }}>
                   Não há registros correspondentes aos filtros selecionados.
@@ -480,7 +531,9 @@ export default function AdminReportsPage() {
                           alignItems: 'center',
                           gap: '0.5rem',
                         }}>
-                          <span>🚨 ALERTA CRÍTICO: RISCO À SEGURANÇA ALIMENTAR</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <AlertTriangleIcon size={16} /> ALERTA CRÍTICO: RISCO À SEGURANÇA ALIMENTAR
+                          </span>
                         </div>
                       ) : report.targetUserId || report.orderId ? (
                         <div style={{
@@ -496,7 +549,9 @@ export default function AdminReportsPage() {
                           alignItems: 'center',
                           gap: '0.5rem',
                         }}>
-                          <span>🛒 AUDITORIA DE NÃO PAGAMENTO / PEDIDO PRESENCIAL</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <ShoppingCartIcon size={16} /> AUDITORIA DE NÃO PAGAMENTO / PEDIDO PRESENCIAL
+                          </span>
                         </div>
                       ) : (
                         <div style={{
@@ -507,8 +562,11 @@ export default function AdminReportsPage() {
                           borderRadius: '8px',
                           color: 'var(--color-text-muted)',
                           fontSize: '0.8rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
                         }}>
-                          ℹ️ Denúncia Geral de Informações do Produto / Parceiro
+                          <InfoIcon size={15} /> Denúncia Geral de Informações do Produto / Parceiro
                         </div>
                       )}
 
@@ -532,17 +590,20 @@ export default function AdminReportsPage() {
                       <div className={styles.partnerMeta} style={{ marginTop: '0.85rem' }}>
                         {report.orderId && (
                           <span className={styles.metaItem}>
-                            📦 <strong>Pedido:</strong> <code>#{report.orderId.substring(0, 12)}…</code>
+                            <PackageIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                            <strong>Pedido:</strong> <code>#{report.orderId.substring(0, 12)}…</code>
                           </span>
                         )}
                         {report.targetUserId && (
                           <span className={styles.metaItem}>
-                            👤 <strong>Consumidor Alvo:</strong> <code>{report.targetUserId.substring(0, 12)}…</code>
+                            <UserIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                            <strong>Consumidor Alvo:</strong> <code>{report.targetUserId.substring(0, 12)}…</code>
                           </span>
                         )}
                         {report.productId && (
                           <span className={styles.metaItem}>
-                            📦 <strong>Produto ID:</strong>{' '}
+                            <PackageIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                            <strong>Produto ID:</strong>{' '}
                             <Link href={`/products/${report.productId}`} style={{ color: 'var(--color-emerald)', textDecoration: 'underline' }}>
                               {report.productId.substring(0, 12)}…
                             </Link>
@@ -550,14 +611,16 @@ export default function AdminReportsPage() {
                         )}
                         {report.partnerId && (
                           <span className={styles.metaItem}>
-                            🏬 <strong>Parceiro ID:</strong>{' '}
+                            <StoreIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                            <strong>Parceiro ID:</strong>{' '}
                             <Link href={`/public-partners/${report.partnerId}`} style={{ color: 'var(--color-emerald)', textDecoration: 'underline' }}>
                               {report.partnerId.substring(0, 12)}…
                             </Link>
                           </span>
                         )}
                         <span className={styles.metaItem}>
-                          📝 <strong>Relator:</strong> <code>{report.reporterId.substring(0, 12)}…</code>
+                          <FileTextIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                          <strong>Relator:</strong> <code>{report.reporterId.substring(0, 12)}…</code>
                         </span>
                       </div>
                     </div>
@@ -567,10 +630,10 @@ export default function AdminReportsPage() {
                       <button
                         type="button"
                         className={`${styles.btn} ${styles.btnSecondary}`}
-                        style={{ flex: '1 1 100%', marginBottom: '0.25rem' }}
+                        style={{ flex: '1 1 100%', marginBottom: '0.25rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                         onClick={() => setDetailReport(report)}
                       >
-                        👁️ Ver Detalhes Completos & Histórico
+                        <EyeIcon size={15} /> Ver Detalhes Completos & Histórico
                       </button>
 
                       {report.status === 'PENDING' && (
@@ -578,32 +641,32 @@ export default function AdminReportsPage() {
                           <button
                             type="button"
                             className={`${styles.btn}`}
-                            style={{ flex: 1, background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)' }}
+                            style={{ flex: 1, background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                             onClick={() => requestActionConfirmation(report, 'IN_REVIEW')}
                             disabled={updating}
                             id={`review-${report.id}`}
                           >
-                            🔍 Em Análise
+                            <SearchIcon size={14} /> Em Análise
                           </button>
                           <button
                             type="button"
                             className={`${styles.btn} ${styles.btnPrimary}`}
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                             onClick={() => requestActionConfirmation(report, 'RESOLVE')}
                             disabled={updating}
                             id={`resolve-${report.id}`}
                           >
-                            ✔️ Resolver
+                            <CheckIcon size={14} /> Resolver
                           </button>
                           <button
                             type="button"
                             className={`${styles.btn} ${styles.btnDanger}`}
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                             onClick={() => requestActionConfirmation(report, 'DISMISS')}
                             disabled={updating}
                             id={`dismiss-${report.id}`}
                           >
-                            ❌ Descartar
+                            <XCircleIcon size={14} /> Descartar
                           </button>
                         </>
                       )}
@@ -613,30 +676,30 @@ export default function AdminReportsPage() {
                           <button
                             type="button"
                             className={`${styles.btn} ${styles.btnPrimary}`}
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                             onClick={() => requestActionConfirmation(report, 'RESOLVE')}
                             disabled={updating}
                             id={`resolve-${report.id}`}
                           >
-                            ✔️ Concluir & Resolver
+                            <CheckIcon size={14} /> Concluir & Resolver
                           </button>
                           <button
                             type="button"
                             className={`${styles.btn} ${styles.btnDanger}`}
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                             onClick={() => requestActionConfirmation(report, 'DISMISS')}
                             disabled={updating}
                             id={`dismiss-${report.id}`}
                           >
-                            ❌ Descartar Denúncia
+                            <XCircleIcon size={14} /> Descartar Denúncia
                           </button>
                         </>
                       )}
 
                       {(report.status === 'RESOLVED' || report.status === 'DISMISSED') && (
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '0.5rem', flexWrap: 'wrap', padding: '0.25rem 0' }}>
-                          <span style={{ fontSize: '0.825rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                            🔒 Encerrada ({report.status === 'RESOLVED' ? 'Resolvida' : 'Descartada'})
+                          <span style={{ fontSize: '0.825rem', color: 'var(--color-text-muted)', fontStyle: 'italic', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <LockIcon size={13} /> Encerrada ({report.status === 'RESOLVED' ? 'Resolvida' : 'Descartada'})
                           </span>
                           <button
                             type="button"
@@ -649,12 +712,15 @@ export default function AdminReportsPage() {
                               fontWeight: 700,
                               padding: '0.35rem 0.75rem',
                               borderRadius: 'var(--radius-full)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
                             }}
                             onClick={() => requestActionConfirmation(report, 'REOPEN')}
                             disabled={updating}
                             id={`reopen-${report.id}`}
                           >
-                            🔄 Reabrir Denúncia
+                            <RefreshCwIcon size={13} /> Reabrir Denúncia
                           </button>
                         </div>
                       )}
@@ -679,8 +745,8 @@ export default function AdminReportsPage() {
             >
               <div className={styles.modalHeader}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                  <h2 id="detail-report-heading" className={styles.modalTitle}>
-                    🚨 Protocolo #{detailReport.id.substring(0, 8)}
+                  <h2 id="detail-report-heading" className={styles.modalTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <AlertTriangleIcon size={18} style={{ color: '#f87171' }} /> Protocolo #{detailReport.id.substring(0, 8)}
                   </h2>
                   {getStatusBadge(detailReport.status)}
                 </div>
@@ -688,20 +754,20 @@ export default function AdminReportsPage() {
                   type="button"
                   ref={detailCloseRef}
                   onClick={() => setDetailReport(null)}
-                  style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', opacity: 0.7, color: 'var(--color-text)' }}
+                  style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', opacity: 0.7, color: 'var(--color-text)' }}
                   aria-label="Fechar"
                 >
-                  ✖️
+                  ✕
                 </button>
               </div>
 
               <div className={styles.detailSection}>
                 {detailReport.isFoodSafetyRisk && (
                   <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.85rem', borderRadius: '12px', color: '#f87171', marginBottom: '1rem' }}>
-                    <strong style={{ display: 'block', fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-                      🚨 Alerta de Segurança Alimentar (RN-CONSUMER-15)
+                    <strong style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.9rem', marginBottom: '0.25rem' }}>
+                      <AlertTriangleIcon size={16} /> Alerta de Segurança Alimentar (RN-CONSUMER-15)
                     </strong>
-                    <span>Denúncia sinalizada com risco potencial à saúde do consumidor. Deve ser avaliada com máxima prioridade.</span>
+                    <span style={{ display: 'block' }}>Denúncia sinalizada com risco potencial à saúde do consumidor. Deve ser avaliada com máxima prioridade.</span>
                   </div>
                 )}
 
@@ -762,7 +828,8 @@ export default function AdminReportsPage() {
                   color: 'var(--color-text)',
                   lineHeight: '1.5',
                 }}>
-                  ⚖️ <strong>Regra de Auditoria Administrativa:</strong> O consumidor só é bloqueado para pagamentos na entrega se você aceitar formalmente a denúncia da loja clicando em <em>"Aprovar & Resolver"</em>. Se julgar a denúncia improcedente ou justificada, clique em <em>"Descartar"</em> para manter o consumidor livre de restrições.
+                  <ScaleIcon size={15} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                  <strong>Regra de Auditoria Administrativa:</strong> O consumidor só é bloqueado para pagamentos na entrega se você aceitar formalmente a denúncia da loja clicando em <em>"Aprovar & Resolver"</em>. Se julgar a denúncia improcedente ou justificada, clique em <em>"Descartar"</em> para manter o consumidor livre de restrições.
                 </div>
               )}
 
@@ -772,27 +839,29 @@ export default function AdminReportsPage() {
                     <button
                       type="button"
                       className={`${styles.btn}`}
-                      style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)' }}
+                      style={{ background: 'rgba(59,130,246,0.15)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.3)', display: 'inline-flex', alignItems: 'center', gap: 4 }}
                       onClick={() => requestActionConfirmation(detailReport, 'IN_REVIEW')}
                       disabled={updating}
                     >
-                      🔍 Em Análise
+                      <SearchIcon size={14} /> Em Análise
                     </button>
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnPrimary}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                       onClick={() => requestActionConfirmation(detailReport, 'RESOLVE')}
                       disabled={updating}
                     >
-                      ✔️ Aprovar & Resolver
+                      <CheckIcon size={14} /> Aprovar & Resolver
                     </button>
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnDanger}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                       onClick={() => requestActionConfirmation(detailReport, 'DISMISS')}
                       disabled={updating}
                     >
-                      ❌ Descartar
+                      <XCircleIcon size={14} /> Descartar
                     </button>
                   </>
                 )}
@@ -802,18 +871,20 @@ export default function AdminReportsPage() {
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnPrimary}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                       onClick={() => requestActionConfirmation(detailReport, 'RESOLVE')}
                       disabled={updating}
                     >
-                      ✔️ Concluir & Resolver
+                      <CheckIcon size={14} /> Concluir & Resolver
                     </button>
                     <button
                       type="button"
                       className={`${styles.btn} ${styles.btnDanger}`}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}
                       onClick={() => requestActionConfirmation(detailReport, 'DISMISS')}
                       disabled={updating}
                     >
-                      ❌ Descartar Denúncia
+                      <XCircleIcon size={14} /> Descartar Denúncia
                     </button>
                   </>
                 )}
@@ -827,11 +898,14 @@ export default function AdminReportsPage() {
                       color: '#ca8a04',
                       border: '1px solid rgba(202, 138, 4, 0.4)',
                       fontWeight: 700,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
                     }}
                     onClick={() => requestActionConfirmation(detailReport, 'REOPEN')}
                     disabled={updating}
                   >
-                    🔄 Reabrir Denúncia
+                    <RefreshCwIcon size={14} /> Reabrir Denúncia
                   </button>
                 )}
 
@@ -859,28 +933,29 @@ export default function AdminReportsPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className={styles.modalHeader}>
-                <h3 id="confirm-modal-title" className={styles.modalTitle} style={{ fontSize: '1.2rem' }}>
-                  {confirmModal.action === 'RESOLVE' && '✔️'}
-                  {confirmModal.action === 'DISMISS' && '❌'}
-                  {confirmModal.action === 'IN_REVIEW' && '🔍'}
-                  {confirmModal.action === 'REOPEN' && '🔄'}{' '}
+                <h3 id="confirm-modal-title" className={styles.modalTitle} style={{ fontSize: '1.2rem', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  {confirmModal.action === 'RESOLVE' && <CheckIcon size={18} />}
+                  {confirmModal.action === 'DISMISS' && <XCircleIcon size={18} />}
+                  {confirmModal.action === 'IN_REVIEW' && <SearchIcon size={18} />}
+                  {confirmModal.action === 'REOPEN' && <RefreshCwIcon size={18} />}
                   {confirmModal.title}
                 </h3>
                 <button
                   type="button"
                   onClick={() => !updating && setConfirmModal(null)}
-                  style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', opacity: 0.7, color: 'var(--color-text)' }}
+                  style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', opacity: 0.7, color: 'var(--color-text)' }}
                   aria-label="Cancelar"
                   disabled={updating}
                 >
-                  ✖️
+                  ✕
                 </button>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {confirmModal.isFoodSafetyRisk && (
                   <div style={{ background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.65rem 0.85rem', borderRadius: '8px', color: '#f87171', fontSize: '0.85rem', fontWeight: 600 }}>
-                    🚨 Atenção: Esta denúncia envolve risco direto à segurança alimentar de celíacos.
+                    <AlertTriangleIcon size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                    Atenção: Esta denúncia envolve risco direto à segurança alimentar de celíacos.
                   </div>
                 )}
 
@@ -909,8 +984,8 @@ export default function AdminReportsPage() {
                     rows={3}
                     style={{ width: '100%', boxSizing: 'border-box' }}
                   />
-                  <small style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '0.25rem' }}>
-                    🔒 Este parecer ficará registrado no histórico permanente de auditoria da plataforma.
+                  <small style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: '0.25rem' }}>
+                    <LockIcon size={12} /> Este parecer ficará registrado no histórico permanente de auditoria da plataforma.
                   </small>
                 </div>
 
@@ -945,10 +1020,10 @@ export default function AdminReportsPage() {
                     id="confirm-action-btn"
                   >
                     {updating ? 'Processando…' : (
-                      confirmModal.action === 'RESOLVE' ? '✔️ Confirmar Resolução' :
-                      confirmModal.action === 'DISMISS' ? '❌ Confirmar Descarte' :
-                      confirmModal.action === 'IN_REVIEW' ? '🔍 Iniciar Análise' :
-                      '🔄 Confirmar Reabertura'
+                      confirmModal.action === 'RESOLVE' ? 'Confirmar Resolução' :
+                      confirmModal.action === 'DISMISS' ? 'Confirmar Descarte' :
+                      confirmModal.action === 'IN_REVIEW' ? 'Iniciar Análise' :
+                      'Confirmar Reabertura'
                     )}
                   </button>
                 </div>

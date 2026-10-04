@@ -8,6 +8,18 @@ import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
 import { ordersApi, OrderDTO } from '@/api/orders';
 import { paymentsApi, PaymentDetailsDTO } from '@/api/payments';
+import {
+  CreditCardIcon,
+  PixIcon,
+  BikeIcon,
+  CheckCircleIcon,
+  ShieldCheckIcon,
+  ClockIcon,
+  RefreshIcon,
+  LockIcon,
+  AlertTriangleIcon,
+  BanknoteIcon,
+} from '@/components/layout/icons';
 import styles from './checkout.module.css';
 
 function CheckoutPageContent() {
@@ -325,8 +337,9 @@ function CheckoutPageContent() {
 
       <main className={styles.mainContent}>
         <div className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>
-            💳 Finalizar Pagamento
+          <h1 className={styles.pageTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <CreditCardIcon size={24} />
+            <span>Finalizar Pagamento</span>
           </h1>
           <p className={styles.pageSubtitle}>
             Pedido #{order.id.slice(0, 8)} • Conclua sua compra segura
@@ -335,7 +348,9 @@ function CheckoutPageContent() {
 
         {isPaid ? (
           <div className={`${styles.card} ${styles.paidState}`}>
-            <div className={styles.paidIcon}>🎉</div>
+            <div className={styles.paidIcon}>
+              <CheckCircleIcon size={48} style={{ color: '#10b981' }} />
+            </div>
             <h2 className={styles.paidTitle}>Pagamento Confirmado!</h2>
             <p className={styles.paidText}>
               Seu pedido já foi pago e aguarda confirmação do estabelecimento parceiro.
@@ -356,8 +371,10 @@ function CheckoutPageContent() {
                       ? styles.safetyBadgeSafe
                       : styles.safetyBadgeWarning
                   }`}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 >
-                  🛡️ {order.allergenCheckVerdict === 'SAFE' ? 'Verificado Seguro' : 'Atenção Traços'}
+                  <ShieldCheckIcon size={14} />
+                  <span>{order.allergenCheckVerdict === 'SAFE' ? 'Verificado Seguro' : 'Atenção Traços'}</span>
                 </span>
               </div>
 
@@ -412,7 +429,7 @@ function CheckoutPageContent() {
                   }`}
                   onClick={() => setSelectedMethod('PIX')}
                 >
-                  <span style={{ fontSize: '1.5rem' }}>⚡</span>
+                  <PixIcon size={22} />
                   <span>PIX Dinâmico</span>
                   <small style={{ fontSize: '0.75rem', color: 'var(--color-emerald)' }}>
                     Aprovação Imediata
@@ -426,7 +443,7 @@ function CheckoutPageContent() {
                   }`}
                   onClick={() => setSelectedMethod('CREDIT_CARD')}
                 >
-                  <span style={{ fontSize: '1.5rem' }}>💳</span>
+                  <CreditCardIcon size={22} />
                   <span>Cartão</span>
                   <small style={{ fontSize: '0.75rem' }}>Crédito ou Débito</small>
                 </button>
@@ -438,7 +455,7 @@ function CheckoutPageContent() {
                   }`}
                   onClick={() => setSelectedMethod('DELIVERY')}
                 >
-                  <span style={{ fontSize: '1.5rem' }}>🛵</span>
+                  <BikeIcon size={22} />
                   <span>Na Entrega</span>
                   <small style={{ fontSize: '0.75rem' }}>Dinheiro / Maquininha</small>
                 </button>
@@ -459,8 +476,9 @@ function CheckoutPageContent() {
                       />
                     </div>
 
-                    <div className={styles.pixTimer}>
-                      ⏳ Aguardando confirmação do banco em tempo real…
+                    <div className={styles.pixTimer} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      <ClockIcon size={14} />
+                      <span>Aguardando confirmação do banco em tempo real…</span>
                     </div>
 
                     {payment.pixCopyPaste && (
@@ -496,8 +514,14 @@ function CheckoutPageContent() {
                       onClick={() => handleGeneratePix(true)}
                       disabled={processing}
                       title="Clique aqui para atualizar ou gerar um novo QR Code caso tenha expirado ou falhado na leitura"
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                     >
-                      {processing ? 'Atualizando…' : '🔄 Gerar Novamente o QR Code'}
+                      {processing ? 'Atualizando…' : (
+                        <>
+                          <RefreshIcon size={14} />
+                          <span>Gerar Novamente o QR Code</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 ) : (
@@ -510,8 +534,14 @@ function CheckoutPageContent() {
                       className={styles.payButton}
                       onClick={() => handleGeneratePix(false)}
                       disabled={processing}
+                      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                     >
-                      {processing ? 'Gerando…' : `⚡ Gerar Código PIX (R$ ${order.totalAmount.toFixed(2).replace('.', ',')})`}
+                      {processing ? 'Gerando…' : (
+                        <>
+                          <PixIcon size={16} />
+                          <span>Gerar Código PIX (R$ {order.totalAmount.toFixed(2).replace('.', ',')})</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 )
@@ -627,12 +657,19 @@ function CheckoutPageContent() {
                     type="submit"
                     className={styles.payCardSubmitButton}
                     disabled={processing}
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   >
-                    {processing ? 'Processando…' : `🔒 Pagar R$ ${order.totalAmount.toFixed(2).replace('.', ',')} com Cartão`}
+                    {processing ? 'Processando…' : (
+                      <>
+                        <LockIcon size={14} />
+                        <span>Pagar R$ {order.totalAmount.toFixed(2).replace('.', ',')} com Cartão</span>
+                      </>
+                    )}
                   </button>
 
-                  <div className={styles.securityNote}>
-                    🔒 Ambiente criptografado e seguro (PCI-DSS)
+                  <div className={styles.securityNote} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <LockIcon size={13} />
+                    <span>Ambiente criptografado e seguro (PCI-DSS)</span>
                   </div>
                 </form>
               )}
@@ -642,7 +679,9 @@ function CheckoutPageContent() {
                 <div className={styles.deliveryContainer}>
                   {deliveryBlockedReason ? (
                     <div className={styles.blockedAlert}>
-                      <span className={styles.blockedAlertIcon}>⚠️</span>
+                      <span className={styles.blockedAlertIcon}>
+                        <AlertTriangleIcon size={20} />
+                      </span>
                       <div>
                         <strong>Pagamento na Entrega Indisponível</strong>
                         <p style={{ marginTop: '0.35rem', fontSize: '0.85rem', lineHeight: '1.4' }}>
@@ -664,7 +703,7 @@ function CheckoutPageContent() {
                           }`}
                           onClick={() => setDeliveryType('CARD_ON_DELIVERY')}
                         >
-                          <span style={{ fontSize: '1.75rem' }}>💳</span>
+                          <CreditCardIcon size={26} />
                           <span style={{ fontWeight: 700 }}>Maquininha</span>
                           <small style={{ fontSize: '0.75rem', opacity: 0.8 }}>Crédito ou Débito</small>
                         </div>
@@ -675,7 +714,7 @@ function CheckoutPageContent() {
                           }`}
                           onClick={() => setDeliveryType('CASH_ON_DELIVERY')}
                         >
-                          <span style={{ fontSize: '1.75rem' }}>💵</span>
+                          <BanknoteIcon size={26} />
                           <span style={{ fontWeight: 700 }}>Dinheiro</span>
                           <small style={{ fontSize: '0.75rem', opacity: 0.8 }}>Com ou sem troco</small>
                         </div>
@@ -706,8 +745,9 @@ function CheckoutPageContent() {
                       )}
 
                       {order.totalAmount <= 0 ? (
-                        <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#fca5a5', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center' }}>
-                          ⚠️ Este pedido possui valor R$ 0,00 e não pode ser finalizado.
+                        <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#fca5a5', fontSize: '0.85rem', marginBottom: '1rem', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                          <AlertTriangleIcon size={14} />
+                          <span>Este pedido possui valor R$ 0,00 e não pode ser finalizado.</span>
                         </div>
                       ) : (
                         <button
@@ -715,15 +755,22 @@ function CheckoutPageContent() {
                           className={styles.payButton}
                           onClick={handleCheckoutDelivery}
                           disabled={processing || order.totalAmount <= 0}
+                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                         >
-                          {processing
-                            ? 'Confirmando pedido…'
-                            : `🛵 Confirmar Pedido na Entrega (R$ ${order.totalAmount.toFixed(2).replace('.', ',')})`}
+                          {processing ? (
+                            'Confirmando pedido…'
+                          ) : (
+                            <>
+                              <BikeIcon size={16} />
+                              <span>Confirmar Pedido na Entrega (R$ {order.totalAmount.toFixed(2).replace('.', ',')})</span>
+                            </>
+                          )}
                         </button>
                       )}
 
-                      <div className={styles.securityNote}>
-                        🛡️ Ao confirmar, o estabelecimento iniciará o preparo imediatamente. Pagamento no ato da entrega.
+                      <div className={styles.securityNote} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                        <ShieldCheckIcon size={14} />
+                        <span>Ao confirmar, o estabelecimento iniciará o preparo imediatamente. Pagamento no ato da entrega.</span>
                       </div>
                     </>
                   )}

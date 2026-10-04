@@ -11,6 +11,15 @@ import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
+import {
+  PlusIcon,
+  StoreIcon,
+  MapPinIcon,
+  PhoneIcon,
+  BriefcaseIcon,
+  ChefHatIcon,
+  BanknoteIcon,
+} from '@/components/layout/icons';
 import styles from './partner.module.css';
 
 export default function PartnerListPage() {
@@ -77,15 +86,15 @@ export default function PartnerListPage() {
             <h1 className={styles.title}>Meus Estabelecimentos</h1>
             <p className={styles.subtitle}>Gerencie suas marcas, informações e catálogo no ecossistema CeLiLac.</p>
           </div>
-          <Link href="/partner/register" className={`${styles.btn} ${styles.btnPrimary}`} style={{ textDecoration: 'none' }}>
-            ➕ Novo Estabelecimento
+          <Link href="/partner/register" className={`${styles.btn} ${styles.btnPrimary}`} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            <PlusIcon size={16} /> Novo Estabelecimento
           </Link>
         </div>
 
         <div className={styles.grid}>
           {partners.length === 0 ? (
             <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>🏪</span>
+              <span className={styles.emptyIcon}><StoreIcon size={44} /></span>
               <h2>Nenhum estabelecimento comercial cadastrado</h2>
               <p>Cadastre sua marca para exibir produtos e conquistar clientes com restrições alimentares.</p>
               <Link href="/partner/register" className={`${styles.btn} ${styles.btnPrimary}`} style={{ marginTop: '1rem', textDecoration: 'none' }}>
@@ -103,9 +112,9 @@ export default function PartnerListPage() {
                   <p className={styles.partnerDescription}>{partner.description || 'Sem descrição cadastrada.'}</p>
                   
                   <div className={styles.partnerMeta}>
-                    <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
-                    <span className={styles.metaItem}>📞 {partner.phone}</span>
-                    <span className={styles.metaItem}>💼 {translatePartnerType(partner.type)}</span>
+                    <span className={styles.metaItem}><MapPinIcon size={14} /> {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
+                    <span className={styles.metaItem}><PhoneIcon size={14} /> {partner.phone}</span>
+                    <span className={styles.metaItem}><BriefcaseIcon size={14} /> {translatePartnerType(partner.type)}</span>
                   </div>
 
                   {partner.approvalStatus === 'REJECTED' && partner.rejectionReason && (
@@ -125,11 +134,11 @@ export default function PartnerListPage() {
                   <Link href={`/partner/${partner.id}`} className={`${styles.btn} ${styles.btnPrimary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
                     Gerenciar
                   </Link>
-                  <Link href={`/partner/orders?partnerId=${partner.id}`} className={`${styles.btn} ${styles.btnSecondary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
-                    🍳 Pedidos
+                  <Link href={`/partner/orders?partnerId=${partner.id}`} className={`${styles.btn} ${styles.btnSecondary}`} style={{ textDecoration: 'none', textAlign: 'center', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                    <ChefHatIcon size={14} /> Pedidos
                   </Link>
-                  <Link href={`/partner/financial?partnerId=${partner.id}`} className={`${styles.btn} ${styles.btnSecondary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
-                    💰 Financeiro
+                  <Link href={`/partner/financial?partnerId=${partner.id}`} className={`${styles.btn} ${styles.btnSecondary}`} style={{ textDecoration: 'none', textAlign: 'center', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}>
+                    <BanknoteIcon size={14} /> Financeiro
                   </Link>
                   <Link href={`/partner/${partner.id}/edit`} className={`${styles.btn} ${styles.btnSecondary}`} style={{ textDecoration: 'none', textAlign: 'center' }}>
                     Editar Dados

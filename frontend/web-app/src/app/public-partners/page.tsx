@@ -8,12 +8,24 @@ import { catalogApi, ProductSummary } from '@/api/catalog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Header } from '@/components/layout/Header';
+import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
+import {
+  BuildingIcon,
+  PackageIcon,
+  SearchIcon,
+  InfoIcon,
+  MapPinIcon,
+  BriefcaseIcon,
+  AlertTriangleIcon,
+  CookieIcon,
+  ShoppingCartIcon,
+} from '@/components/layout/icons';
 import styles from './public-partners.module.css';
 
 function PublicPartnersContent() {
   const { theme, toggleTheme } = useTheme();
-  const { token } = useAuth();
+  const { token, isAuthenticated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -23,6 +35,12 @@ function PublicPartnersContent() {
   const [products, setProducts] = useState<ProductSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
+
+  const handleTabChange = (newTab: 'partners' | 'products') => {
+    setActiveTab(newTab);
+    setQuery('');
+    router.replace(`/public-partners?tab=${newTab}`, { scroll: false });
+  };
 
   useEffect(() => {
     const tabParam = searchParams.get('tab');
@@ -95,33 +113,31 @@ function PublicPartnersContent() {
             role="tab"
             aria-selected={activeTab === 'partners'}
             className={`${styles.tabBtn} ${activeTab === 'partners' ? styles.tabBtnActive : ''}`}
-            onClick={() => {
-              setActiveTab('partners');
-              setQuery('');
-            }}
+            onClick={() => handleTabChange('partners')}
             id="tab-filter-partners"
           >
-            🏢 Estabelecimentos ({partners.length})
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <BuildingIcon size={16} /> Estabelecimentos ({partners.length})
+            </span>
           </button>
           <button
             type="button"
             role="tab"
             aria-selected={activeTab === 'products'}
             className={`${styles.tabBtn} ${activeTab === 'products' ? styles.tabBtnActive : ''}`}
-            onClick={() => {
-              setActiveTab('products');
-              setQuery('');
-            }}
+            onClick={() => handleTabChange('products')}
             id="tab-filter-products"
           >
-            📦 Produtos Ofertados ({products.length})
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <PackageIcon size={16} /> Produtos Ofertados ({products.length})
+            </span>
           </button>
         </div>
 
         {/* Buscador com metadados adaptativos */}
         <div className={styles.searchSection}>
           <div className={styles.searchCard}>
-            <span className={styles.searchIcon}>🔍</span>
+            <span className={styles.searchIcon}><SearchIcon size={18} /></span>
             <input
               type="text"
               className={styles.input}
@@ -187,15 +203,12 @@ function PublicPartnersContent() {
               flexWrap: 'wrap',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.88rem', color: 'var(--color-text)' }}>
-                <span>💡</span>
+                <InfoIcon size={16} style={{ color: 'var(--color-primary, #10b981)', flexShrink: 0 }} />
                 <span>Procurando itens específicos? Você pode navegar por todos os produtos homologados cadastrados de uma vez só.</span>
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  setActiveTab('products');
-                  setQuery('');
-                }}
+                onClick={() => handleTabChange('products')}
                 className="btn btn-em"
                 style={{
                   fontSize: '0.82rem',
@@ -207,14 +220,14 @@ function PublicPartnersContent() {
                   gap: '6px',
                 }}
               >
-                📦 Ver Todos os Produtos ({products.length})
+                <PackageIcon size={15} /> Ver Todos os Produtos ({products.length})
               </button>
             </div>
 
             <div className={styles.partnersGrid}>
             {filteredPartners.length === 0 ? (
               <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>🔍</span>
+                <span className={styles.emptyIcon}><SearchIcon size={44} /></span>
                 <h2>Nenhum parceiro encontrado</h2>
                 <p>Tente alterar sua busca para localizar outros estabelecimentos homologados.</p>
               </div>
@@ -242,13 +255,13 @@ function PublicPartnersContent() {
                     <p className={styles.partnerDescription}>{partner.description || 'Sem descrição cadastrada.'}</p>
 
                     <div className={styles.partnerMeta}>
-                      <span className={styles.metaItem}>📍 {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
-                      <span className={styles.metaItem}>💼 {translatePartnerType(partner.type)}</span>
+                      <span className={styles.metaItem}><MapPinIcon size={14} /> {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
+                      <span className={styles.metaItem}><BriefcaseIcon size={14} /> {translatePartnerType(partner.type)}</span>
                     </div>
 
                     {partner.operationalStatus === 'TEMPORARILY_CLOSED' && (
                       <div className={styles.statusNotice}>
-                        <span>⚠️</span>
+                        <AlertTriangleIcon size={15} style={{ color: '#f59e0b' }} />
                         <strong>Temporariamente Fechado</strong>
                       </div>
                     )}
@@ -261,7 +274,7 @@ function PublicPartnersContent() {
                       onClick={() => router.push(`/public-partners/${partner.id}`)}
                       id={`view-public-partner-${partner.id}`}
                     >
-                      🔍 Ver Perfil Completo
+                      <SearchIcon size={15} /> Ver Perfil Completo
                     </button>
                   </div>
                 </section>
@@ -274,14 +287,17 @@ function PublicPartnersContent() {
           <div className={styles.productsGrid}>
             {filteredProducts.length === 0 ? (
               <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>🍪</span>
+                <span className={styles.emptyIcon}><CookieIcon size={44} /></span>
                 <h2>Nenhum produto encontrado</h2>
                 <p>Tente buscar por outro termo, ingrediente ou categoria de alimento seguro.</p>
               </div>
             ) : (
               filteredProducts.map((product) => {
                 const partnerName = product.partnerId ? partnerMap.get(product.partnerId) : null;
-                const unitPrice = (product as any).price ? Number((product as any).price) : 0;
+                const rawPrice = (product as any).price;
+                const unitPrice = rawPrice !== undefined && rawPrice !== null && !isNaN(Number(rawPrice))
+                  ? Number(rawPrice)
+                  : 0;
 
                 return (
                   <section key={product.id} className={styles.productCard}>
@@ -293,7 +309,7 @@ function PublicPartnersContent() {
                           </span>
                           <h2 className={styles.productTitle}>
                             <Link
-                              href={`/products/${product.id}`}
+                              href={`/products/${product.id}?from=public-partners`}
                               style={{ textDecoration: 'none', color: 'inherit' }}
                             >
                               {product.name}
@@ -312,9 +328,21 @@ function PublicPartnersContent() {
                       <div className={styles.productPartnerTag}>
                         <span>Marca: <strong>{product.brand}</strong></span>
                         {partnerName && (
-                          <span> · 🏢 <strong>{partnerName}</strong></span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}> · <BuildingIcon size={13} /> <strong>{partnerName}</strong></span>
                         )}
                       </div>
+
+                      {/* Selo de compatibilidade personalizada com o perfil do usuário logado */}
+                      {isAuthenticated && product.compatibilityReport && (
+                        <div style={{ marginBottom: '0.65rem' }}>
+                          <RiskBadge
+                            riskLevel={product.compatibilityReport.riskLevel}
+                            confidenceLevel={product.compatibilityReport.confidenceLevel}
+                            hasDivergence={product.compatibilityReport.hasDivergence}
+                            showLabel={true}
+                          />
+                        </div>
+                      )}
 
                       <div className={styles.productBadges}>
                         {product.hasGluten ? (
@@ -335,6 +363,15 @@ function PublicPartnersContent() {
                           }
                           return <span className={styles.badgeApproved}>Sem Leite</span>;
                         })()}
+
+                        {(() => {
+                          const cross = (product.crossContamination || '').toLowerCase();
+                          const nutTerms = ['castanha', 'amendoim', 'nozes', 'amêndoa', 'pistache', 'avelã', 'macadâmia'];
+                          if (nutTerms.some((t) => cross.includes(t))) {
+                            return <span className={styles.badgePending} title={product.crossContamination}>Traços: Castanhas/Amendoim</span>;
+                          }
+                          return null;
+                        })()}
                       </div>
 
                       <p className={styles.productIngredients} title={product.ingredients}>
@@ -342,21 +379,43 @@ function PublicPartnersContent() {
                       </p>
                     </div>
 
-                    <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-                      <Link
-                        href={`/products/${product.id}`}
-                        className={styles.btnPrimary}
-                        style={{
-                          textDecoration: 'none',
-                          padding: '0.55rem 1rem',
-                          fontSize: '0.875rem',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                        }}
-                      >
-                        🛒 Ver Detalhes / Comprar
-                      </Link>
+                    <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Valor unitário
+                        </span>
+                        {unitPrice > 0 ? (
+                          <strong style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-emerald, #10b981)' }}>
+                            R$ {unitPrice.toFixed(2).replace('.', ',')}
+                          </strong>
+                        ) : (
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Sob Consulta</span>
+                        )}
+                      </div>
+
+                      {(() => {
+                        const isBlocked = isAuthenticated && product.compatibilityReport?.riskLevel === 'BLOCKED';
+                        return (
+                          <Link
+                            href={`/products/${product.id}?from=public-partners`}
+                            className={styles.btnPrimary}
+                            style={{
+                              textDecoration: 'none',
+                              padding: '0.55rem 1rem',
+                              fontSize: '0.875rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                              width: 'auto',
+                              background: isBlocked ? 'rgba(239, 68, 68, 0.12)' : undefined,
+                              color: isBlocked ? '#ef4444' : undefined,
+                              border: isBlocked ? '1px solid #ef4444' : undefined,
+                            }}
+                          >
+                            <ShoppingCartIcon size={15} /> {isBlocked ? 'Ver Detalhes (Incompatível)' : 'Ver Detalhes / Comprar'}
+                          </Link>
+                        );
+                      })()}
                     </div>
                   </section>
                 );

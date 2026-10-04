@@ -8,6 +8,14 @@ import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
 import { ordersApi, OrderDTO } from '@/api/orders';
 import { apiClient } from '@/api/client';
+import {
+  PackageIcon,
+  ChefHatIcon,
+  BanknoteIcon,
+  CreditCardIcon,
+  PixIcon,
+  InfoIcon,
+} from '@/components/layout/icons';
 import styles from './orders.module.css';
 
 function MyOrdersContent() {
@@ -140,8 +148,9 @@ function MyOrdersContent() {
 
       <main className={styles.mainContent}>
         <div className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>
-            📦 Meus Pedidos
+          <h1 className={styles.pageTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <PackageIcon size={24} />
+            <span>Meus Pedidos</span>
           </h1>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
             {(userRole === 'PARCEIRO' || userRole === 'ADMIN') && (
@@ -149,8 +158,10 @@ function MyOrdersContent() {
                 href="/partner/orders"
                 className={styles.partnerActionBtn}
                 title="Acessar painel e gerenciar pedidos recebidos pela sua cozinha"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                <span>🍳</span> Pedidos da Cozinha
+                <ChefHatIcon size={16} />
+                <span>Pedidos da Cozinha</span>
               </Link>
             )}
             <Link href="/public-partners" className={styles.payActionBtn}>
@@ -181,7 +192,9 @@ function MyOrdersContent() {
                   textAlign: 'center',
                 }}
               >
-                <div style={{ fontSize: '1.75rem', marginBottom: '0.4rem' }}>🍳</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.5rem' }}>
+                  <ChefHatIcon size={32} style={{ color: '#f59e0b' }} />
+                </div>
                 <div style={{ fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.35rem', fontSize: '1rem' }}>
                   Você possui uma conta de parceiro comercial
                 </div>
@@ -191,8 +204,10 @@ function MyOrdersContent() {
                 <Link
                   href="/partner/orders"
                   className={styles.partnerActionBtn}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <span>🍳</span> Ir para Pedidos da Cozinha
+                  <ChefHatIcon size={16} />
+                  <span>Ir para Pedidos da Cozinha</span>
                 </Link>
               </div>
             )}
@@ -228,13 +243,25 @@ function MyOrdersContent() {
                       {order.paymentMethod && (
                         <div style={{ marginTop: '0.25rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
                           {order.paymentMethod === 'CASH_ON_DELIVERY' ? (
-                            <span>💵 Dinheiro na entrega {order.changeFor ? `(Troco p/ R$ ${Number(order.changeFor).toFixed(2).replace('.', ',')})` : '(Sem troco)'}</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <BanknoteIcon size={14} />
+                              <span>Dinheiro na entrega {order.changeFor ? `(Troco p/ R$ ${Number(order.changeFor).toFixed(2).replace('.', ',')})` : '(Sem troco)'}</span>
+                            </span>
                           ) : order.paymentMethod === 'CARD_ON_DELIVERY' ? (
-                            <span>💳 Maquininha na entrega</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <CreditCardIcon size={14} />
+                              <span>Maquininha na entrega</span>
+                            </span>
                           ) : order.paymentMethod === 'PIX' ? (
-                            <span>⚡ PIX</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <PixIcon size={14} />
+                              <span>PIX</span>
+                            </span>
                           ) : (
-                            <span>💳 Cartão de Crédito</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <CreditCardIcon size={14} />
+                              <span>Cartão de Crédito</span>
+                            </span>
                           )}
                         </div>
                       )}
@@ -267,20 +294,26 @@ function MyOrdersContent() {
                           <Link
                             href={`/checkout/${order.id}?method=PIX`}
                             className={styles.payActionBtn}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                           >
-                            ⚡ Pagar com PIX
+                            <PixIcon size={14} />
+                            <span>Pagar com PIX</span>
                           </Link>
                           <Link
                             href={`/checkout/${order.id}?method=CREDIT_CARD`}
                             className={styles.payCardActionBtn}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                           >
-                            💳 Pagar com Cartão
+                            <CreditCardIcon size={14} />
+                            <span>Pagar com Cartão</span>
                           </Link>
                           <Link
                             href={`/checkout/${order.id}?method=DELIVERY`}
                             className={styles.payDeliveryActionBtn}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                           >
-                            💵 Pagar na Entrega
+                            <BanknoteIcon size={14} />
+                            <span>Pagar na Entrega</span>
                           </Link>
                         </>
                       )}
@@ -313,8 +346,11 @@ function MyOrdersContent() {
             </p>
 
             {cancellingOrder.status === 'PAID' && (
-              <div className={styles.refundAlert}>
-                💡 <strong>Estorno Imediato:</strong> Como o parceiro ainda não confirmou o início da produção, o valor integral de <strong>R$ {cancellingOrder.totalAmount.toFixed(2).replace('.', ',')}</strong> será reembolsado automaticamente.
+              <div className={styles.refundAlert} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <InfoIcon size={18} style={{ color: '#38bdf8', flexShrink: 0, marginTop: 2 }} />
+                <span>
+                  <strong>Estorno Imediato:</strong> Como o parceiro ainda não confirmou o início da produção, o valor integral de <strong>R$ {cancellingOrder.totalAmount.toFixed(2).replace('.', ',')}</strong> será reembolsado automaticamente.
+                </span>
               </div>
             )}
 

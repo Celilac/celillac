@@ -2,6 +2,7 @@
 // frontend/web-app/src/components/common/NutritionalInfoAccordion.tsx
 import React, { useState } from 'react';
 import { NutritionalInfo } from '@/api/catalog';
+import { ChartBarIcon } from '@/components/layout/icons';
 
 interface NutritionalInfoAccordionProps {
   value?: NutritionalInfo;
@@ -61,7 +62,7 @@ export const NutritionalInfoAccordion: React.FC<NutritionalInfoAccordionProps> =
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '20px' }}>📊</span>
+          <ChartBarIcon size={20} style={{ color: '#38bdf8' }} />
           <div>
             <span style={{ fontSize: '14px', fontWeight: 700, display: 'block' }}>
               Tabela Nutricional & Porção (Opcional - RDC 429 ANVISA)

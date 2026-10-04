@@ -239,6 +239,32 @@ export async function testDatabaseConnection(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_product_images_order ON product_images(product_id, display_order);
     `, 'Tabela products e product_images');
 
+    // 6.1 Sincronização de Preços do Catálogo / Seed (FEAT-095 / Resiliência de Catálogo)
+    await executeSafeDdl(client, `
+      UPDATE products SET price = 18.90 WHERE id = 'b0000001-0000-0000-0000-000000000001' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 12.50 WHERE id = 'b0000001-0000-0000-0000-000000000002' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 42.00 WHERE id = 'b0000001-0000-0000-0000-000000000003' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 16.90 WHERE id = 'b0000002-0000-0000-0000-000000000001' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 24.50 WHERE id = 'b0000002-0000-0000-0000-000000000002' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 26.90 WHERE id = 'b0000002-0000-0000-0000-000000000003' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 19.90 WHERE id = 'b0000003-0000-0000-0000-000000000001' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 14.90 WHERE id = 'b0000003-0000-0000-0000-000000000002' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 8.50  WHERE id = 'b0000003-0000-0000-0000-000000000003' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 32.00 WHERE id = 'b0000003-0000-0000-0000-000000000004' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 11.90 WHERE id = 'b0000004-0000-0000-0000-000000000001' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 15.00 WHERE id = 'b0000004-0000-0000-0000-000000000002' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 13.50 WHERE id = 'b0000004-0000-0000-0000-000000000003' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 21.00 WHERE id = 'b0000004-0000-0000-0000-000000000004' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 23.00 WHERE id = 'b0000004-0000-0000-0000-000000000005' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 35.00 WHERE id = 'b0000005-0000-0000-0000-000000000001' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 49.90 WHERE id = 'b0000006-0000-0000-0000-000000000001' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 38.00 WHERE id = 'b0000007-0000-0000-0000-000000000001' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 29.90 WHERE id = 'b0000008-0000-0000-0000-000000000001' AND (price IS NULL OR price = 0);
+      UPDATE products SET price = 35.00 WHERE id = 'b0000008-0000-0000-0000-000000000002' AND (price IS NULL OR price = 0);
+      UPDATE products SET partner_id = 'c0000001-0000-0000-0000-000000000003' WHERE id = 'b0000002-0000-0000-0000-000000000001' AND partner_id IS NULL;
+      UPDATE products SET partner_id = 'c0000001-0000-0000-0000-000000000003' WHERE id = 'b0000004-0000-0000-0000-000000000001' AND partner_id IS NULL;
+    `, 'Sincronização de Preços do Catálogo');
+
     // 7. Certificações de Produtos
     await executeSafeDdl(client, `
       CREATE TABLE IF NOT EXISTS product_certifications (
@@ -427,6 +453,29 @@ export async function testDatabaseConnection(): Promise<void> {
       ) AS default_cats(name, normalized_name)
       WHERE NOT EXISTS (SELECT 1 FROM product_categories LIMIT 1);
     `, 'Seed de categorias padrão');
+
+    // 13. Sincronização e Vínculo de Produtos do Catálogo a Parceiros Homologados
+    await executeSafeDdl(client, `
+      UPDATE products 
+      SET partner_id = 'c0000001-0000-0000-0000-000000000002' 
+      WHERE partner_id IS NULL AND id IN (
+        'b0000001-0000-0000-0000-000000000003',
+        'b0000002-0000-0000-0000-000000000002',
+        'b0000007-0000-0000-0000-000000000001',
+        'b0000003-0000-0000-0000-000000000002',
+        'b0000004-0000-0000-0000-000000000002',
+        'b0000004-0000-0000-0000-000000000003',
+        'b0000003-0000-0000-0000-000000000003',
+        'b0000005-0000-0000-0000-000000000001'
+      );
+
+      UPDATE products 
+      SET partner_id = 'c0000001-0000-0000-0000-000000000001' 
+      WHERE partner_id IS NULL AND id IN (
+        'b0000003-0000-0000-0000-000000000001',
+        'b0000006-0000-0000-0000-000000000001'
+      );
+    `, 'Vínculo de produtos comerciais a parceiros homologados');
 
     console.log('[Database]: Conexão e sincronização de esquema com PostgreSQL concluídas com sucesso.');
   } finally {

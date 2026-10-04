@@ -8,6 +8,19 @@ import { useToast } from '@/hooks/useToast';
 import { apiClient, HttpError } from '@/api/client';
 import { categoryApi, CategorySummary, ReviewCategoryInput } from '@/api/category';
 import { Header } from '@/components/layout/Header';
+import {
+  ClockIcon,
+  BanIcon,
+  TagIcon,
+  StoreIcon,
+  AlertTriangleIcon,
+  GlobeIcon,
+  LockIcon,
+  XCircleIcon,
+  CheckCircleIcon,
+  SearchIcon,
+  StatusDot,
+} from '@/components/layout/icons';
 import styles from '../../partner/partner.module.css';
 
 export default function AdminCategoriesPage() {
@@ -139,7 +152,7 @@ export default function AdminCategoriesPage() {
         <Header />
         <main className={styles.container}>
           <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}>⏳</span>
+            <span className={styles.emptyIcon}><ClockIcon size={44} /></span>
             <h2>Verificando permissões administrativas…</h2>
           </div>
         </main>
@@ -153,7 +166,7 @@ export default function AdminCategoriesPage() {
         <Header />
         <main className={styles.container}>
           <div className={styles.emptyState} style={{ borderColor: 'var(--color-danger, #ef4444)' }}>
-            <span className={styles.emptyIcon}>🚫</span>
+            <span className={styles.emptyIcon}><BanIcon size={44} /></span>
             <h2 style={{ color: 'var(--color-danger, #ef4444)' }}>403 Forbidden — Acesso Proibido</h2>
             <p>Você não tem autorização para acessar o painel de moderação de categorias.</p>
             <div style={{ marginTop: '1.5rem' }}>
@@ -194,7 +207,7 @@ export default function AdminCategoriesPage() {
         <div className={styles.header} style={{ marginBottom: '1.5rem' }}>
           <div className={styles.titleArea}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontSize: '2rem' }}>🏷️</span>
+              <TagIcon size={32} style={{ color: 'var(--color-primary)' }} />
               <div>
                 <h1 className={styles.title} style={{ margin: 0 }}>Moderação de Categorias</h1>
                 <p className={styles.subtitle} style={{ margin: '4px 0 0 0' }}>
@@ -204,11 +217,11 @@ export default function AdminCategoriesPage() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <Link href="/admin/partners" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
-              🏪 Moderação de Parceiros
+            <Link href="/admin/partners" className="btn btn-secondary" style={{ fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <StoreIcon size={15} /> Moderação de Parceiros
             </Link>
-            <Link href="/admin/reports" className="btn btn-secondary" style={{ fontSize: '0.85rem' }}>
-              🚨 Denúncias
+            <Link href="/admin/reports" className="btn btn-secondary" style={{ fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <AlertTriangleIcon size={15} /> Denúncias
             </Link>
           </div>
         </div>
@@ -238,8 +251,8 @@ export default function AdminCategoriesPage() {
               background: countPending > 0 ? 'rgba(234, 179, 8, 0.05)' : undefined,
             }}
           >
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-warning, #eab308)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              ⏳ Pendentes
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-warning, #eab308)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <ClockIcon size={13} /> Pendentes
             </span>
             <strong style={{ fontSize: '1.75rem', display: 'block', marginTop: '0.25rem', color: 'var(--color-warning, #eab308)' }}>
               {countPending}
@@ -247,8 +260,8 @@ export default function AdminCategoriesPage() {
           </div>
 
           <div className={styles.card} style={{ padding: '1rem', textAlign: 'center', borderLeft: '4px solid #3b82f6' }}>
-            <span style={{ fontSize: '0.8rem', color: '#3b82f6', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              🌍 Aprovadas Globais
+            <span style={{ fontSize: '0.8rem', color: '#3b82f6', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <GlobeIcon size={13} /> Aprovadas Globais
             </span>
             <strong style={{ fontSize: '1.75rem', display: 'block', marginTop: '0.25rem', color: '#3b82f6' }}>
               {countApprovedGlobal}
@@ -256,8 +269,8 @@ export default function AdminCategoriesPage() {
           </div>
 
           <div className={styles.card} style={{ padding: '1rem', textAlign: 'center', borderLeft: '4px solid var(--color-primary, #059669)' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-primary, #059669)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              🔒 Aprovadas Restritas
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-primary, #059669)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <LockIcon size={13} /> Aprovadas Restritas
             </span>
             <strong style={{ fontSize: '1.75rem', display: 'block', marginTop: '0.25rem', color: 'var(--color-primary, #059669)' }}>
               {countApprovedRestricted}
@@ -265,8 +278,8 @@ export default function AdminCategoriesPage() {
           </div>
 
           <div className={styles.card} style={{ padding: '1rem', textAlign: 'center', borderLeft: '4px solid var(--color-danger, #ef4444)' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-danger, #ef4444)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              ❌ Rejeitadas
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-danger, #ef4444)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <XCircleIcon size={13} /> Rejeitadas
             </span>
             <strong style={{ fontSize: '1.75rem', display: 'block', marginTop: '0.25rem', color: 'var(--color-danger, #ef4444)' }}>
               {countRejected}
@@ -299,25 +312,25 @@ export default function AdminCategoriesPage() {
               type="button"
               className={statusFilter === 'PENDING_APPROVAL' ? 'btn btn-primary' : 'btn btn-secondary'}
               onClick={() => setStatusFilter('PENDING_APPROVAL')}
-              style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+              style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
             >
-              ⏳ Pendentes ({countPending})
+              <ClockIcon size={14} /> Pendentes ({countPending})
             </button>
             <button
               type="button"
               className={statusFilter === 'APPROVED' ? 'btn btn-primary' : 'btn btn-secondary'}
               onClick={() => setStatusFilter('APPROVED')}
-              style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+              style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
             >
-              ✅ Aprovadas ({countApprovedGlobal + countApprovedRestricted})
+              <CheckCircleIcon size={14} /> Aprovadas ({countApprovedGlobal + countApprovedRestricted})
             </button>
             <button
               type="button"
               className={statusFilter === 'REJECTED' ? 'btn btn-primary' : 'btn btn-secondary'}
               onClick={() => setStatusFilter('REJECTED')}
-              style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+              style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
             >
-              ❌ Rejeitadas ({countRejected})
+              <XCircleIcon size={14} /> Rejeitadas ({countRejected})
             </button>
           </div>
 
@@ -325,7 +338,7 @@ export default function AdminCategoriesPage() {
           <div style={{ minWidth: '260px', flex: '0 1 320px' }}>
             <input
               type="text"
-              placeholder="🔍 Buscar por nome da categoria…"
+              placeholder="Buscar por nome da categoria…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={styles.input}
@@ -337,12 +350,12 @@ export default function AdminCategoriesPage() {
         {/* Lista de Categorias */}
         {loading ? (
           <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}>⏳</span>
+            <ClockIcon size={44} style={{ color: 'var(--color-primary)' }} />
             <h2>Carregando categorias…</h2>
           </div>
         ) : filteredCategories.length === 0 ? (
           <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}>🏷️</span>
+            <TagIcon size={44} style={{ color: 'var(--color-text-muted)' }} />
             <h2>Nenhuma categoria encontrada</h2>
             <p>Nenhuma categoria corresponde ao filtro selecionado.</p>
           </div>
@@ -379,18 +392,18 @@ export default function AdminCategoriesPage() {
                         
                         {/* Status Badge */}
                         {isPending && (
-                          <span className={`${styles.badge} ${styles.badgePending}`}>
-                            ⏳ Pendente de Moderação
+                          <span className={`${styles.badge} ${styles.badgePending}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <StatusDot color="yellow" size={7} /> Pendente de Moderação
                           </span>
                         )}
                         {isApproved && (
-                          <span className={`${styles.badge} ${styles.badgeApproved}`}>
-                            ✅ Aprovada
+                          <span className={`${styles.badge} ${styles.badgeApproved}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <StatusDot color="green" size={7} /> Aprovada
                           </span>
                         )}
                         {isRejected && (
-                          <span className={`${styles.badge} ${styles.badgeDanger}`}>
-                            ❌ Rejeitada
+                          <span className={`${styles.badge} ${styles.badgeDanger}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <StatusDot color="red" size={7} /> Rejeitada
                           </span>
                         )}
 
@@ -405,9 +418,12 @@ export default function AdminCategoriesPage() {
                               background: 'rgba(59, 130, 246, 0.15)',
                               color: '#3b82f6',
                               border: '1px solid rgba(59, 130, 246, 0.3)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
                             }}
                           >
-                            🌍 Visibilidade Global (Pública)
+                            <GlobeIcon size={12} /> Visibilidade Global (Pública)
                           </span>
                         ) : (
                           <span
@@ -419,9 +435,12 @@ export default function AdminCategoriesPage() {
                               background: 'rgba(234, 179, 8, 0.12)',
                               color: 'var(--color-warning, #eab308)',
                               border: '1px solid rgba(234, 179, 8, 0.3)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
                             }}
                           >
-                            🔒 Restrita ao Parceiro Criador
+                            <LockIcon size={12} /> Restrita ao Parceiro Criador
                           </span>
                         )}
                       </div>
@@ -460,7 +479,7 @@ export default function AdminCategoriesPage() {
                             : 'Torna a categoria pública para todos os parceiros e clientes'
                         }
                       >
-                        🌍 {isApproved && isGlobal ? 'Global Ativa' : 'Tornar Global'}
+                        <GlobeIcon size={14} /> {isApproved && isGlobal ? 'Global Ativa' : 'Tornar Global'}
                       </button>
 
                       <button
@@ -482,7 +501,7 @@ export default function AdminCategoriesPage() {
                             : 'Aprova apenas para o parceiro criador utilizar'
                         }
                       >
-                        🔒 {isApproved && !isGlobal ? 'Restrita Ativa' : 'Aprovar Restrita'}
+                        <LockIcon size={14} /> {isApproved && !isGlobal ? 'Restrita Ativa' : 'Aprovar Restrita'}
                       </button>
 
                       {!isRejected && (
@@ -507,7 +526,7 @@ export default function AdminCategoriesPage() {
                             cursor: 'pointer',
                           }}
                         >
-                          ❌ Rejeitar
+                          <XCircleIcon size={14} /> Rejeitar
                         </button>
                       )}
                     </div>
@@ -549,8 +568,8 @@ export default function AdminCategoriesPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className={styles.modalHeader}>
-                <h3 id="reject-modal-title" className={styles.modalTitle}>
-                  ❌ Rejeitar Categoria
+                <h3 id="reject-modal-title" className={styles.modalTitle} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <XCircleIcon size={18} style={{ color: 'var(--color-danger, #ef4444)' }} /> Rejeitar Categoria
                 </h3>
                 <button
                   ref={rejectCloseRef}
