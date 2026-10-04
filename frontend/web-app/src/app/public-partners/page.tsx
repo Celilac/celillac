@@ -8,6 +8,7 @@ import { catalogApi, ProductSummary } from '@/api/catalog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Header } from '@/components/layout/Header';
+import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
 import {
   BuildingIcon,
@@ -24,7 +25,7 @@ import styles from './public-partners.module.css';
 
 function PublicPartnersContent() {
   const { theme, toggleTheme } = useTheme();
-  const { token } = useAuth();
+  const { token, isAuthenticated } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -331,6 +332,18 @@ function PublicPartnersContent() {
                         )}
                       </div>
 
+                      {/* Selo de compatibilidade personalizada com o perfil do usuário logado */}
+                      {isAuthenticated && product.compatibilityReport && (
+                        <div style={{ marginBottom: '0.65rem' }}>
+                          <RiskBadge
+                            riskLevel={product.compatibilityReport.riskLevel}
+                            confidenceLevel={product.compatibilityReport.confidenceLevel}
+                            hasDivergence={product.compatibilityReport.hasDivergence}
+                            showLabel={true}
+                          />
+                        </div>
+                      )}
+
                       <div className={styles.productBadges}>
                         {product.hasGluten ? (
                           <span className={styles.badgeRejected}>Contém Glúten</span>
@@ -349,6 +362,15 @@ function PublicPartnersContent() {
                             return <span className={styles.badgePending}>Traços de Leite</span>;
                           }
                           return <span className={styles.badgeApproved}>Sem Leite</span>;
+                        })()}
+
+                        {(() => {
+                          const cross = (product.crossContamination || '').toLowerCase();
+                          const nutTerms = ['castanha', 'amendoim', 'nozes', 'amêndoa', 'pistache', 'avelã', 'macadâmia'];
+                          if (nutTerms.some((t) => cross.includes(t))) {
+                            return <span className={styles.badgePending} title={product.crossContamination}>Traços: Castanhas/Amendoim</span>;
+                          }
+                          return null;
                         })()}
                       </div>
 
@@ -371,21 +393,29 @@ function PublicPartnersContent() {
                         )}
                       </div>
 
-                      <Link
-                        href={`/products/${product.id}?from=public-partners`}
-                        className={styles.btnPrimary}
-                        style={{
-                          textDecoration: 'none',
-                          padding: '0.55rem 1rem',
-                          fontSize: '0.875rem',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          width: 'auto',
-                        }}
-                      >
-                        <ShoppingCartIcon size={15} /> Ver Detalhes / Comprar
-                      </Link>
+                      {(() => {
+                        const isBlocked = isAuthenticated && product.compatibilityReport?.riskLevel === 'BLOCKED';
+                        return (
+                          <Link
+                            href={`/products/${product.id}?from=public-partners`}
+                            className={styles.btnPrimary}
+                            style={{
+                              textDecoration: 'none',
+                              padding: '0.55rem 1rem',
+                              fontSize: '0.875rem',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                              width: 'auto',
+                              background: isBlocked ? 'rgba(239, 68, 68, 0.12)' : undefined,
+                              color: isBlocked ? '#ef4444' : undefined,
+                              border: isBlocked ? '1px solid #ef4444' : undefined,
+                            }}
+                          >
+                            <ShoppingCartIcon size={15} /> {isBlocked ? 'Ver Detalhes (Incompatível)' : 'Ver Detalhes / Comprar'}
+                          </Link>
+                        );
+                      })()}
                     </div>
                   </section>
                 );
