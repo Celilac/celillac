@@ -48,10 +48,13 @@ function ProductDetailsContent({ params }: PageProps) {
   const searchParams = useSearchParams();
   const toast = useToast();
 
+  const fromParam = searchParams.get('from');
+
   const handleBack = () => {
-    const from = searchParams.get('from');
-    if (from === 'public-partners') {
+    if (fromParam === 'public-partners') {
       router.push('/public-partners?tab=products');
+    } else if (fromParam === 'dashboard') {
+      router.push('/dashboard');
     } else if (typeof window !== 'undefined' && window.history.length > 1) {
       router.back();
     } else {
@@ -59,9 +62,10 @@ function ProductDetailsContent({ params }: PageProps) {
     }
   };
 
-  const fromParam = searchParams.get('from');
   const backLabel = fromParam === 'public-partners'
     ? '← Voltar aos Produtos Ofertados'
+    : fromParam === 'dashboard'
+    ? '← Voltar ao Dashboard'
     : '← Voltar';
 
   const [userRole, setUserRole] = useState<string | null>(null);

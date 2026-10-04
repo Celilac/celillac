@@ -922,7 +922,7 @@ export default function DashboardPage() {
                             </span>
                           </div>
                           <Link
-                            href={`/products/${product.id}`}
+                            href={`/products/${product.id}?from=dashboard`}
                             className="btn btn-ghost"
                             style={{
                               fontSize: 'var(--text-label)',
@@ -1196,7 +1196,7 @@ export default function DashboardPage() {
                     return (
                       <Link
                         key={product.id}
-                        href={`/products/${product.id}`}
+                        href={`/products/${product.id}?from=dashboard`}
                         style={{
                           textDecoration: 'none',
                           color: 'inherit',
