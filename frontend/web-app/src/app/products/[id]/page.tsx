@@ -154,6 +154,11 @@ export default function ProductDetailsPage({ params }: PageProps) {
       return;
     }
 
+    if (unitPrice <= 0) {
+      toast.error('Este produto está com valor sob consulta e não pode ser adquirido diretamente pelo checkout online.');
+      return;
+    }
+
     try {
       setSubmittingOrder(true);
       const res = await ordersApi.createOrder(
@@ -390,7 +395,7 @@ export default function ProductDetailsPage({ params }: PageProps) {
                 </span>
               </div>
 
-              {!isPurchaseBlocked && product.partnerId && (
+              {!isPurchaseBlocked && product.partnerId && unitPrice > 0 && (
                 <div className={styles.quantityGroup}>
                   <span className={styles.quantityLabel}>Quantidade:</span>
                   <div className={styles.quantityControls}>
@@ -480,6 +485,13 @@ export default function ProductDetailsPage({ params }: PageProps) {
                   <BuildingIcon size={16} style={{ color: 'var(--color-brand-gold)' }} /> <strong>Visão de Gestão:</strong>
                 </span>{' '}
                 Pedidos com entrega e pagamento são realizados exclusivamente por consumidores. Como parceiro ou moderador, utilize este painel para verificar a apresentação do produto.
+              </div>
+            ) : unitPrice <= 0 ? (
+              <div className={styles.catalogOnlyNotice}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  <InfoIcon size={16} style={{ color: 'var(--color-primary)' }} /> <strong>Produto com Valor Sob Consulta:</strong>
+                </span>{' '}
+                Este item está cadastrado com valor sob consulta e não está disponível para compra direta no checkout online. Entre em contato com o estabelecimento parceiro para cotações e encomendas.
               </div>
             ) : (
               <div className={styles.purchaseFooter}>

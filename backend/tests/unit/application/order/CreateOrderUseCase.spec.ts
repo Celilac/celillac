@@ -169,6 +169,38 @@ describe('CreateOrderUseCase Unit Tests', () => {
     expect(orderRepository.save).not.toHaveBeenCalled();
   });
 
+  it('deve falhar se o produto estiver com valor sob consulta (preço <= 0)', async () => {
+    partnerRepository.findById.mockResolvedValue(createMockPartner(true));
+    foodProfileRepository.findByUserId.mockResolvedValue(createMockProfile(true));
+
+    const zeroPriceProduct = Product.create(
+      {
+        name: 'Produto Sob Consulta',
+        brand: 'CeLiLac Marca',
+        ingredients: 'Ingrediente seguro',
+        hasGluten: false,
+        crossContamination: '',
+        price: 0,
+        category: 'Geral',
+        partnerId,
+        isActive: true,
+      },
+      'prod-zero-price'
+    ).getValue();
+
+    productRepository.findById.mockResolvedValue(zeroPriceProduct);
+
+    const result = await useCase.execute({
+      consumerId,
+      partnerId,
+      items: [{ productId: 'prod-zero-price', quantity: 1 }],
+    });
+
+    expect(result.isFailure).toBe(true);
+    expect(result.getError()).toContain('está com valor sob consulta');
+    expect(orderRepository.save).not.toHaveBeenCalled();
+  });
+
   it('deve falhar se o consumidor não tiver perfil alimentar configurado', async () => {
     partnerRepository.findById.mockResolvedValue(createMockPartner(true));
     foodProfileRepository.findByUserId.mockResolvedValue(null);

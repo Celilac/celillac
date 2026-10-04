@@ -92,6 +92,12 @@ export class CreateOrderUseCase {
         );
       }
 
+      if (!product.price || product.price <= 0) {
+        return Result.fail<CreateOrderOutputDTO>(
+          `O produto "${product.name}" está com valor sob consulta e não pode ser adquirido diretamente pelo checkout online.`
+        );
+      }
+
       // Snapshot para o AllergenEngine
       const snapshot: ProductSnapshot = {
         id: product.id,
