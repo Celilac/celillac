@@ -454,6 +454,29 @@ export async function testDatabaseConnection(): Promise<void> {
       WHERE NOT EXISTS (SELECT 1 FROM product_categories LIMIT 1);
     `, 'Seed de categorias padrão');
 
+    // 13. Sincronização e Vínculo de Produtos do Catálogo a Parceiros Homologados
+    await executeSafeDdl(client, `
+      UPDATE products 
+      SET partner_id = 'c0000001-0000-0000-0000-000000000002' 
+      WHERE partner_id IS NULL AND id IN (
+        'b0000001-0000-0000-0000-000000000003',
+        'b0000002-0000-0000-0000-000000000002',
+        'b0000007-0000-0000-0000-000000000001',
+        'b0000003-0000-0000-0000-000000000002',
+        'b0000004-0000-0000-0000-000000000002',
+        'b0000004-0000-0000-0000-000000000003',
+        'b0000003-0000-0000-0000-000000000003',
+        'b0000005-0000-0000-0000-000000000001'
+      );
+
+      UPDATE products 
+      SET partner_id = 'c0000001-0000-0000-0000-000000000001' 
+      WHERE partner_id IS NULL AND id IN (
+        'b0000003-0000-0000-0000-000000000001',
+        'b0000006-0000-0000-0000-000000000001'
+      );
+    `, 'Vínculo de produtos comerciais a parceiros homologados');
+
     console.log('[Database]: Conexão e sincronização de esquema com PostgreSQL concluídas com sucesso.');
   } finally {
     client.release();

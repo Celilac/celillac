@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { catalogApi, ProductDetails } from '@/api/catalog';
+import { partnerApi, PartnerSummary } from '@/api/partner';
 import { compatibilityApi, CompatibilityResponse } from '@/api/compatibility';
 import { ordersApi } from '@/api/orders';
 import { apiClient } from '@/api/client';
@@ -70,6 +71,7 @@ function ProductDetailsContent({ params }: PageProps) {
 
   const [userRole, setUserRole] = useState<string | null>(null);
   const [product, setProduct] = useState<ProductDetails | null>(null);
+  const [sellerPartner, setSellerPartner] = useState<PartnerSummary | null>(null);
   const [compatibility, setCompatibility] = useState<CompatibilityResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -103,6 +105,17 @@ function ProductDetailsContent({ params }: PageProps) {
 
       const prodData = await catalogApi.getById(productId, token || undefined);
       setProduct(prodData);
+
+      if (prodData?.partnerId) {
+        try {
+          const partnerData = await partnerApi.get(prodData.partnerId, token || undefined);
+          setSellerPartner(partnerData);
+        } catch {
+          setSellerPartner(null);
+        }
+      } else {
+        setSellerPartner(null);
+      }
 
       // A análise de compatibilidade pertence exclusivamente a consumidores (CELIACO)
       // Parceiros e administradores gerenciam o catálogo e não possuem restrições pessoais
@@ -275,9 +288,20 @@ function ProductDetailsContent({ params }: PageProps) {
               <h1 style={{ fontSize: '1.8rem', color: 'var(--color-text)', margin: '0.25rem 0 0.5rem 0' }}>
                 {product.name}
               </h1>
-              <p style={{ color: 'var(--color-text-muted)', margin: 0, fontSize: '1rem' }}>
-                Marca / Parceiro: <strong>{product.brand}</strong>
-              </p>
+              <div style={{ color: 'var(--color-text-muted)', margin: 0, fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span>Marca: <strong style={{ color: 'var(--color-text)' }}>{product.brand}</strong></span>
+                {sellerPartner && (
+                  <>
+                    <span>•</span>
+                    <span>
+                      Estabelecimento:{' '}
+                      <Link href={`/public-partners/${sellerPartner.id}`} style={{ color: 'var(--color-emerald)', fontWeight: 600, textDecoration: 'none' }}>
+                        {sellerPartner.name}
+                      </Link>
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -425,9 +449,69 @@ function ProductDetailsContent({ params }: PageProps) {
 
           {/* Card de Preço, Quantidade e Ação de Compra com Trava Biológica */}
           <div className={styles.purchaseCard}>
+            {sellerPartner && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '0.6rem',
+                  paddingBottom: '0.9rem',
+                  marginBottom: '1.25rem',
+                  borderBottom: '1px solid var(--color-border)',
+                  fontSize: '0.875rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text)', flexWrap: 'wrap' }}>
+                  <BuildingIcon size={16} style={{ color: 'var(--color-emerald)', flexShrink: 0 }} />
+                  <span>
+                    Vendido e entregue por:{' '}
+                    <Link
+                      href={`/public-partners/${sellerPartner.id}`}
+                      style={{ color: 'var(--color-text)', fontWeight: 700, textDecoration: 'underline' }}
+                    >
+                      {sellerPartner.name}
+                    </Link>
+                  </span>
+                  {sellerPartner.city && (
+                    <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
+                      ({sellerPartner.city}{sellerPartner.state ? `, ${sellerPartner.state}` : ''})
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      padding: '2px 8px',
+                      borderRadius: '999px',
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      color: 'var(--color-emerald)',
+                      border: '1px solid rgba(16, 185, 129, 0.25)',
+                    }}
+                  >
+                    <CheckCircleIcon size={12} /> Homologado
+                  </span>
+                  <Link
+                    href={`/public-partners/${sellerPartner.id}`}
+                    style={{ fontSize: '0.8rem', color: 'var(--color-emerald)', fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    Ver catálogo do parceiro →
+                  </Link>
+                </div>
+              </div>
+            )}
+
             <div className={styles.purchaseHeader}>
               <div className={styles.purchasePriceGroup}>
-                <span className={styles.purchasePriceLabel}>Preço do Item</span>
+                <span className={styles.purchasePriceLabel}>
+                  {product.partnerId ? 'Preço do Item' : 'Preço de Referência Médio'}
+                </span>
                 <span className={styles.purchasePriceValue}>
                   {unitPrice > 0 ? (
                     `R$ ${unitPrice.toFixed(2).replace('.', ',')}`
@@ -500,11 +584,46 @@ function ProductDetailsContent({ params }: PageProps) {
                 </div>
               </div>
             ) : !product.partnerId ? (
-              <div className={styles.catalogOnlyNotice}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                  <InfoIcon size={16} style={{ color: 'var(--color-primary)' }} /> <strong>Produto Informativo:</strong>
-                </span>{' '}
-                Este item foi cadastrado no catálogo geral para consulta de rótulo e ingredientes. Para realizar pedidos com entrega segura, explore os estabelecimentos homologados em <Link href="/public-partners" style={{ color: 'var(--color-emerald)', fontWeight: 600 }}>Descobrir Locais</Link>.
+              <div
+                style={{
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '1.25rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.75rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-text)' }}>
+                  <InfoIcon size={18} style={{ color: 'var(--color-emerald)', flexShrink: 0 }} />
+                  <strong style={{ fontSize: '0.95rem' }}>Produto Cadastrado para Consulta de Rótulo</strong>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
+                  Este item está catalogado na base geral de alimentos para verificação de alérgenos, checagem de ingredientes e conferência de rotulagem. Ele não possui um estabelecimento comercial parceiro cadastrado para entrega direta pelo aplicativo no momento.
+                </p>
+                <div
+                  style={{
+                    paddingTop: '0.75rem',
+                    borderTop: '1px solid var(--color-border)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '0.75rem',
+                  }}
+                >
+                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                    Para pedir alimentos com entrega segura e laudos verificados:
+                  </span>
+                  <Link
+                    href="/public-partners"
+                    className="btn btn-em"
+                    style={{ fontSize: '0.85rem', padding: '0.45rem 1rem', textDecoration: 'none' }}
+                  >
+                    Explorar Estabelecimentos Homologados →
+                  </Link>
+                </div>
               </div>
             ) : !isAuthenticated ? (
               <div className={styles.purchaseFooter}>
