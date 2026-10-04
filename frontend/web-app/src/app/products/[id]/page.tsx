@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { catalogApi, ProductDetails } from '@/api/catalog';
@@ -40,12 +40,29 @@ interface PageProps {
   params: { id: string };
 }
 
-export default function ProductDetailsPage({ params }: PageProps) {
+function ProductDetailsContent({ params }: PageProps) {
   const productId = params?.id;
 
   const { token, userId, isAuthenticated } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
+
+  const handleBack = () => {
+    const from = searchParams.get('from');
+    if (from === 'public-partners') {
+      router.push('/public-partners?tab=products');
+    } else if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/dashboard');
+    }
+  };
+
+  const fromParam = searchParams.get('from');
+  const backLabel = fromParam === 'public-partners'
+    ? '← Voltar aos Produtos Ofertados'
+    : '← Voltar';
 
   const [userRole, setUserRole] = useState<string | null>(null);
   const [product, setProduct] = useState<ProductDetails | null>(null);
@@ -135,9 +152,14 @@ export default function ProductDetailsPage({ params }: PageProps) {
         <main className={styles.container} style={{ textAlign: 'center', paddingTop: '4rem' }}>
           <h2>Produto não encontrado</h2>
           <p>O produto solicitado não foi localizado no catálogo.</p>
-          <Link href="/dashboard" className="btn btn-em" style={{ marginTop: '1rem', display: 'inline-block' }}>
-            Voltar ao Dashboard
-          </Link>
+          <button
+            type="button"
+            onClick={handleBack}
+            className="btn btn-em"
+            style={{ marginTop: '1rem', display: 'inline-block', cursor: 'pointer' }}
+          >
+            {backLabel}
+          </button>
         </main>
       </div>
     );
@@ -218,9 +240,25 @@ export default function ProductDetailsPage({ params }: PageProps) {
 
       <main className={styles.container} style={{ maxWidth: '900px', width: '100%', boxSizing: 'border-box', margin: '0 auto', padding: '2rem 1rem' }}>
         <div style={{ width: '100%', marginBottom: '1.5rem' }}>
-          <Link href="/dashboard" style={{ color: 'var(--color-emerald)', textDecoration: 'none', fontWeight: 600 }}>
-            ← Voltar ao Dashboard
-          </Link>
+          <button
+            type="button"
+            onClick={handleBack}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              padding: 0,
+              color: 'var(--color-emerald)',
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+            }}
+            id="product-back-btn"
+          >
+            {backLabel}
+          </button>
         </div>
 
         {/* Card Principal do Produto */}
@@ -604,5 +642,22 @@ export default function ProductDetailsPage({ params }: PageProps) {
         onSuccess={() => toast.success('Denúncia registrada com sucesso.')}
       />
     </div>
+  );
+}
+
+export default function ProductDetailsPage(props: PageProps) {
+  return (
+    <Suspense
+      fallback={
+        <div>
+          <Header />
+          <main className={styles.container} style={{ textAlign: 'center', paddingTop: '4rem' }}>
+            <p>Carregando informações do produto...</p>
+          </main>
+        </div>
+      }
+    >
+      <ProductDetailsContent {...props} />
+    </Suspense>
   );
 }

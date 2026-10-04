@@ -35,6 +35,12 @@ function PublicPartnersContent() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
 
+  const handleTabChange = (newTab: 'partners' | 'products') => {
+    setActiveTab(newTab);
+    setQuery('');
+    router.replace(`/public-partners?tab=${newTab}`, { scroll: false });
+  };
+
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam === 'products') {
@@ -106,10 +112,7 @@ function PublicPartnersContent() {
             role="tab"
             aria-selected={activeTab === 'partners'}
             className={`${styles.tabBtn} ${activeTab === 'partners' ? styles.tabBtnActive : ''}`}
-            onClick={() => {
-              setActiveTab('partners');
-              setQuery('');
-            }}
+            onClick={() => handleTabChange('partners')}
             id="tab-filter-partners"
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -121,10 +124,7 @@ function PublicPartnersContent() {
             role="tab"
             aria-selected={activeTab === 'products'}
             className={`${styles.tabBtn} ${activeTab === 'products' ? styles.tabBtnActive : ''}`}
-            onClick={() => {
-              setActiveTab('products');
-              setQuery('');
-            }}
+            onClick={() => handleTabChange('products')}
             id="tab-filter-products"
           >
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -207,10 +207,7 @@ function PublicPartnersContent() {
               </div>
               <button
                 type="button"
-                onClick={() => {
-                  setActiveTab('products');
-                  setQuery('');
-                }}
+                onClick={() => handleTabChange('products')}
                 className="btn btn-em"
                 style={{
                   fontSize: '0.82rem',
@@ -296,7 +293,10 @@ function PublicPartnersContent() {
             ) : (
               filteredProducts.map((product) => {
                 const partnerName = product.partnerId ? partnerMap.get(product.partnerId) : null;
-                const unitPrice = (product as any).price ? Number((product as any).price) : 0;
+                const rawPrice = (product as any).price;
+                const unitPrice = rawPrice !== undefined && rawPrice !== null && !isNaN(Number(rawPrice))
+                  ? Number(rawPrice)
+                  : 0;
 
                 return (
                   <section key={product.id} className={styles.productCard}>
@@ -308,7 +308,7 @@ function PublicPartnersContent() {
                           </span>
                           <h2 className={styles.productTitle}>
                             <Link
-                              href={`/products/${product.id}`}
+                              href={`/products/${product.id}?from=public-partners`}
                               style={{ textDecoration: 'none', color: 'inherit' }}
                             >
                               {product.name}
@@ -357,9 +357,22 @@ function PublicPartnersContent() {
                       </p>
                     </div>
 
-                    <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', borderTop: '1px solid var(--color-border)', paddingTop: '0.75rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Valor unitário
+                        </span>
+                        {unitPrice > 0 ? (
+                          <strong style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--color-emerald, #10b981)' }}>
+                            R$ {unitPrice.toFixed(2).replace('.', ',')}
+                          </strong>
+                        ) : (
+                          <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Sob Consulta</span>
+                        )}
+                      </div>
+
                       <Link
-                        href={`/products/${product.id}`}
+                        href={`/products/${product.id}?from=public-partners`}
                         className={styles.btnPrimary}
                         style={{
                           textDecoration: 'none',
@@ -368,6 +381,7 @@ function PublicPartnersContent() {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '0.4rem',
+                          width: 'auto',
                         }}
                       >
                         <ShoppingCartIcon size={15} /> Ver Detalhes / Comprar
