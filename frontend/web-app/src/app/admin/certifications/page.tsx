@@ -56,6 +56,19 @@ export default function AdminCertificationsPage() {
     setMounted(true);
   }, []);
 
+  // Fechar modal com tecla ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (previewImage) setPreviewImage(null);
+        else if (approvingItem && !updating) setApprovingItem(null);
+        else if (rejectingItem && !updating) setRejectingItem(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [previewImage, approvingItem, rejectingItem, updating]);
+
   // Trava de Segurança de Acesso — Verifica papel no backend/IAM
   useEffect(() => {
     if (isInitializing) return;
@@ -496,17 +509,39 @@ export default function AdminCertificationsPage() {
 
         {/* Modal de Homologação */}
         {approvingItem && (
-          <div className={styles.modalOverlay}>
-            <div className={styles.modalContent} style={{ maxWidth: 460 }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 10px', color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <CheckCircleIcon size={18} /> Homologar Selo / Laudo Técnico
-              </h2>
-              <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', marginBottom: 14 }}>
+          <div
+            className={styles.modalOverlay || styles.dialogOverlay}
+            onClick={() => !updating && setApprovingItem(null)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="approve-modal-title"
+          >
+            <div
+              className={styles.modalContent || styles.dialogCard}
+              style={{ maxWidth: 480 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.modalHeader}>
+                <h2 id="approve-modal-title" className={styles.modalTitle} style={{ fontSize: '1.25rem', color: '#10b981' }}>
+                  <CheckCircleIcon size={20} /> Homologar Selo / Laudo Técnico
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => !updating && setApprovingItem(null)}
+                  className={styles.modalCloseBtn}
+                  aria-label="Fechar modal"
+                  disabled={updating}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
                 Você está homologando o selo <strong>{approvingItem.certificationType}</strong> para o produto <strong>{approvingItem.productName}</strong>. Este produto passará a exibir o selo de segurança alimentar auditada pelo CeLiLac.
               </p>
 
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: 6 }}>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: 8, color: 'var(--color-text)' }}>
                   Observações / Parecer do Auditor (Opcional):
                 </label>
                 <textarea
@@ -516,17 +551,18 @@ export default function AdminCertificationsPage() {
                   placeholder="Ex: Laudo laboratorial consultado no sistema do emissor com resultado negativo para traços de glúten (<5ppm)."
                   style={{
                     width: '100%',
-                    padding: '8px 10px',
+                    padding: '10px 12px',
                     borderRadius: 8,
                     border: '1px solid var(--color-border)',
                     background: 'var(--color-surface)',
                     color: 'var(--color-text)',
-                    fontSize: '0.85rem',
+                    fontSize: '0.88rem',
+                    resize: 'vertical',
                   }}
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
                 <button
                   ref={approveCloseRef}
                   type="button"
@@ -552,17 +588,39 @@ export default function AdminCertificationsPage() {
 
         {/* Modal de Rejeição */}
         {rejectingItem && (
-          <div className={styles.modalOverlay}>
-            <div className={styles.modalContent} style={{ maxWidth: 460 }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: 800, margin: '0 0 10px', color: '#ef4444', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <XCircleIcon size={18} /> Rejeitar Selo / Laudo Técnico
-              </h2>
-              <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', marginBottom: 14 }}>
+          <div
+            className={styles.modalOverlay || styles.dialogOverlay}
+            onClick={() => !updating && setRejectingItem(null)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reject-modal-title"
+          >
+            <div
+              className={styles.modalContent || styles.dialogCard}
+              style={{ maxWidth: 480 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.modalHeader}>
+                <h2 id="reject-modal-title" className={styles.modalTitle} style={{ fontSize: '1.25rem', color: '#ef4444' }}>
+                  <XCircleIcon size={20} /> Rejeitar Selo / Laudo Técnico
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => !updating && setRejectingItem(null)}
+                  className={styles.modalCloseBtn}
+                  aria-label="Fechar modal"
+                  disabled={updating}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
                 Informe a justificativa da rejeição para o produto <strong>{rejectingItem.productName}</strong> ({rejectingItem.certificationType}):
               </p>
 
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: 6 }}>
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, marginBottom: 8, color: 'var(--color-text)' }}>
                   Justificativa Obrigatória:
                 </label>
                 <textarea
@@ -572,17 +630,18 @@ export default function AdminCertificationsPage() {
                   placeholder="Ex: Foto do laudo cortada/ilegível ou certificado expirado. Reenviar foto com dados nítidos."
                   style={{
                     width: '100%',
-                    padding: '8px 10px',
+                    padding: '10px 12px',
                     borderRadius: 8,
                     border: '1px solid var(--color-border)',
                     background: 'var(--color-surface)',
                     color: 'var(--color-text)',
-                    fontSize: '0.85rem',
+                    fontSize: '0.88rem',
+                    resize: 'vertical',
                   }}
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
                 <button
                   ref={rejectCloseRef}
                   type="button"
@@ -609,9 +668,12 @@ export default function AdminCertificationsPage() {
         {/* Lightbox / Zoom da Foto do Laudo */}
         {previewImage && (
           <div
-            className={styles.modalOverlay}
+            className={styles.modalOverlay || styles.dialogOverlay}
             onClick={() => setPreviewImage(null)}
             style={{ cursor: 'zoom-out', zIndex: 99999 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Visualização do documento"
           >
             <div
               style={{
