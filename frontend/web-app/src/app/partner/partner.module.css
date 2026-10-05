@@ -644,13 +644,15 @@ input:checked + .sliderOperational:before {
 }
 
 /* Modal Dialog */
-.dialogOverlay {
+.dialogOverlay,
+.modalOverlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(9, 17, 21, 0.7);
+  background: rgba(9, 17, 21, 0.75);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -659,7 +661,8 @@ input:checked + .sliderOperational:before {
   padding: 1rem;
 }
 
-.dialogCard {
+.dialogCard,
+.modalContent {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
@@ -1049,11 +1052,13 @@ input:checked + .sliderOperational:before {
   background-color: #10b981;
 }
 
-:global(html[data-theme='light']) .dialogOverlay {
+:global(html[data-theme='light']) .dialogOverlay,
+:global(html[data-theme='light']) .modalOverlay {
   background: rgba(15, 23, 42, 0.5);
 }
 
-:global(html[data-theme='light']) .dialogCard {
+:global(html[data-theme='light']) .dialogCard,
+:global(html[data-theme='light']) .modalContent {
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.12);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
