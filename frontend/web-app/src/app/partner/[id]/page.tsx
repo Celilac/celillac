@@ -372,214 +372,6 @@ export default function PartnerDetailPage({ params }: PageProps) {
                 />
               </div>
             </div>
-
-            {/* SEÇÃO DE PRODUTOS DO ESTABELECIMENTO */}
-            <div className={styles.card} style={{ gap: '1.25rem', marginTop: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                <div>
-                  <h2 className={styles.sectionTitle} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <PackageIcon size={20} /> Produtos do Estabelecimento
-                  </h2>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                    Itens fabricados ou fornecidos por {partner.name}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleOpenCreateProduct}
-                  className="btn btn-em"
-                  style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  Novo Produto
-                </button>
-              </div>
-
-              {loadingProducts ? (
-                <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem 0' }}>Carregando produtos…</p>
-              ) : products.length === 0 ? (
-                <div style={{
-                  padding: '2rem',
-                  textAlign: 'center',
-                  background: 'var(--color-elevated, rgba(255,255,255,0.02))',
-                  borderRadius: '12px',
-                  border: '1px solid var(--color-border)',
-                }}>
-                  <p style={{ color: 'var(--color-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                    Nenhum produto cadastrado para este estabelecimento ainda.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleOpenCreateProduct}
-                    className="btn btn-em"
-                    style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Cadastrar Primeiro Produto
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {products.map((p) => {
-                    const statusInfo: Record<string, { label: string; dotColor: string; bg: string; color: string; border: string }> = {
-                      ANALISADO: { label: 'Analisado', dotColor: 'green', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
-                      APPROVED: { label: 'Aprovado', dotColor: 'green', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
-                      PENDENTE_DE_ANALISE: { label: 'Pendente', dotColor: 'yellow', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
-                      PENDING_ANALYSIS: { label: 'Pendente', dotColor: 'yellow', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
-                      FLAGGED: { label: 'Sinalizado', dotColor: 'red', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
-                    };
-                    const st = statusInfo[p.analysisStatus] || statusInfo['PENDENTE_DE_ANALISE'];
-
-                    return (
-                      <div
-                        key={p.id}
-                        style={{
-                          padding: '1rem',
-                          borderRadius: '10px',
-                          background: 'var(--color-elevated)',
-                          border: '1px solid var(--color-border)',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          gap: '12px',
-                          flexWrap: 'wrap',
-                        }}
-                      >
-                        <div style={{ flex: 1, minWidth: '240px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <strong style={{ fontSize: '1rem', color: 'var(--color-text)' }}>{p.name}</strong>
-                            <span style={{
-                              padding: '2px 8px',
-                              borderRadius: '9999px',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              background: st.bg,
-                              color: st.color,
-                              border: `1px solid ${st.border}`,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '5px',
-                            }}>
-                              <StatusDot color={st.dotColor} size={6} />
-                              {st.label}
-                            </span>
-                          </div>
-
-                          <p style={{ margin: '0 0 6px 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                            <strong>Marca:</strong> {p.brand || 'Própria'}
-                          </p>
-
-                          {p.ingredients && (
-                            <p style={{ margin: '0 0 8px 0', fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
-                              <strong>Ingredientes:</strong> {p.ingredients}
-                            </p>
-                          )}
-
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                            {p.hasGluten ? (
-                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-blocked-bg)', color: 'var(--color-blocked)', border: '1px solid var(--color-blocked-border, rgba(239,68,68,0.3))', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <WheatIcon size={12} /> Contém Glúten
-                              </span>
-                            ) : (
-                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <SparklesIcon size={12} /> Sem Glúten
-                              </span>
-                            )}
-
-                            {/* Badge de Leite e Derivados */}
-                            {(() => {
-                              const ing = (p.ingredients || '').toLowerCase();
-                              const cross = (p.crossContamination || '').toLowerCase();
-                              const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme de leite', 'soro de leite', 'whey'];
-                              const hasMilkInIng = milkTerms.some((t) => ing.includes(t));
-                              const hasMilkInTraces = milkTerms.some((t) => cross.includes(t));
-
-                              if (hasMilkInIng) {
-                                return (
-                                  <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                    <MilkIcon size={12} /> Contém Leite
-                                  </span>
-                                );
-                              }
-                              if (hasMilkInTraces) {
-                                return (
-                                  <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                    <AlertTriangleIcon size={12} /> Traços de Leite
-                                  </span>
-                                );
-                              }
-                              return (
-                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                  <MilkIcon size={12} /> Sem Leite
-                                </span>
-                              );
-                            })()}
-
-                            {(() => {
-                              const cc = (p.crossContamination || '').trim().toLowerCase();
-                              const envRisk = (p as any).crossContaminationDetails?.environmentRisk;
-                              const isFree =
-                                !cc ||
-                                cc === 'none' ||
-                                cc === 'nenhum' ||
-                                cc.startsWith('nenhum') ||
-                                cc.startsWith('livre') ||
-                                cc.includes('100% livre') ||
-                                envRisk === 'EXCLUSIVE_ENVIRONMENT';
-
-                              if (isFree) return null;
-
-                              return (
-                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: '1px solid var(--color-warning-border)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                  <AlertTriangleIcon size={12} /> Contaminação Cruzada
-                                </span>
-                              );
-                            })()}
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditProduct(p)}
-                            className="btn btn-secondary"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              fontSize: '0.8rem',
-                              padding: '0.4rem 0.8rem',
-                              whiteSpace: 'nowrap',
-                              cursor: 'pointer',
-                            }}
-                            title="Editar informações do produto"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 20h9" />
-                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                            </svg>
-                            Editar
-                          </button>
-                          <Link
-                            href={`/products/${p.id}`}
-                            className="btn btn-ghost"
-                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', whiteSpace: 'nowrap' }}
-                          >
-                            Ver no Catálogo
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </section>
 
           <aside className={styles.sidePanel}>
@@ -620,6 +412,216 @@ export default function PartnerDetailPage({ params }: PageProps) {
             </div>
           </aside>
         </div>
+
+        {/* SEÇÃO DE PRODUTOS DO ESTABELECIMENTO (LARGURA TOTAL) */}
+        <section style={{ marginTop: '2rem' }}>
+          <div className={styles.card} style={{ gap: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 className={styles.sectionTitle} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <PackageIcon size={20} /> Produtos do Estabelecimento
+                </h2>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                  Itens fabricados ou fornecidos por {partner.name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenCreateProduct}
+                className="btn btn-em"
+                style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Novo Produto
+              </button>
+            </div>
+
+            {loadingProducts ? (
+              <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem 0' }}>Carregando produtos…</p>
+            ) : products.length === 0 ? (
+              <div style={{
+                padding: '2rem',
+                textAlign: 'center',
+                background: 'var(--color-elevated, rgba(255,255,255,0.02))',
+                borderRadius: '12px',
+                border: '1px solid var(--color-border)',
+              }}>
+                <p style={{ color: 'var(--color-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  Nenhum produto cadastrado para este estabelecimento ainda.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleOpenCreateProduct}
+                  className="btn btn-em"
+                  style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Cadastrar Primeiro Produto
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {products.map((p) => {
+                  const statusInfo: Record<string, { label: string; dotColor: string; bg: string; color: string; border: string }> = {
+                    ANALISADO: { label: 'Analisado', dotColor: 'green', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+                    APPROVED: { label: 'Aprovado', dotColor: 'green', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+                    PENDENTE_DE_ANALISE: { label: 'Pendente', dotColor: 'yellow', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
+                    PENDING_ANALYSIS: { label: 'Pendente', dotColor: 'yellow', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
+                    FLAGGED: { label: 'Sinalizado', dotColor: 'red', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
+                  };
+                  const st = statusInfo[p.analysisStatus] || statusInfo['PENDENTE_DE_ANALISE'];
+
+                  return (
+                    <div
+                      key={p.id}
+                      style={{
+                        padding: '1rem',
+                        borderRadius: '10px',
+                        background: 'var(--color-elevated)',
+                        border: '1px solid var(--color-border)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        gap: '12px',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: '240px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <strong style={{ fontSize: '1rem', color: 'var(--color-text)' }}>{p.name}</strong>
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            background: st.bg,
+                            color: st.color,
+                            border: `1px solid ${st.border}`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                          }}>
+                            <StatusDot color={st.dotColor} size={6} />
+                            {st.label}
+                          </span>
+                        </div>
+
+                        <p style={{ margin: '0 0 6px 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                          <strong>Marca:</strong> {p.brand || 'Própria'}
+                        </p>
+
+                        {p.ingredients && (
+                          <p style={{ margin: '0 0 8px 0', fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                            <strong>Ingredientes:</strong> {p.ingredients}
+                          </p>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {p.hasGluten ? (
+                            <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-blocked-bg)', color: 'var(--color-blocked)', border: '1px solid var(--color-blocked-border, rgba(239,68,68,0.3))', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <WheatIcon size={12} /> Contém Glúten
+                            </span>
+                          ) : (
+                            <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <SparklesIcon size={12} /> Sem Glúten
+                            </span>
+                          )}
+
+                          {/* Badge de Leite e Derivados */}
+                          {(() => {
+                            const ing = (p.ingredients || '').toLowerCase();
+                            const cross = (p.crossContamination || '').toLowerCase();
+                            const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme de leite', 'soro de leite', 'whey'];
+                            const hasMilkInIng = milkTerms.some((t) => ing.includes(t));
+                            const hasMilkInTraces = milkTerms.some((t) => cross.includes(t));
+
+                            if (hasMilkInIng) {
+                              return (
+                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <MilkIcon size={12} /> Contém Leite
+                                </span>
+                              );
+                            }
+                            if (hasMilkInTraces) {
+                              return (
+                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <AlertTriangleIcon size={12} /> Traços de Leite
+                                </span>
+                              );
+                            }
+                            return (
+                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <MilkIcon size={12} /> Sem Leite
+                              </span>
+                            );
+                          })()}
+
+                          {(() => {
+                            const cc = (p.crossContamination || '').trim().toLowerCase();
+                            const envRisk = (p as any).crossContaminationDetails?.environmentRisk;
+                            const isFree =
+                              !cc ||
+                              cc === 'none' ||
+                              cc === 'nenhum' ||
+                              cc.startsWith('nenhum') ||
+                              cc.startsWith('livre') ||
+                              cc.includes('100% livre') ||
+                              envRisk === 'EXCLUSIVE_ENVIRONMENT';
+
+                            if (isFree) return null;
+
+                            return (
+                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: '1px solid var(--color-warning-border)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <AlertTriangleIcon size={12} /> Contaminação Cruzada
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditProduct(p)}
+                          className="btn btn-secondary"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '0.8rem',
+                            padding: '0.4rem 0.8rem',
+                            whiteSpace: 'nowrap',
+                            cursor: 'pointer',
+                          }}
+                          title="Editar informações do produto"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                          </svg>
+                          Editar
+                        </button>
+                        <Link
+                          href={`/products/${p.id}`}
+                          className="btn btn-ghost"
+                          style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', whiteSpace: 'nowrap' }}
+                        >
+                          Ver no Catálogo
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
       </main>
 
       {/* Modal de Confirmação de Alteração do Status Operacional */}

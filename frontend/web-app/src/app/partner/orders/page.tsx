@@ -997,7 +997,7 @@ function PartnerOrdersContent() {
                   </label>
                   <textarea
                     className={styles.modalTextarea}
-                    rows={2}
+                    rows={3}
                     placeholder={
                       reportReason === 'CLIENT_ABSENT'
                         ? 'Ex: Entregador aguardou 15 min no endereço, tentou ligar 3 vezes e ninguém atendeu...'
