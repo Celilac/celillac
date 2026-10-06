@@ -43,10 +43,22 @@
 - Parceiros só podem editar ou inativar seus próprios produtos.
 - Produtos inativos são omitidos das buscas públicas gerais.
 
+## Frontend — Ferramenta Lateral de Filtros e Ordenação (Guia Comercial)
+
+No Guia Comercial (`/public-partners?tab=products`), a aba de produtos ofertados conta com o componente `ProductFiltersSidebar` integrado com layout de duas colunas no desktop e gaveta retrátil no mobile:
+- **Ordenação:** Menor Preço (crescente com sob consulta ao final), Maior Preço (decrescente com sob consulta ao final), Ordem Alfabética (A-Z) e Padrão.
+- **Filtros Biológicos:** 100% Sem Glúten (verificação estrita de `hasGluten` e contaminação cruzada), Sem Leite / Sem Lactose, Sem Soja, Sem Oleaginosas/Castanhas e Sem Ovos.
+- **Compatibilidade Segura:** Toggle "Meu Perfil Seguro" exibindo apenas produtos com `riskLevel === 'SAFE'` quando autenticado.
+- **Faixa de Preço & Disponibilidade:** Preço Mínimo, Preço Máximo e opção para ocultar produtos sob consulta.
+- **Categorias & Selos:** Agrupamento dinâmico por categorias existentes com contador de itens e selo Vegano.
+- **Usabilidade:** Contador reativo de resultados, chips de filtros ativos com remoção individual e botão "Limpar todos".
+
 ## Testes
 
 - `backend/tests/unit/domain/catalog/Product.spec.ts`
 - `backend/tests/unit/domain/catalog/ProductImage.spec.ts`
 - `backend/tests/unit/domain/catalog/ProductCertification.spec.ts`
 - `backend/tests/unit/application/catalog/{CreateProductUseCase,SearchProductsUseCase,GetProductUseCase,UpdateProductUseCase,InactivateProductUseCase}.spec.ts`
+- `backend/tests/unit/application/catalog/ProductFilters.spec.ts` (Regras de filtragem, ordenação e contagem de filtros)
+
 
