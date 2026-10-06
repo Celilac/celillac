@@ -9,6 +9,15 @@ import { Header } from '@/components/layout/Header';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { ordersApi, OrderDTO } from '@/api/orders';
 import { paymentsApi, PartnerFinancialAccountDTO } from '@/api/payments';
+import {
+  BanknoteIcon,
+  ChefHatIcon,
+  ShieldCheckIcon,
+  PixIcon,
+  BuildingIcon,
+  CheckCircleIcon,
+  FileTextIcon,
+} from '@/components/layout/icons';
 import styles from './partner-financial.module.css';
 
 function PartnerFinancialPageContent() {
@@ -163,8 +172,9 @@ function PartnerFinancialPageContent() {
 
       <main className={styles.mainContent}>
         <div className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>
-            💰 Painel Financeiro & Repasses
+          <h1 className={styles.pageTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <BanknoteIcon size={24} />
+            <span>Painel Financeiro & Repasses</span>
           </h1>
 
           <div className={styles.headerControls}>
@@ -236,8 +246,10 @@ function PartnerFinancialPageContent() {
             <Link
               href={`/partner/orders?partnerId=${selectedPartnerId}`}
               className={styles.ordersLink}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              🍳 Ir para Pedidos
+              <ChefHatIcon size={16} />
+              <span>Ir para Pedidos</span>
             </Link>
           </div>
         </div>
@@ -248,12 +260,8 @@ function PartnerFinancialPageContent() {
               Nenhum estabelecimento comercial vinculado a esta conta
             </p>
             <p style={{ color: 'var(--color-text-muted)', marginBottom: '1.5rem', fontSize: '1rem', maxWidth: '600px', margin: '0 auto 1.5rem', lineHeight: 1.5 }}>
-              O Painel Financeiro e Repasses é exclusivo para estabelecimentos parceiros. Se você deseja testar este painel com a subconta e pedidos semeados, faça login com a conta do parceiro:
+              O Painel Financeiro e Repasses é exclusivo para estabelecimentos parceiros cadastrados no CeLiLac. Cadastre seu estabelecimento para gerenciar repasses, chave PIX e vendas.
             </p>
-            <div style={{ background: 'var(--color-elevated)', padding: '1.25rem 1.5rem', borderRadius: '12px', display: 'inline-block', marginBottom: '2rem', textAlign: 'left', border: '1px solid var(--color-border)' }}>
-              <div style={{ color: 'var(--color-text)', fontSize: '0.95rem' }}><strong>E-mail:</strong> parceiro.restaurante@seed.celilac.dev</div>
-              <div style={{ color: 'var(--color-text)', fontSize: '0.95rem', marginTop: '0.4rem' }}><strong>Senha:</strong> Seed@123456</div>
-            </div>
             <div>
               <Link href="/partner/register" className={styles.saveButton} style={{ display: 'inline-block', width: 'auto', padding: '0.85rem 2rem', textDecoration: 'none' }}>
                 Cadastrar Novo Estabelecimento
@@ -267,7 +275,7 @@ function PartnerFinancialPageContent() {
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>
               <span>Vendas Brutas</span>
-              <span>💵</span>
+              <BanknoteIcon size={16} />
             </div>
             <div className={styles.metricValue}>
               R$ {grossTotal.toFixed(2).replace('.', ',')}
@@ -280,7 +288,7 @@ function PartnerFinancialPageContent() {
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>
               <span>Comissão CeLiLac (12%)</span>
-              <span>🛡️</span>
+              <ShieldCheckIcon size={16} />
             </div>
             <div className={styles.metricValue} style={{ color: 'var(--color-warning)' }}>
               - R$ {platformFeeTotal.toFixed(2).replace('.', ',')}
@@ -293,7 +301,7 @@ function PartnerFinancialPageContent() {
           <div className={styles.metricCard}>
             <div className={styles.metricLabel}>
               <span>Repasse Líquido</span>
-              <span>⚡</span>
+              <PixIcon size={16} />
             </div>
             <div className={styles.metricValue} style={{ color: 'var(--color-emerald)' }}>
               R$ {netPartnerTotal.toFixed(2).replace('.', ',')}
@@ -307,13 +315,15 @@ function PartnerFinancialPageContent() {
         <div className={styles.sectionsGrid}>
           {/* Configuração de Chave PIX e Subconta */}
           <div className={styles.card}>
-            <h2 className={styles.cardTitle}>
-              🏦 Dados de Recebimento
+            <h2 className={styles.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <BuildingIcon size={18} />
+              <span>Dados de Recebimento</span>
             </h2>
 
             {account?.isVerified && (
-              <div className={styles.accountStatusBadge}>
-                ✅ Subconta Asaas ativa ({account.gatewaySubaccountId})
+              <div className={styles.accountStatusBadge} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <CheckCircleIcon size={14} />
+                <span>Subconta Asaas ativa ({account.gatewaySubaccountId})</span>
               </div>
             )}
 
@@ -392,7 +402,7 @@ function PartnerFinancialPageContent() {
           {/* Extrato Transacional com Split */}
           <div className={styles.card}>
             <h2 className={styles.cardTitle}>
-              📄 Extrato Transacional de Vendas
+              <FileTextIcon size={18} /> Extrato Transacional de Vendas
             </h2>
 
             {paidOrders.length === 0 ? (

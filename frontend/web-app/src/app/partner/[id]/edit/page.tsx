@@ -12,6 +12,17 @@ import { maskCnpj, validateCnpj, maskCep } from '@/utils/mask';
 import { fetchAddressByCep } from '@/services/viaCep';
 import InternationalPhoneInput from '@/components/common/InternationalPhoneInput';
 import PartnerLocationMap from '@/components/common/PartnerLocationMap';
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  CameraIcon,
+  RefreshIcon,
+  TrashIcon,
+  MapPinIcon,
+  SaveIcon,
+  CompassIcon,
+} from '@/components/layout/icons';
 import styles from '../../partner.module.css';
 
 interface PageProps {
@@ -19,9 +30,9 @@ interface PageProps {
 }
 
 const TYPE_OPTIONS = [
-  { value: 'RESTAURANT',           label: '🍽️ Estabelecimento Alimentício (Lanchonete/Restaurante)' },
-  { value: 'MARKET',               label: '🛒 Comércio Alimentar (Mercado/Empório)' },
-  { value: 'INDEPENDENT_PRODUCER', label: '👩‍🍳 Produtor Independente (Artesanal/Fábrica)' },
+  { value: 'RESTAURANT',           label: 'Estabelecimento Alimentício (Lanchonete/Restaurante)' },
+  { value: 'MARKET',               label: 'Comércio Alimentar (Mercado/Empório)' },
+  { value: 'INDEPENDENT_PRODUCER', label: 'Produtor Independente (Artesanal/Fábrica)' },
 ];
 
 export default function EditPartnerPage({ params }: PageProps) {
@@ -244,7 +255,7 @@ export default function EditPartnerPage({ params }: PageProps) {
 
           {originalStatus === 'APPROVED' && (
             <div className={`${styles.alertBanner} ${styles.alertBannerWarning}`} style={{ marginBottom: '1.5rem' }}>
-              <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+              <span style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center' }}><AlertTriangleIcon size={20} color="var(--color-warning)" /></span>
               <div>
                 <strong>Alerta de Alteração Crítica</strong>
                 <p style={{ marginTop: '0.25rem', fontSize: 'var(--text-label)' }}>
@@ -293,8 +304,8 @@ export default function EditPartnerPage({ params }: PageProps) {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label className={styles.label} htmlFor="partner-cnpj">CNPJ (Opcional)</label>
                     {cnpj.replace(/\D/g, '').length === 14 && (
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: cnpjError ? 'var(--color-danger, #EF4444)' : 'var(--color-success, #10B981)' }}>
-                        {cnpjError ? `❌ ${cnpjError}` : '✅ CNPJ Válido'}
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: cnpjError ? 'var(--color-danger, #EF4444)' : 'var(--color-success, #10B981)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                        {cnpjError ? <><XCircleIcon size={12} /> {cnpjError}</> : <><CheckCircleIcon size={12} /> CNPJ Válido</>}
                       </span>
                     )}
                   </div>
@@ -359,7 +370,7 @@ export default function EditPartnerPage({ params }: PageProps) {
                         }
                       }}
                     >
-                      <span className={styles.brandDropzoneIcon}>🖼️</span>
+                      <span className={styles.brandDropzoneIcon}><CameraIcon size={32} /></span>
                       <span className={styles.brandDropzoneTitle}>Adicione a marca do negócio</span>
                       <span className={styles.brandDropzoneSubtitle}>Arraste uma imagem ou clique para selecionar</span>
                       <span className={styles.brandDropzoneMeta}>PNG, JPG ou WebP • Máx. 5 MB</span>
@@ -380,16 +391,18 @@ export default function EditPartnerPage({ params }: PageProps) {
                           className={styles.brandBtnAction}
                           onClick={() => fileInputRef.current?.click()}
                           disabled={loading}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                         >
-                          🔄 Alterar imagem
+                          <RefreshIcon size={14} /> Alterar imagem
                         </button>
                         <button
                           type="button"
                           className={`${styles.brandBtnAction} ${styles.brandBtnRemove}`}
                           onClick={handleRemoveLogo}
                           disabled={loading}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                         >
-                          🗑️ Remover
+                          <TrashIcon size={14} /> Remover
                         </button>
                       </div>
                     </div>
@@ -415,8 +428,8 @@ export default function EditPartnerPage({ params }: PageProps) {
 
             {/* ── PARTE INFERIOR — SEÇÃO DE LOCALIZAÇÃO E ATENDIMENTO (Largura Integral) ── */}
             <div className={styles.formSectionDivider}>
-              <h2 className={styles.formSectionTitle}>
-                📍 Localização e Atendimento
+              <h2 className={styles.formSectionTitle} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <MapPinIcon size={18} /> Localização e Atendimento
               </h2>
 
               {/* Seletor de País e CEP */}
@@ -430,12 +443,12 @@ export default function EditPartnerPage({ params }: PageProps) {
                     onChange={(e) => setCountry(e.target.value)}
                     disabled={loading}
                   >
-                    <option value="BR">🇧🇷 Brasil</option>
-                    <option value="PT">🇵🇹 Portugal</option>
-                    <option value="US">🇺🇸 Estados Unidos</option>
-                    <option value="ES">🇪🇸 Espanha</option>
-                    <option value="AR">🇦🇷 Argentina</option>
-                    <option value="OTHER">🌐 Outro País</option>
+                    <option value="BR">Brasil (+55)</option>
+                    <option value="PT">Portugal (+351)</option>
+                    <option value="US">Estados Unidos (+1)</option>
+                    <option value="ES">Espanha (+34)</option>
+                    <option value="AR">Argentina (+54)</option>
+                    <option value="OTHER">Outro País</option>
                   </select>
                 </div>
 
@@ -462,7 +475,7 @@ export default function EditPartnerPage({ params }: PageProps) {
                     />
                     {loadingCep && (
                       <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.8rem', color: 'var(--color-accent)' }}>
-                        ⏳ Buscando...
+                        Buscando CEP...
                       </span>
                     )}
                   </div>
@@ -532,8 +545,8 @@ export default function EditPartnerPage({ params }: PageProps) {
 
               {/* Pré-visualização do Google Maps */}
               <div style={{ marginTop: '1.25rem' }}>
-                <label className={styles.label} style={{ marginBottom: '8px', display: 'block' }}>
-                  🗺️ Localização no Mapa (Google Maps)
+                <label className={styles.label} style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <CompassIcon size={16} /> Localização no Mapa (Google Maps)
                 </label>
                 <PartnerLocationMap
                   address={address}
@@ -564,7 +577,7 @@ export default function EditPartnerPage({ params }: PageProps) {
                 disabled={loading}
                 id="save-edit-btn"
               >
-                {loading ? 'Salvando...' : '💾 Salvar Alterações'}
+                {loading ? 'Salvando...' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}><SaveIcon size={16} /> Salvar Alterações</span>}
               </button>
             </div>
           </form>

@@ -8,13 +8,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { UserAvatar } from '@/components/common/UserAvatar';
 import { apiClient, HttpError } from '@/api/client';
-import { HomeIcon, DashboardIcon, BuildingIcon, BriefcaseIcon, ShieldIcon, UsersIcon, LogoutIcon, SunIcon, MoonIcon, MenuIcon, CloseIcon, BellIcon } from './icons';
+import { HomeIcon, DashboardIcon, BuildingIcon, BriefcaseIcon, ShieldIcon, UsersIcon, LogoutIcon, SunIcon, MoonIcon, MenuIcon, CloseIcon, BellIcon, PackageIcon, HeartIcon, ChefHatIcon } from './icons';
 import { AdminDrawer } from './AdminDrawer';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { NotificationDropdown } from './NotificationDropdown';
 
 export function Header() {
-  const { token, userId, isAuthenticated, logout } = useAuth();
+  const { token, userId, isAuthenticated, logout, isLoggingOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { unreadCount } = useNotifications();
   const router = useRouter();
@@ -91,11 +91,10 @@ export function Header() {
           setUserInfo(null);
           if (err instanceof HttpError && err.status === 401) {
             logout();
-            router.replace('/auth/login');
           }
         });
     }
-  }, [isAuthenticated, token, userId, logout, router]);
+  }, [isAuthenticated, token, userId, logout]);
 
   return (
     <>
@@ -181,13 +180,13 @@ export function Header() {
 
           {mounted && isAuthenticated && (
             <Link href="/orders" className={navLinkClass('/orders')} onClick={() => setMenuOpen(false)}>
-              📦 Meus Pedidos
+              <PackageIcon /> Meus Pedidos
             </Link>
           )}
 
           {mounted && isAuthenticated && (
             <Link href="/favorites" className={navLinkClass('/favorites')} onClick={() => setMenuOpen(false)}>
-              ❤️ Favoritos
+              <HeartIcon /> Favoritos
             </Link>
           )}
 
@@ -218,7 +217,7 @@ export function Header() {
                   gap: '6px',
                 }}
               >
-                <span>🍳</span> Pedidos da Cozinha
+                <ChefHatIcon /> Pedidos da Cozinha
               </Link>
             </>
           )}
@@ -295,10 +294,10 @@ export function Header() {
           {mounted && isAuthenticated && (
             <button
               type="button"
+              disabled={isLoggingOut}
               onClick={() => {
                 setMenuOpen(false);
                 logout();
-                router.replace('/auth/login');
               }}
               className="nav-logout-btn"
               id="btn-logout"

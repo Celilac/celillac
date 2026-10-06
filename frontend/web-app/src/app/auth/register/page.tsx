@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { PasswordEyeIcon } from '@/components/common/PasswordEyeIcon';
+import { UserIcon, StoreIcon, SparklesIcon } from '@/components/layout/icons';
 
 const STRONG_PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
 
@@ -123,7 +124,7 @@ export default function RegisterPage() {
                       className="role-option-card"
                       onClick={() => handleSelectRole('CELIACO')}
                     >
-                      <span className="role-option-icon" role="img" aria-label="Consumidor">🥗</span>
+                      <span className="role-option-icon" aria-hidden="true"><UserIcon size={24} /></span>
                       <div className="role-option-body">
                         <div className="role-option-title">
                           <span>Consumidor / Perfil Alimentar</span>
@@ -141,7 +142,7 @@ export default function RegisterPage() {
                       className="role-option-card"
                       onClick={() => handleSelectRole('PARCEIRO')}
                     >
-                      <span className="role-option-icon" role="img" aria-label="Parceiro">🏪</span>
+                      <span className="role-option-icon" aria-hidden="true"><StoreIcon size={24} /></span>
                       <div className="role-option-body">
                         <div className="role-option-title">
                           <span>Parceiro / Fornecedor</span>
@@ -162,7 +163,7 @@ export default function RegisterPage() {
                 <div>
                   <div className="role-header-banner">
                     <div className="role-header-banner-role">
-                      <span>{role === 'CELIACO' ? '🥗' : '🏪'}</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center' }}>{role === 'CELIACO' ? <UserIcon size={18} /> : <StoreIcon size={18} />}</span>
                       <span>{role === 'CELIACO' ? 'Conta Consumidor' : 'Conta Parceiro / Fornecedor'}</span>
                     </div>
                     <button
@@ -272,9 +273,9 @@ export default function RegisterPage() {
                       className="btn btn-em"
                       id="register-submit"
                       disabled={isSubmitDisabled}
-                      style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem' }}
+                      style={{ width: '100%', justifyContent: 'center', marginTop: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
                     >
-                      {loading ? 'Criando conta…' : '✨ Criar minha conta'}
+                      {loading ? 'Criando conta…' : <><SparklesIcon size={16} /> Criar minha conta</>}
                     </button>
                   </form>
 

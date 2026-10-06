@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { CloseIcon, ShieldIcon, UsersIcon, BriefcaseIcon } from './icons';
+import { CloseIcon, ShieldIcon, UsersIcon, BriefcaseIcon, TagIcon, MedalIcon, AlertTriangleIcon } from './icons';
 import styles from './AdminDrawer.module.css';
 
 interface AdminDrawerProps {
@@ -53,13 +53,13 @@ export const AdminDrawer: React.FC<AdminDrawerProps> = ({ isOpen, onClose }) => 
       href: '/admin/categories',
       label: 'Categorias de Produtos',
       description: 'Taxonomia e organização de itens do catálogo',
-      icon: <span>🏷️</span>,
+      icon: <TagIcon />,
     },
     {
       href: '/admin/certifications',
       label: 'Selos & Laudos Laboratoriais',
       description: 'Validação oficial de conformidade e segurança alimentar',
-      icon: <span>🏅</span>,
+      icon: <MedalIcon />,
     },
   ];
 
@@ -68,7 +68,7 @@ export const AdminDrawer: React.FC<AdminDrawerProps> = ({ isOpen, onClose }) => 
       href: '/admin/reports',
       label: 'Denúncias & Contaminação',
       description: 'Gestão de alertas de risco alimentar reportados',
-      icon: <span>🚨</span>,
+      icon: <AlertTriangleIcon />,
     },
     {
       href: '/admin/users',

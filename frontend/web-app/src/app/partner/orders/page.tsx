@@ -9,60 +9,80 @@ import { Header } from '@/components/layout/Header';
 import { partnerApi, PartnerSummary } from '@/api/partner';
 import { ordersApi, OrderDTO, OrderProblemReason } from '@/api/orders';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
+import {
+  BellIcon,
+  ClockIcon,
+  SparklesIcon,
+  CheckCircleIcon,
+  FireIcon,
+  PackageIcon,
+  BikeIcon,
+  FinishFlagIcon,
+  ChefHatIcon,
+  BanknoteIcon,
+  CreditCardIcon,
+  ShieldCheckIcon,
+  AlertTriangleIcon,
+  FileTextIcon,
+  XCircleIcon,
+  MapPinIcon,
+  UserXIcon,
+  MessageSquareIcon,
+} from '@/components/layout/icons';
 import styles from './partner-orders.module.css';
 
 const PROBLEM_OPTIONS: Array<{
   reason: OrderProblemReason;
-  icon: string;
+  icon: React.ReactNode;
   title: string;
   desc: string;
   isSevere: boolean;
 }> = [
   {
     reason: 'CLIENT_ABSENT',
-    icon: '🏃',
+    icon: <UserXIcon size={20} />,
     title: 'Cliente ausente / Não atende entregador',
     desc: 'Entregador aguardou no local e não conseguiu contato por telefone ou interfone.',
     isSevere: true,
   },
   {
     reason: 'CLIENT_REFUSED_PAYMENT',
-    icon: '💳',
+    icon: <CreditCardIcon size={20} />,
     title: 'Cliente recusou o pagamento na entrega',
     desc: 'Cliente se negou a realizar o pagamento na maquininha ou em dinheiro.',
     isSevere: true,
   },
   {
     reason: 'ADDRESS_UNREACHABLE',
-    icon: '📍',
+    icon: <MapPinIcon size={20} />,
     title: 'Endereço incorreto, incompleto ou inacessível',
     desc: 'Endereço inexistente, sem número, fora da rota ou sem acesso de segurança.',
     isSevere: false,
   },
   {
     reason: 'FRAUDULENT_ORDER',
-    icon: '🎭',
+    icon: <AlertTriangleIcon size={20} />,
     title: 'Suspeita de trote ou pedido fraudulento',
     desc: 'Telefone inválido, dados falsos ou comportamento suspeito do cliente.',
     isSevere: true,
   },
   {
     reason: 'CLIENT_REQUESTED_CANCELLATION',
-    icon: '✋',
+    icon: <XCircleIcon size={20} />,
     title: 'Cliente solicitou o cancelamento',
     desc: 'O cliente entrou em contato com a loja pedindo expressamente o cancelamento.',
     isSevere: false,
   },
   {
     reason: 'OUT_OF_STOCK',
-    icon: '🍳',
+    icon: <ChefHatIcon size={20} />,
     title: 'Item ou ingrediente esgotado na cozinha',
     desc: 'A cozinha não possui insumos seguros disponíveis para atender ao pedido.',
     isSevere: false,
   },
   {
     reason: 'OTHER',
-    icon: '💬',
+    icon: <MessageSquareIcon size={20} />,
     title: 'Outro problema com o cliente ou entrega',
     desc: 'Outra ocorrência não listada acima (detalhar no campo abaixo).',
     isSevere: false,
@@ -180,13 +200,13 @@ function PartnerOrdersContent() {
       if (isForCurrent) {
         toast.info(
           `Novo pedido recebido! #${payload.orderId.slice(0, 8)} • R$ ${Number(payload.totalAmount).toFixed(2)}`,
-          'Novo Pedido! 🔔'
+          'Novo Pedido!'
         );
         fetchPartnerOrders();
       } else {
         toast.info(
           `Novo pedido em ${locName || 'outro estabelecimento'}! #${payload.orderId.slice(0, 8)}`,
-          'Novo Pedido! 🔔'
+          'Novo Pedido!'
         );
       }
       fetchAllPendingCounts(partners);
@@ -428,13 +448,13 @@ function PartnerOrdersContent() {
       if (isDelivery) {
         return (
           <span className={`${styles.statusBadge} ${styles.badgePendingAccept}`}>
-            🔔 Aguardando Aceite
+            <BellIcon size={12} /> Aguardando Aceite
           </span>
         );
       }
       return (
         <span className={`${styles.statusBadge} ${styles.badgeAwaitingPayment}`}>
-          ⏳ Aguardando Pagamento
+          <ClockIcon size={12} /> Aguardando Pagamento
         </span>
       );
     }
@@ -442,7 +462,7 @@ function PartnerOrdersContent() {
     if (order.status === 'PAID') {
       return (
         <span className={`${styles.statusBadge} ${styles.badgeNewPaid}`}>
-          ✨ Novo • Pago
+          <SparklesIcon size={12} /> Novo • Pago
         </span>
       );
     }
@@ -450,7 +470,7 @@ function PartnerOrdersContent() {
     if (order.status === 'CONFIRMED') {
       return (
         <span className={`${styles.statusBadge} ${styles.badgeConfirmed}`}>
-          ✔️ Confirmado
+          <CheckCircleIcon size={12} /> Confirmado
         </span>
       );
     }
@@ -458,7 +478,7 @@ function PartnerOrdersContent() {
     if (order.status === 'PREPARING') {
       return (
         <span className={`${styles.statusBadge} ${styles.badgePreparing}`}>
-          🔥 Em Preparo
+          <FireIcon size={12} /> Em Preparo
         </span>
       );
     }
@@ -466,7 +486,7 @@ function PartnerOrdersContent() {
     if (order.status === 'READY_FOR_PICKUP') {
       return (
         <span className={`${styles.statusBadge} ${styles.badgeReady}`}>
-          📦 Pronto p/ Retirada
+          <PackageIcon size={12} /> Pronto p/ Retirada
         </span>
       );
     }
@@ -474,7 +494,7 @@ function PartnerOrdersContent() {
     if (order.status === 'OUT_FOR_DELIVERY') {
       return (
         <span className={`${styles.statusBadge} ${styles.badgeDelivery}`}>
-          🛵 Saiu para Entrega
+          <BikeIcon size={12} /> Saiu para Entrega
         </span>
       );
     }
@@ -482,7 +502,7 @@ function PartnerOrdersContent() {
     if (order.status === 'DELIVERED') {
       return (
         <span className={`${styles.statusBadge} ${styles.badgeDelivered}`}>
-          🏁 Entregue
+          <FinishFlagIcon size={12} /> Entregue
         </span>
       );
     }
@@ -520,8 +540,8 @@ function PartnerOrdersContent() {
       <main className={styles.mainContent}>
         <div className={styles.pageHeader}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-            <h1 className={styles.pageTitle} style={{ margin: 0 }}>
-              🍳 Gestão de Pedidos
+            <h1 className={styles.pageTitle} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <ChefHatIcon size={24} /> Gestão de Pedidos
             </h1>
 
             <div
@@ -570,7 +590,7 @@ function PartnerOrdersContent() {
                     </span>
                     {pendingCounts[selectedPartnerId] > 0 && (
                       <span className={styles.activePartnerBadge}>
-                        🔔 {pendingCounts[selectedPartnerId]}
+                        <BellIcon size={12} /> {pendingCounts[selectedPartnerId]}
                       </span>
                     )}
                   </span>
@@ -612,7 +632,7 @@ function PartnerOrdersContent() {
                           </div>
                           {count > 0 && (
                             <span className={styles.pendingBadge}>
-                              🔔 {count} {count === 1 ? 'novo' : 'novos'}
+                              <BellIcon size={12} /> {count} {count === 1 ? 'novo' : 'novos'}
                             </span>
                           )}
                           {isSelected && (
@@ -632,7 +652,7 @@ function PartnerOrdersContent() {
               href={`/partner/financial?partnerId=${selectedPartnerId}`}
               className={styles.financialButton}
             >
-              💰 Painel Financeiro & PIX
+              <BanknoteIcon size={16} /> Painel Financeiro & PIX
             </Link>
           </div>
         </div>
@@ -641,14 +661,15 @@ function PartnerOrdersContent() {
           <div className={styles.emptyCard}>
             <p className={styles.emptyTitle}>Nenhum restaurante parceiro vinculado a esta conta.</p>
             <p className={styles.emptyText}>
-              Para visualizar a cozinha e despachar pedidos, faça login com a conta parceira de teste:
+              Para visualizar a cozinha e despachar pedidos, você precisa ter um estabelecimento comercial parceiro cadastrado.
             </p>
-            <div className={styles.credentialBox}>
-              <p><strong>E-mail:</strong> parceiro.restaurante@seed.celilac.dev</p>
-              <p><strong>Senha:</strong> Seed@123456</p>
+            <div style={{ marginTop: '1.25rem', marginBottom: '1.25rem' }}>
+              <Link href="/partner/register" className={styles.financialButton}>
+                Cadastrar Estabelecimento
+              </Link>
             </div>
             <p className={styles.emptyText} style={{ marginTop: '1rem', fontSize: '0.85rem' }}>
-              Se você é um cliente celíaco fazendo pedidos, acesse <Link href="/orders" style={{ color: 'var(--color-primary, #059669)', textDecoration: 'underline' }}>Meus Pedidos</Link>.
+              Se você é um cliente fazendo pedidos, acesse <Link href="/orders" style={{ color: 'var(--color-primary, #059669)', textDecoration: 'underline' }}>Meus Pedidos</Link>.
             </p>
           </div>
         ) : (
@@ -657,7 +678,7 @@ function PartnerOrdersContent() {
             {partners.filter((p) => p.id !== selectedPartnerId && (pendingCounts[p.id] || 0) > 0).length > 0 && (
               <div className={styles.multiPartnerAlert}>
                 <div className={styles.multiPartnerAlertContent}>
-                  <span className={styles.multiPartnerAlertIcon}>🔔</span>
+                  <span className={styles.multiPartnerAlertIcon}><BellIcon size={18} /></span>
                   <span>
                     Atenção: Você possui{' '}
                     <strong>
@@ -773,7 +794,7 @@ function PartnerOrdersContent() {
                         {order.paymentMethod === 'CARD_ON_DELIVERY' ? (
                           <div className={`${styles.paymentBanner} ${styles.paymentBannerCard}`}>
                             <div className={styles.paymentBannerMain}>
-                              <span className={styles.paymentIcon}>💳</span>
+                              <span className={styles.paymentIcon}><CreditCardIcon size={16} /></span>
                               <span className={styles.paymentTitle}>Maquininha na Entrega</span>
                             </div>
                             <span className={styles.paymentSubtitle}>Cartão Débito / Crédito</span>
@@ -781,7 +802,7 @@ function PartnerOrdersContent() {
                         ) : order.paymentMethod === 'CASH_ON_DELIVERY' ? (
                           <div className={`${styles.paymentBanner} ${styles.paymentBannerCash}`}>
                             <div className={styles.paymentBannerMain}>
-                              <span className={styles.paymentIcon}>💵</span>
+                              <span className={styles.paymentIcon}><BanknoteIcon size={16} /></span>
                               <span className={styles.paymentTitle}>Dinheiro na Entrega</span>
                             </div>
                             <span className={styles.paymentSubtitle}>
@@ -791,7 +812,7 @@ function PartnerOrdersContent() {
                         ) : (
                           <div className={`${styles.paymentBanner} ${styles.paymentBannerOnline}`}>
                             <div className={styles.paymentBannerMain}>
-                              <span className={styles.paymentIcon}>🛡️</span>
+                              <span className={styles.paymentIcon}><ShieldCheckIcon size={16} /></span>
                               <span className={styles.paymentTitle}>Pagamento Online</span>
                             </div>
                             <span className={styles.paymentSubtitle}>
@@ -816,7 +837,7 @@ function PartnerOrdersContent() {
 
                       {order.notes && (
                         <div className={styles.orderNotes}>
-                          📝 {order.notes}
+                          <FileTextIcon size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} /> {order.notes}
                         </div>
                       )}
 
@@ -838,7 +859,7 @@ function PartnerOrdersContent() {
                             className={`${styles.actionButton} ${styles.actionConfirm}`}
                             onClick={() => handleAction(order.id, 'CONFIRM')}
                           >
-                            ✅ Aceitar Pedido
+                            <CheckCircleIcon size={16} /> Aceitar Pedido
                           </button>
                         )}
 
@@ -848,7 +869,7 @@ function PartnerOrdersContent() {
                             className={`${styles.actionButton} ${styles.actionPrepare}`}
                             onClick={() => handleAction(order.id, 'START_PREPARING')}
                           >
-                            🔥 Iniciar Preparo
+                            <FireIcon size={16} /> Iniciar Preparo
                           </button>
                         )}
 
@@ -858,7 +879,7 @@ function PartnerOrdersContent() {
                             className={`${styles.actionButton} ${styles.actionReady}`}
                             onClick={() => handleAction(order.id, 'READY_FOR_PICKUP')}
                           >
-                            📦 Marcar como Pronto
+                            <PackageIcon size={16} /> Marcar como Pronto
                           </button>
                         )}
 
@@ -868,7 +889,7 @@ function PartnerOrdersContent() {
                             className={`${styles.actionButton} ${styles.actionReady}`}
                             onClick={() => handleAction(order.id, 'OUT_FOR_DELIVERY')}
                           >
-                            🛵 Despachar para Entrega
+                            <BikeIcon size={16} /> Despachar para Entrega
                           </button>
                         )}
 
@@ -878,7 +899,7 @@ function PartnerOrdersContent() {
                             className={`${styles.actionButton} ${styles.actionDeliver}`}
                             onClick={() => handleAction(order.id, 'DELIVER')}
                           >
-                            🏁 Concluir Entrega
+                            <FinishFlagIcon size={16} /> Concluir Entrega
                           </button>
                         )}
 
@@ -890,7 +911,7 @@ function PartnerOrdersContent() {
                             onClick={() => handleOpenReportModal(order)}
                             title="Reportar ocorrência ou problema com este pedido ou cliente"
                           >
-                            🚨 Reportar Problema
+                            <AlertTriangleIcon size={16} /> Reportar Problema
                           </button>
                         )}
                       </div>
@@ -907,8 +928,8 @@ function PartnerOrdersContent() {
           <div className={styles.modalOverlay} onClick={handleCloseReportModal}>
             <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
               <div className={styles.modalHeader}>
-                <h2 className={styles.modalTitle}>
-                  🚨 Reportar Problema com o Pedido
+                <h2 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <AlertTriangleIcon size={20} color="var(--color-danger)" /> Reportar Problema com o Pedido
                 </h2>
                 <button
                   type="button"
@@ -976,7 +997,7 @@ function PartnerOrdersContent() {
                   </label>
                   <textarea
                     className={styles.modalTextarea}
-                    rows={2}
+                    rows={3}
                     placeholder={
                       reportReason === 'CLIENT_ABSENT'
                         ? 'Ex: Entregador aguardou 15 min no endereço, tentou ligar 3 vezes e ninguém atendeu...'
@@ -1013,7 +1034,7 @@ function PartnerOrdersContent() {
                     className={styles.btnDangerConfirm}
                     disabled={isSubmittingReport}
                   >
-                    {isSubmittingReport ? 'Processando...' : '🚨 Confirmar e Cancelar Pedido'}
+                    {isSubmittingReport ? 'Processando...' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}><AlertTriangleIcon size={16} /> Confirmar e Cancelar Pedido</span>}
                   </button>
                 </div>
               </form>

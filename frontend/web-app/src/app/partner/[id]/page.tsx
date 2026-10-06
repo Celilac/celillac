@@ -15,6 +15,22 @@ import { CreateProductModal } from '@/components/common/CreateProductModal';
 import PartnerLocationMap from '@/components/common/PartnerLocationMap';
 import { formatDisplayPhone, maskCnpj } from '@/utils/mask';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
+import {
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ClockIcon,
+  FileTextIcon,
+  RocketIcon,
+  ArrowLeftIcon,
+  BuildingIcon,
+  MapPinIcon,
+  PackageIcon,
+  WheatIcon,
+  SparklesIcon,
+  MilkIcon,
+  StatusDot,
+} from '@/components/layout/icons';
 import styles from '../partner.module.css';
 
 interface PageProps {
@@ -152,7 +168,7 @@ export default function PartnerDetailPage({ params }: PageProps) {
     if (partner.approvalStatus === 'REJECTED') {
       return (
         <div className={`${styles.alertBanner} ${styles.alertBannerDanger}`}>
-          <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+          <span style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center' }}><AlertTriangleIcon size={20} color="var(--color-danger)" /></span>
           <div>
             <strong>Cadastro Rejeitado pela Administração</strong>
             <p style={{ marginTop: '0.25rem' }}>
@@ -169,7 +185,7 @@ export default function PartnerDetailPage({ params }: PageProps) {
     if (partner.approvalStatus === 'SUSPENDED') {
       return (
         <div className={`${styles.alertBanner} ${styles.alertBannerDanger}`}>
-          <span style={{ fontSize: '1.25rem' }}>🚫</span>
+          <span style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center' }}><XCircleIcon size={20} color="var(--color-danger)" /></span>
           <div>
             <strong>Estabelecimento Suspenso</strong>
             <p style={{ marginTop: '0.25rem' }}>
@@ -186,7 +202,7 @@ export default function PartnerDetailPage({ params }: PageProps) {
     if (partner.approvalStatus === 'PENDING_REVIEW') {
       return (
         <div className={`${styles.alertBanner} ${styles.alertBannerWarning}`}>
-          <span style={{ fontSize: '1.25rem' }}>⏳</span>
+          <span style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center' }}><ClockIcon size={20} color="var(--color-warning)" /></span>
           <div>
             <strong>Aguardando Revisão Administrativa</strong>
             <p style={{ marginTop: '0.25rem' }}>
@@ -200,7 +216,7 @@ export default function PartnerDetailPage({ params }: PageProps) {
     if (partner.approvalStatus === 'DRAFT') {
       return (
         <div className={`${styles.alertBanner} ${styles.alertBannerInfo}`}>
-          <span style={{ fontSize: '1.25rem' }}>📝</span>
+          <span style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center' }}><FileTextIcon size={20} color="var(--color-accent)" /></span>
           <div>
             <strong>Cadastro em Rascunho</strong>
             <p style={{ marginTop: '0.25rem' }}>
@@ -209,11 +225,11 @@ export default function PartnerDetailPage({ params }: PageProps) {
             <button 
               type="button" 
               className={`${styles.btn} ${styles.btnPrimary}`} 
-              style={{ marginTop: '0.75rem', padding: '0.45rem 1rem', fontSize: '0.8rem' }}
+              style={{ marginTop: '0.75rem', padding: '0.45rem 1rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
               onClick={handleSubmitForReview}
               disabled={updating}
             >
-              🚀 Enviar para Revisão
+              <RocketIcon size={16} /> Enviar para Revisão
             </button>
           </div>
         </div>
@@ -222,7 +238,7 @@ export default function PartnerDetailPage({ params }: PageProps) {
 
     return (
       <div className={`${styles.alertBanner} ${styles.alertBannerInfo}`} style={{ background: 'var(--color-status-approved-bg)', color: 'var(--color-status-approved)', borderColor: 'var(--color-status-approved-border)' }}>
-        <span style={{ fontSize: '1.25rem' }}>✅</span>
+        <span style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center' }}><CheckCircleIcon size={20} color="var(--color-status-approved)" /></span>
         <div>
           <strong>Cadastro Aprovado e Homologado</strong>
           <p style={{ marginTop: '0.25rem' }}>
@@ -271,9 +287,9 @@ export default function PartnerDetailPage({ params }: PageProps) {
             <Link 
               href="/partner" 
               className="btn btn-secondary"
-              style={{ textDecoration: 'none', whiteSpace: 'nowrap', fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+              style={{ textDecoration: 'none', whiteSpace: 'nowrap', fontSize: '0.875rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
             >
-              ⬅️ Meus Estabelecimentos
+              <ArrowLeftIcon size={14} /> Meus Estabelecimentos
             </Link>
             <button
               type="button"
@@ -307,7 +323,9 @@ export default function PartnerDetailPage({ params }: PageProps) {
         <div className={styles.dashboardLayout} style={{ marginTop: '2rem' }}>
           <section className={styles.mainPanel}>
             <div className={styles.card} style={{ gap: '1rem' }}>
-              <h2 className={styles.sectionTitle}>🏢 Informações Cadastrais</h2>
+              <h2 className={styles.sectionTitle} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <BuildingIcon size={20} /> Informações Cadastrais
+              </h2>
               <div className={styles.infoGrid}>
                 <div>
                   <p className={styles.infoRow}><strong>Razão/Nome Fantasia:</strong> <span>{partner.name}</span></p>
@@ -341,7 +359,9 @@ export default function PartnerDetailPage({ params }: PageProps) {
 
               {/* Mapa de Localização */}
               <div style={{ marginTop: '0.75rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem' }}>
-                <p style={{ fontWeight: 600, marginBottom: '0.5rem' }}>📍 Localização no Mapa:</p>
+                <p style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <MapPinIcon size={16} /> Localização no Mapa:
+                </p>
                 <PartnerLocationMap
                   address={partner.address}
                   city={partner.city}
@@ -352,219 +372,22 @@ export default function PartnerDetailPage({ params }: PageProps) {
                 />
               </div>
             </div>
-
-            {/* SEÇÃO DE PRODUTOS DO ESTABELECIMENTO */}
-            <div className={styles.card} style={{ gap: '1.25rem', marginTop: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                <div>
-                  <h2 className={styles.sectionTitle} style={{ margin: 0 }}>📦 Produtos do Estabelecimento</h2>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                    Itens fabricados ou fornecidos por {partner.name}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleOpenCreateProduct}
-                  className="btn btn-em"
-                  style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  Novo Produto
-                </button>
-              </div>
-
-              {loadingProducts ? (
-                <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem 0' }}>Carregando produtos…</p>
-              ) : products.length === 0 ? (
-                <div style={{
-                  padding: '2rem',
-                  textAlign: 'center',
-                  background: 'var(--color-elevated, rgba(255,255,255,0.02))',
-                  borderRadius: '12px',
-                  border: '1px solid var(--color-border)',
-                }}>
-                  <p style={{ color: 'var(--color-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-                    Nenhum produto cadastrado para este estabelecimento ainda.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleOpenCreateProduct}
-                    className="btn btn-em"
-                    style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Cadastrar Primeiro Produto
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {products.map((p) => {
-                    const statusInfo: Record<string, { label: string; bg: string; color: string; border: string }> = {
-                      ANALISADO: { label: '✅ Analisado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
-                      APPROVED: { label: '✅ Aprovado', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
-                      PENDENTE_DE_ANALISE: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
-                      PENDING_ANALYSIS: { label: '⏳ Pendente', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
-                      FLAGGED: { label: '⚠️ Sinalizado', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
-                    };
-                    const st = statusInfo[p.analysisStatus] || statusInfo['PENDENTE_DE_ANALISE'];
-
-                    return (
-                      <div
-                        key={p.id}
-                        style={{
-                          padding: '1rem',
-                          borderRadius: '10px',
-                          background: 'var(--color-elevated)',
-                          border: '1px solid var(--color-border)',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          gap: '12px',
-                          flexWrap: 'wrap',
-                        }}
-                      >
-                        <div style={{ flex: 1, minWidth: '240px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <strong style={{ fontSize: '1rem', color: 'var(--color-text)' }}>{p.name}</strong>
-                            <span style={{
-                              padding: '2px 8px',
-                              borderRadius: '9999px',
-                              fontSize: '0.75rem',
-                              fontWeight: 600,
-                              background: st.bg,
-                              color: st.color,
-                              border: `1px solid ${st.border}`,
-                            }}>
-                              {st.label}
-                            </span>
-                          </div>
-
-                          <p style={{ margin: '0 0 6px 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                            <strong>Marca:</strong> {p.brand || 'Própria'}
-                          </p>
-
-                          {p.ingredients && (
-                            <p style={{ margin: '0 0 8px 0', fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
-                              <strong>Ingredientes:</strong> {p.ingredients}
-                            </p>
-                          )}
-
-                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                            {p.hasGluten ? (
-                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-blocked-bg)', color: 'var(--color-blocked)', border: '1px solid var(--color-blocked-border, rgba(239,68,68,0.3))' }}>
-                                🌾 Contém Glúten
-                              </span>
-                            ) : (
-                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)' }}>
-                                ✨ Sem Glúten
-                              </span>
-                            )}
-
-                            {/* Badge de Leite e Derivados */}
-                            {(() => {
-                              const ing = (p.ingredients || '').toLowerCase();
-                              const cross = (p.crossContamination || '').toLowerCase();
-                              const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme de leite', 'soro de leite', 'whey'];
-                              const hasMilkInIng = milkTerms.some((t) => ing.includes(t));
-                              const hasMilkInTraces = milkTerms.some((t) => cross.includes(t));
-
-                              if (hasMilkInIng) {
-                                return (
-                                  <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-                                    🥛 Contém Leite
-                                  </span>
-                                );
-                              }
-                              if (hasMilkInTraces) {
-                                return (
-                                  <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                                    ⚠️ Traços de Leite
-                                  </span>
-                                );
-                              }
-                              return (
-                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)' }}>
-                                  🥛 Sem Leite
-                                </span>
-                              );
-                            })()}
-
-                            {(() => {
-                              const cc = (p.crossContamination || '').trim().toLowerCase();
-                              const envRisk = (p as any).crossContaminationDetails?.environmentRisk;
-                              const isFree =
-                                !cc ||
-                                cc === 'none' ||
-                                cc === 'nenhum' ||
-                                cc.startsWith('nenhum') ||
-                                cc.startsWith('livre') ||
-                                cc.includes('100% livre') ||
-                                envRisk === 'EXCLUSIVE_ENVIRONMENT';
-
-                              if (isFree) return null;
-
-                              return (
-                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: '1px solid var(--color-warning-border)' }}>
-                                  ⚠️ Contaminação Cruzada
-                                </span>
-                              );
-                            })()}
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEditProduct(p)}
-                            className="btn btn-secondary"
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              fontSize: '0.8rem',
-                              padding: '0.4rem 0.8rem',
-                              whiteSpace: 'nowrap',
-                              cursor: 'pointer',
-                            }}
-                            title="Editar informações do produto"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 20h9" />
-                              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                            </svg>
-                            Editar
-                          </button>
-                          <Link
-                            href={`/products/${p.id}`}
-                            className="btn btn-ghost"
-                            style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', whiteSpace: 'nowrap' }}
-                          >
-                            Ver no Catálogo
-                          </Link>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
           </section>
 
           <aside className={styles.sidePanel}>
             <div className={styles.card} style={{ gap: '1.25rem' }}>
-              <h2 className={styles.sectionTitle}>⚙️ Status Operacional</h2>
+              <h2 className={styles.sectionTitle}>Status Operacional</h2>
               
               <div className={styles.toggleContainer}>
                 <div>
-                  <p style={{ fontWeight: '600', color: 'var(--color-text)' }}>
-                    {partner.operationalStatus === 'ACTIVE' ? '🟢 Aberto' :
-                     partner.operationalStatus === 'TEMPORARILY_CLOSED' ? '🟡 Temporariamente Fechado' : '🔴 Inativo'}
+                  <p style={{ fontWeight: '600', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {partner.operationalStatus === 'ACTIVE' ? (
+                      <><StatusDot color="green" size={9} /> Aberto</>
+                    ) : partner.operationalStatus === 'TEMPORARILY_CLOSED' ? (
+                      <><StatusDot color="yellow" size={9} /> Temporariamente Fechado</>
+                    ) : (
+                      <><StatusDot color="red" size={9} /> Inativo</>
+                    )}
                   </p>
                   <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', marginTop: '0.25rem' }}>
                     {partner.operationalStatus === 'ACTIVE' ? 'Visível na busca e apto a operar.' : 'Exibe aviso de fechamento aos clientes.'}
@@ -589,6 +412,216 @@ export default function PartnerDetailPage({ params }: PageProps) {
             </div>
           </aside>
         </div>
+
+        {/* SEÇÃO DE PRODUTOS DO ESTABELECIMENTO (LARGURA TOTAL) */}
+        <section style={{ marginTop: '2rem' }}>
+          <div className={styles.card} style={{ gap: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h2 className={styles.sectionTitle} style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <PackageIcon size={20} /> Produtos do Estabelecimento
+                </h2>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                  Itens fabricados ou fornecidos por {partner.name}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenCreateProduct}
+                className="btn btn-em"
+                style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Novo Produto
+              </button>
+            </div>
+
+            {loadingProducts ? (
+              <p style={{ color: 'var(--color-text-muted)', textAlign: 'center', padding: '1rem 0' }}>Carregando produtos…</p>
+            ) : products.length === 0 ? (
+              <div style={{
+                padding: '2rem',
+                textAlign: 'center',
+                background: 'var(--color-elevated, rgba(255,255,255,0.02))',
+                borderRadius: '12px',
+                border: '1px solid var(--color-border)',
+              }}>
+                <p style={{ color: 'var(--color-text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                  Nenhum produto cadastrado para este estabelecimento ainda.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleOpenCreateProduct}
+                  className="btn btn-em"
+                  style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Cadastrar Primeiro Produto
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {products.map((p) => {
+                  const statusInfo: Record<string, { label: string; dotColor: string; bg: string; color: string; border: string }> = {
+                    ANALISADO: { label: 'Analisado', dotColor: 'green', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+                    APPROVED: { label: 'Aprovado', dotColor: 'green', bg: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: 'var(--color-safe-border)' },
+                    PENDENTE_DE_ANALISE: { label: 'Pendente', dotColor: 'yellow', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
+                    PENDING_ANALYSIS: { label: 'Pendente', dotColor: 'yellow', bg: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: 'var(--color-warning-border)' },
+                    FLAGGED: { label: 'Sinalizado', dotColor: 'red', bg: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: 'var(--color-danger-border)' },
+                  };
+                  const st = statusInfo[p.analysisStatus] || statusInfo['PENDENTE_DE_ANALISE'];
+
+                  return (
+                    <div
+                      key={p.id}
+                      style={{
+                        padding: '1rem',
+                        borderRadius: '10px',
+                        background: 'var(--color-elevated)',
+                        border: '1px solid var(--color-border)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        gap: '12px',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <div style={{ flex: 1, minWidth: '240px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <strong style={{ fontSize: '1rem', color: 'var(--color-text)' }}>{p.name}</strong>
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            background: st.bg,
+                            color: st.color,
+                            border: `1px solid ${st.border}`,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                          }}>
+                            <StatusDot color={st.dotColor} size={6} />
+                            {st.label}
+                          </span>
+                        </div>
+
+                        <p style={{ margin: '0 0 6px 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                          <strong>Marca:</strong> {p.brand || 'Própria'}
+                        </p>
+
+                        {p.ingredients && (
+                          <p style={{ margin: '0 0 8px 0', fontSize: '0.8rem', color: 'var(--color-text-muted)', lineHeight: '1.4' }}>
+                            <strong>Ingredientes:</strong> {p.ingredients}
+                          </p>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          {p.hasGluten ? (
+                            <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-blocked-bg)', color: 'var(--color-blocked)', border: '1px solid var(--color-blocked-border, rgba(239,68,68,0.3))', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <WheatIcon size={12} /> Contém Glúten
+                            </span>
+                          ) : (
+                            <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <SparklesIcon size={12} /> Sem Glúten
+                            </span>
+                          )}
+
+                          {/* Badge de Leite e Derivados */}
+                          {(() => {
+                            const ing = (p.ingredients || '').toLowerCase();
+                            const cross = (p.crossContamination || '').toLowerCase();
+                            const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme de leite', 'soro de leite', 'whey'];
+                            const hasMilkInIng = milkTerms.some((t) => ing.includes(t));
+                            const hasMilkInTraces = milkTerms.some((t) => cross.includes(t));
+
+                            if (hasMilkInIng) {
+                              return (
+                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <MilkIcon size={12} /> Contém Leite
+                                </span>
+                              );
+                            }
+                            if (hasMilkInTraces) {
+                              return (
+                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <AlertTriangleIcon size={12} /> Traços de Leite
+                                </span>
+                              );
+                            }
+                            return (
+                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <MilkIcon size={12} /> Sem Leite
+                              </span>
+                            );
+                          })()}
+
+                          {(() => {
+                            const cc = (p.crossContamination || '').trim().toLowerCase();
+                            const envRisk = (p as any).crossContaminationDetails?.environmentRisk;
+                            const isFree =
+                              !cc ||
+                              cc === 'none' ||
+                              cc === 'nenhum' ||
+                              cc.startsWith('nenhum') ||
+                              cc.startsWith('livre') ||
+                              cc.includes('100% livre') ||
+                              envRisk === 'EXCLUSIVE_ENVIRONMENT';
+
+                            if (isFree) return null;
+
+                            return (
+                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-warning-bg)', color: 'var(--color-warning)', border: '1px solid var(--color-warning-border)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <AlertTriangleIcon size={12} /> Contaminação Cruzada
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditProduct(p)}
+                          className="btn btn-secondary"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            fontSize: '0.8rem',
+                            padding: '0.4rem 0.8rem',
+                            whiteSpace: 'nowrap',
+                            cursor: 'pointer',
+                          }}
+                          title="Editar informações do produto"
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                          </svg>
+                          Editar
+                        </button>
+                        <Link
+                          href={`/products/${p.id}`}
+                          className="btn btn-ghost"
+                          style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem', whiteSpace: 'nowrap' }}
+                        >
+                          Ver no Catálogo
+                        </Link>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
       </main>
 
       {/* Modal de Confirmação de Alteração do Status Operacional */}
@@ -609,10 +642,12 @@ export default function PartnerDetailPage({ params }: PageProps) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>
-                {pendingOperationalStatus === 'TEMPORARILY_CLOSED'
-                  ? '⚠️ Pausar Operação do Estabelecimento?'
-                  : '🟢 Abrir Estabelecimento?'}
+              <h3 className={styles.modalTitle} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {pendingOperationalStatus === 'TEMPORARILY_CLOSED' ? (
+                  <><AlertTriangleIcon size={18} color="var(--color-warning)" /> Pausar Operação do Estabelecimento?</>
+                ) : (
+                  <><CheckCircleIcon size={18} color="var(--color-safe)" /> Abrir Estabelecimento?</>
+                )}
               </h3>
               <button
                 type="button"

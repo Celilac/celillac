@@ -7,6 +7,22 @@ import { useToast } from '@/hooks/useToast';
 import { apiClient, HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { UserAvatar } from '@/components/common/UserAvatar';
+import {
+  TrashIcon,
+  AlertTriangleIcon,
+  UsersIcon,
+  KeyIcon,
+  PinIcon,
+  ClipboardListIcon,
+  MailIcon,
+  CheckIcon,
+  CrownIcon,
+  UserXIcon,
+  XCircleIcon,
+  RefreshCwIcon,
+  BanIcon,
+  StatusDot,
+} from '@/components/layout/icons';
 import styles from '../../partner/partner.module.css';
 
 export interface UserSummary {
@@ -59,7 +75,9 @@ function DeleteConfirmModal({ user, onConfirm, onCancel, isDeleting }: DeleteCon
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-          <span style={{ fontSize: '2rem' }}>🗑️</span>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(239, 68, 68, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <TrashIcon size={20} style={{ color: '#f87171' }} />
+          </div>
           <h2
             id="delete-modal-title"
             style={{ margin: 0, fontSize: '1.2rem', fontWeight: 700, color: '#f87171' }}
@@ -90,7 +108,8 @@ function DeleteConfirmModal({ user, onConfirm, onCancel, isDeleting }: DeleteCon
         </div>
 
         <p style={{ color: 'var(--color-text-muted, #94a3b8)', fontSize: '0.85rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
-          ⚠️ Esta ação <strong>não pode ser desfeita</strong>. Todos os dados vinculados (perfil alimentar, favoritos, avaliações) serão removidos. O e-mail ficará livre para novo cadastro.
+          <AlertTriangleIcon size={14} style={{ color: 'var(--color-warning, #facc15)', verticalAlign: 'text-bottom', marginRight: 4 }} />
+          Esta ação <strong>não pode ser desfeita</strong>. Todos os dados vinculados (perfil alimentar, favoritos, avaliações) serão removidos. O e-mail ficará livre para novo cadastro.
         </p>
 
         <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -276,7 +295,7 @@ export default function AdminUsersPage() {
         <div className={styles.grid}>
           {users.length === 0 ? (
             <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>👥</span>
+              <UsersIcon size={44} style={{ color: 'var(--color-text-muted)' }} />
               <h2>Nenhum usuário cadastrado no sistema</h2>
             </div>
           ) : (
@@ -301,71 +320,79 @@ export default function AdminUsersPage() {
                     </div>
 
                     <div className={styles.partnerMeta} style={{ marginTop: '0.5rem' }}>
-                      <span className={styles.metaItem}>🔑 <strong>Função:</strong> {user.role}</span>
                       <span className={styles.metaItem}>
-                        📌 <strong>Conta:</strong>{' '}
+                        <KeyIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                        <strong>Função:</strong> {user.role}
+                      </span>
+                      <span className={styles.metaItem}>
+                        <PinIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                        <strong>Conta:</strong>{' '}
                         {user.accountStatus === 'ACTIVE'
                           ? <span style={{ color: '#4ade80' }}>Ativa</span>
-                          : <span style={{ color: '#facc15' }}>⏳ Pendente de Aprovação</span>}
+                          : <span style={{ color: '#facc15', display: 'inline-flex', alignItems: 'center', gap: 4 }}><StatusDot color="yellow" size={7} /> Pendente de Aprovação</span>}
                       </span>
                       <span className={styles.metaItem}>
-                        📋 <strong>Perfil:</strong>{' '}
+                        <ClipboardListIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                        <strong>Perfil:</strong>{' '}
                         {user.profileEvaluationStatus === 'APPROVED'
-                          ? <span style={{ color: '#4ade80' }}>✅ Aprovado</span>
+                          ? <span style={{ color: '#4ade80', display: 'inline-flex', alignItems: 'center', gap: 4 }}><StatusDot color="green" size={7} /> Aprovado</span>
                           : user.profileEvaluationStatus === 'REJECTED'
-                            ? <span style={{ color: '#f87171' }}>❌ Rejeitado</span>
-                            : <span style={{ color: '#facc15' }}>⏳ Pendente de Avaliação</span>}
+                            ? <span style={{ color: '#f87171', display: 'inline-flex', alignItems: 'center', gap: 4 }}><StatusDot color="red" size={7} /> Rejeitado</span>
+                            : <span style={{ color: '#facc15', display: 'inline-flex', alignItems: 'center', gap: 4 }}><StatusDot color="yellow" size={7} /> Pendente de Avaliação</span>}
                       </span>
-                      <span className={styles.metaItem}>✉️ <strong>E-mail:</strong> {user.isEmailVerified ? 'Verificado' : 'Não verificado'}</span>
+                      <span className={styles.metaItem}>
+                        <MailIcon size={13} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                        <strong>E-mail:</strong> {user.isEmailVerified ? 'Verificado' : 'Não verificado'}
+                      </span>
                     </div>
                   </div>
 
                   <div className={styles.cardActions} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' }}>
                     {user.role === 'ADMIN' && user.accountStatus === 'PENDING_APPROVAL' && (
-                      <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} style={{ flex: 1 }}
+                      <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                         onClick={() => handleApproveAdmin(user.id)} disabled={updating} id={`approve-admin-${user.id}`}>
-                        ✔️ Aprovar Acesso Admin
+                        <CheckIcon size={14} /> Aprovar Acesso Admin
                       </button>
                     )}
 
                     {user.role !== 'ADMIN' && !isSelf && (
-                      <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} style={{ flex: '1 1 100%' }}
+                      <button type="button" className={`${styles.btn} ${styles.btnSecondary}`} style={{ flex: '1 1 100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                         onClick={() => handlePromoteToAdmin(user.id)} disabled={updating} id={`promote-admin-${user.id}`}>
-                        👑 Promover a Administrador
+                        <CrownIcon size={14} /> Promover a Administrador
                       </button>
                     )}
 
                     {user.role === 'ADMIN' && !isSelf && (
-                      <button type="button" className={`${styles.btn} ${styles.btnDanger}`} style={{ flex: '1 1 100%', opacity: 0.85 }}
+                      <button type="button" className={`${styles.btn} ${styles.btnDanger}`} style={{ flex: '1 1 100%', opacity: 0.85, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                         onClick={() => handleDemoteAdmin(user.id)} disabled={updating} id={`demote-admin-${user.id}`}>
-                        ⬇️ Remover Acesso Admin
+                        <UserXIcon size={14} /> Remover Acesso Admin
                       </button>
                     )}
 
                     {user.profileEvaluationStatus === 'PENDING_EVALUATION' && (
                       <>
-                        <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} style={{ flex: 1 }}
+                        <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                           onClick={() => handleEvaluateProfile(user.id, 'APPROVED')} disabled={updating} id={`approve-profile-${user.id}`}>
-                          ✅ Aprovar Perfil
+                          <CheckIcon size={14} /> Aprovar Perfil
                         </button>
-                        <button type="button" className={`${styles.btn} ${styles.btnDanger}`} style={{ flex: 1 }}
+                        <button type="button" className={`${styles.btn} ${styles.btnDanger}`} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                           onClick={() => handleEvaluateProfile(user.id, 'REJECTED')} disabled={updating} id={`reject-profile-${user.id}`}>
-                          ❌ Rejeitar Perfil
+                          <XCircleIcon size={14} /> Rejeitar Perfil
                         </button>
                       </>
                     )}
 
                     {user.profileEvaluationStatus === 'REJECTED' && (
-                      <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} style={{ flex: 1 }}
+                      <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                         onClick={() => handleEvaluateProfile(user.id, 'APPROVED')} disabled={updating} id={`reapprove-profile-${user.id}`}>
-                        🔄 Desfazer Rejeição &amp; Aprovar
+                        <RefreshCwIcon size={14} /> Desfazer Rejeição &amp; Aprovar
                       </button>
                     )}
 
                     {user.profileEvaluationStatus === 'APPROVED' && user.role !== 'ADMIN' && (
-                      <button type="button" className={`${styles.btn} ${styles.btnDanger}`} style={{ flex: 1 }}
+                      <button type="button" className={`${styles.btn} ${styles.btnDanger}`} style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                         onClick={() => handleEvaluateProfile(user.id, 'REJECTED')} disabled={updating} id={`re-reject-profile-${user.id}`}>
-                        🚫 Alterar para Rejeitado
+                        <BanIcon size={14} /> Alterar para Rejeitado
                       </button>
                     )}
 
@@ -386,9 +413,13 @@ export default function AdminUsersPage() {
                           cursor: 'pointer',
                           fontWeight: 600,
                           fontSize: '0.85rem',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
                         }}
                       >
-                        🗑️ Excluir Conta do Usuário
+                        <TrashIcon size={14} /> Excluir Conta do Usuário
                       </button>
                     )}
                   </div>

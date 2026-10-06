@@ -38,7 +38,7 @@ export const iamApi = {
     apiClient.post<LoginResponse>('/iam/login', body),
 
   logout: (token: string) =>
-    apiClient.post<void>('/iam/logout', {}, token),
+    apiClient.post<void>('/iam/logout', {}, token, { keepalive: true }),
 
   verifyEmailCode: (code: string, token: string) =>
     apiClient.post<{ message: string }>('/iam/email-verification/verify', { code }, token),

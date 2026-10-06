@@ -2,6 +2,7 @@
 // frontend/web-app/src/components/common/CrossContaminationSelector.tsx
 import React from 'react';
 import { CrossContaminationDetails, EnvironmentRiskLevel } from '@/api/catalog';
+import { ShieldCheckIcon, SparklesIcon, AlertTriangleIcon, InfoIcon } from '@/components/layout/icons';
 
 interface CrossContaminationSelectorProps {
   value?: CrossContaminationDetails;
@@ -17,7 +18,7 @@ const RISK_OPTIONS: Array<{
   badgeColor: string;
   badgeBorder: string;
   description: string;
-  icon: string;
+  icon: React.ReactNode;
 }> = [
   {
     key: 'EXCLUSIVE_ENVIRONMENT',
@@ -28,7 +29,7 @@ const RISK_OPTIONS: Array<{
     badgeBorder: 'rgba(16, 185, 129, 0.35)',
     description:
       'A cozinha, maquinário e utensílios são totalmente dedicados e livres de glúten e outros alérgenos. Não há entrada de farinhas ou ingredientes de risco no local.',
-    icon: '🛡️',
+    icon: <ShieldCheckIcon size={22} style={{ color: '#10b981' }} />,
   },
   {
     key: 'SHARED_WITH_PROTOCOL',
@@ -39,7 +40,7 @@ const RISK_OPTIONS: Array<{
     badgeBorder: 'rgba(56, 189, 248, 0.35)',
     description:
       'Mesmo espaço físico, porém com dias/horários de produção separados, higienização validada e utensílios identificados por cor ou autoclave.',
-    icon: '🧼',
+    icon: <SparklesIcon size={22} style={{ color: '#38bdf8' }} />,
   },
   {
     key: 'SHARED_ENVIRONMENT',
@@ -50,7 +51,7 @@ const RISK_OPTIONS: Array<{
     badgeBorder: 'rgba(245, 158, 11, 0.35)',
     description:
       'Mesmo maquinário, masseiras, fornos ou fritadeiras compartilhados com produtos contendo glúten ou alérgenos sem higienização certificada.',
-    icon: '⚠️',
+    icon: <AlertTriangleIcon size={22} style={{ color: '#f59e0b' }} />,
   },
   {
     key: 'UNKNOWN_RISK',
@@ -61,7 +62,7 @@ const RISK_OPTIONS: Array<{
     badgeBorder: 'rgba(148, 163, 184, 0.35)',
     description:
       'O estabelecimento revende o item pronto ou não possui informações detalhadas do ambiente de manufatura.',
-    icon: '❓',
+    icon: <InfoIcon size={22} style={{ color: '#94a3b8' }} />,
   },
 ];
 

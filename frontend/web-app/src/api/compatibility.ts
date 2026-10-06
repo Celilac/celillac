@@ -22,10 +22,12 @@ export interface CompatibilityRequest {
 }
 
 export interface CompatibilityResponse {
-  isCompatible: boolean;
-  riskLevel:    RiskLevel;
-  conflicts:    ConflictDetail[];
-  reasoning:    string;
+  isCompatible:     boolean;
+  riskLevel:        RiskLevel;
+  conflicts:        ConflictDetail[];
+  reasoning:        string;
+  confidenceLevel?: 'AUDITED_BY_CELILAC' | 'PARTNER_DECLARED' | 'PRECAUTIONARY';
+  hasDivergence?:   boolean;
 }
 
 export const compatibilityApi = {
