@@ -562,3 +562,127 @@
   margin-top: 0.25rem;
 }
 
+/* ==========================================================================
+   Layout com Barra Lateral de Filtros para Produtos
+   ========================================================================== */
+
+.productsLayout {
+  display: flex;
+  gap: var(--space-6);
+  align-items: flex-start;
+  width: 100%;
+}
+
+.productsSidebarColumn {
+  width: 290px;
+  flex-shrink: 0;
+}
+
+.productsMainColumn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.productsTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.mobileFilterTriggerBtn {
+  display: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+:global(html[data-theme='light']) .mobileFilterTriggerBtn {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.mobileFilterTriggerBtn:hover {
+  border-color: var(--color-emerald);
+  color: var(--color-emerald);
+}
+
+/* Chips de Filtros Ativos */
+.filterChipsRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.25rem 0;
+}
+
+.filterChipsLabel {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-emerald);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-full);
+  padding: 0.2rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.filterChipRemove {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.filterClearAllLink {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.2rem 0.4rem;
+}
+
+@media (max-width: 900px) {
+  .productsLayout {
+    flex-direction: column;
+  }
+
+  .productsSidebarColumn {
+    display: none;
+  }
+
+  .mobileFilterTriggerBtn {
+    display: inline-flex;
+  }
+}
+
+

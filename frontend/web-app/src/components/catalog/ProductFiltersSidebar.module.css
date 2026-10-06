@@ -1,0 +1,401 @@
+/* frontend/web-app/src/components/catalog/ProductFiltersSidebar.module.css */
+
+.sidebarCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 1.5rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+:global(html[data-theme='light']) .sidebarCard {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+/* Cabeçalho da Ferramenta */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.titleArea {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.titleIcon {
+  color: var(--color-emerald);
+  display: flex;
+  align-items: center;
+}
+
+.title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.activeCountBadge {
+  background: var(--color-emerald);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  padding: 0.15rem 0.5rem;
+  line-height: 1;
+}
+
+.btnClear {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.btnClear:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.closeMobileBtn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+}
+
+/* Seções de Filtros */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sectionIcon {
+  color: var(--color-text-muted);
+  display: inline-flex;
+  align-items: center;
+  margin-right: 0.35rem;
+}
+
+/* Select de Ordenação */
+.selectWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.select {
+  width: 100%;
+  appearance: none;
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 2rem 0.6rem 0.85rem;
+  font-size: 0.88rem;
+  color: var(--color-text);
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+:global(html[data-theme='light']) .select {
+  background: #f8fafc;
+}
+
+.select:focus {
+  border-color: var(--color-emerald);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}
+
+.selectArrow {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--color-text-muted);
+  display: flex;
+  align-items: center;
+}
+
+/* Grupos de Opções e Checkboxes Estilizados */
+.checkboxList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.checkboxItem {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  user-select: none;
+  font-size: 0.86rem;
+  color: var(--color-text);
+}
+
+.checkboxItem:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+:global(html[data-theme='light']) .checkboxItem:hover {
+  background: #f1f5f9;
+}
+
+.customCheck {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.checkboxChecked .customCheck {
+  background: var(--color-emerald);
+  border-color: var(--color-emerald);
+  color: #ffffff;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.badgeTag {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-status-approved-bg);
+  color: var(--color-status-approved);
+  border: 1px solid var(--color-status-approved-border);
+  font-weight: 700;
+  margin-left: auto;
+}
+
+/* Card Destaque para Perfil Seguro */
+.safeProfileCard {
+  background: rgba(16, 185, 129, 0.07);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.safeProfileCard .checkboxItem {
+  padding: 0;
+}
+
+.safeProfileHint {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* Faixa de Preço */
+.priceInputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.priceInputWrapper {
+  display: flex;
+  align-items: center;
+  background: var(--color-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.35rem 0.6rem;
+  flex: 1;
+  transition: border-color 0.2s ease;
+}
+
+:global(html[data-theme='light']) .priceInputWrapper {
+  background: #f8fafc;
+}
+
+.priceInputWrapper:focus-within {
+  border-color: var(--color-emerald);
+}
+
+.currencyPrefix {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  margin-right: 0.25rem;
+}
+
+.priceInput {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+}
+
+.priceSeparator {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+/* Lista de Categorias */
+.categoryPills {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.categoryPill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.84rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.categoryPill:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+}
+
+:global(html[data-theme='light']) .categoryPill:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.categoryPillActive {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: var(--color-emerald) !important;
+  border-color: rgba(16, 185, 129, 0.3) !important;
+  font-weight: 600;
+}
+
+.categoryCount {
+  font-size: 0.74rem;
+  background: var(--color-elevated);
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+}
+
+/* Botão Mobile Trigger & Modal */
+.mobileOverlay {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .sidebarCard {
+    position: static;
+    max-height: none;
+    box-shadow: none;
+  }
+
+  .mobileDrawerOpen {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    justify-content: flex-end;
+  }
+
+  .mobileDrawerContent {
+    width: 85%;
+    max-width: 360px;
+    height: 100%;
+    background: var(--color-surface);
+    padding: 1.5rem;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    overflow-y: auto;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.25);
+    animation: slideInRight 0.25s ease-out;
+  }
+
+  :global(html[data-theme='light']) .mobileDrawerContent {
+    background: #ffffff;
+  }
+
+  .closeMobileBtn {
+    display: flex;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
