@@ -79,6 +79,7 @@ describe('CreateOrderUseCase Unit Tests', () => {
       findById: jest.fn(),
       findByConsumerId: jest.fn(),
       findByPartnerId: jest.fn(),
+      findPendingExpired: jest.fn(),
     };
 
     productRepository = {

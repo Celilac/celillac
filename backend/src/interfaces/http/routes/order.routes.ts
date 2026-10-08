@@ -21,6 +21,8 @@ import { ListConsumerOrdersUseCase } from '../../../application/order/ListConsum
 import { ListPartnerOrdersUseCase } from '../../../application/order/ListPartnerOrdersUseCase';
 import { UpdateOrderStatusUseCase } from '../../../application/order/UpdateOrderStatusUseCase';
 import { ReportOrderNonPaymentUseCase } from '../../../application/order/ReportOrderNonPaymentUseCase';
+import { CancelExpiredOrdersUseCase } from '../../../application/order/CancelExpiredOrdersUseCase';
+import { OrderExpirationWorker } from '../../../infrastructure/workers/OrderExpirationWorker';
 import { sseOrderNotificationHub } from '../../../infrastructure/notifications/SseOrderNotificationHub';
 
 import { OrderController } from '../controllers/order/OrderController';
@@ -47,6 +49,18 @@ const refundPaymentUseCase = new RefundPaymentUseCase(
   auditLogRepository
 );
 
+const cancelExpiredOrdersUseCase = new CancelExpiredOrdersUseCase(
+  orderRepository,
+  paymentRepository,
+  refundPaymentUseCase,
+  sseOrderNotificationHub,
+  auditLogRepository
+);
+
+// Inicializa o worker em segundo plano para varredura ultra-leve (intervalo de 60s)
+const orderExpirationWorker = new OrderExpirationWorker(cancelExpiredOrdersUseCase);
+orderExpirationWorker.start();
+
 const createOrderUseCase = new CreateOrderUseCase(
   orderRepository,
   productRepository,
@@ -59,7 +73,11 @@ const cancelOrderUseCase = new CancelOrderUseCase(
   paymentRepository,
   refundPaymentUseCase
 );
-const getOrderUseCase = new GetOrderUseCase(orderRepository, partnerRepository);
+const getOrderUseCase = new GetOrderUseCase(
+  orderRepository,
+  partnerRepository,
+  cancelExpiredOrdersUseCase
+);
 const listConsumerOrdersUseCase = new ListConsumerOrdersUseCase(orderRepository);
 const listPartnerOrdersUseCase = new ListPartnerOrdersUseCase(orderRepository, partnerRepository);
 const updateOrderStatusUseCase = new UpdateOrderStatusUseCase(

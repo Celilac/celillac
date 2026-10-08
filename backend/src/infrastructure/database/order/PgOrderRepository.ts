@@ -166,6 +166,43 @@ export class PgOrderRepository implements IOrderRepository {
     return this.assembleOrders(orderRes.rows, itemsRes.rows);
   }
 
+  async findPendingExpired(partnerTimeoutMinutes: number, paymentTimeoutMinutes: number): Promise<Order[]> {
+    const orderRes = await this.pool.query(
+      `SELECT o.*, p.method AS payment_method, p.change_for
+       FROM orders o
+       LEFT JOIN (
+         SELECT DISTINCT ON (order_id) order_id, method, change_for
+         FROM payments ORDER BY order_id, created_at DESC
+       ) p ON p.order_id = o.id
+       WHERE (
+         (
+           (o.status = 'PAID' OR (o.status IN ('CREATED', 'AWAITING_PAYMENT') AND p.method IN ('CASH_ON_DELIVERY', 'CARD_ON_DELIVERY')))
+           AND COALESCE(o.updated_at, o.created_at) <= (NOW() - ($1 * INTERVAL '1 minute'))
+         )
+         OR
+         (
+           o.status IN ('CREATED', 'AWAITING_PAYMENT')
+           AND (p.method IS NULL OR p.method NOT IN ('CASH_ON_DELIVERY', 'CARD_ON_DELIVERY'))
+           AND COALESCE(o.updated_at, o.created_at) <= (NOW() - ($2 * INTERVAL '1 minute'))
+         )
+       )
+       ORDER BY o.created_at ASC`,
+      [partnerTimeoutMinutes, paymentTimeoutMinutes]
+    );
+
+    if (orderRes.rows.length === 0) {
+      return [];
+    }
+
+    const orderIds = orderRes.rows.map((r) => r.id);
+    const itemsRes = await this.pool.query(
+      'SELECT * FROM order_items WHERE order_id = ANY($1::uuid[])',
+      [orderIds]
+    );
+
+    return this.assembleOrders(orderRes.rows, itemsRes.rows);
+  }
+
   private assembleOrders(orderRows: any[], itemRows: any[]): Order[] {
     const itemsByOrderId = new Map<string, any[]>();
     for (const itemRow of itemRows) {
