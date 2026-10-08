@@ -149,8 +149,10 @@ function PublicPartnersContent() {
             onClick={() => handleTabChange('partners')}
             id="tab-filter-partners"
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <BuildingIcon size={16} /> Estabelecimentos ({partners.length})
+            <span className={styles.tabContent}>
+              <BuildingIcon size={16} className={styles.tabIcon} />
+              <span className={styles.tabTitle}>Estabelecimentos</span>
+              <span className={styles.tabCount}>({partners.length})</span>
             </span>
           </button>
           <button
@@ -161,8 +163,12 @@ function PublicPartnersContent() {
             onClick={() => handleTabChange('products')}
             id="tab-filter-products"
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <PackageIcon size={16} /> Produtos Ofertados ({products.length})
+            <span className={styles.tabContent}>
+              <PackageIcon size={16} className={styles.tabIcon} />
+              <span className={styles.tabTitle}>
+                Produtos<span className={styles.tabExtraLabel}> Ofertados</span>
+              </span>
+              <span className={styles.tabCount}>({products.length})</span>
             </span>
           </button>
         </div>
