@@ -1,7 +1,7 @@
 # Catálogo de Produtos
 
 **Status:** ✅ Implementado (Fase 1: Expansão Cadastral e Composição; Fase 2: Galeria de Imagens Funcionais; Fase 3: Segurança Alimentar Avançada, Estilos e Selos; Fase 4: Integração AllergenEngine e Moderação de Laudos)
-**Entregue em:** 2026-07-01 (Última atualização: 2026-10-06 - ver [CHANGELOG.md](../../CHANGELOG.md))
+**Entregue em:** 2026-07-01 (Última atualização: 2026-09-10 - ver [CHANGELOG.md](../../CHANGELOG.md))
 **Regras de domínio:** [`docs/DOMAIN_MODEL.md`](../DOMAIN_MODEL.md#2-catálogo-de-produtos-e-parceiros)
 
 ## Endpoints
