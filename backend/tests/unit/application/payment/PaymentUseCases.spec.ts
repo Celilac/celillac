@@ -75,6 +75,7 @@ describe('Payment Application Use Cases Unit Tests', () => {
       findById: jest.fn(),
       findByConsumerId: jest.fn(),
       findByPartnerId: jest.fn(),
+      findPendingExpired: jest.fn(),
     };
 
     paymentRepository = {

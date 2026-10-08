@@ -97,6 +97,7 @@ describe('ReportOrderNonPaymentUseCase', () => {
       findById: jest.fn(),
       findByConsumerId: jest.fn(),
       findByPartnerId: jest.fn(),
+      findPendingExpired: jest.fn(),
     };
 
     partnerRepository = {

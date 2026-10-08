@@ -306,6 +306,8 @@ export async function testDatabaseConnection(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_orders_partner_id ON orders(partner_id);
       CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
       CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_orders_timeout_lookup ON orders (status, updated_at, created_at)
+        WHERE status IN ('CREATED', 'AWAITING_PAYMENT', 'PAID');
 
       CREATE TABLE IF NOT EXISTS order_items (
         id UUID PRIMARY KEY,

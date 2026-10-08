@@ -232,7 +232,11 @@ export class Order extends Entity<OrderProps> {
     return Result.ok<void>(undefined);
   }
 
-  public cancel(reason: string, requestedByConsumer: boolean = false): Result<{ requiresRefund: boolean }> {
+  public cancel(
+    reason: string,
+    requestedByConsumer: boolean = false,
+    isSystem: boolean = false
+  ): Result<{ requiresRefund: boolean }> {
     if (!reason || reason.trim() === '') {
       return Result.fail<{ requiresRefund: boolean }>('O motivo do cancelamento é obrigatório.');
     }
@@ -248,6 +252,12 @@ export class Order extends Entity<OrderProps> {
     if (requestedByConsumer && !OrderCancellationPolicy.canConsumerCancel(this.props.status)) {
       return Result.fail<{ requiresRefund: boolean }>(
         'O cancelamento não é mais permitido pelo consumidor pois o estabelecimento já confirmou ou iniciou o pedido.'
+      );
+    }
+
+    if (isSystem && ![OrderStatus.CREATED, OrderStatus.AWAITING_PAYMENT, OrderStatus.PAID].includes(this.props.status)) {
+      return Result.fail<{ requiresRefund: boolean }>(
+        'O cancelamento automático só é aplicável a pedidos que ainda não foram confirmados pelo estabelecimento.'
       );
     }
 

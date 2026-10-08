@@ -60,6 +60,7 @@ describe('Order Lifecycle Use Cases (Cancel, Queries, Status Transitions)', () =
       findById: jest.fn(),
       findByConsumerId: jest.fn(),
       findByPartnerId: jest.fn(),
+      findPendingExpired: jest.fn(),
     };
 
     partnerRepository = {

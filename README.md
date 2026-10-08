@@ -44,7 +44,7 @@ celillac/
 │   │   ├── application/     # Casos de uso
 │   │   ├── infrastructure/  # PostgreSQL (pg), gateways (Asaas), repositórios
 │   │   └── interfaces/      # Controllers HTTP (Express)
-│   └── tests/unit/          # 88 suítes | 604 testes
+│   └── tests/unit/          # 90 suítes | 615 testes
 ├── frontend/
 │   ├── web-app/             # Aplicação principal (Next.js 14, porta 3001)
 │   ├── landing-page/        # Landing page estática (Next.js 14, porta 3002)
@@ -130,6 +130,7 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 🛡️ Segurança, Anti-Bot & Anti-DDoS | ✅ Implementado | [`docs/features/security-hardening.md`](docs/features/security-hardening.md) |
 | 💵 Pagamento na Entrega & Proteção Contra Fraude | ✅ Implementado | [`docs/features/delivery-payment-and-fraud-protection.md`](docs/features/delivery-payment-and-fraud-protection.md) |
 | 🔄 Autonomia de Testes & Auto-Cura | ✅ Implementado | [`docs/features/autonomous-testing-protocol.md`](docs/features/autonomous-testing-protocol.md) |
+| ⏱️ Cancelamento Automático de Pedidos (Timeouts) | ✅ Implementado | [`docs/features/order-auto-cancellation.md`](docs/features/order-auto-cancellation.md) |
 
 ---
 

@@ -101,6 +101,49 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Cancelado',
 };
 
+function OrderAcceptanceTimer({ createdAt }: { createdAt: string }) {
+  const [secondsLeft, setSecondsLeft] = useState<number>(() => {
+    const created = new Date(createdAt).getTime();
+    const expires = created + 15 * 60 * 1000; // 15 minutos limite do estabelecimento
+    return Math.max(0, Math.floor((expires - Date.now()) / 1000));
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const created = new Date(createdAt).getTime();
+      const expires = created + 15 * 60 * 1000;
+      setSecondsLeft(Math.max(0, Math.floor((expires - Date.now()) / 1000)));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [createdAt]);
+
+  const isUrgent = secondsLeft < 300; // Menos de 5 minutos
+  const mins = Math.floor(secondsLeft / 60);
+  const secs = (secondsLeft % 60).toString().padStart(2, '0');
+
+  return (
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        padding: '0.2rem 0.55rem',
+        borderRadius: '999px',
+        fontSize: '0.75rem',
+        fontWeight: 600,
+        backgroundColor: isUrgent ? 'rgba(239, 68, 68, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+        color: isUrgent ? '#ef4444' : '#d97706',
+        border: `1px solid ${isUrgent ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+        marginLeft: '0.5rem',
+      }}
+      title="Tempo limite para aceitar o pedido antes do cancelamento automático (15 minutos)"
+    >
+      <ClockIcon size={12} />
+      <span>{secondsLeft > 0 ? `Aceitar: ${mins}:${secs}` : 'Expirando...'}</span>
+    </div>
+  );
+}
+
 function PartnerOrdersContent() {
   const { token, isAuthenticated, isInitializing } = useAuth();
   const router = useRouter();
@@ -785,6 +828,11 @@ function PartnerOrdersContent() {
                               minute: '2-digit',
                             })}
                           </span>
+                          {(order.status === 'PAID' ||
+                            ((order.paymentMethod === 'CASH_ON_DELIVERY' || order.paymentMethod === 'CARD_ON_DELIVERY') &&
+                              (order.status === 'CREATED' || order.status === 'AWAITING_PAYMENT'))) && (
+                            <OrderAcceptanceTimer createdAt={order.createdAt} />
+                          )}
                         </div>
                         {renderStatusBadge(order)}
                       </div>
@@ -913,6 +961,12 @@ function PartnerOrdersContent() {
                           >
                             <AlertTriangleIcon size={16} /> Reportar Problema
                           </button>
+                        )}
+
+                        {order.status === 'CANCELLED' && order.cancelReason && (
+                          <div style={{ fontSize: '0.8rem', color: '#ef4444', marginTop: '0.6rem', fontWeight: 500, lineHeight: 1.4 }}>
+                            <strong>Cancelamento:</strong> {order.cancelReason}
+                          </div>
                         )}
                       </div>
                     </div>
