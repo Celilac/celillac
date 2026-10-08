@@ -1,11 +1,18 @@
 /* frontend/web-app/src/app/public-partners/public-partners.module.css */
 
 .container {
-  max-width: 1320px;
+  max-width: 100%;
   width: 100%;
-  margin: 0 auto;
-  padding: var(--space-8) var(--space-6);
+  margin: 0;
+  padding: var(--space-6) var(--space-6);
   min-height: 100vh;
+  box-sizing: border-box;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: var(--space-4) var(--space-3);
+  }
 }
 
 /* Header da Página */
@@ -119,6 +126,13 @@
 @media (min-width: 1120px) {
   .partnersGrid {
     grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .partnersGrid {
+    grid-template-columns: repeat(4, 1fr);
     gap: 1.75rem;
   }
 }
@@ -388,8 +402,8 @@
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 5px;
-  gap: 8px;
+  padding: 4px;
+  gap: 6px;
   margin-bottom: var(--space-6);
   width: 100%;
   max-width: 520px;
@@ -404,7 +418,7 @@
 .tabBtn {
   flex: 1 1 0;
   min-width: 0;
-  padding: 0.75rem 1rem;
+  padding: 0.7rem 0.85rem;
   border-radius: var(--radius-md);
   border: none;
   background: transparent;
@@ -413,11 +427,36 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.tabContent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.tabIcon {
+  flex-shrink: 0;
+}
+
+.tabTitle {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabCount {
+  white-space: nowrap;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .tabExtraLabel {
@@ -448,19 +487,22 @@
 @media (max-width: 640px) {
   .tabsContainer {
     width: 100%;
-    max-width: 520px;
-    padding: 4px;
-    gap: 6px;
+    max-width: 100%;
+    padding: 3px;
+    gap: 4px;
   }
 
   .tabBtn {
-    padding: 0.65rem 0.5rem;
-    font-size: clamp(0.76rem, 3.2vw, 0.88rem);
-    gap: 0.35rem;
+    padding: 0.55rem 0.35rem;
+    font-size: clamp(0.78rem, 3.4vw, 0.86rem);
+  }
+
+  .tabContent {
+    gap: 0.3rem;
   }
 
   .tabExtraLabel {
-    display: inline;
+    display: none;
   }
 }
 
@@ -470,8 +512,8 @@
 
 .productsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: var(--space-5);
 }
 
 .productCard {
@@ -677,7 +719,7 @@
   }
 
   .productsSidebarColumn {
-    display: none;
+    display: contents;
   }
 
   .mobileFilterTriggerBtn {
