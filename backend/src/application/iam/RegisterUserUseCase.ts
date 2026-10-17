@@ -15,6 +15,7 @@ export interface RegisterUserDTO {
   password: string;
   role: UserRole;
   fullName?: string;
+  termsAccepted?: boolean;
 }
 
 export interface RegisterUserResponseDTO {
@@ -23,6 +24,8 @@ export interface RegisterUserResponseDTO {
   role: string;
   accountStatus: string;
   isEmailVerified: boolean;
+  termsAcceptedAt?: string;
+  termsVersion?: string;
   message?: string;
 }
 
@@ -84,7 +87,16 @@ export class RegisterUserUseCase {
       accountStatus = realActiveAdmins.length > 0 ? 'PENDING_APPROVAL' : 'ACTIVE';
     }
 
-    // 5. Criar entidade User
+    // 5. Criar entidade User com registro de consentimento LGPD e versão dos termos
+    if (dto.termsAccepted === false) {
+      return Result.fail<RegisterUserResponseDTO>(
+        'É obrigatório aceitar os Termos de Uso e a Política de Privacidade para criar uma conta.',
+      );
+    }
+
+    const termsAcceptedAt = new Date();
+    const termsVersion = '1.0';
+
     const userResult = User.create({
       email,
       passwordHash: passwordHashResult.getValue(),
@@ -93,6 +105,8 @@ export class RegisterUserUseCase {
       accountStatus,
       profileEvaluationStatus: 'PENDING_EVALUATION',
       isEmailVerified: false,
+      termsAcceptedAt,
+      termsVersion,
     });
 
     if (userResult.isFailure) {
@@ -126,6 +140,8 @@ export class RegisterUserUseCase {
       role: user.role,
       accountStatus: user.accountStatus,
       isEmailVerified: user.isEmailVerified,
+      termsAcceptedAt: user.termsAcceptedAt?.toISOString(),
+      termsVersion: user.termsVersion,
       message: isPendingAdmin
         ? 'Conta de Administrador cadastrada com sucesso! Ela aguarda aprovação de um administrador existente para que você possa fazer login.'
         : undefined,

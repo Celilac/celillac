@@ -140,4 +140,39 @@ describe('RegisterUserUseCase', () => {
     expect(userRepository.save).not.toHaveBeenCalled();
     expect(emailService.sendNewUserRegisteredAdminNotification).not.toHaveBeenCalled();
   });
+
+  it('deve registrar consentimento dos termos com data/hora e versão 1.0', async () => {
+    const result = await useCase.execute({
+      email: 'consentimento@exemplo.com',
+      password: 'StrongPassword@123',
+      role: UserRole.CELIACO,
+      fullName: 'Consentimento User',
+      termsAccepted: true,
+    });
+
+    expect(result.isSuccess).toBe(true);
+    const data = result.getValue();
+    expect(data.termsVersion).toBe('1.0');
+    expect(data.termsAcceptedAt).toBeDefined();
+
+    expect(userRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        termsVersion: '1.0',
+        termsAcceptedAt: expect.any(Date),
+      }),
+    );
+  });
+
+  it('deve rejeitar cadastro quando termos não forem aceitos (termsAccepted: false)', async () => {
+    const result = await useCase.execute({
+      email: 'recusou@exemplo.com',
+      password: 'StrongPassword@123',
+      role: UserRole.CELIACO,
+      termsAccepted: false,
+    });
+
+    expect(result.isFailure).toBe(true);
+    expect(result.getError()).toBe('É obrigatório aceitar os Termos de Uso e a Política de Privacidade para criar uma conta.');
+    expect(userRepository.save).not.toHaveBeenCalled();
+  });
 });

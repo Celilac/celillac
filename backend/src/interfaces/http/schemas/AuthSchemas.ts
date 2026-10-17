@@ -7,15 +7,19 @@ export const LoginSchema = z.object({
 });
 
 export const RegisterSchema = z.object({
-  name: z.string().trim().min(2, 'O nome deve ter no mínimo 2 caracteres.').max(100),
+  name: z.string().trim().min(2, 'O nome deve ter no mínimo 2 caracteres.').max(100).optional(),
+  fullName: z.string().trim().min(2, 'O nome deve ter no mínimo 2 caracteres.').max(100).optional(),
   email: z.string().trim().email('E-mail em formato inválido.').max(255),
   password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres.').max(100),
-  role: z.enum(['CONSUMER', 'PARTNER', 'ADMIN']).optional(),
+  role: z.enum(['CONSUMER', 'PARTNER', 'ADMIN', 'CELIACO']).optional(),
   cpf: z.string().trim().optional(),
   birthDate: z.string().trim().optional(),
   phone: z.string().trim().optional(),
   gender: z.string().trim().optional(),
   avatarUrl: z.string().trim().optional(),
+  termsAccepted: z.literal(true, {
+    message: 'Você deve aceitar os Termos de Uso e a Política de Privacidade para continuar.',
+  }),
 });
 
 export const RequestPasswordResetSchema = z.object({

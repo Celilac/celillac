@@ -30,6 +30,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
 
   const passwordStrengthMessage = password && !STRONG_PASSWORD_REGEX.test(password)
     ? 'Use 8+ caracteres com letra maiúscula, minúscula, número e símbolo.'
@@ -44,6 +45,7 @@ export default function RegisterPage() {
     !email.trim() ||
     !password ||
     !confirmPassword ||
+    !termsAccepted ||
     Boolean(passwordStrengthMessage) ||
     Boolean(confirmPasswordMessage);
 
@@ -68,11 +70,22 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!termsAccepted) {
+      toast.error('Você deve aceitar os Termos de Uso e a Política de Privacidade para criar sua conta.', 'Consentimento obrigatório');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const normalizedEmail = email.trim().toLowerCase();
-      const user = await iamApi.register({ email: normalizedEmail, password, role, fullName: fullName.trim() } as any);
+      const user = await iamApi.register({
+        email: normalizedEmail,
+        password,
+        role,
+        fullName: fullName.trim(),
+        termsAccepted: true,
+      });
       
       const session = await iamApi.login({ email: normalizedEmail, password });
       login(session.token, user.id);
@@ -266,6 +279,30 @@ export default function RegisterPage() {
                         </button>
                       </div>
                       {confirmPasswordMessage ? <p className="field-error">{confirmPasswordMessage}</p> : null}
+                    </div>
+
+                    <div className="field" style={{ marginTop: '0.85rem', marginBottom: '0.85rem' }}>
+                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', cursor: 'pointer', fontSize: '0.82rem', lineHeight: '1.4', color: 'var(--color-text-secondary)' }}>
+                        <input
+                          type="checkbox"
+                          id="register-terms-consent"
+                          checked={termsAccepted}
+                          onChange={(e) => setTermsAccepted(e.target.checked)}
+                          style={{ marginTop: '0.15rem', accentColor: 'var(--color-primary, #059669)', cursor: 'pointer', width: '16px', height: '16px', flexShrink: 0 }}
+                          required
+                        />
+                        <span>
+                          Li e concordo com os{' '}
+                          <Link href="/termos" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary, #059669)', fontWeight: 600, textDecoration: 'underline' }}>
+                            Termos de Uso
+                          </Link>{' '}
+                          e a{' '}
+                          <Link href="/privacidade" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary, #059669)', fontWeight: 600, textDecoration: 'underline' }}>
+                            Política de Privacidade
+                          </Link>
+                          , e dou meu <strong>consentimento expresso (LGPD Art. 11)</strong> para o tratamento dos meus dados de saúde e restrições alimentares com a finalidade exclusiva de segurança alimentar.
+                        </span>
+                      </label>
                     </div>
 
                     <button

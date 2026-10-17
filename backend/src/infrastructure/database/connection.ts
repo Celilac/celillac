@@ -479,6 +479,15 @@ export async function testDatabaseConnection(): Promise<void> {
       );
     `, 'Vínculo de produtos comerciais a parceiros homologados');
 
+    // 14. Consentimento LGPD e Versão dos Termos de Uso em users (Issue #103)
+    await executeSafeDdl(client, `
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMP WITH TIME ZONE,
+      ADD COLUMN IF NOT EXISTS terms_version VARCHAR(20) DEFAULT '1.0';
+
+      CREATE INDEX IF NOT EXISTS idx_users_terms_accepted_at ON users(terms_accepted_at);
+    `, 'Campos de consentimento LGPD e versão de termos em users');
+
     console.log('[Database]: Conexão e sincronização de esquema com PostgreSQL concluídas com sucesso.');
   } finally {
     client.release();

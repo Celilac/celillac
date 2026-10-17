@@ -2,10 +2,11 @@
 import { apiClient } from './client';
 
 export interface RegisterRequest {
-  email:    string;
-  password: string;
-  role:     'CELIACO' | 'PARCEIRO' | 'ADMIN';
-  fullName?: string;
+  email:          string;
+  password:       string;
+  role:           'CELIACO' | 'PARCEIRO' | 'ADMIN';
+  fullName?:      string;
+  termsAccepted?: boolean;
 }
 
 export interface RegisterResponse {
