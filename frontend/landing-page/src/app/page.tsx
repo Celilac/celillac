@@ -1,5 +1,10 @@
 import styles from './page.module.css';
 
+const WEB_APP_URL =
+  process.env.NEXT_PUBLIC_WEB_APP_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.NODE_ENV === 'production' ? 'https://www.celilac.com.br' : 'http://localhost:3001');
+
 export default function LandingPage() {
   return (
     <main className={styles.main}>
@@ -10,7 +15,7 @@ export default function LandingPage() {
         <nav className={styles.nav}>
           <a href="#funcionalidades" className={styles.navLink}>Como Funciona</a>
           <a href="#motor" className={styles.navLink}>O Motor</a>
-          <a href="http://localhost:3001/dashboard" className={styles.navButton}>Entrar no App</a>
+          <a href={`${WEB_APP_URL}/dashboard`} className={styles.navButton}>Entrar no App</a>
         </nav>
       </header>
 
@@ -24,7 +29,7 @@ export default function LandingPage() {
           O CeLiLac analisa os ingredientes reais e te dá a resposta em um segundo.
         </p>
         <div className={styles.ctaGroup}>
-          <a href="http://localhost:3001/dashboard" className={styles.primaryCta}>Proteger minha saúde agora</a>
+          <a href={`${WEB_APP_URL}/dashboard`} className={styles.primaryCta}>Proteger minha saúde agora</a>
           <a href="#funcionalidades" className={styles.secondaryCta}>Entender o motor</a>
         </div>
       </section>

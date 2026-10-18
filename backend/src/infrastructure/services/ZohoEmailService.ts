@@ -2,6 +2,7 @@
 import https from 'https';
 import tls from 'tls';
 import { IEmailService } from '../../domain/services/IEmailService';
+import { DataMasker } from '../security/DataMasker';
 
 /**
  * ZohoEmailService — Serviço de envio de e-mails transacionais via Zoho Mail (SMTP TLS / ZeptoMail API).
@@ -34,7 +35,7 @@ export class ZohoEmailService implements IEmailService {
   }
 
   async sendVerificationCode(recipientEmail: string, code: string, recipientName?: string): Promise<void> {
-    console.log(`[EmailService]: 🔑 Código OTP gerado para ${recipientEmail}: [ ${code} ]`);
+    console.log(`[ZohoEmailService]: 🔑 Enviando código OTP para ${DataMasker.maskEmail(recipientEmail)}`);
     const subject = 'CeLiLac — Seu código de verificação';
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
@@ -66,7 +67,7 @@ export class ZohoEmailService implements IEmailService {
   }
 
   async sendPasswordResetCode(recipientEmail: string, code: string, recipientName?: string): Promise<void> {
-    console.log(`[ZohoEmailService]: 🔑 Código de recuperação de senha gerado para ${recipientEmail}: [ ${code} ]`);
+    console.log(`[ZohoEmailService]: 🔑 Enviando código de recuperação de senha para ${DataMasker.maskEmail(recipientEmail)}`);
     const subject = 'CeLiLac — Recuperação de Senha';
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; background-color: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
@@ -189,7 +190,7 @@ export class ZohoEmailService implements IEmailService {
       </div>
     `;
 
-    console.log(`[ZohoEmailService]: 🔔 Enviando notificação de novo usuário para admin: ${recipientEmail}`);
+    console.log(`[ZohoEmailService]: 🔔 Enviando notificação de novo usuário para admin: ${DataMasker.maskEmail(recipientEmail)}`);
     await this.dispatchEmail(recipientEmail, subject, htmlContent);
   }
 
@@ -203,7 +204,7 @@ export class ZohoEmailService implements IEmailService {
 
   private async sendEmailViaSmtpTls(toEmail: string, subject: string, htmlContent: string): Promise<void> {
     return new Promise((resolve) => {
-      console.log(`[ZohoEmailService]: Conectando via SMTP TLS (${this.smtpHost}:${this.smtpPort}) para enviar e-mail para ${toEmail}...`);
+      console.log(`[ZohoEmailService]: Conectando via SMTP TLS (${this.smtpHost}:${this.smtpPort}) para enviar e-mail para ${DataMasker.maskEmail(toEmail)}...`);
       const socket = tls.connect(
         {
           host: this.smtpHost,
@@ -260,7 +261,7 @@ export class ZohoEmailService implements IEmailService {
               } else if (step === 8 && response.startsWith('250')) {
                 step = 9;
                 sendCommand('QUIT');
-                console.log(`[ZohoEmailService]: E-mail enviado com sucesso via SMTP TLS para ${toEmail}`);
+                console.log(`[ZohoEmailService]: E-mail enviado com sucesso via SMTP TLS para ${DataMasker.maskEmail(toEmail)}`);
                 socket.end();
                 resolve();
               } else if (response.startsWith('5') || response.startsWith('4')) {
@@ -304,7 +305,7 @@ export class ZohoEmailService implements IEmailService {
         let data = '';
         res.on('data', (chunk) => (data += chunk));
         res.on('end', () => {
-          console.log(`[ZohoEmailService]: Status ${res.statusCode} via ZeptoMail para ${toEmail}`);
+          console.log(`[ZohoEmailService]: Status ${res.statusCode} via ZeptoMail para ${DataMasker.maskEmail(toEmail)}`);
           if (res.statusCode !== 200) {
             console.error(`[ZohoEmailService]: Resposta do ZeptoMail: ${data}`);
           }
