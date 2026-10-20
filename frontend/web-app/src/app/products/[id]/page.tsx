@@ -18,6 +18,7 @@ import { CreateProductModal } from '@/components/common/CreateProductModal';
 import { useToast } from '@/hooks/useToast';
 import { translateReasoning, translateConflictReason, translateAllergen } from '@/utils/compatibilityTranslator';
 import { saveRecentCheck } from '@/services/recentChecks';
+import { ProductAllergenBadges } from '@/components/common/AllergenBadge';
 import {
   ShieldCheckIcon,
   ShieldIcon,
@@ -30,7 +31,9 @@ import {
   ShoppingCartIcon,
   ScrollIcon,
   WheatIcon,
+  WheatOffIcon,
   MilkIcon,
+  MilkOffIcon,
   FlaskIcon,
   FileTextIcon,
   CheckCircleIcon,
@@ -697,24 +700,52 @@ function ProductDetailsContent({ params }: PageProps) {
               <h4 style={{ color: 'var(--color-text)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <AlertTriangleIcon size={16} style={{ color: '#f59e0b' }} /> Classificações & Alérgenos
               </h4>
+              <div style={{ marginBottom: '0.75rem' }}>
+                <ProductAllergenBadges product={product} size="sm" />
+              </div>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  <WheatIcon size={15} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> <strong>Contém Glúten:</strong> {
+                  {product.hasGluten ||
+                  product.declaredAllergens?.['GLUTEN'] === 'CONTAINS' ||
+                  product.declaredAllergens?.['WHEAT'] === 'CONTAINS' ? (
+                    <WheatIcon size={15} style={{ verticalAlign: 'middle', marginRight: '6px', color: '#ef4444' }} />
+                  ) : (
+                    <WheatOffIcon size={15} style={{ verticalAlign: 'middle', marginRight: '6px', color: '#10b981' }} />
+                  )} <strong>Contém Glúten:</strong> {
                     product.hasGluten ||
                     product.declaredAllergens?.['GLUTEN'] === 'CONTAINS' ||
                     product.declaredAllergens?.['WHEAT'] === 'CONTAINS'
                       ? 'Sim'
-                      : 'Não'
+                      : 'Não (Livre de Glúten)'
                   }
                 </li>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
-                  <MilkIcon size={15} style={{ verticalAlign: 'middle', marginRight: '6px' }} /> <strong>Declaração de Leite:</strong> {(() => {
+                  {(() => {
                     const ing = (product.ingredients || '').toLowerCase();
                     const cross = (product.crossContamination || '').toLowerCase();
                     const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme', 'whey', 'soro'];
-                    if (milkTerms.some((t) => ing.includes(t))) return 'Contém Leite / Derivados';
-                    if (milkTerms.some((t) => cross.includes(t))) return 'Pode conter traços de leite';
-                    return 'Não contém leite nem traços (Livre)';
+                    if (milkTerms.some((t) => ing.includes(t))) {
+                      return (
+                        <>
+                          <MilkIcon size={15} style={{ verticalAlign: 'middle', marginRight: '6px', color: '#ef4444' }} />
+                          <strong>Declaração de Leite:</strong> Contém Leite / Derivados
+                        </>
+                      );
+                    }
+                    if (milkTerms.some((t) => cross.includes(t))) {
+                      return (
+                        <>
+                          <MilkIcon size={15} style={{ verticalAlign: 'middle', marginRight: '6px', color: '#f59e0b' }} />
+                          <strong>Declaração de Leite:</strong> Pode conter traços de leite
+                        </>
+                      );
+                    }
+                    return (
+                      <>
+                        <MilkOffIcon size={15} style={{ verticalAlign: 'middle', marginRight: '6px', color: '#10b981' }} />
+                        <strong>Declaração de Leite:</strong> Não contém leite nem traços (Livre)
+                      </>
+                    );
                   })()}
                 </li>
                 <li style={{ padding: '0.5rem', background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>

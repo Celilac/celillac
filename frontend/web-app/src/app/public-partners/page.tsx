@@ -10,6 +10,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Header } from '@/components/layout/Header';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
+import { ProductAllergenBadges } from '@/components/common/AllergenBadge';
 import {
   ProductFiltersSidebar,
   CategoryOption,
@@ -640,33 +641,7 @@ function PublicPartnersContent() {
                           )}
 
                           <div className={styles.productBadges}>
-                            {product.hasGluten ? (
-                              <span className={styles.badgeRejected}>Contém Glúten</span>
-                            ) : (
-                              <span className={styles.badgeApproved}>Sem Glúten</span>
-                            )}
-
-                            {(() => {
-                              const ing = (product.ingredients || '').toLowerCase();
-                              const cross = (product.crossContamination || '').toLowerCase();
-                              const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme', 'whey', 'soro'];
-                              if (milkTerms.some((t) => ing.includes(t))) {
-                                return <span className={styles.badgeRejected}>Contém Leite</span>;
-                              }
-                              if (milkTerms.some((t) => cross.includes(t))) {
-                                return <span className={styles.badgePending}>Traços de Leite</span>;
-                              }
-                              return <span className={styles.badgeApproved}>Sem Leite</span>;
-                            })()}
-
-                            {(() => {
-                              const cross = (product.crossContamination || '').toLowerCase();
-                              const nutTerms = ['castanha', 'amendoim', 'nozes', 'amêndoa', 'pistache', 'avelã', 'macadâmia'];
-                              if (nutTerms.some((t) => cross.includes(t))) {
-                                return <span className={styles.badgePending} title={product.crossContamination}>Traços: Castanhas/Amendoim</span>;
-                              }
-                              return null;
-                            })()}
+                            <ProductAllergenBadges product={product} size="sm" />
                           </div>
 
                           <p className={styles.productIngredients} title={product.ingredients}>
