@@ -6,7 +6,7 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-88%20suites%20%7C%20604%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-93%20suites%20%7C%20645%20passing-brightgreen)](#-testes)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20%2B%20Oracle%20Cloud-orange)](#-segurança--governança)
 
 ---
@@ -150,12 +150,13 @@ npm run test:smoke       # ou node scripts/test-api-smoke.mjs
 cd backend && npm test
 ```
 
-**87 suítes de teste | 592 casos 100% aprovados**, cobrindo domínio, casos de uso, controllers, middlewares de segurança e o Motor de Alérgenos:
+**93 suítes de teste | 645 casos 100% aprovados**, cobrindo domínio, casos de uso, controllers, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
 | `domain/Result.spec.ts` | 100% |
 | `domain/partner/Cnpj.spec.ts` | 100% |
+| `domain/partner/Cpf.spec.ts` | 100% |
 | `domain/iam/Email`, `PasswordHash`, `User`, `PasswordReset` | 100% |
 | `domain/food-profile/SeverityLevel`, `Restriction`, `FoodProfile` | 100% |
 | `domain/allergen-engine/AllergenEngine` ← 9 casos críticos | ~98% |

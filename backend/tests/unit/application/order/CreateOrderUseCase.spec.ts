@@ -93,6 +93,7 @@ describe('CreateOrderUseCase Unit Tests', () => {
       create: jest.fn(),
       findById: jest.fn(),
       findByCnpj: jest.fn(),
+      findByDocumentNumber: jest.fn(),
       findAllByUserId: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),

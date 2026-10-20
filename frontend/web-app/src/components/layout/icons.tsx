@@ -571,12 +571,36 @@ export function WheatIcon({ className, size = 18, style }: IconProps) {
   );
 }
 
+export function WheatOffIcon({ className, size = 18, style }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={style} {...strokeProps}>
+      <path d="M2 22 16 8" />
+      <path d="M3.47 12.53 5 11l1.53 1.53a3.5 3.5 0 0 1 0 4.94L5 19l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" />
+      <path d="M7.47 8.53 9 7l1.53 1.53a3.5 3.5 0 0 1 0 4.94L9 15l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" />
+      <path d="M11.47 4.53 13 3l1.53 1.53a3.5 3.5 0 0 1 0 4.94L13 11l-1.53-1.53a3.5 3.5 0 0 1 0-4.94Z" />
+      <path d="M20 2h2v2a4 4 0 0 1-4 4h-2V6a4 4 0 0 1 4-4Z" />
+      <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" strokeWidth={2} />
+    </svg>
+  );
+}
+
 export function MilkIcon({ className, size = 18, style }: IconProps) {
   return (
     <svg className={className} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={style} {...strokeProps}>
       <path d="M8 2h8v3H8z" />
       <path d="M8 5 6 9v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9l-2-4" />
       <line x1="6" y1="13" x2="18" y2="13" />
+    </svg>
+  );
+}
+
+export function MilkOffIcon({ className, size = 18, style }: IconProps) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={style} {...strokeProps}>
+      <path d="M8 2h8v3H8z" />
+      <path d="M8 5 6 9v11a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V9l-2-4" />
+      <line x1="6" y1="13" x2="18" y2="13" />
+      <line x1="2" y1="2" x2="22" y2="22" stroke="currentColor" strokeWidth={2} />
     </svg>
   );
 }

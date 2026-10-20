@@ -2,6 +2,7 @@
 import { Entity } from '../Entity';
 import { Result } from '../Result';
 import { Cnpj } from './value-objects/Cnpj';
+import { Cpf } from './value-objects/Cpf';
 
 export enum PartnerType {
   RESTAURANT = 'RESTAURANT',
@@ -23,10 +24,19 @@ export enum PartnerOperationalStatus {
   TEMPORARILY_CLOSED = 'TEMPORARILY_CLOSED',
 }
 
+export type LegalNature = 'PJ' | 'PF';
+export type DocumentType = 'CNPJ' | 'CPF';
+
 export interface PartnerProps {
   userId: string;
   name: string;
   cnpj?: string;
+  legalNature?: LegalNature;
+  documentNumber?: string;
+  documentType?: DocumentType;
+  documentUrl?: string;
+  companyName?: string;
+  responsibleName?: string;
   description: string;
   address: string;
   phone: string;
@@ -53,6 +63,12 @@ export class Partner extends Entity<PartnerProps> {
   get userId(): string { return this.props.userId; }
   get name(): string { return this.props.name; }
   get cnpj(): string | undefined { return this.props.cnpj; }
+  get legalNature(): LegalNature { return this.props.legalNature || 'PJ'; }
+  get documentNumber(): string | undefined { return this.props.documentNumber || this.props.cnpj; }
+  get documentType(): DocumentType { return this.props.documentType || (this.props.legalNature === 'PF' ? 'CPF' : 'CNPJ'); }
+  get documentUrl(): string | undefined { return this.props.documentUrl; }
+  get companyName(): string | undefined { return this.props.companyName; }
+  get responsibleName(): string | undefined { return this.props.responsibleName; }
   get description(): string { return this.props.description; }
   get address(): string { return this.props.address; }
   get phone(): string { return this.props.phone; }
@@ -158,7 +174,10 @@ export class Partner extends Entity<PartnerProps> {
   }
 
   updateDetails(details: Partial<Omit<PartnerProps, 'userId' | 'approvalStatus' | 'operationalStatus' | 'rejectionReason' | 'suspensionReason'>>): Result<void> {
-    const criticalFields: Array<keyof typeof details> = ['name', 'type', 'cnpj', 'address', 'phone', 'city', 'state'];
+    const criticalFields: Array<keyof typeof details> = [
+      'name', 'type', 'cnpj', 'address', 'phone', 'city', 'state',
+      'legalNature', 'documentNumber', 'companyName', 'responsibleName'
+    ];
     let changedCritical = false;
 
     for (const key of criticalFields) {
@@ -180,13 +199,46 @@ export class Partner extends Entity<PartnerProps> {
       }
       this.props.type = details.type;
     }
-    if (details.cnpj !== undefined) {
-      const cnpjResult = Cnpj.create(details.cnpj);
-      if (cnpjResult.isFailure) {
-        return Result.fail<void>(cnpjResult.getError());
+    if (details.legalNature !== undefined) {
+      if (details.legalNature !== 'PJ' && details.legalNature !== 'PF') {
+        return Result.fail<void>('Natureza jurídica inválida. Deve ser PJ ou PF.');
       }
-      const validCnpj = cnpjResult.getValue();
-      this.props.cnpj = validCnpj ? validCnpj.formatted : undefined;
+      this.props.legalNature = details.legalNature;
+    }
+
+    // Validação de documento (CPF ou CNPJ de acordo com a natureza)
+    const effectiveNature = details.legalNature || this.props.legalNature || 'PJ';
+    const rawDoc = details.documentNumber !== undefined ? details.documentNumber : details.cnpj;
+
+    if (rawDoc !== undefined) {
+      if (effectiveNature === 'PF') {
+        const cpfResult = Cpf.create(rawDoc);
+        if (cpfResult.isFailure) {
+          return Result.fail<void>(cpfResult.getError());
+        }
+        const validCpf = cpfResult.getValue();
+        this.props.documentNumber = validCpf ? validCpf.formatted : undefined;
+        this.props.documentType = 'CPF';
+      } else {
+        const cnpjResult = Cnpj.create(rawDoc);
+        if (cnpjResult.isFailure) {
+          return Result.fail<void>(cnpjResult.getError());
+        }
+        const validCnpj = cnpjResult.getValue();
+        this.props.cnpj = validCnpj ? validCnpj.formatted : undefined;
+        this.props.documentNumber = validCnpj ? validCnpj.formatted : undefined;
+        this.props.documentType = 'CNPJ';
+      }
+    }
+
+    if (details.companyName !== undefined) {
+      this.props.companyName = details.companyName && details.companyName.trim().length > 0 ? details.companyName.trim() : undefined;
+    }
+    if (details.responsibleName !== undefined) {
+      this.props.responsibleName = details.responsibleName && details.responsibleName.trim().length > 0 ? details.responsibleName.trim() : undefined;
+    }
+    if (details.documentUrl !== undefined) {
+      this.props.documentUrl = details.documentUrl && details.documentUrl.trim().length > 0 ? details.documentUrl.trim() : undefined;
     }
     if (details.address !== undefined) {
       if (details.address.trim().length === 0) {
@@ -227,20 +279,39 @@ export class Partner extends Entity<PartnerProps> {
     if (!props.name || props.name.trim().length === 0) {
       return Result.fail<Partner>('O nome comercial do parceiro é obrigatório.');
     }
-    let formattedCnpj: string | undefined;
-    if (props.cnpj !== undefined) {
-      const cnpjResult = Cnpj.create(props.cnpj);
-      if (cnpjResult.isFailure) {
-        return Result.fail<Partner>(cnpjResult.getError());
-      }
-      const validCnpj = cnpjResult.getValue();
-      formattedCnpj = validCnpj ? validCnpj.formatted : undefined;
-    }
     if (!props.address || props.address.trim().length === 0) {
       return Result.fail<Partner>('O endereço do parceiro é obrigatório.');
     }
     if (!props.type || !Object.values(PartnerType).includes(props.type)) {
       return Result.fail<Partner>('Tipo de parceiro inválido ou não informado.');
+    }
+
+    const legalNature = props.legalNature || 'PJ';
+    let formattedDoc: string | undefined;
+    let formattedCnpj: string | undefined;
+    let documentType: DocumentType = legalNature === 'PF' ? 'CPF' : 'CNPJ';
+
+    const inputDoc = props.documentNumber !== undefined ? props.documentNumber : props.cnpj;
+
+    if (inputDoc !== undefined) {
+      if (legalNature === 'PF') {
+        const cpfResult = Cpf.create(inputDoc);
+        if (cpfResult.isFailure) {
+          return Result.fail<Partner>(cpfResult.getError());
+        }
+        const validCpf = cpfResult.getValue();
+        formattedDoc = validCpf ? validCpf.formatted : undefined;
+        documentType = 'CPF';
+      } else {
+        const cnpjResult = Cnpj.create(inputDoc);
+        if (cnpjResult.isFailure) {
+          return Result.fail<Partner>(cnpjResult.getError());
+        }
+        const validCnpj = cnpjResult.getValue();
+        formattedCnpj = validCnpj ? validCnpj.formatted : undefined;
+        formattedDoc = formattedCnpj;
+        documentType = 'CNPJ';
+      }
     }
 
     return Result.ok<Partner>(
@@ -249,6 +320,12 @@ export class Partner extends Entity<PartnerProps> {
           userId: props.userId,
           name: props.name.trim(),
           cnpj: formattedCnpj,
+          legalNature,
+          documentNumber: formattedDoc,
+          documentType,
+          documentUrl: props.documentUrl ? props.documentUrl.trim() : undefined,
+          companyName: props.companyName ? props.companyName.trim() : undefined,
+          responsibleName: props.responsibleName ? props.responsibleName.trim() : undefined,
           description: (props.description || '').trim(),
           address: props.address.trim(),
           phone: (props.phone || '').trim(),
@@ -269,15 +346,31 @@ export class Partner extends Entity<PartnerProps> {
 
   /**
    * Reconstitui um Partner a partir da persistência (PostgreSQL).
-   * Tolera dados legados (ex: CNPJ anterior à regra do Módulo 11) sem quebrar consultas.
+   * Tolera dados legados sem quebrar consultas.
    */
   static reconstitute(props: PartnerProps, id: string): Partner {
+    const legalNature = props.legalNature || 'PJ';
+    let formattedDoc = props.documentNumber || props.cnpj;
     let formattedCnpj = props.cnpj;
-    if (props.cnpj) {
-      const cnpjResult = Cnpj.create(props.cnpj);
-      if (cnpjResult.isSuccess) {
-        const validCnpj = cnpjResult.getValue();
-        formattedCnpj = validCnpj ? validCnpj.formatted : formattedCnpj;
+    let documentType: DocumentType = props.documentType || (legalNature === 'PF' ? 'CPF' : 'CNPJ');
+
+    if (props.documentNumber || props.cnpj) {
+      const raw = props.documentNumber || props.cnpj;
+      if (legalNature === 'PF') {
+        const cpfResult = Cpf.create(raw);
+        if (cpfResult.isSuccess) {
+          const validCpf = cpfResult.getValue();
+          formattedDoc = validCpf ? validCpf.formatted : formattedDoc;
+        }
+        documentType = 'CPF';
+      } else {
+        const cnpjResult = Cnpj.create(raw);
+        if (cnpjResult.isSuccess) {
+          const validCnpj = cnpjResult.getValue();
+          formattedCnpj = validCnpj ? validCnpj.formatted : formattedCnpj;
+          formattedDoc = formattedCnpj;
+        }
+        documentType = 'CNPJ';
       }
     }
 
@@ -286,6 +379,12 @@ export class Partner extends Entity<PartnerProps> {
         userId: props.userId,
         name: (props.name || '').trim(),
         cnpj: formattedCnpj,
+        legalNature,
+        documentNumber: formattedDoc,
+        documentType,
+        documentUrl: props.documentUrl ? props.documentUrl.trim() : undefined,
+        companyName: props.companyName ? props.companyName.trim() : undefined,
+        responsibleName: props.responsibleName ? props.responsibleName.trim() : undefined,
         description: (props.description || '').trim(),
         address: (props.address || '').trim(),
         phone: (props.phone || '').trim(),

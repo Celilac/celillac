@@ -6,6 +6,12 @@ export interface PartnerSummary {
   userId:             string;
   name:               string;
   cnpj?:              string;
+  legalNature?:       'PJ' | 'PF';
+  documentNumber?:    string;
+  documentType?:      'CNPJ' | 'CPF';
+  documentUrl?:       string;
+  companyName?:       string;
+  responsibleName?:   string;
   description:        string;
   address:            string;
   phone:              string;

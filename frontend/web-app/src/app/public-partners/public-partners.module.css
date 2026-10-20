@@ -1,10 +1,10 @@
 /* frontend/web-app/src/app/public-partners/public-partners.module.css */
 
 .container {
-  max-width: 100%;
+  max-width: 1200px;
   width: 100%;
-  margin: 0;
-  padding: var(--space-6) var(--space-6);
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
   min-height: 100vh;
   box-sizing: border-box;
 }
@@ -130,12 +130,6 @@
   }
 }
 
-@media (min-width: 1440px) {
-  .partnersGrid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.75rem;
-  }
-}
 
 /* Card do Estabelecimento */
 .card {

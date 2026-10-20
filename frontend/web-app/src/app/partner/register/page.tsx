@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/useToast';
 import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { validateImageFile, compressImage } from '@/utils/image';
-import { maskCnpj, validateCnpj, maskCep } from '@/utils/mask';
+import { maskCnpj, validateCnpj, maskCpf, validateCpf, maskCep } from '@/utils/mask';
 import { fetchAddressByCep } from '@/services/viaCep';
 import InternationalPhoneInput from '@/components/common/InternationalPhoneInput';
 import PartnerLocationMap from '@/components/common/PartnerLocationMap';
@@ -21,6 +21,8 @@ import {
   MapPinIcon,
   SaveIcon,
   CompassIcon,
+  BuildingIcon,
+  UserIcon,
 } from '@/components/layout/icons';
 import styles from '../partner.module.css';
 
@@ -35,23 +37,30 @@ export default function RegisterPartnerPage() {
   const router = useRouter();
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const docFileInputRef = useRef<HTMLInputElement>(null);
 
-  const [name,           setName]           = useState('');
-  const [cnpj,           setCnpj]           = useState('');
-  const [cnpjError,      setCnpjError]      = useState('');
-  const [description,    setDescription]    = useState('');
-  const [address,        setAddress]        = useState('');
-  const [phone,          setPhone]          = useState('');
-  const [type,           setType]           = useState('RESTAURANT');
-  const [country,        setCountry]        = useState('BR');
-  const [cep,            setCep]            = useState('');
-  const [loadingCep,     setLoadingCep]     = useState(false);
-  const [city,           setCity]           = useState('');
-  const [state,          setState]          = useState('');
-  const [deliveryRegion, setDeliveryRegion] = useState('');
-  const [logoUrl,        setLogoUrl]        = useState('');
-  const [isDragging,     setIsDragging]     = useState(false);
-  const [loading,        setLoading]        = useState(false);
+  const [name,            setName]            = useState('');
+  const [legalNature,     setLegalNature]     = useState<'PJ' | 'PF'>('PJ');
+  const [companyName,     setCompanyName]     = useState('');
+  const [cnpj,            setCnpj]            = useState('');
+  const [cnpjError,       setCnpjError]       = useState('');
+  const [responsibleName, setResponsibleName] = useState('');
+  const [cpf,             setCpf]             = useState('');
+  const [cpfError,        setCpfError]        = useState('');
+  const [documentUrl,     setDocumentUrl]     = useState('');
+  const [description,     setDescription]     = useState('');
+  const [address,         setAddress]         = useState('');
+  const [phone,           setPhone]           = useState('');
+  const [type,            setType]            = useState('RESTAURANT');
+  const [country,         setCountry]         = useState('BR');
+  const [cep,             setCep]             = useState('');
+  const [loadingCep,      setLoadingCep]      = useState(false);
+  const [city,            setCity]            = useState('');
+  const [state,           setState]           = useState('');
+  const [deliveryRegion,  setDeliveryRegion]  = useState('');
+  const [logoUrl,         setLogoUrl]         = useState('');
+  const [isDragging,      setIsDragging]      = useState(false);
+  const [loading,         setLoading]         = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -92,6 +101,49 @@ export default function RegisterPartnerPage() {
       setCnpjError(validation.error || 'CNPJ inválido');
     } else {
       setCnpjError('');
+    }
+  }
+
+  function handleCpfChange(val: string) {
+    const formatted = maskCpf(val);
+    setCpf(formatted);
+    const validation = validateCpf(formatted);
+    if (!validation.valid && formatted.replace(/\D/g, '').length === 11) {
+      setCpfError(validation.error || 'CPF inválido');
+    } else {
+      setCpfError('');
+    }
+  }
+
+  async function processDocFile(file: File) {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('O documento deve ter no máximo 5MB.', 'Arquivo Muito Grande');
+      return;
+    }
+    try {
+      if (file.type.startsWith('image/')) {
+        const compressed = await compressImage(file, 1600, 1600, 0.9);
+        setDocumentUrl(compressed);
+      } else {
+        const reader = new FileReader();
+        reader.onload = () => {
+          setDocumentUrl(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+      toast.info('Documento comprobatório anexado com sucesso!', 'Documentação');
+    } catch {
+      toast.error('Não foi possível processar o documento. Tente novamente.', 'Erro no Envio');
+    }
+  }
+
+  function handleDocFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      processDocFile(file);
+    }
+    if (e.target) {
+      e.target.value = '';
     }
   }
 
@@ -153,28 +205,50 @@ export default function RegisterPartnerPage() {
     toast.info('Marca do estabelecimento removida.', 'Removido');
   }
 
+  function handleRemoveDoc() {
+    setDocumentUrl('');
+    if (docFileInputRef.current) {
+      docFileInputRef.current.value = '';
+    }
+    toast.info('Documento comprobatório removido.', 'Removido');
+  }
+
+  // Validação reativa rigorosa dos campos obrigatórios
+  const cleanPhone = phone.replace(/\D/g, '');
+  const isDocValid = legalNature === 'PJ'
+    ? (cnpj.replace(/\D/g, '').length === 14 && !cnpjError && companyName.trim().length >= 2)
+    : (cpf.replace(/\D/g, '').length === 11 && !cpfError && responsibleName.trim().length >= 2);
+
+  const isFormValid = Boolean(
+    name.trim().length >= 2 &&
+    type &&
+    cleanPhone.length >= 8 &&
+    address.trim().length >= 3 &&
+    city.trim().length >= 2 &&
+    state.trim().length >= 2 &&
+    isDocValid
+  );
+
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
     if (!isAuthenticated || !token) return;
 
-    if (!name.trim() || !address.trim() || !phone.trim() || !type) {
+    if (!isFormValid) {
       toast.warning('Por favor, preencha todos os campos obrigatórios (*).', 'Campos incompletos');
       return;
-    }
-
-    if (cnpj.trim().length > 0) {
-      const validation = validateCnpj(cnpj);
-      if (!validation.valid) {
-        toast.error(validation.error || 'CNPJ inválido. Verifique os dígitos informados.', 'Validação Fiscal');
-        return;
-      }
     }
 
     setLoading(true);
     try {
       const created = await partnerApi.register({
         name,
-        cnpj: cnpj || undefined,
+        legalNature,
+        documentNumber: legalNature === 'PJ' ? cnpj : cpf,
+        documentType: legalNature === 'PJ' ? 'CNPJ' : 'CPF',
+        companyName: legalNature === 'PJ' ? companyName : undefined,
+        responsibleName: legalNature === 'PF' ? responsibleName : undefined,
+        documentUrl: documentUrl || undefined,
+        cnpj: legalNature === 'PJ' ? cnpj : undefined,
         description,
         address,
         phone,
@@ -262,28 +336,223 @@ export default function RegisterPartnerPage() {
                   </select>
                 </div>
 
+                {/* ── SELETOR DE REGIME FISCAL: PJ vs PF (Feedback do Professor) ── */}
                 <div className={styles.formGroup}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <label className={styles.label} htmlFor="partner-cnpj">CNPJ (Opcional)</label>
-                    {cnpj.replace(/\D/g, '').length === 14 && (
-                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: cnpjError ? 'var(--color-danger, #EF4444)' : 'var(--color-success, #10B981)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                        {cnpjError ? <><XCircleIcon size={12} /> {cnpjError}</> : <><CheckCircleIcon size={12} /> CNPJ Válido</>}
+                  <label className={styles.label}>Regime de Atuação do Estabelecimento *</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginTop: '0.35rem' }}>
+                    <button
+                      type="button"
+                      onClick={() => { setLegalNature('PJ'); setCpfError(''); }}
+                      disabled={loading}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        padding: '0.85rem 1rem',
+                        borderRadius: 'var(--radius-md, 8px)',
+                        border: legalNature === 'PJ' ? '2px solid var(--color-primary, #10B981)' : '1px solid var(--color-border, #334155)',
+                        backgroundColor: legalNature === 'PJ' ? 'rgba(16, 185, 129, 0.08)' : 'var(--color-surface, #1E293B)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.2s ease',
+                      }}
+                      id="select-pj-btn"
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.9rem', color: legalNature === 'PJ' ? 'var(--color-primary, #10B981)' : 'var(--color-text, #F8FAFC)' }}>
+                        <BuildingIcon size={16} /> Pessoa Jurídica (PJ)
                       </span>
-                    )}
+                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #94A3B8)', marginTop: '0.35rem', lineHeight: 1.3 }}>
+                        Restaurantes, indústrias, empórios e comércios com CNPJ
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => { setLegalNature('PF'); setCnpjError(''); }}
+                      disabled={loading}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        padding: '0.85rem 1rem',
+                        borderRadius: 'var(--radius-md, 8px)',
+                        border: legalNature === 'PF' ? '2px solid var(--color-primary, #10B981)' : '1px solid var(--color-border, #334155)',
+                        backgroundColor: legalNature === 'PF' ? 'rgba(16, 185, 129, 0.08)' : 'var(--color-surface, #1E293B)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.2s ease',
+                      }}
+                      id="select-pf-btn"
+                    >
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontWeight: 700, fontSize: '0.9rem', color: legalNature === 'PF' ? 'var(--color-primary, #10B981)' : 'var(--color-text, #F8FAFC)' }}>
+                        <UserIcon size={16} /> Pessoa Física (PF)
+                      </span>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #94A3B8)', marginTop: '0.35rem', lineHeight: 1.3 }}>
+                        Produtores artesanais, confeiteiras caseiras e autônomos com CPF
+                      </span>
+                    </button>
                   </div>
+                </div>
+
+                {/* ── CAMPOS ESPECÍFICOS PARA PESSOA JURÍDICA (PJ) ── */}
+                {legalNature === 'PJ' && (
+                  <>
+                    <div className={styles.formGroup}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label className={styles.label} htmlFor="partner-cnpj">CNPJ do Estabelecimento *</label>
+                        {cnpj.replace(/\D/g, '').length === 14 && (
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: cnpjError ? 'var(--color-danger, #EF4444)' : 'var(--color-success, #10B981)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                            {cnpjError ? <><XCircleIcon size={12} /> {cnpjError}</> : <><CheckCircleIcon size={12} /> CNPJ Válido</>}
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        id="partner-cnpj"
+                        type="text"
+                        className={styles.input}
+                        placeholder="00.000.000/0000-00"
+                        value={cnpj}
+                        maxLength={18}
+                        onChange={(e) => handleCnpjChange(e.target.value)}
+                        disabled={loading}
+                        required
+                        style={cnpjError ? { borderColor: 'var(--color-danger, #EF4444)' } : undefined}
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label className={styles.label} htmlFor="partner-company-name">Razão Social *</label>
+                      <input
+                        id="partner-company-name"
+                        type="text"
+                        className={styles.input}
+                        placeholder="Ex: Cantina Sem Glúten Alimentos LTDA"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        required
+                        disabled={loading}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* ── CAMPOS ESPECÍFICOS PARA PESSOA FÍSICA (PF) ── */}
+                {legalNature === 'PF' && (
+                  <>
+                    <div className={styles.formGroup}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label className={styles.label} htmlFor="partner-cpf">CPF do Produtor / Responsável *</label>
+                        {cpf.replace(/\D/g, '').length === 11 && (
+                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: cpfError ? 'var(--color-danger, #EF4444)' : 'var(--color-success, #10B981)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                            {cpfError ? <><XCircleIcon size={12} /> {cpfError}</> : <><CheckCircleIcon size={12} /> CPF Válido</>}
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        id="partner-cpf"
+                        type="text"
+                        className={styles.input}
+                        placeholder="000.000.000-00"
+                        value={cpf}
+                        maxLength={14}
+                        onChange={(e) => handleCpfChange(e.target.value)}
+                        disabled={loading}
+                        required
+                        style={cpfError ? { borderColor: 'var(--color-danger, #EF4444)' } : undefined}
+                      />
+                    </div>
+
+                    <div className={styles.formGroup}>
+                      <label className={styles.label} htmlFor="partner-responsible-name">Nome do Produtor Responsável *</label>
+                      <input
+                        id="partner-responsible-name"
+                        type="text"
+                        className={styles.input}
+                        placeholder="Ex: Everton Coimbra de Araújo"
+                        value={responsibleName}
+                        onChange={(e) => setResponsibleName(e.target.value)}
+                        required
+                        disabled={loading}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* ── UPLOAD DE DOCUMENTO COMPROBATÓRIO (ALVARÁ / DOC COM FOTO) ── */}
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>
+                    {legalNature === 'PJ' ? 'Documento / Alvará Sanitário / Cartão CNPJ' : 'Documento com Foto do Produtor (RG / CNH)'}
+                  </label>
                   <input
-                    id="partner-cnpj"
-                    type="text"
-                    className={styles.input}
-                    placeholder="00.000.000/0000-00"
-                    value={cnpj}
-                    maxLength={18}
-                    onChange={(e) => handleCnpjChange(e.target.value)}
+                    ref={docFileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,application/pdf"
+                    style={{ display: 'none' }}
+                    onChange={handleDocFileChange}
                     disabled={loading}
-                    style={cnpjError ? { borderColor: 'var(--color-danger, #EF4444)' } : undefined}
+                    id="doc-file-input"
                   />
-                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748B)' }}>
-                    Opcional para produtor artesanal ou pessoa física sem registro de pessoa jurídica.
+                  {!documentUrl ? (
+                    <div
+                      onClick={() => docFileInputRef.current?.click()}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') docFileInputRef.current?.click(); }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.75rem 1rem',
+                        border: '1px dashed var(--color-border, #334155)',
+                        borderRadius: 'var(--radius-md, 8px)',
+                        cursor: 'pointer',
+                        backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                        transition: 'border-color 0.2s',
+                      }}
+                    >
+                      <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted, #94A3B8)' }}>
+                        Clique para anexar comprovante (PDF ou Imagem, máx 5MB)
+                      </span>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-primary, #10B981)' }}>
+                        + Anexar
+                      </span>
+                    </div>
+                  ) : (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.65rem 0.9rem',
+                      border: '1px solid var(--color-primary, #10B981)',
+                      borderRadius: 'var(--radius-md, 8px)',
+                      backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                    }}>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--color-primary, #10B981)', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}>
+                        <CheckCircleIcon size={14} /> Documento anexado com sucesso
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleRemoveDoc}
+                        disabled={loading}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--color-danger, #EF4444)',
+                          fontSize: '0.78rem',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.2rem',
+                        }}
+                      >
+                        <TrashIcon size={13} /> Remover
+                      </button>
+                    </div>
+                  )}
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748B)', marginTop: '0.35rem', display: 'block' }}>
+                    {legalNature === 'PJ' 
+                      ? 'Recomendado para agilizar a homologação do estabelecimento pela administração.' 
+                      : 'Necessário para comprovação de autenticidade do produtor artesanal.'}
                   </span>
                 </div>
 
@@ -521,26 +790,60 @@ export default function RegisterPartnerPage() {
               </div>
             </div>
 
-            {/* ── RODAPÉ DE AÇÕES ── */}
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '2.5rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)' }}>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnSecondary}`}
-                style={{ flex: 1 }}
-                onClick={() => router.push('/partner')}
-                disabled={loading}
-              >
-                Voltar
-              </button>
-              <button
-                type="submit"
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                style={{ flex: 2 }}
-                disabled={loading}
-                id="submit-register-btn"
-              >
-                {loading ? 'Salvando...' : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}><SaveIcon size={16} /> Cadastrar Estabelecimento</span>}
-              </button>
+            {/* ── RODAPÉ DE AÇÕES COM VALIDAÇÃO REATIVA (Feedback do Professor) ── */}
+            <div style={{ marginTop: '2.5rem', paddingTop: '1rem', borderTop: '1px solid var(--color-border)' }}>
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                  style={{ flex: 1 }}
+                  onClick={() => router.push('/partner')}
+                  disabled={loading}
+                >
+                  Voltar
+                </button>
+                <button
+                  type="submit"
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  style={{
+                    flex: 2,
+                    opacity: !isFormValid || loading ? 0.45 : 1,
+                    cursor: !isFormValid || loading ? 'not-allowed' : 'pointer',
+                    filter: !isFormValid || loading ? 'grayscale(35%)' : 'none',
+                    transition: 'all 0.2s ease',
+                  }}
+                  disabled={!isFormValid || loading}
+                  id="submit-register-btn"
+                  title={!isFormValid ? 'Preencha todos os campos obrigatórios (*) para habilitar o cadastro' : 'Cadastrar Estabelecimento'}
+                >
+                  {loading ? 'Salvando...' : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <SaveIcon size={16} /> Cadastrar Estabelecimento
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {!isFormValid && (
+                <div style={{
+                  marginTop: '0.75rem',
+                  padding: '0.6rem 0.9rem',
+                  borderRadius: 'var(--radius-sm, 6px)',
+                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                  color: 'var(--color-danger, #EF4444)',
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  lineHeight: 1.4,
+                }}>
+                  <XCircleIcon size={14} />
+                  <span>
+                    <strong>Campos obrigatórios pendentes:</strong> Preencha o nome fantasia, tipo, endereço, telefone e os dados fiscais ({legalNature === 'PJ' ? 'CNPJ válido e Razão Social' : 'CPF válido e Nome do Produtor'}) para habilitar o envio.
+                  </span>
+                </div>
+              )}
             </div>
           </form>
         </div>

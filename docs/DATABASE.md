@@ -96,8 +96,14 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 |:-------|:-----|:-----------|
 | `id` | UUID | PK |
 | `user_id` | UUID | FK → users.id, NOT NULL |
-| `name` | VARCHAR(255) | Nome comercial / Razão social, NOT NULL |
-| `cnpj` | VARCHAR(20) | Opcional. Se informado, validado via Módulo 11 da Receita Federal e formatado (99.999.999/9999-99) |
+| `name` | VARCHAR(255) | Nome fantasia / comercial do estabelecimento, NOT NULL |
+| `legal_nature` | VARCHAR(10) | NOT NULL DEFAULT 'PJ' (`'PJ'` ou `'PF'`) (Migration 030) |
+| `document_number` | VARCHAR(30) | Documento cadastral (CNPJ se PJ ou CPF se PF) formatado (Migration 030) |
+| `document_type` | VARCHAR(10) | `'CNPJ'` ou `'CPF'` (Migration 030) |
+| `document_url` | TEXT | Link para alvará sanitário (PJ) ou documento de identidade com foto (PF) (Migration 030) |
+| `company_name` | VARCHAR(255) | Razão Social da empresa (PJ) (Migration 030) |
+| `responsible_name` | VARCHAR(255) | Nome do Produtor / Responsável legal (PF) (Migration 030) |
+| `cnpj` | VARCHAR(20) | Opcional (legado/retrocompatibilidade). Se informado, validado via Módulo 11 da Receita Federal |
 | `description` | TEXT | Descrição do negócio |
 | `address` | TEXT | Endereço completo georreferenciado via Google Maps, NOT NULL |
 | `phone` | VARCHAR(50) | Telefone / WhatsApp de contato no padrão internacional E.164 (ex: +5511999998888) |
@@ -112,6 +118,7 @@ O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes 
 | `logo_url` | TEXT | DataURL / URL da marca do estabelecimento (logotipo) |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
 | `updated_at` | TIMESTAMP | DEFAULT NOW() |
+| *(índices)* | INDEX | `idx_partners_document_number`, `idx_partners_user_id` |
 
 ### Tabela: `food_profiles` (Perfil Alimentar)
 | Coluna | Tipo | Restrições |

@@ -19,8 +19,66 @@ import {
   BriefcaseIcon,
   ChefHatIcon,
   BanknoteIcon,
+  StatusDot,
 } from '@/components/layout/icons';
 import styles from './partner.module.css';
+
+const DEMO_PARTNERS: PartnerSummary[] = [
+  {
+    id: 'demo-partner-1',
+    userId: 'user-demo',
+    name: 'Sabor & Saúde Sem Glúten',
+    companyName: 'Sabor e Saúde Alimentos Especiais LTDA',
+    legalNature: 'PJ',
+    documentType: 'CNPJ',
+    documentNumber: '12.345.678/0001-90',
+    cnpj: '12.345.678/0001-90',
+    description: 'Restaurante e confeitaria 100% livre de glúten e contaminação cruzada. Cozinha dedicada e certificada.',
+    address: 'Av. Paulista, 1500 - Bela Vista',
+    city: 'São Paulo',
+    state: 'SP',
+    phone: '(11) 98765-4321',
+    type: 'RESTAURANT',
+    approvalStatus: 'APPROVED',
+    operationalStatus: 'ACTIVE',
+    logoUrl: '/brand/logo_with_transparent_background.png',
+  },
+  {
+    id: 'demo-partner-2',
+    userId: 'user-demo',
+    name: 'Fazenda Vale do Sol - Queijos Veganos',
+    responsibleName: 'Carlos Eduardo Mendes',
+    legalNature: 'PF',
+    documentType: 'CPF',
+    documentNumber: '123.456.789-00',
+    description: 'Produção artesanal de queijos vegetais à base de castanhas e leites vegetais frescos. Zero lactose e caseína.',
+    address: 'Estrada das Flores, Km 12',
+    city: 'Atibaia',
+    state: 'SP',
+    phone: '(11) 97123-9876',
+    type: 'PRODUCER',
+    approvalStatus: 'APPROVED',
+    operationalStatus: 'PAUSED',
+  },
+  {
+    id: 'demo-partner-3',
+    userId: 'user-demo',
+    name: 'Padaria Artesanal Puro Trigo Zero',
+    companyName: 'Panificadora Especial Zero Trigo EIRELI',
+    legalNature: 'PJ',
+    documentType: 'CNPJ',
+    documentNumber: '98.765.432/0001-10',
+    cnpj: '98.765.432/0001-10',
+    description: 'Pães de fermentação natural, bolos e salgados preparados exclusivamente com farinhas sem glúten.',
+    address: 'Rua das Camélias, 240',
+    city: 'Campinas',
+    state: 'SP',
+    phone: '(19) 99876-1122',
+    type: 'BAKERY',
+    approvalStatus: 'PENDING',
+    operationalStatus: 'INACTIVE',
+  },
+];
 
 export default function PartnerListPage() {
   const { token, isAuthenticated, isInitializing } = useAuth();
@@ -34,29 +92,46 @@ export default function PartnerListPage() {
   useEffect(() => {
     if (isInitializing) return;
 
+    const isDemo = typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('demo') === 'multi' || window.location.hash.includes('demo=multi'));
+
     if (!isAuthenticated || !token) {
+      if (isDemo) {
+        setPartners(DEMO_PARTNERS);
+        setLoading(false);
+        return;
+      }
       router.replace('/auth/login');
       return;
     }
 
     partnerApi.listUserPartners(token)
-      .then((data) => setPartners(data))
+      .then((data) => {
+        if (data && data.length > 0) {
+          setPartners(data);
+        } else if (isDemo) {
+          setPartners(DEMO_PARTNERS);
+        } else {
+          setPartners([]);
+        }
+      })
       .catch((err) => {
-        toast.error(
-          err instanceof HttpError ? err.message : 'Erro ao listar seus estabelecimentos.',
-          'Erro'
-        );
+        if (isDemo) {
+          setPartners(DEMO_PARTNERS);
+        } else {
+          toast.error(
+            err instanceof HttpError ? err.message : 'Erro ao listar seus estabelecimentos.',
+            'Erro'
+          );
+        }
       })
       .finally(() => setLoading(false));
   }, [isAuthenticated, token, isInitializing, router, toast]);
 
-  if (loading || isInitializing || !isAuthenticated) {
+  if (loading || (isInitializing && !partners.length)) {
     return (
       <div className={styles.container}>
         <Header />
-        {(loading || isInitializing) && (
-          <p className="profile-loading" role="status">Carregando seus estabelecimentos…</p>
-        )}
+        <p className="profile-loading" role="status">Carregando seus estabelecimentos…</p>
       </div>
     );
   }
@@ -83,7 +158,14 @@ export default function PartnerListPage() {
       <main className={styles.container}>
         <div className={styles.header}>
           <div className={styles.titleArea}>
-            <h1 className={styles.title}>Meus Estabelecimentos</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+              <h1 className={styles.title}>Meus Estabelecimentos</h1>
+              {partners.length > 0 && (
+                <span className={styles.countBadge}>
+                  {partners.length} {partners.length === 1 ? 'cadastrado' : 'cadastrados'}
+                </span>
+              )}
+            </div>
             <p className={styles.subtitle}>Gerencie suas marcas, informações e catálogo no ecossistema CeLiLac.</p>
           </div>
           <Link href="/partner/register" className={`${styles.btn} ${styles.btnPrimary}`} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -106,12 +188,48 @@ export default function PartnerListPage() {
               <section key={partner.id} className={styles.card}>
                 <div className={styles.cardContent}>
                   <div className={styles.cardHeader}>
-                    <h2 className={styles.partnerName}>{partner.name}</h2>
-                    {getStatusLabel(partner.approvalStatus)}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                      {partner.logoUrl ? (
+                        <img
+                          src={partner.logoUrl}
+                          alt={partner.name}
+                          className={styles.partnerThumb}
+                        />
+                      ) : (
+                        <div className={styles.partnerThumbFallback}>
+                          <StoreIcon size={22} />
+                        </div>
+                      )}
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <h2 className={styles.partnerName} title={partner.name}>{partner.name}</h2>
+                        {partner.companyName && (partner.legalNature === 'PJ' || !partner.legalNature) && (
+                          <span className={styles.partnerSubName}>{partner.companyName}</span>
+                        )}
+                        {partner.responsibleName && partner.legalNature === 'PF' && (
+                          <span className={styles.partnerSubName}>Produtor: {partner.responsibleName}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px', flexShrink: 0 }}>
+                      {getStatusLabel(partner.approvalStatus)}
+                      {partner.approvalStatus === 'APPROVED' && (
+                        <span className={partner.operationalStatus === 'ACTIVE' ? styles.operationalActive : styles.operationalPaused}>
+                          <StatusDot color={partner.operationalStatus === 'ACTIVE' ? 'green' : 'amber'} size={8} />
+                          {partner.operationalStatus === 'ACTIVE' ? 'Aberto' : 'Pausado'}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className={styles.partnerDescription}>{partner.description || 'Sem descrição cadastrada.'}</p>
                   
                   <div className={styles.partnerMeta}>
+                    <span className={styles.metaLegalBadge}>
+                      {partner.legalNature === 'PF' || partner.documentType === 'CPF' ? (
+                        <><strong>PF</strong> • Produtor Individual {partner.documentNumber ? `(${partner.documentNumber})` : ''}</>
+                      ) : (
+                        <><strong>PJ</strong> • Empresa {partner.documentNumber || partner.cnpj ? `(${partner.documentNumber || partner.cnpj})` : ''}</>
+                      )}
+                    </span>
                     <span className={styles.metaItem}><MapPinIcon size={14} /> {partner.city ? `${partner.city} - ${partner.state}` : 'Sem cidade'}</span>
                     <span className={styles.metaItem}><PhoneIcon size={14} /> {partner.phone}</span>
                     <span className={styles.metaItem}><BriefcaseIcon size={14} /> {translatePartnerType(partner.type)}</span>

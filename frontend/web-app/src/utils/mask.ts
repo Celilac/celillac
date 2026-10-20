@@ -61,6 +61,58 @@ export function validateCnpj(raw: string): { valid: boolean; error?: string } {
 }
 
 /**
+ * Aplica máscara de CPF dinâmica: 999.999.999-99
+ */
+export function maskCpf(value: string): string {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9, 11)}`;
+}
+
+/**
+ * Validação algorítmica rigorosa do CPF (Módulo 11 da Receita Federal)
+ */
+export function validateCpf(raw: string): { valid: boolean; error?: string } {
+  const digits = raw.replace(/\D/g, '');
+
+  if (digits.length === 0) {
+    return { valid: true };
+  }
+
+  if (digits.length !== 11) {
+    return { valid: false, error: 'O CPF deve conter 11 dígitos numéricos.' };
+  }
+
+  if (/^(\d)\1{10}$/.test(digits)) {
+    return { valid: false, error: 'CPF inválido (números repetidos).' };
+  }
+
+  let sum1 = 0;
+  for (let i = 0; i < 9; i++) {
+    sum1 += parseInt(digits[i], 10) * (10 - i);
+  }
+  const rem1 = sum1 % 11;
+  const digit1 = rem1 < 2 ? 0 : 11 - rem1;
+  if (parseInt(digits[9], 10) !== digit1) {
+    return { valid: false, error: 'Primeiro dígito verificador do CPF incorreto.' };
+  }
+
+  let sum2 = 0;
+  for (let i = 0; i < 10; i++) {
+    sum2 += parseInt(digits[i], 10) * (11 - i);
+  }
+  const rem2 = sum2 % 11;
+  const digit2 = rem2 < 2 ? 0 : 11 - rem2;
+  if (parseInt(digits[10], 10) !== digit2) {
+    return { valid: false, error: 'Segundo dígito verificador do CPF incorreto.' };
+  }
+
+  return { valid: true };
+}
+
+/**
  * Aplica máscara de CEP: 99999-999
  */
 export function maskCep(value: string): string {

@@ -15,6 +15,7 @@ import { FavoriteButton } from '@/components/common/FavoriteButton';
 import { ReviewsList } from '@/components/common/ReviewsList';
 import { ReportModal } from '@/components/common/ReportModal';
 import PartnerLocationMap from '@/components/common/PartnerLocationMap';
+import { ProductAllergenBadges } from '@/components/common/AllergenBadge';
 import { formatDisplayPhone } from '@/utils/mask';
 import {
   MessageSquareIcon,
@@ -322,26 +323,7 @@ export default function PublicPartnerDetailPage({ params }: PageProps) {
                             <ExternalLinkIcon size={12} style={{ color: 'var(--color-emerald, #059669)' }} />
                           </h3>
                         </Link>
-                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                          {product.hasGluten ? (
-                            <span className={`${styles.badge} ${styles.badgeRejected}`}>Contém Glúten</span>
-                          ) : (
-                            <span className={`${styles.badge} ${styles.badgeApproved}`}>Sem Glúten</span>
-                          )}
-
-                          {(() => {
-                            const ing = (product.ingredients || '').toLowerCase();
-                            const cross = (product.crossContamination || '').toLowerCase();
-                            const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme', 'whey', 'soro'];
-                            if (milkTerms.some((t) => ing.includes(t))) {
-                              return <span className={`${styles.badge} ${styles.badgeRejected}`}>Contém Leite</span>;
-                            }
-                            if (milkTerms.some((t) => cross.includes(t))) {
-                              return <span className={`${styles.badge} ${styles.badgePending}`}>Traços de Leite</span>;
-                            }
-                            return <span className={`${styles.badge} ${styles.badgeApproved}`}>Sem Leite</span>;
-                          })()}
-                        </div>
+                        <ProductAllergenBadges product={product} size="sm" />
                       </div>
                       <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)' }}>Marca: {product.brand}</p>
                       <p style={{ fontSize: 'var(--text-label)', color: 'var(--color-text-muted)', lineHeight: '1.5', wordBreak: 'break-word' }}>

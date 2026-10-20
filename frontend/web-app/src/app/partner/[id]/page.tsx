@@ -13,6 +13,7 @@ import { HttpError } from '@/api/client';
 import { Header } from '@/components/layout/Header';
 import { CreateProductModal } from '@/components/common/CreateProductModal';
 import PartnerLocationMap from '@/components/common/PartnerLocationMap';
+import { ProductAllergenBadges } from '@/components/common/AllergenBadge';
 import { formatDisplayPhone, maskCnpj } from '@/utils/mask';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
 import {
@@ -522,45 +523,8 @@ export default function PartnerDetailPage({ params }: PageProps) {
                           </p>
                         )}
 
-                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                          {p.hasGluten ? (
-                            <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-blocked-bg)', color: 'var(--color-blocked)', border: '1px solid var(--color-blocked-border, rgba(239,68,68,0.3))', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <WheatIcon size={12} /> Contém Glúten
-                            </span>
-                          ) : (
-                            <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <SparklesIcon size={12} /> Sem Glúten
-                            </span>
-                          )}
-
-                          {/* Badge de Leite e Derivados */}
-                          {(() => {
-                            const ing = (p.ingredients || '').toLowerCase();
-                            const cross = (p.crossContamination || '').toLowerCase();
-                            const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme de leite', 'soro de leite', 'whey'];
-                            const hasMilkInIng = milkTerms.some((t) => ing.includes(t));
-                            const hasMilkInTraces = milkTerms.some((t) => cross.includes(t));
-
-                            if (hasMilkInIng) {
-                              return (
-                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                  <MilkIcon size={12} /> Contém Leite
-                                </span>
-                              );
-                            }
-                            if (hasMilkInTraces) {
-                              return (
-                                <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                  <AlertTriangleIcon size={12} /> Traços de Leite
-                                </span>
-                              );
-                            }
-                            return (
-                              <span style={{ padding: '2px 8px', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 600, background: 'var(--color-safe-bg)', color: 'var(--color-safe)', border: '1px solid var(--color-safe-border)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <MilkIcon size={12} /> Sem Leite
-                              </span>
-                            );
-                          })()}
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <ProductAllergenBadges product={p} size="sm" />
 
                           {(() => {
                             const cc = (p.crossContamination || '').trim().toLowerCase();

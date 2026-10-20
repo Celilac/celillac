@@ -19,6 +19,7 @@ import { apiClient, HttpError } from '@/api/client';
 import { useToast } from '@/hooks/useToast';
 import { Header } from '@/components/layout/Header';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
+import { ProductAllergenBadges } from '@/components/common/AllergenBadge';
 import { CreateProductModal } from '@/components/common/CreateProductModal';
 import { translateReasoning, translateConflictReason, translatePartnerType } from '@/utils/compatibilityTranslator';
 import { saveRecentCheck } from '@/services/recentChecks';
@@ -1313,39 +1314,7 @@ export default function DashboardPage() {
                           </div>
 
                           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: 'auto', paddingTop: 'var(--space-2)' }}>
-                            {product.hasGluten ? (
-                              <span style={{
-                                padding: '4px 10px',
-                                borderRadius: '9999px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                background: 'var(--color-blocked-bg)',
-                                color: 'var(--color-blocked)',
-                                border: '1px solid var(--color-blocked-border, rgba(239, 68, 68, 0.3))',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                              }}>
-                                <WheatIcon size={13} />
-                                <span>Contém Glúten</span>
-                              </span>
-                            ) : (
-                              <span style={{
-                                padding: '4px 10px',
-                                borderRadius: '9999px',
-                                fontSize: '0.75rem',
-                                fontWeight: 600,
-                                background: 'var(--color-safe-bg)',
-                                color: 'var(--color-safe)',
-                                border: '1px solid var(--color-safe-border)',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '5px',
-                              }}>
-                                <ShieldCheckIcon size={13} />
-                                <span>Sem Glúten</span>
-                              </span>
-                            )}
+                            <ProductAllergenBadges product={product} size="sm" />
 
                             {(() => {
                               const cc = (product.crossContamination || '').trim().toLowerCase();
