@@ -40,7 +40,10 @@ export class PartnerController extends BaseController {
   async register(req: Request, res: Response): Promise<void> {
     try {
       const userId = req.user?.id;
-      const { name, cnpj, description, address, phone, type, city, state, deliveryRegion, logoUrl, isDraft } = req.body;
+      const { 
+        name, cnpj, description, address, phone, type, city, state, deliveryRegion, logoUrl, isDraft,
+        legalNature, documentNumber, documentType, documentUrl, companyName, responsibleName
+      } = req.body;
 
       if (!userId) {
         this.unauthorized(res, 'Usuário não autenticado.');
@@ -51,6 +54,12 @@ export class PartnerController extends BaseController {
         userId,
         name,
         cnpj,
+        legalNature,
+        documentNumber,
+        documentType,
+        documentUrl,
+        companyName,
+        responsibleName,
         description,
         address,
         phone,
@@ -68,8 +77,8 @@ export class PartnerController extends BaseController {
       }
       this.created(res, result.getValue());
     } catch (error: any) {
-      if (error?.code === '23505' && error?.constraint?.includes('cnpj')) {
-        this.badRequest(res, 'Já existe um estabelecimento cadastrado com este CNPJ.');
+      if (error?.code === '23505' && (error?.constraint?.includes('cnpj') || error?.constraint?.includes('document_number'))) {
+        this.badRequest(res, 'Já existe um estabelecimento cadastrado com este documento fiscal.');
         return;
       }
       this.serverError(res, 'Erro interno ao cadastrar estabelecimento.');
@@ -79,7 +88,10 @@ export class PartnerController extends BaseController {
   async update(req: Request, res: Response): Promise<void> {
     const userId = req.user?.id;
     const { id } = req.params;
-    const { name, cnpj, description, address, phone, type, city, state, deliveryRegion, logoUrl } = req.body;
+    const { 
+      name, cnpj, description, address, phone, type, city, state, deliveryRegion, logoUrl,
+      legalNature, documentNumber, documentType, documentUrl, companyName, responsibleName
+    } = req.body;
 
     if (!userId) {
       this.unauthorized(res, 'Usuário não autenticado.');
@@ -91,6 +103,12 @@ export class PartnerController extends BaseController {
       userId,
       name,
       cnpj,
+      legalNature,
+      documentNumber,
+      documentType,
+      documentUrl,
+      companyName,
+      responsibleName,
       description,
       address,
       phone,

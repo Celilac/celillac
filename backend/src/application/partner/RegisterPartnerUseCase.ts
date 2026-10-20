@@ -1,7 +1,7 @@
 // backend/src/application/partner/RegisterPartnerUseCase.ts
 import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRepository';
 import { IUserRepository } from '../../domain/iam/repositories/IUserRepository';
-import { Partner, PartnerType, PartnerApprovalStatus, PartnerOperationalStatus } from '../../domain/partner/Partner';
+import { Partner, PartnerType, PartnerApprovalStatus, PartnerOperationalStatus, LegalNature, DocumentType } from '../../domain/partner/Partner';
 import { Result } from '../../domain/Result';
 import { UserRole } from '../../domain/iam/value-objects/UserRole';
 
@@ -9,6 +9,12 @@ export interface RegisterPartnerDTO {
   userId:          string;
   name:            string;
   cnpj?:           string;
+  legalNature?:    LegalNature;
+  documentNumber?: string;
+  documentType?:   DocumentType;
+  documentUrl?:    string;
+  companyName?:    string;
+  responsibleName?:string;
   description:     string;
   address:         string;
   phone:           string;
@@ -25,6 +31,12 @@ export interface PartnerResponseDTO {
   userId:             string;
   name:               string;
   cnpj?:              string;
+  legalNature:        string;
+  documentNumber?:    string;
+  documentType:       string;
+  documentUrl?:       string;
+  companyName?:       string;
+  responsibleName?:   string;
   description:        string;
   address:            string;
   phone:              string;
@@ -81,6 +93,12 @@ export class RegisterPartnerUseCase {
       userId:            dto.userId,
       name:              dto.name,
       cnpj:              dto.cnpj,
+      legalNature:       dto.legalNature,
+      documentNumber:    dto.documentNumber,
+      documentType:      dto.documentType,
+      documentUrl:       dto.documentUrl,
+      companyName:       dto.companyName,
+      responsibleName:   dto.responsibleName,
       description:       dto.description,
       address:           dto.address,
       phone:             dto.phone,
@@ -99,11 +117,14 @@ export class RegisterPartnerUseCase {
 
     const partner = partnerResult.getValue();
 
-    // 4. Se tiver CNPJ informado, verificar se já existe outro parceiro cadastrado
-    if (partner.cnpj) {
-      const existingPartner = await this.partnerRepository.findByCnpj(partner.cnpj);
+    // 4. Se tiver documento informado, verificar se já existe outro parceiro cadastrado
+    const docToCheck = partner.documentNumber || partner.cnpj;
+    if (docToCheck) {
+      const existingPartner = await this.partnerRepository.findByDocumentNumber(docToCheck);
       if (existingPartner) {
-        return Result.fail<PartnerResponseDTO>('Já existe um estabelecimento cadastrado com este CNPJ.');
+        return Result.fail<PartnerResponseDTO>(
+          `Já existe um estabelecimento cadastrado com este ${partner.documentType || 'documento'}.`
+        );
       }
     }
 
@@ -114,6 +135,12 @@ export class RegisterPartnerUseCase {
       userId:             partner.userId,
       name:               partner.name,
       cnpj:               partner.cnpj,
+      legalNature:        partner.legalNature,
+      documentNumber:     partner.documentNumber,
+      documentType:       partner.documentType,
+      documentUrl:        partner.documentUrl,
+      companyName:        partner.companyName,
+      responsibleName:    partner.responsibleName,
       description:        partner.description,
       address:            partner.address,
       phone:              partner.phone,

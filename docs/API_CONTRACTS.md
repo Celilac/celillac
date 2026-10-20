@@ -908,13 +908,18 @@ Recupera todas as avaliações de um produto específico e sua média.
 ## 7. Gestão de Parceiros (Partners)
 
 ### `POST /partners` 🔒
-Cadastra um novo perfil comercial de parceiro. Apenas para usuários com papel `PARCEIRO`.
+Cadastra um novo perfil comercial de parceiro (Pessoa Jurídica ou Pessoa Física). Apenas para usuários com papel `PARCEIRO`.
 
 **Request Body:**
 ```json
 {
   "name": "Cantina Vegana Sem Glúten",
-  "cnpj": "12345678000195",
+  "legalNature": "PJ",
+  "documentNumber": "12.345.678/0001-95",
+  "documentType": "CNPJ",
+  "documentUrl": "https://storage.celilac.com.br/docs/alvara-sanitario.pdf",
+  "companyName": "Cantina Vegana Alimentos LTDA",
+  "responsibleName": "Maria Silva",
   "description": "Pratos saudáveis livres de contaminação cruzada.",
   "address": "Av. Paulista, 1000",
   "phone": "11999998888",
@@ -928,8 +933,13 @@ Cadastra um novo perfil comercial de parceiro. Apenas para usuários com papel `
 
 | Campo | Tipo | Obrigatório | Validação / Descrição |
 |:------|:-----|:-----------:|:----------------------|
-| `name` | `string` | ✅ | Nome comercial ou razão social |
-| `cnpj` | `string` | ❌ | Opcional (produtor artesanal/PF). Se informado, validado via Módulo 11 da Receita Federal |
+| `name` | `string` | ✅ | Nome fantasia ou nome comercial do estabelecimento |
+| `legalNature` | `string` | ❌ | `"PJ"` ou `"PF"` (padrão: `"PJ"`). Define se o parceiro atua como empresa ou produtor individual |
+| `documentNumber` / `cnpj` | `string` | ❌ | CNPJ (se PJ) ou CPF (se PF), validado via Módulo 11 da Receita Federal e higienizado |
+| `documentType` | `string` | ❌ | `"CNPJ"` ou `"CPF"` (inferido automaticamente conforme o documento ou `legalNature`) |
+| `documentUrl` | `string` | ❌ | Link para documento comprobatório (Alvará sanitário para PJ / Doc de Identidade com foto para PF) |
+| `companyName` | `string` | ❌ | Razão Social da empresa (quando `legalNature = "PJ"`) |
+| `responsibleName` | `string` | ❌ | Nome do Produtor / Responsável legal (quando `legalNature = "PF"`) |
 | `phone` | `string` | ✅ | Telefone no padrão internacional E.164 (ex: `+5511999998888`) |
 | `address` | `string` | ✅ | Endereço completo (georreferenciado via Google Maps no frontend) |
 | `type` | `string` | ✅ | `RESTAURANT`, `MARKET` ou `INDEPENDENT_PRODUCER` |
@@ -945,6 +955,12 @@ Cadastra um novo perfil comercial de parceiro. Apenas para usuários com papel `
   "id": "uuid-do-parceiro",
   "userId": "uuid-do-dono",
   "name": "Cantina Vegana Sem Glúten",
+  "legalNature": "PJ",
+  "documentNumber": "12.345.678/0001-95",
+  "documentType": "CNPJ",
+  "documentUrl": "https://storage.celilac.com.br/docs/alvara-sanitario.pdf",
+  "companyName": "Cantina Vegana Alimentos LTDA",
+  "responsibleName": "Maria Silva",
   "cnpj": "12.345.678/0001-95",
   "description": "Pratos saudáveis livres de contaminação cruzada.",
   "address": "Av. Paulista, 1000",
@@ -971,6 +987,12 @@ Lista todos os parceiros comerciais vinculados ao usuário responsável logado.
     "id": "uuid-do-parceiro",
     "userId": "uuid-do-dono",
     "name": "Cantina Vegana Sem Glúten",
+    "legalNature": "PJ",
+    "documentNumber": "12.345.678/0001-95",
+    "documentType": "CNPJ",
+    "documentUrl": "https://storage.celilac.com.br/docs/alvara-sanitario.pdf",
+    "companyName": "Cantina Vegana Alimentos LTDA",
+    "responsibleName": "Maria Silva",
     "approvalStatus": "DRAFT",
     "operationalStatus": "INACTIVE",
     "logoUrl": "data:image/webp;base64,..."
@@ -987,6 +1009,11 @@ Atualiza os dados cadastrais do parceiro. Alterações críticas regridem o stat
 ```json
 {
   "name": "Novo Nome Cantina",
+  "legalNature": "PF",
+  "documentNumber": "123.456.789-00",
+  "documentType": "CPF",
+  "documentUrl": "https://storage.celilac.com.br/docs/doc-identidade.pdf",
+  "responsibleName": "Maria Silva",
   "address": "Novo Endereço, 123",
   "phone": "11988887777",
   "logoUrl": "data:image/webp;base64,..."

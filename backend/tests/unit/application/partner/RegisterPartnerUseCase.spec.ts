@@ -21,6 +21,7 @@ describe('RegisterPartnerUseCase', () => {
       create: jest.fn(),
       findById: jest.fn(),
       findByCnpj: jest.fn().mockResolvedValue(null),
+      findByDocumentNumber: jest.fn().mockResolvedValue(null),
       findAllByUserId: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),
@@ -168,7 +169,7 @@ describe('RegisterPartnerUseCase', () => {
     }, 'user-1').getValue();
 
     userRepository.findById.mockResolvedValue(user);
-    partnerRepository.findByCnpj.mockResolvedValue({ id: 'outro-parceiro' } as any);
+    partnerRepository.findByDocumentNumber.mockResolvedValue({ id: 'outro-parceiro' } as any);
 
     const result = await useCase.execute({
       userId: 'user-1',
@@ -182,6 +183,65 @@ describe('RegisterPartnerUseCase', () => {
 
     expect(result.isFailure).toBe(true);
     expect(result.getError()).toContain('Já existe um estabelecimento cadastrado com este CNPJ');
+    expect(partnerRepository.create).not.toHaveBeenCalled();
+  });
+
+  it('deve registrar um parceiro como Pessoa Física (PF) com CPF e nome de responsável', async () => {
+    const user = User.create({
+      email: makeValidEmail('artesanal@teste.com'),
+      passwordHash: makeValidHash(),
+      role: UserRole.PARCEIRO,
+    }, 'user-pf').getValue();
+
+    userRepository.findById.mockResolvedValue(user);
+    partnerRepository.findByDocumentNumber.mockResolvedValue(null);
+
+    const result = await useCase.execute({
+      userId: 'user-pf',
+      name: 'Bolos Artesanais da Ana',
+      legalNature: 'PF',
+      documentNumber: '529.982.247-25',
+      responsibleName: 'Ana Paula Boleira',
+      documentUrl: 'https://storage.celilac.com.br/docs/ana.pdf',
+      description: 'Bolos artesanais sem glúten e sem lactose',
+      address: 'Rua dos Doces, 12',
+      phone: '11988887777',
+      type: PartnerType.INDEPENDENT_PRODUCER,
+    });
+
+    expect(result.isSuccess).toBe(true);
+    expect(partnerRepository.create).toHaveBeenCalled();
+    const data = result.getValue();
+    expect(data.legalNature).toBe('PF');
+    expect(data.documentNumber).toBe('529.982.247-25');
+    expect(data.documentType).toBe('CPF');
+    expect(data.responsibleName).toBe('Ana Paula Boleira');
+    expect(data.documentUrl).toBe('https://storage.celilac.com.br/docs/ana.pdf');
+  });
+
+  it('deve falhar se o CPF do parceiro PF já estiver cadastrado em outro estabelecimento', async () => {
+    const user = User.create({
+      email: makeValidEmail('artesanal2@teste.com'),
+      passwordHash: makeValidHash(),
+      role: UserRole.PARCEIRO,
+    }, 'user-pf-2').getValue();
+
+    userRepository.findById.mockResolvedValue(user);
+    partnerRepository.findByDocumentNumber.mockResolvedValue({ id: 'outro-parceiro-pf' } as any);
+
+    const result = await useCase.execute({
+      userId: 'user-pf-2',
+      name: 'Bolos Artesanais da Ana 2',
+      legalNature: 'PF',
+      documentNumber: '529.982.247-25',
+      description: 'Bolos',
+      address: 'Rua dos Doces, 12',
+      phone: '11988887777',
+      type: PartnerType.INDEPENDENT_PRODUCER,
+    });
+
+    expect(result.isFailure).toBe(true);
+    expect(result.getError()).toContain('Já existe um estabelecimento cadastrado com este CPF');
     expect(partnerRepository.create).not.toHaveBeenCalled();
   });
 });

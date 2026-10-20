@@ -483,5 +483,151 @@ describe('Partner Domain Entity', () => {
       expect(partner.operationalStatus).toBe(PartnerOperationalStatus.INACTIVE);
     });
   });
+
+  describe('PF vs PJ Support', () => {
+    it('should successfully create an independent producer as Pessoa Física (PF) with valid CPF', () => {
+      const res = Partner.create({
+        userId: 'user-uuid-pf',
+        name: 'Cozinha Artesanal da Maria',
+        legalNature: 'PF',
+        documentNumber: '529.982.247-25',
+        responsibleName: 'Maria Silva Cozinha',
+        documentUrl: 'https://storage.celilac.com.br/docs/rg-maria.pdf',
+        description: 'Pães artesanais sem glúten e sem leite',
+        address: 'Rua das Flores, 45',
+        phone: '11999998888',
+        type: PartnerType.INDEPENDENT_PRODUCER,
+      });
+
+      expect(res.isSuccess).toBe(true);
+      const partner = res.getValue();
+      expect(partner.legalNature).toBe('PF');
+      expect(partner.documentNumber).toBe('529.982.247-25');
+      expect(partner.documentType).toBe('CPF');
+      expect(partner.responsibleName).toBe('Maria Silva Cozinha');
+      expect(partner.documentUrl).toBe('https://storage.celilac.com.br/docs/rg-maria.pdf');
+      expect(partner.cnpj).toBeUndefined();
+    });
+
+    it('should fail to create a PF partner when CPF is invalid', () => {
+      const res = Partner.create({
+        userId: 'user-uuid-pf',
+        name: 'Cozinha Artesanal da Maria',
+        legalNature: 'PF',
+        documentNumber: '111.111.111-11',
+        description: 'Pães',
+        address: 'Rua das Flores, 45',
+        phone: '11999998888',
+        type: PartnerType.INDEPENDENT_PRODUCER,
+      });
+
+      expect(res.isFailure).toBe(true);
+      expect(res.getError()).toContain('repetidos');
+    });
+
+    it('should successfully create a partner as Pessoa Jurídica (PJ) with CNPJ and companyName', () => {
+      const res = Partner.create({
+        userId: 'user-uuid-pj',
+        name: 'Restaurante Celíaco LTDA',
+        legalNature: 'PJ',
+        documentNumber: '12.345.678/0001-95',
+        companyName: 'Restaurante Celíaco LTDA ME',
+        documentUrl: 'https://storage.celilac.com.br/docs/cartao-cnpj.pdf',
+        description: 'Restaurante especializado',
+        address: 'Av Paulista, 1000',
+        phone: '1133334444',
+        type: PartnerType.RESTAURANT,
+      });
+
+      expect(res.isSuccess).toBe(true);
+      const partner = res.getValue();
+      expect(partner.legalNature).toBe('PJ');
+      expect(partner.documentNumber).toBe('12.345.678/0001-95');
+      expect(partner.cnpj).toBe('12.345.678/0001-95');
+      expect(partner.documentType).toBe('CNPJ');
+      expect(partner.companyName).toBe('Restaurante Celíaco LTDA ME');
+      expect(partner.documentUrl).toBe('https://storage.celilac.com.br/docs/cartao-cnpj.pdf');
+    });
+
+    it('should update details including legalNature, CPF/CNPJ, companyName and responsibleName', () => {
+      const res = Partner.create({
+        userId: 'user-uuid',
+        name: 'Estabelecimento Inicial',
+        address: 'Rua A, 10',
+        phone: '11988887777',
+        type: PartnerType.INDEPENDENT_PRODUCER,
+        description: '',
+      });
+      const partner = res.getValue();
+
+      // Atualiza para PF com CPF válido
+      const updatePfRes = partner.updateDetails({
+        legalNature: 'PF',
+        documentNumber: '529.982.247-25',
+        responsibleName: 'João da Silva',
+        documentUrl: 'https://storage.celilac.com.br/docs/doc-joao.pdf',
+      });
+      expect(updatePfRes.isSuccess).toBe(true);
+      expect(partner.legalNature).toBe('PF');
+      expect(partner.documentNumber).toBe('529.982.247-25');
+      expect(partner.documentType).toBe('CPF');
+      expect(partner.responsibleName).toBe('João da Silva');
+
+      // Atualiza para PJ com CNPJ válido
+      const updatePjRes = partner.updateDetails({
+        legalNature: 'PJ',
+        documentNumber: '12.345.678/0001-95',
+        companyName: 'Padaria Sem Glúten S/A',
+      });
+      expect(updatePjRes.isSuccess).toBe(true);
+      expect(partner.legalNature).toBe('PJ');
+      expect(partner.documentNumber).toBe('12.345.678/0001-95');
+      expect(partner.documentType).toBe('CNPJ');
+      expect(partner.companyName).toBe('Padaria Sem Glúten S/A');
+    });
+
+    it('should fail updateDetails if legalNature is invalid', () => {
+      const res = Partner.create({
+        userId: 'user-uuid',
+        name: 'Estabelecimento',
+        address: 'Rua A, 10',
+        phone: '11988887777',
+        type: PartnerType.RESTAURANT,
+        description: '',
+      });
+      const partner = res.getValue();
+      const updateRes = partner.updateDetails({
+        // @ts-expect-error teste com valor inválido
+        legalNature: 'OUTRO',
+      });
+      expect(updateRes.isFailure).toBe(true);
+      expect(updateRes.getError()).toContain('Natureza jurídica inválida');
+    });
+
+    it('should reconstitute a PF partner correctly from persistence', () => {
+      const partner = Partner.reconstitute(
+        {
+          userId: 'user-uuid',
+          name: 'Doces da Lúcia',
+          legalNature: 'PF',
+          documentNumber: '52998224725',
+          responsibleName: 'Lúcia Ferreira',
+          documentUrl: 'https://storage.celilac.com.br/docs/lucia-alvara.pdf',
+          description: 'Doces artesanais',
+          address: 'Rua D, 400',
+          phone: '11966665555',
+          type: PartnerType.INDEPENDENT_PRODUCER,
+        },
+        'partner-pf-uuid'
+      );
+
+      expect(partner.id).toBe('partner-pf-uuid');
+      expect(partner.legalNature).toBe('PF');
+      expect(partner.documentNumber).toBe('529.982.247-25');
+      expect(partner.documentType).toBe('CPF');
+      expect(partner.responsibleName).toBe('Lúcia Ferreira');
+      expect(partner.documentUrl).toBe('https://storage.celilac.com.br/docs/lucia-alvara.pdf');
+    });
+  });
 });
 

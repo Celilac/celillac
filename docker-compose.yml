@@ -70,6 +70,7 @@ services:
       - ./harness/scripts/migrations/027_add_idempotency_key_to_payments.sql:/docker-entrypoint-initdb.d/027_add_idempotency_key_to_payments.sql:ro
       - ./harness/scripts/migrations/028_add_delivery_payment_and_fraud_protection.sql:/docker-entrypoint-initdb.d/028_add_delivery_payment_and_fraud_protection.sql:ro
       - ./harness/scripts/migrations/029_add_terms_and_lgpd_consent_to_users.sql:/docker-entrypoint-initdb.d/029_add_terms_and_lgpd_consent_to_users.sql:ro
+      - ./harness/scripts/migrations/030_add_pf_pj_support_to_partners.sql:/docker-entrypoint-initdb.d/030_add_pf_pj_support_to_partners.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U celilac_user -d celilac_db"]
       interval: 5s

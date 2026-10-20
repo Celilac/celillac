@@ -34,6 +34,7 @@ describe('CreateCategoryUseCase', () => {
       create: jest.fn(),
       findById: jest.fn().mockResolvedValue(mockPartner),
       findByCnpj: jest.fn(),
+      findByDocumentNumber: jest.fn(),
       findAllByUserId: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),

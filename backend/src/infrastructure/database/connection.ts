@@ -160,9 +160,16 @@ export async function testDatabaseConnection(): Promise<void> {
         logo_url TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
       ALTER TABLE partners ADD COLUMN IF NOT EXISTS logo_url TEXT;
       ALTER TABLE partners ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS legal_nature VARCHAR(10) DEFAULT 'PJ';
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS document_number VARCHAR(20);
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS document_type VARCHAR(10) DEFAULT 'CNPJ';
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS document_url TEXT;
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS company_name VARCHAR(255);
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS responsible_name VARCHAR(255);
+      CREATE INDEX IF NOT EXISTS idx_partners_legal_nature ON partners(legal_nature);
+      CREATE INDEX IF NOT EXISTS idx_partners_document_number ON partners(document_number);
     `, 'Tabelas consumers e partners');
 
     // 5. Categorias de Produtos

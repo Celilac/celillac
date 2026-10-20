@@ -3,13 +3,19 @@ import { IPartnerRepository } from '../../domain/partner/repositories/IPartnerRe
 import { IUserRepository } from '../../domain/iam/repositories/IUserRepository';
 import { UserRole } from '../../domain/iam/value-objects/UserRole';
 import { Result } from '../../domain/Result';
-import { PartnerType } from '../../domain/partner/Partner';
+import { PartnerType, LegalNature, DocumentType } from '../../domain/partner/Partner';
 
 export interface UpdatePartnerDTO {
   partnerId:       string;
   userId:          string; // Usuário tentando atualizar
   name?:           string;
   cnpj?:           string;
+  legalNature?:    LegalNature;
+  documentNumber?: string;
+  documentType?:   DocumentType;
+  documentUrl?:    string;
+  companyName?:    string;
+  responsibleName?:string;
   description?:    string;
   address?:        string;
   phone?:          string;
@@ -47,16 +53,22 @@ export class UpdatePartnerUseCase {
 
     // 3. Executar a alteração no domínio (se for crítica, o status regride automaticamente)
     const updateResult = partner.updateDetails({
-      name:           dto.name,
-      cnpj:           dto.cnpj,
-      description:    dto.description,
-      address:        dto.address,
-      phone:          dto.phone,
-      type:           dto.type,
-      city:           dto.city,
-      state:          dto.state,
-      deliveryRegion: dto.deliveryRegion,
-      logoUrl:        dto.logoUrl,
+      name:            dto.name,
+      cnpj:            dto.cnpj,
+      legalNature:     dto.legalNature,
+      documentNumber:  dto.documentNumber,
+      documentType:    dto.documentType,
+      documentUrl:     dto.documentUrl,
+      companyName:     dto.companyName,
+      responsibleName: dto.responsibleName,
+      description:     dto.description,
+      address:         dto.address,
+      phone:           dto.phone,
+      type:            dto.type,
+      city:            dto.city,
+      state:           dto.state,
+      deliveryRegion:  dto.deliveryRegion,
+      logoUrl:         dto.logoUrl,
     });
 
     if (updateResult.isFailure) {
