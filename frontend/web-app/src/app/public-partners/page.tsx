@@ -10,6 +10,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Header } from '@/components/layout/Header';
 import { RiskBadge } from '@/components/compatibility/RiskBadge';
 import { translatePartnerType } from '@/utils/compatibilityTranslator';
+import { ProductAllergenBadges } from '@/components/common/AllergenBadge';
 import {
   ProductFiltersSidebar,
   CategoryOption,
@@ -149,8 +150,10 @@ function PublicPartnersContent() {
             onClick={() => handleTabChange('partners')}
             id="tab-filter-partners"
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <BuildingIcon size={16} /> Estabelecimentos ({partners.length})
+            <span className={styles.tabContent}>
+              <BuildingIcon size={16} className={styles.tabIcon} />
+              <span className={styles.tabTitle}>Estabelecimentos</span>
+              <span className={styles.tabCount}>({partners.length})</span>
             </span>
           </button>
           <button
@@ -161,8 +164,12 @@ function PublicPartnersContent() {
             onClick={() => handleTabChange('products')}
             id="tab-filter-products"
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <PackageIcon size={16} /> Produtos Ofertados ({products.length})
+            <span className={styles.tabContent}>
+              <PackageIcon size={16} className={styles.tabIcon} />
+              <span className={styles.tabTitle}>
+                Produtos<span className={styles.tabExtraLabel}> Ofertados</span>
+              </span>
+              <span className={styles.tabCount}>({products.length})</span>
             </span>
           </button>
         </div>
@@ -634,33 +641,7 @@ function PublicPartnersContent() {
                           )}
 
                           <div className={styles.productBadges}>
-                            {product.hasGluten ? (
-                              <span className={styles.badgeRejected}>Contém Glúten</span>
-                            ) : (
-                              <span className={styles.badgeApproved}>Sem Glúten</span>
-                            )}
-
-                            {(() => {
-                              const ing = (product.ingredients || '').toLowerCase();
-                              const cross = (product.crossContamination || '').toLowerCase();
-                              const milkTerms = ['leite', 'lactose', 'queijo', 'manteiga', 'creme', 'whey', 'soro'];
-                              if (milkTerms.some((t) => ing.includes(t))) {
-                                return <span className={styles.badgeRejected}>Contém Leite</span>;
-                              }
-                              if (milkTerms.some((t) => cross.includes(t))) {
-                                return <span className={styles.badgePending}>Traços de Leite</span>;
-                              }
-                              return <span className={styles.badgeApproved}>Sem Leite</span>;
-                            })()}
-
-                            {(() => {
-                              const cross = (product.crossContamination || '').toLowerCase();
-                              const nutTerms = ['castanha', 'amendoim', 'nozes', 'amêndoa', 'pistache', 'avelã', 'macadâmia'];
-                              if (nutTerms.some((t) => cross.includes(t))) {
-                                return <span className={styles.badgePending} title={product.crossContamination}>Traços: Castanhas/Amendoim</span>;
-                              }
-                              return null;
-                            })()}
+                            <ProductAllergenBadges product={product} size="sm" />
                           </div>
 
                           <p className={styles.productIngredients} title={product.ingredients}>

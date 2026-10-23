@@ -69,6 +69,8 @@ services:
       - ./harness/scripts/migrations/026_create_payments_and_financial_accounts_tables.sql:/docker-entrypoint-initdb.d/026_create_payments_and_financial_accounts_tables.sql:ro
       - ./harness/scripts/migrations/027_add_idempotency_key_to_payments.sql:/docker-entrypoint-initdb.d/027_add_idempotency_key_to_payments.sql:ro
       - ./harness/scripts/migrations/028_add_delivery_payment_and_fraud_protection.sql:/docker-entrypoint-initdb.d/028_add_delivery_payment_and_fraud_protection.sql:ro
+      - ./harness/scripts/migrations/029_add_terms_and_lgpd_consent_to_users.sql:/docker-entrypoint-initdb.d/029_add_terms_and_lgpd_consent_to_users.sql:ro
+      - ./harness/scripts/migrations/030_add_pf_pj_support_to_partners.sql:/docker-entrypoint-initdb.d/030_add_pf_pj_support_to_partners.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U celilac_user -d celilac_db"]
       interval: 5s
@@ -85,8 +87,11 @@ services:
       - ./backend/.env
     environment:
       DB_HOST: db
+      DB_POOL_MAX: 35
+      DB_POOL_IDLE_TIMEOUT: 30000
+      DB_POOL_CONN_TIMEOUT: 5000
     volumes:
-      - ./backend/src:/app/src
+      - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -109,12 +114,12 @@ services:
       - "traefik.http.routers.backend-sse.middlewares=security-headers"
       - "traefik.http.routers.backend-sse.service=backend"
       - "traefik.http.routers.backend-sse.priority=100"
-      # Middlewares de Proteção e Anti-DDoS do Traefik
+      # Middlewares de Proteção e Anti-DDoS do Traefik (Calibrados para Produção)
       - "traefik.http.middlewares.security-buffering.buffering.maxRequestBodyBytes=26214400"
       - "traefik.http.middlewares.security-buffering.buffering.memRequestBodyBytes=2097152"
-      - "traefik.http.middlewares.security-inflight.inflightreq.amount=50"
-      - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=100"
-      - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=150"
+      - "traefik.http.middlewares.security-inflight.inflightreq.amount=100"
+      - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=150"
+      - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=250"
       - "traefik.http.middlewares.security-headers.headers.sslredirect=true"
       - "traefik.http.middlewares.security-headers.headers.stsSeconds=31536000"
       - "traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true"
@@ -129,9 +134,6 @@ services:
     restart: unless-stopped
     env_file:
       - ./frontend/web-app/.env.local
-    volumes:
-      - ./frontend/web-app/src:/app/src
-      - ./frontend/web-app/public:/app/public
     depends_on:
       - backend
     networks:
@@ -148,6 +150,7 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:
 
 networks:
   traefik_network:

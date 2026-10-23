@@ -79,6 +79,7 @@ describe('CreateOrderUseCase Unit Tests', () => {
       findById: jest.fn(),
       findByConsumerId: jest.fn(),
       findByPartnerId: jest.fn(),
+      findPendingExpired: jest.fn(),
     };
 
     productRepository = {
@@ -92,6 +93,7 @@ describe('CreateOrderUseCase Unit Tests', () => {
       create: jest.fn(),
       findById: jest.fn(),
       findByCnpj: jest.fn(),
+      findByDocumentNumber: jest.fn(),
       findAllByUserId: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),

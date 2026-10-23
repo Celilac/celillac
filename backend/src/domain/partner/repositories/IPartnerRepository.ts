@@ -5,6 +5,7 @@ export interface IPartnerRepository {
   create(partner: Partner): Promise<void>;
   findById(id: string): Promise<Partner | null>;
   findByCnpj(cnpj: string): Promise<Partner | null>;
+  findByDocumentNumber(documentNumber: string): Promise<Partner | null>;
   findAllByUserId(userId: string): Promise<Partner[]>;
   findAll(): Promise<Partner[]>;
   update(partner: Partner): Promise<void>;

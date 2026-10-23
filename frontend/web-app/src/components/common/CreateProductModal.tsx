@@ -114,19 +114,19 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
   const [mayContainTraces, setMayContainTraces] = useState('');
   const [compositionNotes, setCompositionNotes] = useState('');
 
-  // Campos de Segurança Alimentar (Fase 1)
+  // Campos de Segurança Alimentar
   const [hasGluten, setHasGluten] = useState<boolean>(false);
   const [milkDeclaration, setMilkDeclaration] = useState<'FREE' | 'CONTAINS' | 'TRACES' | null>(null);
   const [crossContaminationType, setCrossContaminationType] = useState<string>('NENHUM');
 
-  // Galeria de Imagens & Rótulos (Fase 2)
+  // Galeria de Imagens & Rótulos
   const [images, setImages] = useState<ProductImageDTO[]>([]);
   const coverImage = useMemo(
     () => images.find((img) => img.isCover) || images[0] || null,
     [images]
   );
 
-  // Matriz de Alérgenos, Riscos de Ambiente, Estilos de Vida e Certificações (Fase 3)
+  // Matriz de Alérgenos, Riscos de Ambiente, Estilos de Vida e Certificações
   const [declaredAllergens, setDeclaredAllergens] = useState<Record<string, AllergenPresence>>({});
   const [crossContaminationDetails, setCrossContaminationDetails] = useState<CrossContaminationDetails>({
     environmentRisk: 'UNKNOWN_RISK',
@@ -720,7 +720,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   border: '1px solid rgba(16, 185, 129, 0.3)',
                 }}
               >
-                {productToEdit ? 'Modo de Edição' : 'Fases 1 & 2 • Ficha Técnica & Galeria'}
+                {productToEdit ? 'Modo de Edição' : 'Ficha Técnica & Galeria'}
               </span>
             </div>
             <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
@@ -1256,7 +1256,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
               </div>
             </div>
 
-            {/* Bloco: Galeria de Imagens & Rótulos (Fase 2) */}
+            {/* Bloco: Galeria de Imagens & Rótulos */}
             <div
               className={`product-form-section ${activeStepMobile === 2 ? 'mobile-active-step' : 'mobile-hidden-step'}`}
               style={{
@@ -1358,7 +1358,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                 </small>
               </div>
 
-              {/* Matriz Oficial de Alérgenos (Fase 3) */}
+              {/* Matriz Oficial de Alérgenos */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
                 <div>
                   <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 700, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -1416,7 +1416,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
                   <ShieldIcon size={16} /> Ambiente, Estilos de Vida & Certificações
                 </h4>
                 <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 600 }}>
-                  Fase 3 • Auditoria Técnica
+                  Auditoria Técnica & Laudos
                 </span>
               </div>
 
@@ -1898,7 +1898,7 @@ export const CreateProductModal: React.FC<CreateProductModalProps> = ({
               )}
             </div>
 
-            {/* Card 3: Resumo da Galeria & Documentação Visual (Fase 2) */}
+            {/* Card 3: Resumo da Galeria & Documentação Visual */}
             <div
               style={{
                 background: theme === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'var(--color-elevated)',

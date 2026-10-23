@@ -16,7 +16,13 @@ export class RegisterUserController extends BaseController {
   }
 
   protected async executeImpl(req: Request, res: Response): Promise<void> {
-    const { email, password, role, fullName } = req.body;
+    const { email, password, role, fullName, name, termsAccepted } = req.body;
+
+    // Validação de consentimento LGPD / Termos de Uso
+    if (termsAccepted === false || termsAccepted === 'false') {
+      this.badRequest(res, 'Você deve aceitar os Termos de Uso e a Política de Privacidade para continuar.');
+      return;
+    }
 
     // Validação de input de interface (não de domínio)
     if (!email || !password || !role) {
@@ -33,7 +39,8 @@ export class RegisterUserController extends BaseController {
       email,
       password,
       role: role as UserRole,
-      fullName: fullName ? String(fullName).trim() : undefined,
+      fullName: (fullName || name) ? String(fullName || name).trim() : undefined,
+      termsAccepted: termsAccepted !== undefined ? Boolean(termsAccepted) : undefined,
     });
 
     if (result.isFailure) {

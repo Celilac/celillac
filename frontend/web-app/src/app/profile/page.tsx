@@ -770,6 +770,42 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {/* Dica Informativa do Perfil do Parceiro (Imagens 2 e 6 / Professor) */}
+        {userRole === 'PARCEIRO' && (
+          <div style={{
+            background: theme === 'dark' ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.06)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            borderRadius: '14px',
+            padding: '16px 20px',
+            marginBottom: '24px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '14px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+          }}>
+            <div style={{
+              color: 'var(--color-primary, #10B981)',
+              background: 'rgba(16, 185, 129, 0.15)',
+              padding: '6px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              marginTop: '1px',
+            }}>
+              <InfoIcon size={18} />
+            </div>
+            <div style={{ fontSize: '0.875rem', lineHeight: 1.55, color: theme === 'dark' ? '#E2E8F0' : '#334155' }}>
+              <strong style={{ color: 'var(--color-primary, #10B981)', display: 'block', marginBottom: '2px', fontSize: '0.92rem' }}>
+                Dica de Acesso: Pessoa Física Responsável pelo Estabelecimento
+              </strong>
+              Este formulário gerencia os dados da <strong>pessoa física responsável</strong> pelo acesso e pelas comunicações da conta na plataforma CeLiLac.
+              Seus <strong>estabelecimentos comerciais</strong> são cadastrados e geridos separadamente — podendo ser formalizados como <strong>Pessoa Jurídica (PJ com CNPJ)</strong> ou <strong>Pessoa Física / Produtor Artesanal (PF com CPF)</strong>.
+            </div>
+          </div>
+        )}
+
         {/* Banner de contexto — ADMIN */}
         {userRole === 'ADMIN' && (
           <div style={{
@@ -897,7 +933,25 @@ export default function ProfilePage() {
           <div className="profile-grid">
             {/* Dados Pessoais & Foto */}
             <section className="card profile-panel">
-              <h2 className="card-title">Dados pessoais</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '8px' }}>
+                <h2 className="card-title" style={{ margin: 0 }}>Dados pessoais</h2>
+                {userRole === 'PARCEIRO' && (
+                  <span style={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    padding: '3px 10px',
+                    borderRadius: '9999px',
+                    backgroundColor: 'rgba(99, 102, 241, 0.12)',
+                    color: '#818CF8',
+                    border: '1px solid rgba(99, 102, 241, 0.25)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}>
+                    <UserIcon size={12} /> Pessoa Física Responsável
+                  </span>
+                )}
+              </div>
 
               <div className="avatar-row">
                 <UserAvatar avatarUrl={avatarUrl} fullName={fullName} size={64} />

@@ -26,6 +26,8 @@ export interface UserProps {
   accountStatus?: AccountStatus;
   profileEvaluationStatus?: ProfileEvaluationStatus;
   isEmailVerified?: boolean;
+  termsAcceptedAt?: Date;
+  termsVersion?: string;
 }
 
 /**
@@ -94,6 +96,14 @@ export class User extends Entity<UserProps> {
 
   get isEmailVerified(): boolean {
     return !!this.props.isEmailVerified;
+  }
+
+  get termsAcceptedAt(): Date | undefined {
+    return this.props.termsAcceptedAt;
+  }
+
+  get termsVersion(): string | undefined {
+    return this.props.termsVersion;
   }
 
   public isPendingAdminApproval(): boolean {

@@ -143,9 +143,39 @@ function CheckoutPageContent() {
     fetchOrderData();
   }, [isAuthenticated, isInitializing, router, fetchOrderData]);
 
-  // Polling reativo em tempo real para detectar quando o PIX for pago
+  const [timeLeftSeconds, setTimeLeftSeconds] = useState<number | null>(null);
+
+  // Countdown timer regressivo de 10 minutos para seleção e pagamento
   useEffect(() => {
-    if (!token || !orderId || !payment || order?.status === 'PAID') return;
+    if (!order || (order.status !== 'CREATED' && order.status !== 'AWAITING_PAYMENT')) {
+      setTimeLeftSeconds(null);
+      return;
+    }
+
+    const calculateRemaining = () => {
+      const createdTime = new Date(order.createdAt).getTime();
+      const expirationTime = createdTime + 10 * 60 * 1000; // 10 minutos limite
+      const remaining = Math.max(0, Math.floor((expirationTime - Date.now()) / 1000));
+      return remaining;
+    };
+
+    setTimeLeftSeconds(calculateRemaining());
+
+    const timer = setInterval(() => {
+      const remaining = calculateRemaining();
+      setTimeLeftSeconds(remaining);
+      if (remaining <= 0) {
+        clearInterval(timer);
+        fetchOrderData();
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [order?.createdAt, order?.status, fetchOrderData]);
+
+  // Polling reativo em tempo real para detectar quando o PIX for pago ou cancelado
+  useEffect(() => {
+    if (!token || !orderId || order?.status === 'PAID' || order?.status === 'CANCELLED') return;
 
     const interval = setInterval(async () => {
       try {
@@ -154,6 +184,13 @@ function CheckoutPageContent() {
           setOrder(updatedOrder);
           toast.success('Pagamento confirmado com sucesso!', 'Sucesso');
           clearInterval(interval);
+        } else if (updatedOrder.status === 'CANCELLED') {
+          setOrder(updatedOrder);
+          toast.error(
+            updatedOrder.cancelReason || 'Este pedido foi cancelado automaticamente por expiração.',
+            'Pedido Cancelado'
+          );
+          clearInterval(interval);
         }
       } catch {
         // Silencioso no polling
@@ -161,7 +198,7 @@ function CheckoutPageContent() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [token, orderId, payment, order?.status, toast]);
+  }, [token, orderId, order?.status, toast]);
 
   const handleGeneratePix = async (forceNew = false) => {
     if (!token || !order) return;
@@ -330,6 +367,7 @@ function CheckoutPageContent() {
   }
 
   const isPaid = order.status === 'PAID' || order.status === 'CONFIRMED' || order.status === 'PREPARING';
+  const isCancelled = order.status === 'CANCELLED';
 
   return (
     <div className={styles.container}>
@@ -346,7 +384,25 @@ function CheckoutPageContent() {
           </p>
         </div>
 
-        {isPaid ? (
+        {isCancelled ? (
+          <div className={`${styles.card} ${styles.paidState}`}>
+            <div className={styles.paidIcon} style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }}>
+              <AlertTriangleIcon size={48} style={{ color: '#ef4444' }} />
+            </div>
+            <h2 className={styles.paidTitle} style={{ color: '#ef4444' }}>Pedido Cancelado</h2>
+            <p className={styles.paidText}>
+              {order.cancelReason || 'Este pedido foi cancelado automaticamente por expiração de tempo.'}
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+              <Link href="/orders" className={styles.trackOrderBtn}>
+                Ver Meus Pedidos
+              </Link>
+              <Link href="/public-partners" className={styles.trackOrderBtn} style={{ background: 'var(--color-primary, #059669)', color: '#ffffff' }}>
+                Novo Pedido no Catálogo
+              </Link>
+            </div>
+          </div>
+        ) : isPaid ? (
           <div className={`${styles.card} ${styles.paidState}`}>
             <div className={styles.paidIcon}>
               <CheckCircleIcon size={48} style={{ color: '#10b981' }} />
@@ -418,6 +474,32 @@ function CheckoutPageContent() {
 
             {/* Lado Direito: Opções de Pagamento e Abas */}
             <div className={styles.card}>
+              {timeLeftSeconds !== null && timeLeftSeconds > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '8px',
+                    backgroundColor: timeLeftSeconds < 180 ? 'rgba(239, 68, 68, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                    border: `1px solid ${timeLeftSeconds < 180 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`,
+                    color: timeLeftSeconds < 180 ? '#ef4444' : '#d97706',
+                    marginBottom: '1.25rem',
+                    fontSize: '0.875rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <ClockIcon size={18} />
+                    <span>Tempo para concluir o pagamento:</span>
+                  </div>
+                  <span style={{ fontSize: '1.1rem', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                    {Math.floor(timeLeftSeconds / 60)}:{(timeLeftSeconds % 60).toString().padStart(2, '0')}
+                  </span>
+                </div>
+              )}
+
               <h2 className={styles.cardTitle}>Forma de Pagamento</h2>
 
               {/* Seletor de Métodos (Abas) */}

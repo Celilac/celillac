@@ -155,6 +155,15 @@ async function main() {
     })
   );
 
+  // 6. Teste de Bloqueio de Rota Não Autenticada de Pedido (POST /orders/test-notification removida -> 404)
+  results.push(
+    await runRequest('Proteção SSE de Pedidos (/orders/test-notification removida)', '/orders/test-notification', {
+      method: 'POST',
+      body: { orderId: 'test-order-probe' },
+      expectedStatus: 404,
+    })
+  );
+
   // Consolidação
   const total = results.length;
   const passed = results.filter((r) => r.success).length;

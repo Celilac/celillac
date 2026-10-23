@@ -10,8 +10,8 @@
   gap: var(--space-5);
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
   position: sticky;
-  top: 1.5rem;
-  max-height: calc(100vh - 3rem);
+  top: 5rem;
+  max-height: calc(100vh - 5.5rem);
   overflow-y: auto;
   scrollbar-width: thin;
 }
@@ -342,48 +342,52 @@
   color: var(--color-text-muted);
 }
 
-/* Botão Mobile Trigger & Modal */
-.mobileOverlay {
+/* Drawer Modal Mobile */
+.mobileDrawerOpen {
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  justify-content: flex-end;
+}
+
+.mobileDrawerContent {
+  width: 85%;
+  max-width: 360px;
+  height: 100%;
+  background: var(--color-surface);
+  padding: 1.5rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-y: auto;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.25);
+  animation: slideInRight 0.25s ease-out;
+}
+
+:global(html[data-theme='light']) .mobileDrawerContent {
+  background: #ffffff;
+}
+
+.closeMobileBtn {
   display: none;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
 }
 
 @media (max-width: 900px) {
   .sidebarCard {
-    position: static;
-    max-height: none;
-    box-shadow: none;
-  }
-
-  .mobileDrawerOpen {
-    display: flex;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.65);
-    z-index: 1000;
-    backdrop-filter: blur(4px);
-    justify-content: flex-end;
-  }
-
-  .mobileDrawerContent {
-    width: 85%;
-    max-width: 360px;
-    height: 100%;
-    background: var(--color-surface);
-    padding: 1.5rem;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    overflow-y: auto;
-    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.25);
-    animation: slideInRight 0.25s ease-out;
-  }
-
-  :global(html[data-theme='light']) .mobileDrawerContent {
-    background: #ffffff;
+    display: none;
   }
 
   .closeMobileBtn {

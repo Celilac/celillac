@@ -6,7 +6,7 @@
 [![Backend](https://img.shields.io/badge/Backend-Node.js%2FTypeScript-green)](#)
 [![Architecture](https://img.shields.io/badge/Architecture-Clean%20Architecture%20%2B%20DDD-blue)](#)
 [![Mobile](https://img.shields.io/badge/Mobile-Flutter-blue)](#-mobile)
-[![Tests](https://img.shields.io/badge/Tests-82%20suites%20%7C%20512%20passing-brightgreen)](#-testes)
+[![Tests](https://img.shields.io/badge/Tests-93%20suites%20%7C%20645%20passing-brightgreen)](#-testes)
 [![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions%20%2B%20Oracle%20Cloud-orange)](#-segurança--governança)
 
 ---
@@ -44,7 +44,7 @@ celillac/
 │   │   ├── application/     # Casos de uso
 │   │   ├── infrastructure/  # PostgreSQL (pg), gateways (Asaas), repositórios
 │   │   └── interfaces/      # Controllers HTTP (Express)
-│   └── tests/unit/          # 82 suítes | 512 testes
+│   └── tests/unit/          # 90 suítes | 615 testes
 ├── frontend/
 │   ├── web-app/             # Aplicação principal (Next.js 14, porta 3001)
 │   ├── landing-page/        # Landing page estática (Next.js 14, porta 3002)
@@ -130,13 +130,14 @@ Cada contexto tem seu próprio doc em [`docs/features/`](docs/features/) com end
 | 🛡️ Segurança, Anti-Bot & Anti-DDoS | ✅ Implementado | [`docs/features/security-hardening.md`](docs/features/security-hardening.md) |
 | 💵 Pagamento na Entrega & Proteção Contra Fraude | ✅ Implementado | [`docs/features/delivery-payment-and-fraud-protection.md`](docs/features/delivery-payment-and-fraud-protection.md) |
 | 🔄 Autonomia de Testes & Auto-Cura | ✅ Implementado | [`docs/features/autonomous-testing-protocol.md`](docs/features/autonomous-testing-protocol.md) |
+| ⏱️ Cancelamento Automático de Pedidos (Timeouts) | ✅ Implementado | [`docs/features/order-auto-cancellation.md`](docs/features/order-auto-cancellation.md) |
 
 ---
 
 ## 🧪 Testes e Validação Autônoma
 
 ```bash
-# Validação completa em pirâmide (Backend Typecheck + 87 suítes Jest + Paridade + Frontend Typecheck + Smoke Tests)
+# Validação completa em pirâmide (Backend Typecheck + 88 suítes Jest + Paridade + Frontend Typecheck + Smoke Tests)
 npm run verify           # ou node scripts/agent-verify.mjs
 
 # Execução rápida (apenas backend)
@@ -149,12 +150,13 @@ npm run test:smoke       # ou node scripts/test-api-smoke.mjs
 cd backend && npm test
 ```
 
-**87 suítes de teste | 592 casos 100% aprovados**, cobrindo domínio, casos de uso, controllers, middlewares de segurança e o Motor de Alérgenos:
+**93 suítes de teste | 645 casos 100% aprovados**, cobrindo domínio, casos de uso, controllers, middlewares de segurança e o Motor de Alérgenos:
 
 | Suíte | Cobertura |
 |:------|:----------|
 | `domain/Result.spec.ts` | 100% |
 | `domain/partner/Cnpj.spec.ts` | 100% |
+| `domain/partner/Cpf.spec.ts` | 100% |
 | `domain/iam/Email`, `PasswordHash`, `User`, `PasswordReset` | 100% |
 | `domain/food-profile/SeverityLevel`, `Restriction`, `FoodProfile` | 100% |
 | `domain/allergen-engine/AllergenEngine` ← 9 casos críticos | ~98% |

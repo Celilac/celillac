@@ -1,7 +1,8 @@
 // frontend/web-app/src/components/catalog/ProductFiltersSidebar.tsx
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ProductFilterState,
   ProductSortOption,
@@ -45,7 +46,32 @@ export function ProductFiltersSidebar({
   isOpenMobile = false,
   onCloseMobile,
 }: ProductFiltersSidebarProps) {
+  const [mounted, setMounted] = useState(false);
   const activeCount = countActiveFilters(filters);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Bloqueio do scroll do body e suporte a tecla ESC quando o drawer mobile estiver aberto
+  useEffect(() => {
+    if (!isOpenMobile) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onCloseMobile) {
+        onCloseMobile();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpenMobile, onCloseMobile]);
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onFilterChange({
@@ -461,8 +487,8 @@ export function ProductFiltersSidebar({
         {renderContent()}
       </aside>
 
-      {/* Visualização Mobile (Drawer Modal) */}
-      {isOpenMobile && (
+      {/* Visualização Mobile (Drawer Modal com Portal para isolamento completo) */}
+      {isOpenMobile && mounted && createPortal(
         <div
           className={styles.mobileDrawerOpen}
           onClick={(e) => {
@@ -491,7 +517,8 @@ export function ProductFiltersSidebar({
               Aplicar Filtros ({filteredProductsCount})
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

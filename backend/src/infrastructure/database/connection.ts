@@ -7,11 +7,14 @@ import { Pool } from 'pg';
  * Credenciais do docker-compose.yml (DATABASE.md).
  */
 export const pool = new Pool({
-  host:     process.env.DB_HOST     ?? 'localhost',
-  port:     Number(process.env.DB_PORT ?? 5432),
-  database: process.env.DB_NAME     ?? 'celilac_db',
-  user:     process.env.DB_USER     ?? 'celilac_user',
-  password: process.env.DB_PASSWORD ?? 'celilac_password',
+  host:                    process.env.DB_HOST                    ?? 'localhost',
+  port:                    Number(process.env.DB_PORT             ?? 5432),
+  database:                process.env.DB_NAME                    ?? 'celilac_db',
+  user:                    process.env.DB_USER                    ?? 'celilac_user',
+  password:                process.env.DB_PASSWORD                ?? 'celilac_password',
+  max:                     Number(process.env.DB_POOL_MAX         ?? 35),
+  idleTimeoutMillis:       Number(process.env.DB_POOL_IDLE_TIMEOUT ?? 30000),
+  connectionTimeoutMillis: Number(process.env.DB_POOL_CONN_TIMEOUT ?? 5000),
 });
 
 /**
@@ -160,9 +163,16 @@ export async function testDatabaseConnection(): Promise<void> {
         logo_url TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
       ALTER TABLE partners ADD COLUMN IF NOT EXISTS logo_url TEXT;
       ALTER TABLE partners ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS legal_nature VARCHAR(10) DEFAULT 'PJ';
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS document_number VARCHAR(20);
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS document_type VARCHAR(10) DEFAULT 'CNPJ';
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS document_url TEXT;
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS company_name VARCHAR(255);
+      ALTER TABLE partners ADD COLUMN IF NOT EXISTS responsible_name VARCHAR(255);
+      CREATE INDEX IF NOT EXISTS idx_partners_legal_nature ON partners(legal_nature);
+      CREATE INDEX IF NOT EXISTS idx_partners_document_number ON partners(document_number);
     `, 'Tabelas consumers e partners');
 
     // 5. Categorias de Produtos
@@ -306,6 +316,8 @@ export async function testDatabaseConnection(): Promise<void> {
       CREATE INDEX IF NOT EXISTS idx_orders_partner_id ON orders(partner_id);
       CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
       CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_orders_timeout_lookup ON orders (status, updated_at, created_at)
+        WHERE status IN ('CREATED', 'AWAITING_PAYMENT', 'PAID');
 
       CREATE TABLE IF NOT EXISTS order_items (
         id UUID PRIMARY KEY,
@@ -476,6 +488,15 @@ export async function testDatabaseConnection(): Promise<void> {
         'b0000006-0000-0000-0000-000000000001'
       );
     `, 'Vínculo de produtos comerciais a parceiros homologados');
+
+    // 14. Consentimento LGPD e Versão dos Termos de Uso em users (Issue #103)
+    await executeSafeDdl(client, `
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMP WITH TIME ZONE,
+      ADD COLUMN IF NOT EXISTS terms_version VARCHAR(20) DEFAULT '1.0';
+
+      CREATE INDEX IF NOT EXISTS idx_users_terms_accepted_at ON users(terms_accepted_at);
+    `, 'Campos de consentimento LGPD e versão de termos em users');
 
     console.log('[Database]: Conexão e sincronização de esquema com PostgreSQL concluídas com sucesso.');
   } finally {

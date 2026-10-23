@@ -43,7 +43,7 @@ export interface BotBlockerOptions {
 export function createBotBlocker(options: BotBlockerOptions = {}) {
   const {
     allowAuthenticated = true,
-    exemptPaths = ['/health'],
+    exemptPaths = ['/health', '/uploads'],
   } = options;
 
   return (req: Request, res: Response, next: NextFunction): void => {

@@ -60,12 +60,14 @@ describe('Order Lifecycle Use Cases (Cancel, Queries, Status Transitions)', () =
       findById: jest.fn(),
       findByConsumerId: jest.fn(),
       findByPartnerId: jest.fn(),
+      findPendingExpired: jest.fn(),
     };
 
     partnerRepository = {
       create: jest.fn(),
       findById: jest.fn().mockResolvedValue(mockPartner),
       findByCnpj: jest.fn(),
+      findByDocumentNumber: jest.fn(),
       findAllByUserId: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),
