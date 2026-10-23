@@ -2,16 +2,28 @@
 import { Pool } from 'pg';
 import { IProductCatalogRepository, PaginatedResult, SearchProductQuery } from '../../../domain/catalog/repositories/IProductCatalogRepository';
 import { Product, AnalysisStatus, CommercialOrigin, PublicationStatus } from '../../../domain/catalog/Product';
-import { ProductImageType } from '../../../domain/catalog/ProductImage';
+import { ProductImage, ProductImageType } from '../../../domain/catalog/ProductImage';
+import { ProductCertification } from '../../../domain/catalog/ProductCertification';
 import { AllergenType, ALLERGEN_SEARCH_TERMS } from '../../../domain/food-profile/value-objects/AllergenType';
+import { IStorageService, LocalStorageService } from '../../storage/LocalStorageService';
+import { ICacheService, defaultCacheService } from '../../cache/CacheService';
 
 export class PgProductCatalogRepository implements IProductCatalogRepository {
-  constructor(private readonly pool: Pool) {}
+  constructor(
+    private readonly pool: Pool,
+    private readonly storageService: IStorageService = new LocalStorageService(),
+    private readonly cacheService: ICacheService = defaultCacheService,
+  ) {}
 
   async create(product: Product): Promise<void> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+
+      let savedImageUrl = product.imageUrl || null;
+      if (savedImageUrl && this.storageService.isDataUrl(savedImageUrl)) {
+        savedImageUrl = await this.storageService.saveImage(savedImageUrl, 'products');
+      }
 
       await client.query(
         `INSERT INTO products (
@@ -33,7 +45,7 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
           product.partnerId || null,
           product.price,
           product.category,
-          product.imageUrl || null,
+          savedImageUrl,
           product.isActive,
           product.shortDescription || null,
           product.netContent !== undefined ? product.netContent : null,
@@ -52,9 +64,14 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
         ]
       );
 
-      // Persiste as imagens da galeria funcional
+      // Persiste as imagens da galeria funcional desacoplando Base64
       if (product.images && product.images.length > 0) {
         for (const img of product.images) {
+          let imgUrl = img.url;
+          if (imgUrl && this.storageService.isDataUrl(imgUrl)) {
+            imgUrl = await this.storageService.saveImage(imgUrl, 'products');
+          }
+
           await client.query(
             `INSERT INTO product_images (
               id, product_id, url, image_type, caption, display_order, is_cover
@@ -63,7 +80,7 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
             [
               img.id,
               product.id,
-              img.url,
+              imgUrl,
               img.imageType,
               img.caption || null,
               img.displayOrder,
@@ -101,6 +118,7 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
       }
 
       await client.query('COMMIT');
+      await this.cacheService.flushPattern('catalog:search:*');
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -222,6 +240,11 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
     try {
       await client.query('BEGIN');
 
+      let savedImageUrl = product.imageUrl || null;
+      if (savedImageUrl && this.storageService.isDataUrl(savedImageUrl)) {
+        savedImageUrl = await this.storageService.saveImage(savedImageUrl, 'products');
+      }
+
       await client.query(
         `UPDATE products
          SET name = $1, brand = $2, ingredients = $3, has_gluten = $4, cross_contamination = $5,
@@ -243,7 +266,7 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
           product.partnerId || null,
           product.price,
           product.category,
-          product.imageUrl || null,
+          savedImageUrl,
           product.isActive,
           product.shortDescription || null,
           product.netContent !== undefined ? product.netContent : null,
@@ -263,10 +286,15 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
         ]
       );
 
-      // Sincroniza a galeria de imagens
+      // Sincroniza a galeria de imagens desacoplando Base64
       await client.query(`DELETE FROM product_images WHERE product_id = $1`, [product.id]);
       if (product.images && product.images.length > 0) {
         for (const img of product.images) {
+          let imgUrl = img.url;
+          if (imgUrl && this.storageService.isDataUrl(imgUrl)) {
+            imgUrl = await this.storageService.saveImage(imgUrl, 'products');
+          }
+
           await client.query(
             `INSERT INTO product_images (
               id, product_id, url, image_type, caption, display_order, is_cover
@@ -275,7 +303,7 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
             [
               img.id,
               product.id,
-              img.url,
+              imgUrl,
               img.imageType,
               img.caption || null,
               img.displayOrder,
@@ -314,6 +342,7 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
       }
 
       await client.query('COMMIT');
+      await this.cacheService.flushPattern('catalog:search:*');
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -323,6 +352,37 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
   }
 
   async search(query: SearchProductQuery): Promise<PaginatedResult<Product>> {
+    const cacheKey = `catalog:search:${JSON.stringify(query)}`;
+    const cached = await this.cacheService.get<{
+      serializedProducts: any[];
+      total: number;
+      page: number;
+      limit: number;
+    }>(cacheKey);
+
+    if (cached) {
+      const data = cached.serializedProducts.map((item) =>
+        Product.create(
+          {
+            ...item.props,
+            images: (item.props.images || []).map((img: any) =>
+              ProductImage.create(img, img.id).getValue()
+            ),
+            certifications: (item.props.certifications || []).map((cert: any) =>
+              ProductCertification.create(cert, cert.id).getValue()
+            ),
+          },
+          item.id
+        ).getValue()
+      );
+      return {
+        data,
+        total: cached.total,
+        page: cached.page,
+        limit: cached.limit,
+      };
+    }
+
     const { term, page, limit, avoidAllergens, partnerId } = query;
     const offset = (page - 1) * limit;
 
@@ -512,6 +572,68 @@ export class PgProductCatalogRepository implements IProductCatalogRepository {
         row.id
       ).getValue();
     });
+
+    const serializedProducts = data.map((p) => ({
+      id: p.id,
+      props: {
+        name: p.name,
+        brand: p.brand,
+        ingredients: p.ingredients,
+        hasGluten: p.hasGluten,
+        crossContamination: p.crossContamination,
+        analysisStatus: p.analysisStatus,
+        partnerId: p.partnerId,
+        price: p.price,
+        category: p.category,
+        imageUrl: p.imageUrl,
+        isActive: p.isActive,
+        shortDescription: p.shortDescription,
+        netContent: p.netContent,
+        unitOfMeasure: p.unitOfMeasure,
+        sku: p.sku,
+        ean: p.ean,
+        commercialOrigin: p.commercialOrigin,
+        mayContainTraces: p.mayContainTraces,
+        compositionNotes: p.compositionNotes,
+        publicationStatus: p.publicationStatus,
+        declaredAllergens: p.declaredAllergens,
+        crossContaminationDetails: p.crossContaminationDetails,
+        dietaryFeatures: p.dietaryFeatures,
+        informationOrigin: p.informationOrigin,
+        nutritionalInfo: p.nutritionalInfo,
+        images: p.images.map((img) => ({
+          id: img.id,
+          productId: img.productId,
+          url: img.url,
+          imageType: img.imageType,
+          caption: img.caption,
+          displayOrder: img.displayOrder,
+          isCover: img.isCover,
+        })),
+        certifications: p.certifications.map((c) => ({
+          id: c.id,
+          productId: c.productId,
+          certificationType: c.certificationType,
+          certifyingEntity: c.certifyingEntity,
+          certificateCode: c.certificateCode,
+          validUntil: c.validUntil,
+          imageId: c.imageId,
+          verificationStatus: c.verificationStatus,
+          verificationNotes: c.verificationNotes,
+        })),
+      },
+    }));
+
+    await this.cacheService.set(
+      cacheKey,
+      {
+        serializedProducts,
+        total,
+        page,
+        limit,
+      },
+      60,
+    );
 
     return {
       data,

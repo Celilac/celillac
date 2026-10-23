@@ -38,6 +38,22 @@ export function getApiBaseUrl(): string {
   return envUrl ?? 'http://localhost:3000';
 }
 
+/**
+ * Converte URLs relativas de uploads (/uploads/...) para o domínio canônico da API,
+ * preservando URLs externas completas (HTTP/HTTPS) e Data URLs inalteradas.
+ */
+export function resolveImageUrl(url?: string): string {
+  if (!url || typeof url !== 'string') return '';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/')) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('/uploads/')) {
+    return `${getApiBaseUrl()}${trimmed}`;
+  }
+  return trimmed;
+}
+
 export interface ApiError {
   error: string;
 }
