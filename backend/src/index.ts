@@ -1,5 +1,7 @@
 import 'dotenv/config'; // deve ser a primeira importação
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
 
 import { pool, testDatabaseConnection } from './infrastructure/database/connection';
 import { iamRouter } from './interfaces/http/routes/iam.routes';
@@ -28,6 +30,13 @@ app.set('trust proxy', 1);
 
 app.use(corsMiddleware);
 app.use(securityHeadersMiddleware);
+
+// Rota estática de uploads persistentes com cache HTTP agressivo (30 dias)
+const uploadsDir = path.resolve(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir, { maxAge: '30d', immutable: true }));
 
 // Bloqueia crawlers abusivos, web scrapers conhecidos e bots de IA antes de qualquer processamento
 app.use(botBlockerMiddleware);

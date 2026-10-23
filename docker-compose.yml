@@ -87,8 +87,11 @@ services:
       - ./backend/.env
     environment:
       DB_HOST: db
+      DB_POOL_MAX: 35
+      DB_POOL_IDLE_TIMEOUT: 30000
+      DB_POOL_CONN_TIMEOUT: 5000
     volumes:
-      - ./backend/src:/app/src
+      - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -111,12 +114,12 @@ services:
       - "traefik.http.routers.backend-sse.middlewares=security-headers"
       - "traefik.http.routers.backend-sse.service=backend"
       - "traefik.http.routers.backend-sse.priority=100"
-      # Middlewares de Proteção e Anti-DDoS do Traefik
+      # Middlewares de Proteção e Anti-DDoS do Traefik (Calibrados para Produção)
       - "traefik.http.middlewares.security-buffering.buffering.maxRequestBodyBytes=26214400"
       - "traefik.http.middlewares.security-buffering.buffering.memRequestBodyBytes=2097152"
-      - "traefik.http.middlewares.security-inflight.inflightreq.amount=50"
-      - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=100"
-      - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=150"
+      - "traefik.http.middlewares.security-inflight.inflightreq.amount=100"
+      - "traefik.http.middlewares.backend-ratelimit.ratelimit.average=150"
+      - "traefik.http.middlewares.backend-ratelimit.ratelimit.burst=250"
       - "traefik.http.middlewares.security-headers.headers.sslredirect=true"
       - "traefik.http.middlewares.security-headers.headers.stsSeconds=31536000"
       - "traefik.http.middlewares.security-headers.headers.stsIncludeSubdomains=true"
@@ -131,9 +134,6 @@ services:
     restart: unless-stopped
     env_file:
       - ./frontend/web-app/.env.local
-    volumes:
-      - ./frontend/web-app/src:/app/src
-      - ./frontend/web-app/public:/app/public
     depends_on:
       - backend
     networks:
@@ -150,6 +150,7 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:
 
 networks:
   traefik_network:
