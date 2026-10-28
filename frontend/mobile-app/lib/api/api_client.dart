@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../core/config/api_config.dart';
 import 'api_exception.dart';
 import 'models/auth_models.dart';
 import 'models/compatibility_models.dart';
@@ -15,19 +17,13 @@ import 'models/review_models.dart';
 /// Camada única de comunicação HTTP do app mobile (docs/API_CONTRACTS.md §9).
 /// NUNCA chamar a API de outro lugar do app — apenas via este cliente.
 class ApiClient {
-  ApiClient({http.Client? httpClient}) : _httpClient = httpClient ?? http.Client();
+  ApiClient({http.Client? httpClient, String? baseUrl})
+      : _httpClient = httpClient ?? http.Client(),
+        _baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   final http.Client _httpClient;
+  final String _baseUrl;
   String? _authToken;
-
-  static const int _devPort = 3002;
-
-  static String get _baseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:$_devPort';
-    }
-    return 'http://localhost:$_devPort';
-  }
 
   void setAuthToken(String? token) {
     _authToken = token;
@@ -46,22 +42,45 @@ class ApiClient {
 
     final uri = Uri.parse('$_baseUrl$path');
     final http.Response response;
-    switch (method) {
-      case 'POST':
-        response = await _httpClient.post(uri, headers: headers, body: jsonEncode(body ?? {}));
-        break;
-      case 'DELETE':
-        response = await _httpClient.delete(uri, headers: headers);
-        break;
-      case 'GET':
-      default:
-        response = await _httpClient.get(uri, headers: headers);
+    try {
+      switch (method) {
+        case 'POST':
+          response = await _httpClient.post(uri, headers: headers, body: jsonEncode(body ?? {}));
+          break;
+        case 'PUT':
+          response = await _httpClient.put(uri, headers: headers, body: jsonEncode(body ?? {}));
+          break;
+        case 'DELETE':
+          response = await _httpClient.delete(uri, headers: headers);
+          break;
+        case 'GET':
+        default:
+          response = await _httpClient.get(uri, headers: headers);
+      }
+    } on SocketException {
+      throw ApiException.serviceUnavailable();
+    } on http.ClientException {
+      throw ApiException.serviceUnavailable();
+    } on TimeoutException {
+      throw ApiException.serviceUnavailable();
     }
 
-    final decoded = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
+    if (response.statusCode == 502 || response.statusCode == 503) {
+      throw ApiException.serviceUnavailable(statusCode: response.statusCode);
+    }
+
+    dynamic decoded;
+    try {
+      decoded = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
+    } on FormatException {
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw ApiException('Erro ${response.statusCode}', statusCode: response.statusCode);
+      }
+      rethrow;
+    }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      final message = (decoded is Map && decoded['error'] != null)
+      final message = (decoded is Map && decoded['error'] is String)
           ? decoded['error'] as String
           : 'Erro ${response.statusCode}';
       throw ApiException(message, statusCode: response.statusCode);

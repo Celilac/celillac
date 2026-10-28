@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -94,6 +96,152 @@ void main() {
         client.createFoodProfile(payload),
         throwsA(isA<ApiException>().having((e) => e.isConflict, 'isConflict', isTrue)),
       );
+    });
+    group('base URL', () {
+      test('prefixes every request with the configured baseUrl', () async {
+        http.Request? captured;
+        final client = ApiClient(
+          baseUrl: 'https://api.celilac.com.br',
+          httpClient: MockClient((request) async {
+            captured = request;
+            return http.Response(jsonEncode({'token': 't', 'expiresIn': '7d'}), 200);
+          }),
+        );
+
+        await client.login(const LoginPayload(email: 'a@b.com', password: 'pw'));
+
+        expect(captured!.url.toString(), 'https://api.celilac.com.br/iam/login');
+      });
+    });
+
+    group('service unavailable handling', () {
+      const unavailableMessage =
+          'Serviço temporariamente indisponível. O backend está em manutenção ou inicializando.';
+
+      for (final status in [502, 503]) {
+        test('a $status with an HTML body (proxy page) maps to the unavailable message', () async {
+          final client = ApiClient(
+            httpClient: MockClient((_) async => http.Response('<html>Bad Gateway</html>', status)),
+          );
+
+          await expectLater(
+            client.getFoodProfile('user-1'),
+            throwsA(
+              isA<ApiException>()
+                  .having((e) => e.message, 'message', unavailableMessage)
+                  .having((e) => e.statusCode, 'statusCode', status)
+                  .having((e) => e.isServiceUnavailable, 'isServiceUnavailable', isTrue),
+            ),
+          );
+        });
+
+        test('a $status with a JSON error body still maps to the unavailable message', () async {
+          final client = ApiClient(
+            httpClient: MockClient(
+              (_) async => http.Response(jsonEncode({'error': 'DB down'}), status),
+            ),
+          );
+
+          await expectLater(
+            client.getFoodProfile('user-1'),
+            throwsA(isA<ApiException>().having((e) => e.message, 'message', unavailableMessage)),
+          );
+        });
+      }
+
+      test('a SocketException maps to the unavailable message', () async {
+        final client = ApiClient(
+          httpClient: MockClient((_) async => throw const SocketException('Connection refused')),
+        );
+
+        await expectLater(
+          client.getFoodProfile('user-1'),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.message, 'message', unavailableMessage)
+                .having((e) => e.isServiceUnavailable, 'isServiceUnavailable', isTrue),
+          ),
+        );
+      });
+
+      test('an http.ClientException maps to the unavailable message', () async {
+        final client = ApiClient(
+          httpClient: MockClient((_) async => throw http.ClientException('Failed to fetch')),
+        );
+
+        await expectLater(
+          client.getFoodProfile('user-1'),
+          throwsA(isA<ApiException>().having((e) => e.message, 'message', unavailableMessage)),
+        );
+      });
+
+      test('a TimeoutException maps to the unavailable message', () async {
+        final client = ApiClient(
+          httpClient: MockClient((_) async => throw TimeoutException('slow')),
+        );
+
+        await expectLater(
+          client.getFoodProfile('user-1'),
+          throwsA(isA<ApiException>().having((e) => e.message, 'message', unavailableMessage)),
+        );
+      });
+
+      test('other 5xx errors are not reported as service unavailable', () async {
+        final client = ApiClient(
+          httpClient: MockClient((_) async => http.Response(jsonEncode({'error': 'Boom'}), 500)),
+        );
+
+        await expectLater(
+          client.getFoodProfile('user-1'),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.message, 'message', 'Boom')
+                .having((e) => e.isServiceUnavailable, 'isServiceUnavailable', isFalse),
+          ),
+        );
+      });
+
+      test('a non-JSON error body on a 4xx falls back to a generic message', () async {
+        final client = ApiClient(
+          httpClient: MockClient((_) async => http.Response('nope', 404)),
+        );
+
+        await expectLater(
+          client.getFoodProfile('user-1'),
+          throwsA(
+            isA<ApiException>()
+                .having((e) => e.statusCode, 'statusCode', 404)
+                .having((e) => e.message, 'message', 'Erro 404'),
+          ),
+        );
+      });
+    });
+
+    test('updateFoodProfile sends a PUT request', () async {
+      http.Request? captured;
+      final client = ApiClient(
+        httpClient: MockClient((request) async {
+          captured = request;
+          return http.Response(
+            jsonEncode({
+              'id': 'fp-1',
+              'userId': 'user-1',
+              'isActive': true,
+              'requiresHistoryRevalidation': false,
+              'restrictions': [],
+              'acceptsCrossContamination': false,
+            }),
+            200,
+          );
+        }),
+      );
+
+      await client.updateFoodProfile(
+        'user-1',
+        FoodProfilePayload(userId: 'user-1', restrictions: const [], acceptsCrossContamination: false),
+      );
+
+      expect(captured!.method, 'PUT');
     });
   });
 }

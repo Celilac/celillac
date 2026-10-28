@@ -12,17 +12,42 @@ class HomeShell extends StatefulWidget {
   State<HomeShell> createState() => _HomeShellState();
 }
 
-class _Tab {
-  const _Tab(this.icon, this.label);
+/// Aba da navegação inferior. Para adicionar uma aba nova basta incluir uma
+/// entrada em [_tabs]; [builder] recebe se a aba está ativa (ex.: Scanner
+/// liga/desliga a câmera).
+class _HomeTab {
+  const _HomeTab({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    required this.builder,
+  });
 
-  final String icon;
+  final IconData icon;
+  final IconData activeIcon;
   final String label;
+  final Widget Function(bool isActive) builder;
 }
 
-const _tabs = [
-  _Tab('📷', 'Scanner'),
-  _Tab('🔍', 'Buscar'),
-  _Tab('👤', 'Perfil'),
+final _tabs = <_HomeTab>[
+  _HomeTab(
+    icon: Icons.qr_code_scanner_outlined,
+    activeIcon: Icons.qr_code_scanner,
+    label: 'Scanner',
+    builder: (isActive) => ScannerScreen(isActive: isActive),
+  ),
+  _HomeTab(
+    icon: Icons.search,
+    activeIcon: Icons.search,
+    label: 'Buscar',
+    builder: (_) => const SearchScreen(),
+  ),
+  _HomeTab(
+    icon: Icons.person_outline,
+    activeIcon: Icons.person,
+    label: 'Perfil',
+    builder: (_) => const ProfileScreen(),
+  ),
 ];
 
 class _HomeShellState extends State<HomeShell> {
@@ -34,48 +59,26 @@ class _HomeShellState extends State<HomeShell> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          ScannerScreen(isActive: _currentIndex == 0),
-          const SearchScreen(),
-          const ProfileScreen(),
+          for (var i = 0; i < _tabs.length; i++) _tabs[i].builder(_currentIndex == i),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            border: Border(top: BorderSide(color: AppColors.border)),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          child: Row(
-            children: List.generate(_tabs.length, (index) {
-              final tab = _tabs[index];
-              final isActive = _currentIndex == index;
-              return Expanded(
-                child: InkWell(
-                  onTap: () => setState(() => _currentIndex = index),
-                  child: Opacity(
-                    opacity: isActive ? 1 : 0.5,
-                    child: Column(
-                      children: [
-                        Text(tab.icon, style: const TextStyle(fontSize: 22)),
-                        const SizedBox(height: 4),
-                        Text(
-                          tab.label,
-                          style: TextStyle(
-                            color: isActive ? AppColors.primary : AppColors.textMuted,
-                            fontSize: 11,
-                            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: AppColors.surface,
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textMuted,
+        selectedFontSize: 11,
+        unselectedFontSize: 11,
+        items: [
+          for (final tab in _tabs)
+            BottomNavigationBarItem(
+              icon: Icon(tab.icon),
+              activeIcon: Icon(tab.activeIcon),
+              label: tab.label,
+            ),
+        ],
       ),
     );
   }

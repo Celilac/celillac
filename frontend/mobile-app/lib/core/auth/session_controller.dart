@@ -4,6 +4,7 @@ import '../../api/api_client.dart';
 import '../../api/api_exception.dart';
 import '../../api/models/auth_models.dart';
 import '../storage/secure_token_storage.dart';
+import 'consumer_role.dart';
 import 'jwt.dart';
 
 class SessionUser {
@@ -32,6 +33,7 @@ class SessionController extends ChangeNotifier {
   bool _isLoading = true;
   bool? _hasFoodProfile; // null = ainda não verificado / verificando
   Object? _foodProfileError;
+  bool _roleBlocked = false;
 
   SessionUser? get user => _user;
   bool get isAuthenticated => _isAuthenticated;
@@ -39,12 +41,37 @@ class SessionController extends ChangeNotifier {
   bool? get hasFoodProfile => _hasFoodProfile;
   Object? get foodProfileError => _foodProfileError;
 
+  /// true quando o login/sessão restaurada era de PARCEIRO/ADMIN: o app mobile
+  /// é só para consumidor, então a sessão foi encerrada.
+  bool get roleBlocked => _roleBlocked;
+
+  void acknowledgeRoleBlock() {
+    _roleBlocked = false;
+    notifyListeners();
+  }
+
+  Future<void> _rejectNonConsumer() async {
+    await _storage.delete();
+    _api.setAuthToken(null);
+    _user = null;
+    _isAuthenticated = false;
+    _isLoading = false;
+    _hasFoodProfile = null;
+    _foodProfileError = null;
+    _roleBlocked = true;
+    notifyListeners();
+  }
+
   Future<void> restoreSession() async {
     try {
       final stored = await _storage.read();
       if (stored != null && !isTokenExpired(stored)) {
         final payload = decodeJwt(stored);
         if (payload != null) {
+          if (!isConsumerRole(payload.role)) {
+            await _rejectNonConsumer();
+            return;
+          }
           _api.setAuthToken(stored);
           _user = SessionUser(id: payload.sub, role: payload.role);
           _isAuthenticated = true;
@@ -78,8 +105,13 @@ class SessionController extends ChangeNotifier {
     if (payload == null) {
       throw const ApiException('Token inválido recebido do servidor.', statusCode: 500);
     }
+    if (!isConsumerRole(payload.role)) {
+      await _rejectNonConsumer();
+      return;
+    }
     await _storage.write(token);
     _api.setAuthToken(token);
+    _roleBlocked = false;
     _user = SessionUser(id: payload.sub, role: payload.role);
     _isAuthenticated = true;
     _isLoading = false;

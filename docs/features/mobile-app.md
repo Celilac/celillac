@@ -18,7 +18,7 @@ O App Mobile do CeLiLac é a aplicação nativa focada no uso em campo pelo cons
 | Diretório / Módulo | Responsabilidade |
 |:-------------------|:-----------------|
 | `lib/api/` | Cliente HTTP para integração com o backend (`ApiClient`, JWT Interceptors) |
-| `lib/core/` | Temas visuais adaptativos (Dark/Light), constantes e utilitários |
+| `lib/core/` | Tema, configuração (`config/api_config.dart`), guarda de papel (`auth/consumer_role.dart`) e utilitários |
 | `lib/features/auth/` | Telas de Login, Registro e Armazenamento Seguro de JWT (`flutter_secure_storage`) |
 | `lib/features/profile/` | Gestão de restrições alimentares e preferências de contaminação cruzada |
 | `lib/features/scanner/` | Leitor nativo de código de barras (EAN-13/EAN-8) via câmera |
@@ -32,3 +32,26 @@ O App Mobile do CeLiLac é a aplicação nativa focada no uso em campo pelo cons
 1. **Armazenamento Seguro de Token:** O token JWT é armazenado via `flutter_secure_storage` no Keychain (iOS) e Keystore (Android), nunca em storage não criptografado.
 2. **Cálculo de Risco Exclusivo no Backend:** O app mobile **nunca recalcula** o nível de compatibilidade alimentar. Ele consome exclusivamente a resposta do `POST /compatibility/check` emitida pelo `AllergenEngine` do backend.
 3. **Identidade de Marca (`BrandLogo`):** Derivada diretamente de `assets/brand/logo.png`, sem reutilizar emojis soltos ou placeholders padrão de template.
+
+---
+
+## 4. Fundação (Etapa 0 — `feat/mobile-consumer-parity`)
+
+### Base URL da API
+Resolvida em `ApiConfig` (`lib/core/config/api_config.dart`):
+
+| Cenário | URL |
+|:--------|:----|
+| `--dart-define=API_BASE_URL=<url>` | O valor informado (espaços e `/` finais removidos) |
+| Dev, iOS/desktop (sem define) | `http://localhost:3002` |
+| Dev, Android (sem define) | `http://10.0.2.2:3002` |
+| Release (sem define) | `https://api.celilac.com.br` |
+
+### Indisponibilidade do backend
+Erro de rede (`SocketException`, `ClientException`, timeout) e status `502`/`503` viram `ApiException.serviceUnavailable()`: *"Serviço temporariamente indisponível. O backend está em manutenção ou inicializando."* Login e registro exibem essa mensagem em vez de "senha incorreta".
+
+### Guarda de papel
+O app é exclusivo para `CELIACO` (`UserRole`, ver `docs/API_CONTRACTS.md` §9). Após login ou restauração de sessão, qualquer outro papel (`PARCEIRO`, `ADMIN` ou desconhecido) encerra a sessão, **não persiste o token** e exibe a tela "Use o painel web". O papel vem do claim `role` do JWT (apenas decodificado; a validação continua no servidor).
+
+### Navegação
+`HomeShell` usa `BottomNavigationBar` com `Icons` do Material; novas abas entram adicionando uma `_HomeTab` à lista.
