@@ -40,9 +40,16 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       await context.read<SessionController>().login(email.toLowerCase(), password);
-    } on ApiException catch (_) {
+    } on ApiException catch (e) {
       // Conforme FRONTEND_STRATEGY.md: nunca expor mensagem técnica do backend.
-      if (mounted) _showMessage('Erro de acesso', 'E-mail ou senha incorretos. Tente novamente.');
+      if (mounted) {
+        _showMessage(
+          'Erro de acesso',
+          e.isServiceUnavailable
+              ? ApiException.serviceUnavailableMessage
+              : 'E-mail ou senha incorretos. Tente novamente.',
+        );
+      }
     } catch (_) {
       if (mounted) _showMessage('Erro de acesso', 'E-mail ou senha incorretos. Tente novamente.');
     } finally {
