@@ -6,6 +6,7 @@ import '../../core/auth/session_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/brand_logo.dart';
 import '../../shared/widgets/loading_overlay.dart';
+import '../account/forgot_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.onNavigateToRegister});
@@ -40,9 +41,16 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
     try {
       await context.read<SessionController>().login(email.toLowerCase(), password);
-    } on ApiException catch (_) {
+    } on ApiException catch (e) {
       // Conforme FRONTEND_STRATEGY.md: nunca expor mensagem técnica do backend.
-      if (mounted) _showMessage('Erro de acesso', 'E-mail ou senha incorretos. Tente novamente.');
+      if (mounted) {
+        _showMessage(
+          'Erro de acesso',
+          e.isServiceUnavailable
+              ? ApiException.serviceUnavailableMessage
+              : 'E-mail ou senha incorretos. Tente novamente.',
+        );
+      }
     } catch (_) {
       if (mounted) _showMessage('Erro de acesso', 'E-mail ou senha incorretos. Tente novamente.');
     } finally {
@@ -116,7 +124,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       style: const TextStyle(color: AppColors.textPrimary),
                     ),
-                    const SizedBox(height: 20),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        key: const Key('forgot-password-link'),
+                        onPressed: _isLoading
+                            ? null
+                            : () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(builder: (_) => const ForgotPasswordScreen()),
+                                ),
+                        child: const Text(
+                          'Esqueci minha senha',
+                          style: TextStyle(color: AppColors.primary, fontSize: 13),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
