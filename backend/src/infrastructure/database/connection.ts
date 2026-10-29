@@ -1,4 +1,4 @@
-// backend/src/infrastructure/database/connection.ts
+﻿// backend/src/infrastructure/database/connection.ts
 import { Pool } from 'pg';
 
 /**
@@ -11,7 +11,7 @@ export const pool = new Pool({
   port:                    Number(process.env.DB_PORT             ?? 5432),
   database:                process.env.DB_NAME                    ?? 'celilac_db',
   user:                    process.env.DB_USER                    ?? 'celilac_user',
-  password:                process.env.DB_PASSWORD                ?? (process.env.NODE_ENV === 'production' ? '' : 'celilac_password'),
+  password:                process.env.DB_PASSWORD                ?? 'celilac_password',
   max:                     Number(process.env.DB_POOL_MAX         ?? 35),
   idleTimeoutMillis:       Number(process.env.DB_POOL_IDLE_TIMEOUT ?? 30000),
   connectionTimeoutMillis: Number(process.env.DB_POOL_CONN_TIMEOUT ?? 5000),
