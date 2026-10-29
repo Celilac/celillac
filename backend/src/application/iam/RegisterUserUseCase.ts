@@ -154,15 +154,10 @@ export class RegisterUserUseCase {
     try {
       const recipientEmails = new Set<string>();
 
-      // E-mails padrão centrais de monitoramento para administradores
-      const defaultEmails = ['celilac@zohomail.com', 'evertoncoimbra@gmail.com'];
-      for (const email of defaultEmails) {
-        recipientEmails.add(email.trim().toLowerCase());
-      }
-
-      // E-mails adicionais configurados via variável de ambiente (separados por vírgula)
-      if (process.env.ADMIN_NOTIFICATION_EMAIL) {
-        const envEmails = process.env.ADMIN_NOTIFICATION_EMAIL.split(',').map((e) => e.trim().toLowerCase());
+      // E-mails centrais de monitoramento de novos cadastros (configurados via env)
+      const envEmailsStr = process.env.ADMIN_NOTIFICATION_EMAILS || process.env.ADMIN_NOTIFICATION_EMAIL;
+      if (envEmailsStr) {
+        const envEmails = envEmailsStr.split(',').map((e) => e.trim().toLowerCase());
         for (const envEmail of envEmails) {
           if (envEmail && envEmail.includes('@')) {
             recipientEmails.add(envEmail);

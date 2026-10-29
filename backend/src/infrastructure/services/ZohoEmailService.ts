@@ -27,9 +27,9 @@ export class ZohoEmailService implements IEmailService {
   constructor() {
     this.smtpHost = process.env.ZOHO_SMTP_HOST || 'smtp.zoho.com';
     this.smtpPort = Number(process.env.ZOHO_SMTP_PORT) || 465;
-    this.smtpUser = process.env.ZOHO_SMTP_USER || 'celilac@zohomail.com';
+    this.smtpUser = process.env.ZOHO_SMTP_USER || '';
     this.smtpPass = process.env.ZOHO_SMTP_PASS || '';
-    this.fromEmail = process.env.ZOHO_FROM_EMAIL || this.smtpUser;
+    this.fromEmail = process.env.ZOHO_FROM_EMAIL || this.smtpUser || 'no-reply@celilac.com.br';
     this.apiToken = process.env.ZOHO_API_TOKEN;
     this.apiUrl = process.env.ZOHO_API_URL || 'api.zeptomail.com';
   }

@@ -17,7 +17,11 @@ export class WebhookController extends BaseController {
 
   public async handleAsaas(req: Request, res: Response): Promise<Response> {
     try {
-      const webhookSecret = process.env.ASAAS_WEBHOOK_SECRET || 'dev_webhook_secret_celilac_2026';
+      const webhookSecret = process.env.ASAAS_WEBHOOK_SECRET;
+      if (!webhookSecret) {
+        console.error('[WebhookController] ASAAS_WEBHOOK_SECRET não configurado. Rejeitando webhook.');
+        return this.serverError(res, 'Configuração de webhook ausente no servidor.');
+      }
       const receivedToken = (req.headers['asaas-access-token'] as string) || '';
 
       const isTokenValid =

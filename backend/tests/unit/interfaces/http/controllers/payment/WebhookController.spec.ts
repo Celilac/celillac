@@ -1,4 +1,4 @@
-// backend/tests/unit/interfaces/http/controllers/payment/WebhookController.spec.ts
+﻿// backend/tests/unit/interfaces/http/controllers/payment/WebhookController.spec.ts
 import { WebhookController } from '../../../../../../src/interfaces/http/controllers/payment/WebhookController';
 import { Result } from '../../../../../../src/domain/Result';
 
@@ -98,6 +98,22 @@ describe('WebhookController (A01: Webhook Token Validation)', () => {
     expect(mockRes.status).toHaveBeenCalledWith(400);
     expect(mockRes.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: 'Evento não suportado.' })
+    );
+  });
+
+  it('deve retornar 500 se ASAAS_WEBHOOK_SECRET não estiver configurado', async () => {
+    delete process.env.ASAAS_WEBHOOK_SECRET;
+    mockReq = {
+      headers: { 'asaas-access-token': validSecret },
+      body: { event: 'PAYMENT_RECEIVED' },
+      socket: { remoteAddress: '127.0.0.1' },
+    };
+
+    await webhookController.handleAsaas(mockReq, mockRes);
+
+    expect(mockRes.status).toHaveBeenCalledWith(500);
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'Configuração de webhook ausente no servidor.' })
     );
   });
 });

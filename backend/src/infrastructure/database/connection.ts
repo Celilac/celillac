@@ -1,4 +1,4 @@
-// backend/src/infrastructure/database/connection.ts
+﻿// backend/src/infrastructure/database/connection.ts
 import { Pool } from 'pg';
 
 /**

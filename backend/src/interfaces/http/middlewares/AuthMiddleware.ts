@@ -120,7 +120,12 @@ export async function optionalAuthMiddleware(req: Request, res: Response, next: 
   }
 
   const token = extracted.token;
-  const secret = process.env.JWT_SECRET || 'secret';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    // Sem JWT_SECRET configurado, não é possível verificar tokens — prossegue como visitante
+    next();
+    return;
+  }
 
   try {
     const decoded = jwt.verify(token, secret) as DecodedToken;
