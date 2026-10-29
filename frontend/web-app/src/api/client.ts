@@ -28,7 +28,7 @@ export function getApiBaseUrl(): string {
       return `${protocol}//api.celilac.com.br`;
     }
 
-    // Se o envUrl não estiver definido ou se for localhost, mas o navegador estiver em um IP remoto (ex: VPS Oracle 163.176.195.210)
+    // Se o envUrl não estiver definido ou se for localhost, mas o navegador estiver em um IP remoto (ex: IP público de VPS)
     const isNumericIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
     if (isNumericIp && (!envUrl || envUrl.includes('localhost'))) {
       return 'https://api.celilac.com.br';

@@ -77,11 +77,11 @@ describe('SecurityMiddleware', () => {
     });
 
     it('deve refletir a origem remota/VPS quando ALLOWED_ORIGINS nao estiver definido', () => {
-      mockRequest.headers = { origin: 'http://163.176.195.210:3001' };
+      mockRequest.headers = { origin: 'http://203.0.113.10:3001' };
 
       corsMiddleware(mockRequest as Request, mockResponse as Response, nextFunction);
 
-      expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'http://163.176.195.210:3001');
+      expect(mockResponse.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', 'http://203.0.113.10:3001');
       expect(nextFunction).toHaveBeenCalled();
     });
 

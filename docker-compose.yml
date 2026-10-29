@@ -1,4 +1,4 @@
-services:
+﻿services:
   traefik:
     image: traefik:latest
     container_name: traefik
@@ -31,9 +31,9 @@ services:
     container_name: celilac-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: celilac_user
-      POSTGRES_PASSWORD: celilac_password
-      POSTGRES_DB: celilac_db
+      POSTGRES_USER: ${POSTGRES_USER:-celilac_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-celilac_password}
+      POSTGRES_DB: ${POSTGRES_DB:-celilac_db}
     ports:
       - "5432:5432"
     volumes:
@@ -72,7 +72,7 @@ services:
       - ./harness/scripts/migrations/029_add_terms_and_lgpd_consent_to_users.sql:/docker-entrypoint-initdb.d/029_add_terms_and_lgpd_consent_to_users.sql:ro
       - ./harness/scripts/migrations/030_add_pf_pj_support_to_partners.sql:/docker-entrypoint-initdb.d/030_add_pf_pj_support_to_partners.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U celilac_user -d celilac_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-celilac_user} -d ${POSTGRES_DB:-celilac_db}"]
       interval: 5s
       timeout: 5s
       retries: 5

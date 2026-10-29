@@ -1,4 +1,4 @@
-// backend/tests/unit/application/iam/RegisterUserUseCase.spec.ts
+﻿// backend/tests/unit/application/iam/RegisterUserUseCase.spec.ts
 import { RegisterUserUseCase } from '../../../../src/application/iam/RegisterUserUseCase';
 import { IUserRepository } from '../../../../src/domain/iam/repositories/IUserRepository';
 import { IEmailService } from '../../../../src/domain/services/IEmailService';
@@ -35,10 +35,11 @@ describe('RegisterUserUseCase', () => {
     } as any;
 
     useCase = new RegisterUserUseCase(userRepository, sendVerificationUseCase, emailService);
-    process.env.ADMIN_NOTIFICATION_EMAIL = 'celilac@zohomail.com';
+    process.env.ADMIN_NOTIFICATION_EMAILS = 'admin1@celilac.com.br,admin2@celilac.com.br';
   });
 
   afterEach(() => {
+    delete process.env.ADMIN_NOTIFICATION_EMAILS;
     delete process.env.ADMIN_NOTIFICATION_EMAIL;
   });
 
@@ -72,7 +73,7 @@ describe('RegisterUserUseCase', () => {
 
     expect(emailService.sendNewUserRegisteredAdminNotification).toHaveBeenCalledTimes(2);
     expect(emailService.sendNewUserRegisteredAdminNotification).toHaveBeenCalledWith(
-      'celilac@zohomail.com',
+      'admin1@celilac.com.br',
       expect.objectContaining({
         fullName: 'Novo Consumidor',
         email: 'novo.consumidor@exemplo.com',
@@ -80,7 +81,7 @@ describe('RegisterUserUseCase', () => {
       }),
     );
     expect(emailService.sendNewUserRegisteredAdminNotification).toHaveBeenCalledWith(
-      'evertoncoimbra@gmail.com',
+      'admin2@celilac.com.br',
       expect.objectContaining({
         fullName: 'Novo Consumidor',
         email: 'novo.consumidor@exemplo.com',
@@ -90,6 +91,7 @@ describe('RegisterUserUseCase', () => {
   });
 
   it('deve registrar um novo parceiro comercial e notificar administradores com papel PARCEIRO', async () => {
+    process.env.ADMIN_NOTIFICATION_EMAILS = 'admin1@celilac.com.br,admin2@celilac.com.br';
     const result = await useCase.execute({
       email: 'padaria.artesanal@parceiro.com',
       password: 'StrongPassword@123',
@@ -103,7 +105,7 @@ describe('RegisterUserUseCase', () => {
     await new Promise((resolve) => setImmediate(resolve));
 
     expect(emailService.sendNewUserRegisteredAdminNotification).toHaveBeenCalledWith(
-      'celilac@zohomail.com',
+      'admin1@celilac.com.br',
       expect.objectContaining({
         fullName: 'Padaria Artesanal',
         email: 'padaria.artesanal@parceiro.com',
@@ -111,7 +113,7 @@ describe('RegisterUserUseCase', () => {
       }),
     );
     expect(emailService.sendNewUserRegisteredAdminNotification).toHaveBeenCalledWith(
-      'evertoncoimbra@gmail.com',
+      'admin2@celilac.com.br',
       expect.objectContaining({
         fullName: 'Padaria Artesanal',
         email: 'padaria.artesanal@parceiro.com',
