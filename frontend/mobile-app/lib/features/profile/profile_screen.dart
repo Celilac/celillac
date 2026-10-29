@@ -7,6 +7,9 @@ import '../../core/auth/session_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/loading_overlay.dart';
 import '../../shared/widgets/restriction_chip.dart';
+import '../account/verify_email_screen.dart';
+import '../legal/privacy_screen.dart';
+import '../legal/terms_screen.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -18,6 +21,8 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   FoodProfile? _profile;
+  // null = desconhecido (ainda carregando ou falha ao consultar /iam/me).
+  bool? _emailVerified;
   bool _isLoading = true;
 
   @override
@@ -30,6 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final userId = context.read<SessionController>().user?.id;
     if (userId == null) return;
     final apiClient = context.read<ApiClient>();
+    _loadEmailStatus(apiClient);
     try {
       final data = await apiClient.getFoodProfile(userId);
       if (mounted) setState(() => _profile = data);
@@ -38,6 +44,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  Future<void> _loadEmailStatus(ApiClient apiClient) async {
+    try {
+      final account = await apiClient.getAccount();
+      if (mounted) setState(() => _emailVerified = account.isEmailVerified);
+    } catch (_) {
+      // Estado de verificação é informativo; sem ele o card some.
+    }
+  }
+
+  Future<void> _openVerifyEmail() async {
+    final verified = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const VerifyEmailScreen()),
+    );
+    if (verified == true && mounted) setState(() => _emailVerified = true);
+  }
+
+  void _openLegal(Widget screen) {
+    Navigator.push(context, MaterialPageRoute<void>(builder: (_) => screen));
   }
 
   Future<void> _handleLogout() async {
@@ -160,6 +187,70 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ],
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'CONTA',
+                      style: TextStyle(
+                        color: AppColors.textMutedLight,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                    if (_emailVerified != null) ...[
+                      const SizedBox(height: 12),
+                      if (_emailVerified!)
+                        const Row(
+                          key: Key('email-verified-status'),
+                          children: [
+                            Icon(Icons.check_circle, color: AppColors.success, size: 20),
+                            SizedBox(width: 8),
+                            Text('E-mail verificado', style: TextStyle(color: AppColors.textPrimary)),
+                          ],
+                        )
+                      else ...[
+                        const Row(
+                          key: Key('email-unverified-status'),
+                          children: [
+                            Icon(Icons.mark_email_unread_outlined, color: AppColors.severityMedium, size: 20),
+                            SizedBox(width: 8),
+                            Text('E-mail não verificado', style: TextStyle(color: AppColors.textPrimary)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        OutlinedButton(
+                          onPressed: _openVerifyEmail,
+                          child: const Text('Verificar e-mail'),
+                        ),
+                      ],
+                    ],
+                    const SizedBox(height: 8),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.gavel, color: AppColors.textMutedLight),
+                      title: const Text('Termos de Uso', style: TextStyle(color: AppColors.textPrimary)),
+                      trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted),
+                      onTap: () => _openLegal(const TermsScreen()),
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.shield_outlined, color: AppColors.textMutedLight),
+                      title: const Text('Política de Privacidade', style: TextStyle(color: AppColors.textPrimary)),
+                      trailing: const Icon(Icons.chevron_right, color: AppColors.textMuted),
+                      onTap: () => _openLegal(const PrivacyScreen()),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 16),
               OutlinedButton(
                 onPressed: _handleLogout,

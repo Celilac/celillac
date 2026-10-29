@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../core/config/api_config.dart';
 import 'api_exception.dart';
+import 'models/account_models.dart';
 import 'models/auth_models.dart';
 import 'models/compatibility_models.dart';
 import 'models/favorite_models.dart';
@@ -106,6 +107,54 @@ class ApiClient {
       method: 'POST',
       body: payload.toJson(),
       parse: (json) => LoginResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Público. O backend responde 200 com mensagem genérica mesmo se o e-mail
+  /// não existir (anti-enumeração) — o app deve exibi-la sem distinção.
+  Future<MessageResponse> requestPasswordReset(String email) {
+    return _request(
+      '/iam/password-reset/request',
+      method: 'POST',
+      body: {'email': email},
+      parse: (json) => MessageResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Público. Valida o OTP de 6 dígitos e define a nova senha.
+  Future<MessageResponse> confirmPasswordReset(ConfirmPasswordResetPayload payload) {
+    return _request(
+      '/iam/password-reset/confirm',
+      method: 'POST',
+      body: payload.toJson(),
+      parse: (json) => MessageResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Autenticado (Bearer).
+  Future<MessageResponse> verifyEmail(String code) {
+    return _request(
+      '/iam/email-verification/verify',
+      method: 'POST',
+      body: {'code': code},
+      parse: (json) => MessageResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Autenticado (Bearer).
+  Future<MessageResponse> resendEmailVerification() {
+    return _request(
+      '/iam/email-verification/resend',
+      method: 'POST',
+      parse: (json) => MessageResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Autenticado (Bearer). Fonte do estado "e-mail verificado" (`isEmailVerified`).
+  Future<AccountInfo> getAccount() {
+    return _request(
+      '/iam/me',
+      parse: (json) => AccountInfo.fromJson(json as Map<String, dynamic>),
     );
   }
 

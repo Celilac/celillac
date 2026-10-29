@@ -55,3 +55,23 @@ O app é exclusivo para `CELIACO` (`UserRole`, ver `docs/API_CONTRACTS.md` §9).
 
 ### Navegação
 `HomeShell` usa `BottomNavigationBar` com `Icons` do Material; novas abas entram adicionando uma `_HomeTab` à lista.
+
+---
+
+## 5. Conta e conformidade (Etapa 1 — `feat/mobile-account-compliance`)
+
+Sem dependências novas e sem mudanças de backend/JWT. Todas as chamadas passam pelo `ApiClient`; models em `lib/api/models/account_models.dart`.
+
+| Fluxo | Tela | Endpoint | Observações |
+|:------|:-----|:---------|:------------|
+| Esqueci minha senha (público) | `ForgotPasswordScreen` (link no login) | `POST /iam/password-reset/request` | Sempre exibe a mensagem genérica do backend (anti-enumeração); `429` → mensagem de limite |
+| Redefinir senha (público) | `ResetPasswordScreen` | `POST /iam/password-reset/confirm` | E-mail + OTP 6 dígitos + nova senha (regra forte em `core/validation/password_policy.dart`, a mesma do registro); `400` mapeado para "código inválido/expirado" |
+| Verificar e-mail (autenticado) | `VerifyEmailScreen` (card **Conta** no Perfil) | `POST /iam/email-verification/verify` e `/resend` | `400 "E-mail já verificado."` encerra o fluxo como sucesso; `429` → mensagem de limite |
+| Estado "e-mail verificado" | Card **Conta** no Perfil | `GET /iam/me` → `isEmailVerified` | Não está no JWT. Igual ao web, **não há gate obrigatório**: o fluxo é opcional e não bloqueia o uso |
+| Consentimento LGPD Art. 11 | `RegisterScreen` | — | Checkbox obrigatório (texto idêntico ao do web); o botão de cadastro fica desabilitado até marcar |
+| Termos de Uso / Privacidade | `TermsScreen`, `PrivacyScreen` | — | Texto estático copiado do web (v1.0), sem alterações; acessíveis do registro e do Perfil |
+
+Regras: OTP e senhas nunca são logados nem persistidos; mensagens técnicas do backend não são exibidas (`AccountErrorMessages` traduz); erros de rede/502/503 usam `ApiException.serviceUnavailable`.
+
+> O texto dos Termos (§4) afirma que a verificação de e-mail é "obrigatória", mas nem o web nem o backend a impõem como gate. Divergência registrada para revisão jurídica — o app mobile não altera o conteúdo.
+

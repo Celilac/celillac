@@ -359,6 +359,31 @@ Solicita o reenvio de um novo código OTP de verificação para o e-mail do usu�
 
 ---
 
+### `GET /iam/me` 🔒
+
+Retorna os dados da conta do usuário autenticado. Usado pelos clientes (web e mobile) para saber se o e-mail já foi verificado (`isEmailVerified`). 🔒 **Autenticação obrigatória — Bearer Token.**
+
+**Response `200 OK`:**
+```json
+{
+  "id": "uuid",
+  "email": "usuario@exemplo.com",
+  "role": "CELIACO",
+  "fullName": "Nome Completo",
+  "birthDate": "1990-01-01T00:00:00.000Z",
+  "gender": "PREFIRO_NAO_INFORMAR",
+  "avatarUrl": null,
+  "whatsappPhone": "5511999999999",
+  "accountStatus": "ACTIVE",
+  "profileEvaluationStatus": "APPROVED",
+  "isEmailVerified": true
+}
+```
+
+**Erros possíveis:** `401` (token ausente/inválido), `404 "Usuário não encontrado."`.
+
+---
+
 ## 3. Perfil Alimentar
 
 O Perfil Alimentar é o **elo central** da plataforma: conecta o Usuário (IAM) ao Motor de Alérgenos. Sem um perfil ativo, nenhuma verificação de compatibilidade é possível.
