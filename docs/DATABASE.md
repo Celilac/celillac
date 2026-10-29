@@ -1,4 +1,4 @@
-
+﻿
 ---
 | Atributo | Descrição |
 | :--- | :--- |
@@ -33,7 +33,7 @@ Executado via `docker-compose up -d` na raiz do projeto.
 Host:     localhost
 Porta:    5432
 Usuário:  celilac_user
-Senha:    celilac_password
+Senha:    celilac_password (padrão local de desenvolvimento)
 Banco:    celilac_db
 ```
 
@@ -54,7 +54,7 @@ Host:     localhost
 Porta:    5432
 Banco:    celilac_test_db   ← banco separado do dev!
 Usuário:  celilac_user
-Senha:    celilac_password
+Senha:    celilac_password (padrão local de teste)
 ```
 
 O banco de teste é recriado a cada execução do CI (`ci-develop.yml`). Testes unitários **não** usam banco (domínio puro com mocks). Apenas testes de integração usam este banco.

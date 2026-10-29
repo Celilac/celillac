@@ -1,4 +1,4 @@
-# Changelog — CeLiLac
+﻿# Changelog — CeLiLac
 
 Histórico de entregas do projeto. Formato: `Data | Feature | Descrição`.
 
