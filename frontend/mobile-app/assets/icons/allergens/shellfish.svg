@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64"><!-- Ícone provisório (D3): substituir pelo oficial mantendo o nome do arquivo. -->
+<circle cx="32" cy="32" r="29" fill="#FFFFFF" stroke="#334155" stroke-width="3"/>
+<g fill="#334155" stroke="#334155" stroke-width="2" stroke-linecap="round"><path d="M14 36c0-12 8-20 18-20s18 8 18 20c0 8-8 14-18 14S14 44 14 36z" fill="none"/><path d="M24 22l-4 24M32 18v32M40 22l4 24" fill="none"/></g>
+<line x1="10" y1="54" x2="54" y2="10" stroke="#B91C1C" stroke-width="5" stroke-linecap="round"/></svg>
