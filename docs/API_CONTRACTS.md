@@ -527,7 +527,7 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
 **Regra Fundamental (`FRONTEND_STRATEGY.md`):**
 > O frontend/mobile NUNCA calcula compatibilidade localmente. SEMPRE consulta este endpoint.
 
-**Request Body (planejado):**
+**Request Body:**
 ```json
 {
   "userId":    "uuid-do-usuario",
@@ -550,6 +550,8 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
   ]
 }
 ```
+
+**Erros:** `400` (campos ausentes ou perfil/produto inválido), `401`, `403` (`userId` diferente do usuário autenticado, exceto `ADMIN`), `429` (60 checagens/min).
 
 **Valores possíveis de `riskLevel`:**
 
@@ -771,9 +773,14 @@ Busca produtos pelo nome ou marca, com suporte a paginação.
 **Query Parameters:**
 | Parâmetro | Tipo | Padrão | Descrição |
 |:----------|:-----|:-------|:----------|
-| `q` | `string` | `""` | Termo de busca (`ILIKE` no nome ou marca) |
+| `q` (ou `query`) | `string` | `""` | Termo de busca (`ILIKE` no nome, marca ou SKU) |
 | `page` | `integer`| `1` | Página atual |
 | `limit` | `integer`| `20` | Itens por página (máx 100) |
+| `avoidAllergens` | `string` | — | Lista separada por vírgula de `AllergenType` (ex.: `GLUTEN,LACTOSE`). O backend exclui produtos cujo `ingredients`/`cross_contamination`/`may_contain_traces` mencionam os termos do alérgeno (e `has_gluten` para `GLUTEN`) |
+| `onlyCompatible` (ou `compatible`) | `boolean` | `false` | Com usuário autenticado e perfil ativo, acrescenta ao `avoidAllergens` todos os alérgenos do perfil. **Não** equivale a `riskLevel = SAFE` |
+| `partnerId` | `string (UUID)` | — | Restringe aos produtos de um parceiro |
+
+> Rota com `optionalAuth` e rate limit de 60 buscas/min por IP (`429`). Com JWT e perfil carregado, cada item pode trazer `compatibilityReport`; os clientes **não** o usam como veredito — a fonte é `POST /compatibility/check`.
 
 **Response `200 OK`:**
 ```json
@@ -794,6 +801,26 @@ Busca produtos pelo nome ou marca, com suporte a paginação.
   "limit": 20
 }
 ```
+
+> Cada item da lista também traz (opcionais): `partnerId`, `price`, `category`, `imageUrl`, `shortDescription`, `ean`, `mayContainTraces`, `images[]`, `declaredAllergens`, `dietaryFeatures[]`, `nutritionalInfo`, `certifications[]` e `compatibilityReport` — mesmo formato de `GET /catalog/products/:id`.
+
+---
+
+### `GET /catalog/products/:id`
+
+Detalhe de um produto ativo do catálogo. Rota com `optionalAuth`.
+
+**Response `200 OK`:** os campos do item da busca (acima) mais:
+
+| Campo | Tipo | Descrição |
+|:------|:-----|:----------|
+| `images[]` | `{id, url, imageType, caption?, displayOrder, isCover}` | `imageType`: `PRODUCT`, `PACKAGING`, `LABEL`, `INGREDIENTS`, `NUTRITIONAL_INFO`, `CERTIFICATION` |
+| `dietaryFeatures[]` | `string` | `VEGAN`, `VEGETARIAN`, `NO_ADDED_SUGAR`, `SUGAR_FREE`, `ORGANIC`, `KOSHER`, `HALAL` |
+| `nutritionalInfo` | `object?` | `servingSize`, `calories`, `carbohydrates`, `totalSugars`, `addedSugars`, `proteins`, `totalFat`, `saturatedFat`, `dietaryFiber`, `sodium` (g; `calories` em kcal; `sodium` em mg) |
+| `certifications[]` | `object` | `certificationType`, `certifyingEntity`, `certificateCode?`, `validUntil?`, `imageId?`, `verificationStatus` (`DECLARED_BY_PARTNER` \| `VERIFIED_BY_CELILAC` \| `REJECTED`) |
+| `compatibilityReport` | `object?` | Só com JWT e perfil ativo. Os clientes usam `POST /compatibility/check` como veredito |
+
+**Erros:** `404 { "error": "Produto não encontrado." }`.
 
 ---
 
