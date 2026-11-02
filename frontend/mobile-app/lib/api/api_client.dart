@@ -238,10 +238,22 @@ class ApiClient {
 
   // ─── Catalog ────────────────────────────────────────────────────────────
 
-  Future<CatalogResponse> searchProducts(String query, {int page = 1, int limit = 20}) {
-    final q = Uri.encodeQueryComponent(query);
+  /// Filtros espelham os parâmetros do backend (`avoidAllergens`, `onlyCompatible`);
+  /// o app nunca filtra por segurança localmente.
+  Future<CatalogResponse> searchProducts(
+    String query, {
+    int page = 1,
+    int limit = 20,
+    List<AllergenType> avoidAllergens = const [],
+    bool onlyCompatible = false,
+  }) {
+    final params = StringBuffer('q=${Uri.encodeQueryComponent(query)}&page=$page&limit=$limit');
+    if (avoidAllergens.isNotEmpty) {
+      params.write('&avoidAllergens=${Uri.encodeQueryComponent(avoidAllergens.map((a) => a.wireValue).join(','))}');
+    }
+    if (onlyCompatible) params.write('&onlyCompatible=true');
     return _request(
-      '/catalog/products?q=$q&page=$page&limit=$limit',
+      '/catalog/products?$params',
       parse: (json) => CatalogResponse.fromJson(json as Map<String, dynamic>),
     );
   }
@@ -316,12 +328,10 @@ class ApiClient {
     );
   }
 
-  Future<List<ReviewItem>> getProductReviews(String productId) {
+  Future<ProductReviews> getProductReviews(String productId) {
     return _request(
       '/reviews/product/$productId',
-      parse: (json) => (json as List<dynamic>)
-          .map((e) => ReviewItem.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      parse: (json) => ProductReviews.fromJson(json as Map<String, dynamic>),
     );
   }
 
