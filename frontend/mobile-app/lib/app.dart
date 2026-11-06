@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'api/api_client.dart';
 import 'core/auth/session_controller.dart';
+import 'core/links/external_link_launcher.dart';
 import 'core/storage/recent_checks_storage.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
@@ -23,6 +24,7 @@ class App extends StatelessWidget {
       providers: [
         Provider<ApiClient>.value(value: apiClient),
         Provider<RecentChecksStorage>(create: (_) => RecentChecksStorage()),
+        Provider<ExternalLinkLauncher>(create: (_) => ExternalLinkLauncher()),
         ChangeNotifierProvider<SessionController>(
           create: (_) => SessionController(apiClient: apiClient)..restoreSession(),
         ),

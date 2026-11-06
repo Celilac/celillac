@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../partners/partners_screen.dart';
 import '../profile/profile_screen.dart';
 import '../scanner/scanner_screen.dart';
 import '../search/search_screen.dart';
@@ -41,6 +42,12 @@ final _tabs = <_HomeTab>[
     activeIcon: Icons.search,
     label: 'Buscar',
     builder: (_) => const SearchScreen(),
+  ),
+  _HomeTab(
+    icon: Icons.storefront_outlined,
+    activeIcon: Icons.storefront,
+    label: 'Parceiros',
+    builder: (_) => const PartnersScreen(),
   ),
   _HomeTab(
     icon: Icons.person_outline,

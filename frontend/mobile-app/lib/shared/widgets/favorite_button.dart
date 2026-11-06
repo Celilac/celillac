@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../api/api_client.dart';
+import '../../features/partners/partner_error_messages.dart';
 
 class FavoriteButton extends StatefulWidget {
   const FavoriteButton({
@@ -51,7 +52,7 @@ class _FavoriteButtonState extends State<FavoriteButton> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text(PartnerErrorMessages.favorite(e))),
         );
       }
     } finally {
