@@ -1,13 +1,19 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
+import '../core/config/api_config.dart';
 import 'api_exception.dart';
+import 'models/account_models.dart';
 import 'models/auth_models.dart';
 import 'models/compatibility_models.dart';
+import 'models/consumer_models.dart';
+import 'models/enums.dart';
 import 'models/favorite_models.dart';
 import 'models/food_profile_models.dart';
+import 'models/partner_models.dart';
 import 'models/product_models.dart';
 import 'models/report_models.dart';
 import 'models/review_models.dart';
@@ -15,19 +21,13 @@ import 'models/review_models.dart';
 /// Camada única de comunicação HTTP do app mobile (docs/API_CONTRACTS.md §9).
 /// NUNCA chamar a API de outro lugar do app — apenas via este cliente.
 class ApiClient {
-  ApiClient({http.Client? httpClient}) : _httpClient = httpClient ?? http.Client();
+  ApiClient({http.Client? httpClient, String? baseUrl})
+      : _httpClient = httpClient ?? http.Client(),
+        _baseUrl = baseUrl ?? ApiConfig.baseUrl;
 
   final http.Client _httpClient;
+  final String _baseUrl;
   String? _authToken;
-
-  static const int _devPort = 3002;
-
-  static String get _baseUrl {
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:$_devPort';
-    }
-    return 'http://localhost:$_devPort';
-  }
 
   void setAuthToken(String? token) {
     _authToken = token;
@@ -46,22 +46,48 @@ class ApiClient {
 
     final uri = Uri.parse('$_baseUrl$path');
     final http.Response response;
-    switch (method) {
-      case 'POST':
-        response = await _httpClient.post(uri, headers: headers, body: jsonEncode(body ?? {}));
-        break;
-      case 'DELETE':
-        response = await _httpClient.delete(uri, headers: headers);
-        break;
-      case 'GET':
-      default:
-        response = await _httpClient.get(uri, headers: headers);
+    try {
+      switch (method) {
+        case 'POST':
+          response = await _httpClient.post(uri, headers: headers, body: jsonEncode(body ?? {}));
+          break;
+        case 'PUT':
+          response = await _httpClient.put(uri, headers: headers, body: jsonEncode(body ?? {}));
+          break;
+        case 'PATCH':
+          response = await _httpClient.patch(uri, headers: headers, body: jsonEncode(body ?? {}));
+          break;
+        case 'DELETE':
+          response = await _httpClient.delete(uri, headers: headers);
+          break;
+        case 'GET':
+        default:
+          response = await _httpClient.get(uri, headers: headers);
+      }
+    } on SocketException {
+      throw ApiException.serviceUnavailable();
+    } on http.ClientException {
+      throw ApiException.serviceUnavailable();
+    } on TimeoutException {
+      throw ApiException.serviceUnavailable();
     }
 
-    final decoded = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
+    if (response.statusCode == 502 || response.statusCode == 503) {
+      throw ApiException.serviceUnavailable(statusCode: response.statusCode);
+    }
+
+    dynamic decoded;
+    try {
+      decoded = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
+    } on FormatException {
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw ApiException('Erro ${response.statusCode}', statusCode: response.statusCode);
+      }
+      rethrow;
+    }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      final message = (decoded is Map && decoded['error'] != null)
+      final message = (decoded is Map && decoded['error'] is String)
           ? decoded['error'] as String
           : 'Erro ${response.statusCode}';
       throw ApiException(message, statusCode: response.statusCode);
@@ -87,6 +113,54 @@ class ApiClient {
       method: 'POST',
       body: payload.toJson(),
       parse: (json) => LoginResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Público. O backend responde 200 com mensagem genérica mesmo se o e-mail
+  /// não existir (anti-enumeração) — o app deve exibi-la sem distinção.
+  Future<MessageResponse> requestPasswordReset(String email) {
+    return _request(
+      '/iam/password-reset/request',
+      method: 'POST',
+      body: {'email': email},
+      parse: (json) => MessageResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Público. Valida o OTP de 6 dígitos e define a nova senha.
+  Future<MessageResponse> confirmPasswordReset(ConfirmPasswordResetPayload payload) {
+    return _request(
+      '/iam/password-reset/confirm',
+      method: 'POST',
+      body: payload.toJson(),
+      parse: (json) => MessageResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Autenticado (Bearer).
+  Future<MessageResponse> verifyEmail(String code) {
+    return _request(
+      '/iam/email-verification/verify',
+      method: 'POST',
+      body: {'code': code},
+      parse: (json) => MessageResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Autenticado (Bearer).
+  Future<MessageResponse> resendEmailVerification() {
+    return _request(
+      '/iam/email-verification/resend',
+      method: 'POST',
+      parse: (json) => MessageResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Autenticado (Bearer). Fonte do estado "e-mail verificado" (`isEmailVerified`).
+  Future<AccountInfo> getAccount() {
+    return _request(
+      '/iam/me',
+      parse: (json) => AccountInfo.fromJson(json as Map<String, dynamic>),
     );
   }
 
@@ -117,12 +191,70 @@ class ApiClient {
     );
   }
 
+  // ─── Consumer (docs/API_CONTRACTS.md §11) ───────────────────────────────
+
+  Future<ConsumerMe> getConsumerMe() {
+    return _request(
+      '/consumer/me',
+      parse: (json) => ConsumerMe.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// O alvo é sempre o usuário autenticado (nunca enviamos `targetUserId`).
+  Future<ConsumerStatusResult> setConsumerStatus(ConsumerStatusAction action) {
+    return _request(
+      '/consumer/status',
+      method: 'PATCH',
+      body: {'action': action.wireValue},
+      parse: (json) => ConsumerStatusResult.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<ConsumerFoodProfile> addConsumerRestriction({
+    required AllergenType allergen,
+    required SeverityLevel severity,
+    String? type,
+    String? notes,
+  }) {
+    return _request(
+      '/consumer/restrictions',
+      method: 'POST',
+      body: {
+        'allergen': allergen.wireValue,
+        'severity': severity.wireValue,
+        'type': ?type,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      },
+      parse: (json) => ConsumerFoodProfile.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<ConsumerFoodProfile> removeConsumerRestriction(AllergenType allergen) {
+    return _request(
+      '/consumer/restrictions/${allergen.wireValue}',
+      method: 'DELETE',
+      parse: (json) => ConsumerFoodProfile.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
   // ─── Catalog ────────────────────────────────────────────────────────────
 
-  Future<CatalogResponse> searchProducts(String query, {int page = 1, int limit = 20}) {
-    final q = Uri.encodeQueryComponent(query);
+  /// Filtros espelham os parâmetros do backend (`avoidAllergens`, `onlyCompatible`);
+  /// o app nunca filtra por segurança localmente.
+  Future<CatalogResponse> searchProducts(
+    String query, {
+    int page = 1,
+    int limit = 20,
+    List<AllergenType> avoidAllergens = const [],
+    bool onlyCompatible = false,
+  }) {
+    final params = StringBuffer('q=${Uri.encodeQueryComponent(query)}&page=$page&limit=$limit');
+    if (avoidAllergens.isNotEmpty) {
+      params.write('&avoidAllergens=${Uri.encodeQueryComponent(avoidAllergens.map((a) => a.wireValue).join(','))}');
+    }
+    if (onlyCompatible) params.write('&onlyCompatible=true');
     return _request(
-      '/catalog/products?q=$q&page=$page&limit=$limit',
+      '/catalog/products?$params',
       parse: (json) => CatalogResponse.fromJson(json as Map<String, dynamic>),
     );
   }
@@ -131,6 +263,34 @@ class ApiClient {
     return _request(
       '/catalog/products/$id',
       parse: (json) => Product.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Produtos de um parceiro (`partnerId` é parâmetro suportado pela API).
+  Future<CatalogResponse> getPartnerProducts(String partnerId, {int page = 1, int limit = 20}) {
+    return _request(
+      '/catalog/products?partnerId=${Uri.encodeQueryComponent(partnerId)}&page=$page&limit=$limit',
+      parse: (json) => CatalogResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  // ─── Partners (docs/API_CONTRACTS.md §7) ─────────────────────────────────
+
+  /// Público. A API não tem filtros nem paginação; devolve todos os parceiros aprovados e operacionais.
+  Future<List<PublicPartner>> getPublicPartners() {
+    return _request(
+      '/partners',
+      parse: (json) => (json as List<dynamic>)
+          .map((e) => PublicPartner.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  /// Público (auth opcional). Parceiro não público responde 404.
+  Future<PublicPartner> getPartner(String id) {
+    return _request(
+      '/partners/${Uri.encodeComponent(id)}',
+      parse: (json) => PublicPartner.fromJson(json as Map<String, dynamic>),
     );
   }
 
@@ -197,12 +357,10 @@ class ApiClient {
     );
   }
 
-  Future<List<ReviewItem>> getProductReviews(String productId) {
+  Future<ProductReviews> getProductReviews(String productId) {
     return _request(
       '/reviews/product/$productId',
-      parse: (json) => (json as List<dynamic>)
-          .map((e) => ReviewItem.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      parse: (json) => ProductReviews.fromJson(json as Map<String, dynamic>),
     );
   }
 

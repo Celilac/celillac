@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../api/api_client.dart';
+import '../../features/partners/partner_error_messages.dart';
 
 class ReportDialog extends StatefulWidget {
   const ReportDialog({
@@ -70,7 +71,7 @@ class _ReportDialogState extends State<ReportDialog> {
       }
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = PartnerErrorMessages.report(e);
         _loading = false;
       });
     }

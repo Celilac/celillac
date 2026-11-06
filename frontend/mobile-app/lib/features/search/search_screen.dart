@@ -2,12 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/api_client.dart';
-import '../../api/models/compatibility_models.dart';
+import '../../api/models/enums.dart';
 import '../../api/models/product_models.dart';
 import '../../core/auth/session_controller.dart';
+import '../../core/storage/recent_checks_storage.dart';
 import '../../core/theme/app_colors.dart';
-import '../../shared/widgets/alert_banner.dart';
+import '../catalog/catalog_error_messages.dart';
 import '../product/product_details_screen.dart';
+
+/// Alérgenos oferecidos como filtro (mesmos grupos do filtro do web). São
+/// enviados ao backend em `avoidAllergens`; o app nunca filtra por segurança.
+const _avoidFilters = <AllergenType, String>{
+  AllergenType.gluten: 'Evitar glúten',
+  AllergenType.lactose: 'Evitar lactose',
+  AllergenType.soy: 'Evitar soja',
+  AllergenType.nuts: 'Evitar castanhas/amendoim',
+  AllergenType.eggs: 'Evitar ovos',
+};
+
+enum _SearchStatus { idle, loading, error, loaded }
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -16,19 +29,29 @@ class SearchScreen extends StatefulWidget {
   State<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchReport {
-  const _SearchReport(this.product, this.compatibility);
-
-  final Product product;
-  final CompatibilityReport compatibility;
-}
-
 class _SearchScreenState extends State<SearchScreen> {
+  static const _pageSize = 20;
+
   final _queryController = TextEditingController();
+  final _avoid = <AllergenType>{};
+  bool _onlyCompatible = false;
+
+  _SearchStatus _status = _SearchStatus.idle;
+  String? _error;
   List<Product> _products = [];
-  bool _isSearching = false;
-  bool _isChecking = false;
-  _SearchReport? _report;
+  int _total = 0;
+  int _page = 1;
+  bool _loadingMore = false;
+  String? _moreError;
+  int _requestId = 0;
+
+  List<RecentCheck> _recents = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecents();
+  }
 
   @override
   void dispose() {
@@ -36,51 +59,95 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  Future<void> _handleSearch() async {
-    final query = _queryController.text.trim();
-    if (query.isEmpty) return;
-
-    final apiClient = context.read<ApiClient>();
-    setState(() {
-      _isSearching = true;
-      _report = null;
-    });
-    try {
-      final result = await apiClient.searchProducts(query);
-      if (mounted) setState(() => _products = result.data);
-    } catch (_) {
-      if (mounted) _showError('Não foi possível buscar produtos.');
-    } finally {
-      if (mounted) setState(() => _isSearching = false);
-    }
-  }
-
-  Future<void> _handleCheck(Product product) async {
+  Future<void> _loadRecents() async {
     final userId = context.read<SessionController>().user?.id;
-    final apiClient = context.read<ApiClient>();
     if (userId == null) return;
+    final items = await context.read<RecentChecksStorage>().load(userId);
+    if (mounted) setState(() => _recents = items);
+  }
 
+  bool get _hasFilters => _avoid.isNotEmpty || _onlyCompatible;
+
+  Future<void> _search() async {
+    final query = _queryController.text.trim();
+    if (query.isEmpty && !_hasFilters) {
+      setState(() {
+        _status = _SearchStatus.idle;
+        _products = [];
+      });
+      return;
+    }
+    final api = context.read<ApiClient>();
+    final id = ++_requestId;
     setState(() {
-      _isChecking = true;
-      _report = null;
+      _status = _SearchStatus.loading;
+      _error = null;
+      _moreError = null;
     });
     try {
-      final compatibility = await apiClient.checkCompatibility(userId, product.id);
-      if (mounted) {
-        setState(() {
-          _report = _SearchReport(product, compatibility);
-          _products = [];
-        });
-      }
-    } catch (_) {
-      if (mounted) _showError('Falha ao verificar compatibilidade.');
-    } finally {
-      if (mounted) setState(() => _isChecking = false);
+      final result = await api.searchProducts(
+        query,
+        limit: _pageSize,
+        avoidAllergens: _avoid.toList(),
+        onlyCompatible: _onlyCompatible,
+      );
+      if (!mounted || id != _requestId) return;
+      setState(() {
+        _products = result.data;
+        _total = result.total;
+        _page = 1;
+        _status = _SearchStatus.loaded;
+      });
+    } catch (err) {
+      if (!mounted || id != _requestId) return;
+      setState(() {
+        _error = CatalogErrorMessages.search(err);
+        _status = _SearchStatus.error;
+      });
     }
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  Future<void> _loadMore() async {
+    final api = context.read<ApiClient>();
+    final id = _requestId;
+    setState(() {
+      _loadingMore = true;
+      _moreError = null;
+    });
+    try {
+      final result = await api.searchProducts(
+        _queryController.text.trim(),
+        page: _page + 1,
+        limit: _pageSize,
+        avoidAllergens: _avoid.toList(),
+        onlyCompatible: _onlyCompatible,
+      );
+      if (!mounted || id != _requestId) return;
+      setState(() {
+        _products = [..._products, ...result.data];
+        _total = result.total;
+        _page += 1;
+      });
+    } catch (err) {
+      if (mounted && id == _requestId) setState(() => _moreError = CatalogErrorMessages.search(err));
+    } finally {
+      if (mounted) setState(() => _loadingMore = false);
+    }
+  }
+
+  Future<void> _openProduct(String productId, String name) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ProductDetailsScreen(productId: productId, productName: name)),
+    );
+    if (mounted) _loadRecents();
+  }
+
+  void _toggleAvoid(AllergenType allergen) {
+    setState(() {
+      if (!_avoid.remove(allergen)) _avoid.add(allergen);
+    });
+    _search();
   }
 
   @override
@@ -94,28 +161,27 @@ class _SearchScreenState extends State<SearchScreen> {
             children: [
               const Text(
                 'Buscar Produto',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
+                      key: const Key('search-field'),
                       controller: _queryController,
                       decoration: const InputDecoration(hintText: 'Nome ou marca do produto...'),
                       style: const TextStyle(color: AppColors.textPrimary),
                       textInputAction: TextInputAction.search,
-                      onSubmitted: (_) => _handleSearch(),
+                      onSubmitted: (_) => _search(),
                     ),
                   ),
                   const SizedBox(width: 10),
                   IconButton(
-                    onPressed: _isSearching ? null : _handleSearch,
-                    icon: const Text('🔍', style: TextStyle(fontSize: 20)),
+                    key: const Key('search-button'),
+                    tooltip: 'Buscar',
+                    onPressed: _status == _SearchStatus.loading ? null : _search,
+                    icon: const Icon(Icons.search, color: AppColors.textPrimary),
                     style: IconButton.styleFrom(
                       backgroundColor: AppColors.surface,
                       side: const BorderSide(color: AppColors.border),
@@ -124,138 +190,196 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                 ],
               ),
-              if (_isSearching || _isChecking)
-                const Padding(
-                  padding: EdgeInsets.only(top: 20),
-                  child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
-                ),
-              if (_report != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  _report!.product.name,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  _report!.product.brand,
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-                ),
-                AlertBanner(
-                  status: _report!.compatibility.riskLevel,
-                  message: _report!.compatibility.isCompatible
-                      ? 'Compatível com seu perfil'
-                      : 'Incompatível com seu perfil',
-                  reasoning: _report!.compatibility.reasoning,
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ProductDetailsScreen(
-                                product: _report!.product,
-                                initialCompatibility: _report!.compatibility,
-                              ),
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.info_outline, size: 18),
-                        label: const Text('Ver Detalhes'),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    TextButton(
-                      onPressed: () => setState(() => _report = null),
-                      child: const Text(
-                        '← Voltar',
-                        style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              if (_report == null)
-                Expanded(
-                  child: _products.isEmpty
-                      ? (!_isSearching && _queryController.text.trim().isNotEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.only(top: 40),
-                              child: Text(
-                                'Nenhum produto encontrado para "${_queryController.text.trim()}"',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: Color(0xFF475569), fontSize: 14),
-                              ),
-                            )
-                          : const SizedBox.shrink())
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(top: 16),
-                          itemCount: _products.length,
-                          itemBuilder: (context, index) {
-                            final product = _products[index];
-                            return InkWell(
-                              onTap: () => _handleCheck(product),
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            product.name,
-                                            style: const TextStyle(
-                                              color: AppColors.textPrimary,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          Text(
-                                            product.brand,
-                                            style: const TextStyle(
-                                              color: AppColors.textMuted,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                          const Text(
-                                            'Toque para verificar compatibilidade com seu perfil',
-                                            style: TextStyle(
-                                              color: AppColors.textMutedLight,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const Text(
-                                      'Verificar →',
-                                      style: TextStyle(
-                                        color: AppColors.primary,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                ),
+              const SizedBox(height: 12),
+              _filters(),
+              const SizedBox(height: 8),
+              Expanded(child: _content()),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _filters() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final entry in _avoidFilters.entries)
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilterChip(
+                    key: Key('filter-${entry.key.wireValue}'),
+                    label: Text(entry.value),
+                    selected: _avoid.contains(entry.key),
+                    onSelected: (_) => _toggleAvoid(entry.key),
+                  ),
+                ),
+              FilterChip(
+                key: const Key('filter-only-compatible'),
+                label: const Text('Somente compatíveis com meu perfil'),
+                selected: _onlyCompatible,
+                onSelected: (value) {
+                  setState(() => _onlyCompatible = value);
+                  _search();
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          'Os filtros apenas reduzem a lista e não garantem segurança. '
+          'Confirme sempre o veredito na tela do produto.',
+          key: Key('filters-disclaimer'),
+          style: TextStyle(color: AppColors.textMuted, fontSize: 11),
+        ),
+      ],
+    );
+  }
+
+  Widget _content() {
+    switch (_status) {
+      case _SearchStatus.loading:
+        return const Center(
+          key: Key('search-loading'),
+          child: CircularProgressIndicator(color: AppColors.primary),
+        );
+      case _SearchStatus.error:
+        return Center(
+          key: const Key('search-error'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _error ?? '',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(onPressed: _search, child: const Text('Tentar novamente')),
+            ],
+          ),
+        );
+      case _SearchStatus.loaded:
+        return _products.isEmpty ? _empty() : _results();
+      case _SearchStatus.idle:
+        return _idle();
+    }
+  }
+
+  Widget _empty() {
+    final query = _queryController.text.trim();
+    return Padding(
+      key: const Key('search-empty'),
+      padding: const EdgeInsets.only(top: 40),
+      child: Text(
+        query.isEmpty
+            ? 'Nenhum produto encontrado com esses filtros.'
+            : 'Nenhum produto encontrado para "$query"',
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: AppColors.textMutedLight, fontSize: 14),
+      ),
+    );
+  }
+
+  Widget _results() {
+    final canLoadMore = _products.length < _total;
+    return ListView(
+      padding: const EdgeInsets.only(top: 8),
+      children: [
+        for (final p in _products)
+          _ProductTile(
+            key: Key('product-result-${p.id}'),
+            title: p.name,
+            subtitle: p.brand,
+            onTap: () => _openProduct(p.id, p.name),
+          ),
+        if (_moreError != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(_moreError!, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textMutedLight)),
+          ),
+        if (_loadingMore)
+          const Padding(
+            padding: EdgeInsets.all(12),
+            child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          )
+        else if (canLoadMore)
+          TextButton(key: const Key('load-more'), onPressed: _loadMore, child: const Text('Carregar mais')),
+      ],
+    );
+  }
+
+  Widget _idle() {
+    return ListView(
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'Busque por nome ou marca, ou use os filtros para explorar o catálogo.',
+            key: Key('search-hint'),
+            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+          ),
+        ),
+        if (_recents.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          const Text(
+            'Verificados recentemente',
+            key: Key('recent-checks'),
+            style: TextStyle(color: AppColors.textMutedLight, fontSize: 13, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          for (final r in _recents)
+            _ProductTile(
+              key: Key('recent-${r.productId}'),
+              title: r.productName,
+              subtitle: r.brand,
+              onTap: () => _openProduct(r.productId, r.productName),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _ProductTile extends StatelessWidget {
+  const _ProductTile({super.key, required this.title, required this.subtitle, required this.onTap});
+
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  if (subtitle.isNotEmpty)
+                    Text(subtitle, style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.textMuted),
+          ],
         ),
       ),
     );

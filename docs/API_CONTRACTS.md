@@ -359,6 +359,31 @@ Solicita o reenvio de um novo código OTP de verificação para o e-mail do usu�
 
 ---
 
+### `GET /iam/me` 🔒
+
+Retorna os dados da conta do usuário autenticado. Usado pelos clientes (web e mobile) para saber se o e-mail já foi verificado (`isEmailVerified`). 🔒 **Autenticação obrigatória — Bearer Token.**
+
+**Response `200 OK`:**
+```json
+{
+  "id": "uuid",
+  "email": "usuario@exemplo.com",
+  "role": "CELIACO",
+  "fullName": "Nome Completo",
+  "birthDate": "1990-01-01T00:00:00.000Z",
+  "gender": "PREFIRO_NAO_INFORMAR",
+  "avatarUrl": null,
+  "whatsappPhone": "5511999999999",
+  "accountStatus": "ACTIVE",
+  "profileEvaluationStatus": "APPROVED",
+  "isEmailVerified": true
+}
+```
+
+**Erros possíveis:** `401` (token ausente/inválido), `404 "Usuário não encontrado."`.
+
+---
+
 ## 3. Perfil Alimentar
 
 O Perfil Alimentar é o **elo central** da plataforma: conecta o Usuário (IAM) ao Motor de Alérgenos. Sem um perfil ativo, nenhuma verificação de compatibilidade é possível.
@@ -502,7 +527,7 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
 **Regra Fundamental (`FRONTEND_STRATEGY.md`):**
 > O frontend/mobile NUNCA calcula compatibilidade localmente. SEMPRE consulta este endpoint.
 
-**Request Body (planejado):**
+**Request Body:**
 ```json
 {
   "userId":    "uuid-do-usuario",
@@ -525,6 +550,8 @@ curl http://localhost:3000/food-profile/aed052fa-b410-440b-a1f4-2a73268bae49
   ]
 }
 ```
+
+**Erros:** `400` (campos ausentes ou perfil/produto inválido), `401`, `403` (`userId` diferente do usuário autenticado, exceto `ADMIN`), `429` (60 checagens/min).
 
 **Valores possíveis de `riskLevel`:**
 
@@ -746,9 +773,14 @@ Busca produtos pelo nome ou marca, com suporte a paginação.
 **Query Parameters:**
 | Parâmetro | Tipo | Padrão | Descrição |
 |:----------|:-----|:-------|:----------|
-| `q` | `string` | `""` | Termo de busca (`ILIKE` no nome ou marca) |
+| `q` (ou `query`) | `string` | `""` | Termo de busca (`ILIKE` no nome, marca ou SKU) |
 | `page` | `integer`| `1` | Página atual |
 | `limit` | `integer`| `20` | Itens por página (máx 100) |
+| `avoidAllergens` | `string` | — | Lista separada por vírgula de `AllergenType` (ex.: `GLUTEN,LACTOSE`). O backend exclui produtos cujo `ingredients`/`cross_contamination`/`may_contain_traces` mencionam os termos do alérgeno (e `has_gluten` para `GLUTEN`) |
+| `onlyCompatible` (ou `compatible`) | `boolean` | `false` | Com usuário autenticado e perfil ativo, acrescenta ao `avoidAllergens` todos os alérgenos do perfil. **Não** equivale a `riskLevel = SAFE` |
+| `partnerId` | `string (UUID)` | — | Restringe aos produtos de um parceiro |
+
+> Rota com `optionalAuth` e rate limit de 60 buscas/min por IP (`429`). Com JWT e perfil carregado, cada item pode trazer `compatibilityReport`; os clientes **não** o usam como veredito — a fonte é `POST /compatibility/check`.
 
 **Response `200 OK`:**
 ```json
@@ -769,6 +801,26 @@ Busca produtos pelo nome ou marca, com suporte a paginação.
   "limit": 20
 }
 ```
+
+> Cada item da lista também traz (opcionais): `partnerId`, `price`, `category`, `imageUrl`, `shortDescription`, `ean`, `mayContainTraces`, `images[]`, `declaredAllergens`, `dietaryFeatures[]`, `nutritionalInfo`, `certifications[]` e `compatibilityReport` — mesmo formato de `GET /catalog/products/:id`.
+
+---
+
+### `GET /catalog/products/:id`
+
+Detalhe de um produto ativo do catálogo. Rota com `optionalAuth`.
+
+**Response `200 OK`:** os campos do item da busca (acima) mais:
+
+| Campo | Tipo | Descrição |
+|:------|:-----|:----------|
+| `images[]` | `{id, url, imageType, caption?, displayOrder, isCover}` | `imageType`: `PRODUCT`, `PACKAGING`, `LABEL`, `INGREDIENTS`, `NUTRITIONAL_INFO`, `CERTIFICATION` |
+| `dietaryFeatures[]` | `string` | `VEGAN`, `VEGETARIAN`, `NO_ADDED_SUGAR`, `SUGAR_FREE`, `ORGANIC`, `KOSHER`, `HALAL` |
+| `nutritionalInfo` | `object?` | `servingSize`, `calories`, `carbohydrates`, `totalSugars`, `addedSugars`, `proteins`, `totalFat`, `saturatedFat`, `dietaryFiber`, `sodium` (g; `calories` em kcal; `sodium` em mg) |
+| `certifications[]` | `object` | `certificationType`, `certifyingEntity`, `certificateCode?`, `validUntil?`, `imageId?`, `verificationStatus` (`DECLARED_BY_PARTNER` \| `VERIFIED_BY_CELILAC` \| `REJECTED`) |
+| `compatibilityReport` | `object?` | Só com JWT e perfil ativo. Os clientes usam `POST /compatibility/check` como veredito |
+
+**Erros:** `404 { "error": "Produto não encontrado." }`.
 
 ---
 
@@ -902,6 +954,30 @@ Recupera todas as avaliações de um produto específico e sua média.
   ]
 }
 ```
+
+---
+
+### `GET /reviews/partner/:partnerId`
+
+Lista as avaliações de um parceiro comercial. **Público — sem autenticação.** Diferente do endpoint de produto, a resposta é uma lista simples (sem `totalReviews`/`averageRating`).
+
+**Response `200 OK`:**
+```json
+[
+  {
+    "id": "uuid-da-review",
+    "userId": "uuid-do-usuario",
+    "partnerId": "uuid-do-parceiro",
+    "rating": 5,
+    "comment": "Atendimento ótimo",
+    "createdAt": "2026-07-04T22:00:00Z"
+  }
+]
+```
+
+| Status | Quando |
+|:------:|:-------|
+| `400` | `partnerId` vazio |
 
 ---
 
@@ -1057,20 +1133,40 @@ Altera a disponibilidade operacional (`ACTIVE`, `INACTIVE`, `TEMPORARILY_CLOSED`
 ### `GET /partners`
 Lista pública de parceiros aprovados (`APPROVED`) e operacionais (`ACTIVE` ou `TEMPORARILY_CLOSED`).
 
+Rota pública, **sem filtros nem paginação** (devolve todos os parceiros elegíveis). Cada item tem o mesmo formato de `GET /partners/:id` (visão pública).
+
 **Response `200 OK`:**
 ```json
 [
   {
     "id": "uuid-do-parceiro",
     "name": "Cantina Vegana Sem Glúten",
+    "legalNature": "PJ",
     "description": "Pratos saudáveis livres de contaminação cruzada.",
+    "address": "Av. Paulista, 1000",
+    "phone": "11999998888",
     "type": "RESTAURANT",
     "operationalStatus": "ACTIVE",
     "city": "São Paulo",
-    "state": "SP"
+    "state": "SP",
+    "deliveryRegion": "Grande SP",
+    "logoUrl": "https://storage.celilac.com.br/logos/cantina.png"
   }
 ]
 ```
+
+> ⚠️ **Campos além dos acima:** a resposta real também inclui `userId`, `cnpj`, `documentNumber`, `documentType`, `companyName`, `responsibleName`, `approvalStatus`, `rejectionReason` e `suspensionReason`. Eles **não são contrato público**: os clientes (web e mobile) não devem exibi-los nem depender deles. O mobile não os modela.
+
+---
+
+### `GET /partners/:id`
+Detalhe de um parceiro. **Autenticação opcional** (`optionalAuth`): visitante ou consumidor só enxerga parceiros publicamente aptos (`APPROVED` + `ACTIVE`/`TEMPORARILY_CLOSED`); dono e admin veem o cadastro completo em qualquer estado.
+
+**Response `200 OK`:** objeto com os campos do item de `GET /partners` (na visão pública, `documentUrl`, `rejectionReason` e `suspensionReason` vêm omitidos).
+
+| Status | Quando |
+|:------:|:-------|
+| `404` | Parceiro inexistente **ou** não público para o solicitante |
 
 ---
 
@@ -1280,28 +1376,26 @@ Authorization: Bearer <token>
   "consumer": {
     "id": "consumer-uuid-123",
     "userId": "user-uuid-456",
-    "generalPreferences": {
-      "theme": "dark"
-    },
-    "profileEvaluationStatus": "PENDING_EVALUATION",
-    "hasIncompleteProfileWarning": false
+    "generalPreferences": { "theme": "dark" },
+    "isFoodProfileComplete": true,
+    "isFoodProfileCritical": true,
+    "status": "ATIVO",
+    "createdAt": "2026-08-01T10:00:00.000Z",
+    "updatedAt": "2026-08-01T10:00:00.000Z"
   },
   "foodProfile": {
     "id": "profile-uuid-789",
     "userId": "user-uuid-456",
+    "acceptsCrossContamination": false,
     "restrictions": [
-      {
-        "allergen": "GLUTEN",
-        "severity": "FATAL",
-        "type": "ALLERGY",
-        "notes": "Celíaco grave"
-      }
-    ],
-    "acceptsCrossContamination": false
+      { "id": "r-uuid", "allergen": "GLUTEN", "severity": "FATAL", "type": "ALLERGY", "notes": "Celíaco grave" }
+    ]
   },
   "hasIncompleteProfileWarning": false
 }
 ```
+
+> `foodProfile` é `null` quando o usuário ainda não tem perfil alimentar. `status` pode ser `CONTA_CRIADA`, `ATIVO` ou `INATIVO`.
 
 ---
 
@@ -1373,11 +1467,14 @@ Adiciona uma nova restrição alimentar diretamente ao perfil do consumidor loga
 }
 ```
 
-**Response Body (200 OK / 201 Created):**
+**Response Body (200 OK):** perfil alimentar atualizado
 ```json
 {
-  "success": true,
-  "message": "Restrição adicionada com sucesso."
+  "userId": "user-uuid-456",
+  "acceptsCrossContamination": false,
+  "restrictions": [
+    { "id": "r-uuid", "allergen": "LACTOSE", "severity": "MEDIUM", "type": "INTOLERANCE", "notes": "Intolerância leve" }
+  ]
 }
 ```
 
@@ -1387,13 +1484,7 @@ Adiciona uma nova restrição alimentar diretamente ao perfil do consumidor loga
 
 Remove uma restrição alimentar existente por tipo de alérgeno.
 
-**Response Body (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Restrição removida com sucesso."
-}
-```
+**Response Body (200 OK):** perfil alimentar atualizado, no mesmo formato de `POST /consumer/restrictions`.
 
 ---
 
