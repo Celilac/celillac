@@ -112,3 +112,31 @@ Regras: erros via `CatalogErrorMessages` (mensagens amigáveis; 502/503/rede →
 - O web filtra no cliente por heurística de texto (`productFilters.ts`) e usa `compatibilityReport` embutido para "somente SAFE". O mobile usa os parâmetros do backend, cuja semântica é diferente (`onlyCompatible` = excluir alérgenos do perfil, não "SAFE"). Ordenação, faixa de preço, categoria e "vegano" não têm parâmetro na API e ficaram de fora.
 - O web guarda `riskLevel` em "verificados recentemente"; o mobile não guarda o veredito (pode ficar desatualizado).
 - O scanner (`ScannerScreen`) ainda fabrica relatórios locais para "produto desconhecido" e falha de comunicação; fora do escopo desta etapa.
+
+---
+
+## 8. Parceiros públicos (Etapa 4 — `feat/mobile-public-partners`)
+
+Dependência nova (autorizada): `url_launcher` (ligar e abrir endereço no mapa). Sem mudanças de backend/JWT. Chamadas só no `ApiClient`; model em `lib/api/models/partner_models.dart`.
+
+| Fluxo | Onde | Endpoint | Observações |
+|:------|:-----|:---------|:------------|
+| Lista | `PartnersScreen` (aba **Parceiros**) | `GET /partners` | A API **não tem filtros nem paginação**. A busca por texto (nome, cidade, descrição) é só de exibição, como no web; nenhum filtro de segurança. Estados: carregando, erro (com "Tentar novamente"), vazio, sem resultado; *pull to refresh* |
+| Detalhe | `PartnerDetailsScreen` | `GET /partners/:id` | Badge `PJ • Empresa` / `PF • Produtor`, tipo, cidade/UF, endereço, telefone, atendimento. `TEMPORARILY_CLOSED` mostra aviso e mantém os produtos visíveis (igual ao web). Parceiro não público = 404 → mensagem amigável |
+| Produtos | `PartnerDetailsScreen` | `GET /catalog/products?partnerId&page&limit` | "Carregar mais" por página. Tocar abre o `ProductDetailsScreen` existente; **a lista não mostra veredito** — ele só existe lá, via `POST /compatibility/check` → `AlertBanner` |
+| Avaliações | `PartnerDetailsScreen` | `GET /reviews/partner/:id` | Resposta é lista simples; a média exibida é só aritmética de exibição |
+| Favoritar | `FavoriteButton` | `GET/POST /favorites`, `DELETE /favorites/:id` | Estado inicial via `GET /favorites` (falha ali não atrapalha a tela). `403` (e-mail não verificado) → orienta a verificar o e-mail |
+| Denunciar | `ReportDialog` | `POST /admin/reports` (`partnerId`) | Motivos do enum do backend |
+| Ligar / mapa | `ExternalLinkLauncher` | — | `tel:` com número normalizado; endereço abre busca `https://www.google.com/maps/search/` (decisão D4: só abrir endereço, sem GPS). Só esquemas `http/https/tel/mailto/geo`. Usa `launchUrl` direto (sem `canLaunchUrl`), então **não há mudança** em AndroidManifest `<queries>` nem `LSApplicationQueriesSchemes`. Falha ao abrir → mensagem amigável; copiar endereço/telefone está sempre disponível |
+
+Regras: erros via `PartnerErrorMessages` (502/503/rede → `ApiException.serviceUnavailable`; nunca texto técnico do backend). `FavoriteButton` e `ReportDialog` (ainda sem outro uso no app) deixaram de exibir `e.toString()`.
+
+### Dados que o app não exibe
+`GET /partners` devolve, além do público, `userId`, `cnpj`, `documentNumber`, `documentType`, `companyName`, `responsibleName` e `approvalStatus`. O `PublicPartner` **não lê** esses campos. Exposição pública de CNPJ/CPF é questão de backend (fora do escopo mobile) — ver relatório da etapa.
+
+### Diferenças conhecidas em relação ao web (não alteradas aqui)
+- O web abre o telefone no WhatsApp (`wa.me`); o mobile usa discagem (`tel:`). O parceiro não tem campo de site, então não há link de site.
+- O web exibe mapa embutido; o mobile só abre o app de mapas (D4).
+- Avaliar parceiro (`POST /reviews` com `partnerId`) existe na API mas não faz parte desta etapa.
+- `ProductDetailsScreen` envia texto livre como `reason` na denúncia de produto, mas o backend exige enum (`MISSING_ALLERGEN`, `OTHER`...). Provável 400 pré-existente; fora do escopo.
+

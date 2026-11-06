@@ -957,6 +957,30 @@ Recupera todas as avaliações de um produto específico e sua média.
 
 ---
 
+### `GET /reviews/partner/:partnerId`
+
+Lista as avaliações de um parceiro comercial. **Público — sem autenticação.** Diferente do endpoint de produto, a resposta é uma lista simples (sem `totalReviews`/`averageRating`).
+
+**Response `200 OK`:**
+```json
+[
+  {
+    "id": "uuid-da-review",
+    "userId": "uuid-do-usuario",
+    "partnerId": "uuid-do-parceiro",
+    "rating": 5,
+    "comment": "Atendimento ótimo",
+    "createdAt": "2026-07-04T22:00:00Z"
+  }
+]
+```
+
+| Status | Quando |
+|:------:|:-------|
+| `400` | `partnerId` vazio |
+
+---
+
 ## 7. Gestão de Parceiros (Partners)
 
 ### `POST /partners` 🔒
@@ -1109,20 +1133,40 @@ Altera a disponibilidade operacional (`ACTIVE`, `INACTIVE`, `TEMPORARILY_CLOSED`
 ### `GET /partners`
 Lista pública de parceiros aprovados (`APPROVED`) e operacionais (`ACTIVE` ou `TEMPORARILY_CLOSED`).
 
+Rota pública, **sem filtros nem paginação** (devolve todos os parceiros elegíveis). Cada item tem o mesmo formato de `GET /partners/:id` (visão pública).
+
 **Response `200 OK`:**
 ```json
 [
   {
     "id": "uuid-do-parceiro",
     "name": "Cantina Vegana Sem Glúten",
+    "legalNature": "PJ",
     "description": "Pratos saudáveis livres de contaminação cruzada.",
+    "address": "Av. Paulista, 1000",
+    "phone": "11999998888",
     "type": "RESTAURANT",
     "operationalStatus": "ACTIVE",
     "city": "São Paulo",
-    "state": "SP"
+    "state": "SP",
+    "deliveryRegion": "Grande SP",
+    "logoUrl": "https://storage.celilac.com.br/logos/cantina.png"
   }
 ]
 ```
+
+> ⚠️ **Campos além dos acima:** a resposta real também inclui `userId`, `cnpj`, `documentNumber`, `documentType`, `companyName`, `responsibleName`, `approvalStatus`, `rejectionReason` e `suspensionReason`. Eles **não são contrato público**: os clientes (web e mobile) não devem exibi-los nem depender deles. O mobile não os modela.
+
+---
+
+### `GET /partners/:id`
+Detalhe de um parceiro. **Autenticação opcional** (`optionalAuth`): visitante ou consumidor só enxerga parceiros publicamente aptos (`APPROVED` + `ACTIVE`/`TEMPORARILY_CLOSED`); dono e admin veem o cadastro completo em qualquer estado.
+
+**Response `200 OK`:** objeto com os campos do item de `GET /partners` (na visão pública, `documentUrl`, `rejectionReason` e `suspensionReason` vêm omitidos).
+
+| Status | Quando |
+|:------:|:-------|
+| `404` | Parceiro inexistente **ou** não público para o solicitante |
 
 ---
 
