@@ -27,3 +27,27 @@ class ReviewItem {
   final String? comment;
   final String createdAt;
 }
+
+/// Resposta de GET /reviews/product/:productId (docs/API_CONTRACTS.md §6).
+class ProductReviews {
+  const ProductReviews({
+    required this.totalReviews,
+    required this.averageRating,
+    required this.reviews,
+  });
+
+  factory ProductReviews.fromJson(Map<String, dynamic> json) {
+    final productId = json['productId'] as String?;
+    return ProductReviews(
+      totalReviews: (json['totalReviews'] as num?)?.toInt() ?? 0,
+      averageRating: (json['averageRating'] as num?)?.toDouble() ?? 0,
+      reviews: (json['reviews'] as List<dynamic>? ?? [])
+          .map((e) => ReviewItem.fromJson({'productId': productId, ...(e as Map<String, dynamic>)}))
+          .toList(),
+    );
+  }
+
+  final int totalReviews;
+  final double averageRating;
+  final List<ReviewItem> reviews;
+}

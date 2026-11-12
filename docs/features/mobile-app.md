@@ -91,3 +91,24 @@ Dependência nova (autorizada): `flutter_svg` (pictogramas). Sem mudanças de ba
 
 Regras: sem cálculo de risco local; erros via `ConsumerErrorMessages` (mensagens amigáveis; 502/503/rede → `ApiException.serviceUnavailable`). O `ProfileScreen` passa a distinguir *sem perfil* (400 → "Nenhuma restrição cadastrada.") de *falha de carga* (mensagem + "Tentar novamente"), para nunca exibir falha como ausência de restrições.
 
+---
+
+## 7. Descoberta de produtos (Etapa 3 — `feat/mobile-product-discovery`)
+
+Sem dependências novas (imagens via `Image.network`; `cached_network_image` ficou para depois) e sem mudanças de backend/JWT. Chamadas só no `ApiClient`; models em `lib/api/models/product_models.dart` e `review_models.dart`.
+
+| Fluxo | Onde | Endpoint | Observações |
+|:------|:-----|:---------|:------------|
+| Busca + paginação | `SearchScreen` (aba **Buscar**) | `GET /catalog/products?q&page&limit` | "Carregar mais" acrescenta a próxima página; falha ao carregar mais mantém a lista. Estados: carregando, erro (com "Tentar novamente"), vazio |
+| Filtros | `SearchScreen` | `avoidAllergens`, `onlyCompatible` | Mesmos grupos do web (glúten, lactose, soja, castanhas/amendoim, ovos). **Só parâmetros da API** — nenhum filtro de segurança local. A tela avisa que filtros não garantem segurança |
+| Verificados recentemente | `SearchScreen` (estado inicial) | — | `RecentChecksStorage` (Keychain/Keystore, por usuário, até 8, sem duplicatas). Guarda **somente** id/nome/marca/data, **nunca o veredito**. Armazenamento indisponível = sem histórico, sem erro |
+| Detalhe | `ProductDetailsScreen` | `GET /catalog/products/:id` | Carrossel (capa → `displayOrder`; rótulo, ingredientes, tabela, laudo), nutricional, certificações (`REJECTED` ocultas), características dietéticas. Cada bloco carrega/falha de forma independente |
+| Veredito | `VerdictSection` → `AlertBanner` | `POST /compatibility/check` | Mostra `riskLevel`, `reasoning` e `conflicts` exatamente como vêm. O `compatibilityReport` embutido nos GETs de catálogo é ignorado. Falha = "Compatibilidade não verificada" + "Tentar novamente" |
+| Avaliações | `ProductDetailsScreen` | `GET /reviews/product/:id` | Média, total e lista. Corrigido o parse (a resposta é um objeto, não lista) |
+
+Regras: erros via `CatalogErrorMessages` (mensagens amigáveis; 502/503/rede → `ApiException.serviceUnavailable`; nunca texto técnico do backend).
+
+### Diferenças conhecidas em relação ao web (não alteradas aqui)
+- O web filtra no cliente por heurística de texto (`productFilters.ts`) e usa `compatibilityReport` embutido para "somente SAFE". O mobile usa os parâmetros do backend, cuja semântica é diferente (`onlyCompatible` = excluir alérgenos do perfil, não "SAFE"). Ordenação, faixa de preço, categoria e "vegano" não têm parâmetro na API e ficaram de fora.
+- O web guarda `riskLevel` em "verificados recentemente"; o mobile não guarda o veredito (pode ficar desatualizado).
+- O scanner (`ScannerScreen`) ainda fabrica relatórios locais para "produto desconhecido" e falha de comunicação; fora do escopo desta etapa.

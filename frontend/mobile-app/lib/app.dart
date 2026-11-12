@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'api/api_client.dart';
 import 'core/auth/session_controller.dart';
+import 'core/storage/recent_checks_storage.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/login_screen.dart';
@@ -21,6 +22,7 @@ class App extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<ApiClient>.value(value: apiClient),
+        Provider<RecentChecksStorage>(create: (_) => RecentChecksStorage()),
         ChangeNotifierProvider<SessionController>(
           create: (_) => SessionController(apiClient: apiClient)..restoreSession(),
         ),
