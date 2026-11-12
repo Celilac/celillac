@@ -231,70 +231,64 @@ describe('ZohoEmailService (Security & Sanitization)', () => {
     jest.spyOn(console, 'log').mockImplementation(() => {});
     const errSpyLocal = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    // Cenário 1: Fluxo completo SMTP
-    let dataHandler: ((data: Buffer) => void) | undefined;
-    const mockSocket = {
-      write: jest.fn((cmd: string) => {
-        if (cmd.startsWith('EHLO')) {
-          setTimeout(() => dataHandler?.(Buffer.from('250-smtp.zoho.com\r\n250 AUTH LOGIN\r\n')), 1);
-        } else if (cmd.startsWith('AUTH LOGIN')) {
-          setTimeout(() => dataHandler?.(Buffer.from('334 VXNlcm5hbWU6\r\n')), 1);
-        } else if (cmd.startsWith('MAIL FROM')) {
-          setTimeout(() => dataHandler?.(Buffer.from('250 Sender OK\r\n')), 1);
-        } else if (cmd.startsWith('RCPT TO')) {
-          setTimeout(() => dataHandler?.(Buffer.from('250 Recipient OK\r\n')), 1);
-        } else if (cmd.startsWith('DATA')) {
-          setTimeout(() => dataHandler?.(Buffer.from('354 Enter message\r\n')), 1);
-        } else if (cmd.includes('Subject:')) {
-          setTimeout(() => dataHandler?.(Buffer.from('250 Message accepted\r\n')), 1);
-        }
-      }),
-      on: jest.fn((event: string, handler: any) => {
-        if (event === 'data') dataHandler = handler;
-      }),
-      end: jest.fn(),
+    // Servidor SMTP falso reativo: cada resposta é disparada pelo write correspondente
+    // (sem timers com tempos fixos), tornando o teste determinístico mesmo em runners lentos.
+    const createSmtpSocket = (greeting: string, replies: Array<string | null>) => {
+      let dataHandler: ((data: Buffer) => void) | undefined;
+      let writeIndex = 0;
+      const reply = (payload: string) => setImmediate(() => dataHandler?.(Buffer.from(payload)));
+      const socket = {
+        write: jest.fn(() => {
+          const next = replies[writeIndex++];
+          if (next) reply(next);
+        }),
+        on: jest.fn((event: string, handler: any) => {
+          if (event === 'data') {
+            dataHandler = handler;
+            reply(greeting);
+          }
+        }),
+        end: jest.fn(),
+      };
+      return socket;
     };
+    const connectWith = (socket: any) =>
+      jest.spyOn(tls, 'connect').mockImplementationOnce((_opts: any, onConnect: any) => {
+        setImmediate(onConnect);
+        return socket;
+      });
 
-    jest.spyOn(tls, 'connect').mockImplementationOnce((_opts: any, onConnect: any) => {
-      setTimeout(() => {
-        onConnect();
-        // Passo 0: servidor envia 220
-        dataHandler?.(Buffer.from('220 smtp.zoho.com\r\n'));
-        // Passo 3: simula resposta após auth username
-        setTimeout(() => dataHandler?.(Buffer.from('334 UGFzc3dvcmQ6\r\n')), 5);
-        // Passo 4: simula resposta após auth password
-        setTimeout(() => dataHandler?.(Buffer.from('235 Authentication successful\r\n')), 10);
-      }, 1);
-      return mockSocket as any;
-    });
+    // Cenário 1: Fluxo completo SMTP
+    const mockSocket = createSmtpSocket('220 smtp.zoho.com\r\n', [
+      '250-smtp.zoho.com\r\n250 AUTH LOGIN\r\n', // EHLO
+      '334 VXNlcm5hbWU6\r\n', // AUTH LOGIN
+      '334 UGFzc3dvcmQ6\r\n', // usuário
+      '235 Authentication successful\r\n', // senha
+      '250 Sender OK\r\n', // MAIL FROM
+      '250 Recipient OK\r\n', // RCPT TO
+      '354 Enter message\r\n', // DATA
+      '250 Message accepted\r\n', // corpo
+      null, // QUIT
+    ]);
+    connectWith(mockSocket);
 
     await (service as any).sendEmailViaSmtpTls('cliente@celilac.com.br', 'Assunto', '<p>Corpo</p>');
     expect(mockSocket.end).toHaveBeenCalled();
+    expect(mockSocket.write).toHaveBeenCalledTimes(9);
 
     // Cenário 2: Erro do servidor SMTP (código 5xx)
-    jest.spyOn(tls, 'connect').mockImplementationOnce((_opts: any, onConnect: any) => {
-      setTimeout(() => {
-        onConnect();
-        dataHandler?.(Buffer.from('550 User not found\r\n'));
-      }, 1);
-      return mockSocket as any;
-    });
+    connectWith(createSmtpSocket('550 User not found\r\n', []));
 
     await (service as any).sendEmailViaSmtpTls('cliente@celilac.com.br', 'Assunto', '<p>Corpo</p>');
     expect(errSpyLocal).toHaveBeenCalledWith(expect.stringContaining('Resposta de erro do SMTP'));
 
     // Cenário 3: Erro de conexão socket
-    jest.spyOn(tls, 'connect').mockImplementationOnce((_opts: any, onConnect: any) => {
-      setTimeout(() => {
-        onConnect();
-      }, 1);
-      return {
-        write: jest.fn(),
-        on: jest.fn((event: string, handler: any) => {
-          if (event === 'error') setTimeout(() => handler(new Error('Connection timed out')), 2);
-        }),
-        end: jest.fn(),
-      } as any;
+    connectWith({
+      write: jest.fn(),
+      on: jest.fn((event: string, handler: any) => {
+        if (event === 'error') setImmediate(() => handler(new Error('Connection timed out')));
+      }),
+      end: jest.fn(),
     });
 
     await (service as any).sendEmailViaSmtpTls('cliente@celilac.com.br', 'Assunto', '<p>Corpo</p>');
