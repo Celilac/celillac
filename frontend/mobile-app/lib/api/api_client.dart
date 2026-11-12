@@ -9,6 +9,8 @@ import 'api_exception.dart';
 import 'models/account_models.dart';
 import 'models/auth_models.dart';
 import 'models/compatibility_models.dart';
+import 'models/consumer_models.dart';
+import 'models/enums.dart';
 import 'models/favorite_models.dart';
 import 'models/food_profile_models.dart';
 import 'models/product_models.dart';
@@ -50,6 +52,9 @@ class ApiClient {
           break;
         case 'PUT':
           response = await _httpClient.put(uri, headers: headers, body: jsonEncode(body ?? {}));
+          break;
+        case 'PATCH':
+          response = await _httpClient.patch(uri, headers: headers, body: jsonEncode(body ?? {}));
           break;
         case 'DELETE':
           response = await _httpClient.delete(uri, headers: headers);
@@ -182,6 +187,52 @@ class ApiClient {
       method: 'PUT',
       body: payload.toJson(),
       parse: (json) => FoodProfile.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  // ─── Consumer (docs/API_CONTRACTS.md §11) ───────────────────────────────
+
+  Future<ConsumerMe> getConsumerMe() {
+    return _request(
+      '/consumer/me',
+      parse: (json) => ConsumerMe.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// O alvo é sempre o usuário autenticado (nunca enviamos `targetUserId`).
+  Future<ConsumerStatusResult> setConsumerStatus(ConsumerStatusAction action) {
+    return _request(
+      '/consumer/status',
+      method: 'PATCH',
+      body: {'action': action.wireValue},
+      parse: (json) => ConsumerStatusResult.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<ConsumerFoodProfile> addConsumerRestriction({
+    required AllergenType allergen,
+    required SeverityLevel severity,
+    String? type,
+    String? notes,
+  }) {
+    return _request(
+      '/consumer/restrictions',
+      method: 'POST',
+      body: {
+        'allergen': allergen.wireValue,
+        'severity': severity.wireValue,
+        'type': ?type,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      },
+      parse: (json) => ConsumerFoodProfile.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<ConsumerFoodProfile> removeConsumerRestriction(AllergenType allergen) {
+    return _request(
+      '/consumer/restrictions/${allergen.wireValue}',
+      method: 'DELETE',
+      parse: (json) => ConsumerFoodProfile.fromJson(json as Map<String, dynamic>),
     );
   }
 

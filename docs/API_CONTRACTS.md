@@ -1305,28 +1305,26 @@ Authorization: Bearer <token>
   "consumer": {
     "id": "consumer-uuid-123",
     "userId": "user-uuid-456",
-    "generalPreferences": {
-      "theme": "dark"
-    },
-    "profileEvaluationStatus": "PENDING_EVALUATION",
-    "hasIncompleteProfileWarning": false
+    "generalPreferences": { "theme": "dark" },
+    "isFoodProfileComplete": true,
+    "isFoodProfileCritical": true,
+    "status": "ATIVO",
+    "createdAt": "2026-08-01T10:00:00.000Z",
+    "updatedAt": "2026-08-01T10:00:00.000Z"
   },
   "foodProfile": {
     "id": "profile-uuid-789",
     "userId": "user-uuid-456",
+    "acceptsCrossContamination": false,
     "restrictions": [
-      {
-        "allergen": "GLUTEN",
-        "severity": "FATAL",
-        "type": "ALLERGY",
-        "notes": "Celíaco grave"
-      }
-    ],
-    "acceptsCrossContamination": false
+      { "id": "r-uuid", "allergen": "GLUTEN", "severity": "FATAL", "type": "ALLERGY", "notes": "Celíaco grave" }
+    ]
   },
   "hasIncompleteProfileWarning": false
 }
 ```
+
+> `foodProfile` é `null` quando o usuário ainda não tem perfil alimentar. `status` pode ser `CONTA_CRIADA`, `ATIVO` ou `INATIVO`.
 
 ---
 
@@ -1398,11 +1396,14 @@ Adiciona uma nova restrição alimentar diretamente ao perfil do consumidor loga
 }
 ```
 
-**Response Body (200 OK / 201 Created):**
+**Response Body (200 OK):** perfil alimentar atualizado
 ```json
 {
-  "success": true,
-  "message": "Restrição adicionada com sucesso."
+  "userId": "user-uuid-456",
+  "acceptsCrossContamination": false,
+  "restrictions": [
+    { "id": "r-uuid", "allergen": "LACTOSE", "severity": "MEDIUM", "type": "INTOLERANCE", "notes": "Intolerância leve" }
+  ]
 }
 ```
 
@@ -1412,13 +1413,7 @@ Adiciona uma nova restrição alimentar diretamente ao perfil do consumidor loga
 
 Remove uma restrição alimentar existente por tipo de alérgeno.
 
-**Response Body (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Restrição removida com sucesso."
-}
-```
+**Response Body (200 OK):** perfil alimentar atualizado, no mesmo formato de `POST /consumer/restrictions`.
 
 ---
 

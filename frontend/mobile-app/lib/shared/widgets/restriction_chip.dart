@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../api/models/enums.dart';
 import '../../core/theme/app_colors.dart';
+import 'allergen_pictogram.dart';
 
 const _severityColors = <SeverityLevel, Color>{
   SeverityLevel.lifestyle: AppColors.severityLifestyle,
@@ -33,6 +34,8 @@ class RestrictionChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          AllergenPictogram(allergen: allergen, size: 20),
+          const SizedBox(width: 6),
           Text(
             allergen.label,
             style: const TextStyle(

@@ -75,3 +75,19 @@ Regras: OTP e senhas nunca são logados nem persistidos; mensagens técnicas do 
 
 > O texto dos Termos (§4) afirma que a verificação de e-mail é "obrigatória", mas nem o web nem o backend a impõem como gate. Divergência registrada para revisão jurídica — o app mobile não altera o conteúdo.
 
+---
+
+## 6. Perfil do consumidor (Etapa 2 — `feat/mobile-consumer-profile`)
+
+Dependência nova (autorizada): `flutter_svg` (pictogramas). Sem mudanças de backend/JWT. Chamadas só no `ApiClient`; models em `lib/api/models/consumer_models.dart`.
+
+| Fluxo | Onde | Endpoint | Observações |
+|:------|:-----|:---------|:------------|
+| Status do perfil + aviso | `ConsumerStatusCard` (Perfil) | `GET /consumer/me` | Exibe `hasIncompleteProfileWarning` como vem da API. Status mostrado como no web: `INATIVO` ou `ATIVO` (qualquer outro valor cru, ex. `CONTA_CRIADA`, é tratado como ativo) |
+| Ativar/desativar | `ConsumerStatusCard` | `PATCH /consumer/status` | Body `{action}` (nunca `targetUserId`). Desativar pede confirmação; o estado exibido é o devolvido pela API |
+| Restrições (leitura/edição) | `ProfileScreen`, `EditProfileScreen` | `GET/PUT /food-profile/:userId` | **Decisão:** edição segue em `/food-profile` (igual ao web); evita dois caminhos de escrita |
+| Add/remover restrição | só `ApiClient` (`addConsumerRestriction`, `removeConsumerRestriction`) | `POST /consumer/restrictions`, `DELETE /consumer/restrictions/:allergen` | Implementados e testados, **sem uso na UI** nesta etapa |
+| Pictogramas (D3) | `AllergenPictogram` (usado em `RestrictionChip`) | — | Mapa único `lib/core/assets/allergen_icons.dart` → `assets/icons/allergens/*.svg` (provisórios). Para usar os oficiais AOECS/ACELBRA, substitua os arquivos mantendo o nome ou altere o mapa. Alérgeno sem ícone (`OTHER`) usa fallback genérico |
+
+Regras: sem cálculo de risco local; erros via `ConsumerErrorMessages` (mensagens amigáveis; 502/503/rede → `ApiException.serviceUnavailable`). O `ProfileScreen` passa a distinguir *sem perfil* (400 → "Nenhuma restrição cadastrada.") de *falha de carga* (mensagem + "Tentar novamente"), para nunca exibir falha como ausência de restrições.
+
