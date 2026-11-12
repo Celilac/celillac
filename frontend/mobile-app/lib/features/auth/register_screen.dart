@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../api/models/auth_models.dart';
 import '../../api/models/enums.dart';
+import '../../api/api_exception.dart';
 import '../../core/auth/session_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/brand_logo.dart';
@@ -97,9 +98,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
       // SessionController navega automaticamente após login bem-sucedido.
     } catch (err) {
-      final msg = err.toString().contains('já está em uso')
-          ? 'Este e-mail já possui uma conta. Faça login.'
-          : 'Não foi possível criar a conta. Tente novamente.';
+      final msg = (err is ApiException && err.isServiceUnavailable)
+          ? ApiException.serviceUnavailableMessage
+          : err.toString().contains('já está em uso')
+              ? 'Este e-mail já possui uma conta. Faça login.'
+              : 'Não foi possível criar a conta. Tente novamente.';
       if (mounted) _showMessage('Erro', msg);
     } finally {
       if (mounted) setState(() => _isLoading = false);

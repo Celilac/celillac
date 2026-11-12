@@ -7,6 +7,7 @@ import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/register_screen.dart';
+import 'features/auth/web_panel_required_screen.dart';
 import 'features/home/home_shell.dart';
 import 'features/onboarding/onboarding_profile_screen.dart';
 import 'shared/widgets/loading_overlay.dart';
@@ -52,6 +53,10 @@ class _AuthGateState extends State<AuthGate> {
 
     if (session.isLoading) {
       return const Scaffold(body: LoadingOverlay(message: 'Iniciando CeLiLac...'));
+    }
+
+    if (session.roleBlocked) {
+      return WebPanelRequiredScreen(onBack: session.acknowledgeRoleBlock);
     }
 
     if (!session.isAuthenticated) {
