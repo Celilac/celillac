@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,11 +7,11 @@ import '../../api/models/enums.dart';
 import '../../api/api_exception.dart';
 import '../../core/auth/session_controller.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/validation/password_policy.dart';
+import '../legal/privacy_screen.dart';
+import '../legal/terms_screen.dart';
 import '../../shared/widgets/brand_logo.dart';
 import '../../shared/widgets/loading_overlay.dart';
-
-final _strongPasswordRegex =
-    RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$');
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key, required this.onNavigateToLogin});
@@ -28,6 +29,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isLoading = false;
   bool _showPassword = false;
   bool _showConfirm = false;
+  bool _consentAccepted = false;
+  final _termsTap = TapGestureRecognizer();
+  final _privacyTap = TapGestureRecognizer();
 
   @override
   void initState() {
@@ -35,6 +39,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordController.addListener(() => setState(() {}));
     _confirmController.addListener(() => setState(() {}));
     _emailController.addListener(() => setState(() {}));
+    _termsTap.onTap = () => _openLegal(const TermsScreen());
+    _privacyTap.onTap = () => _openLegal(const PrivacyScreen());
+  }
+
+  void _openLegal(Widget screen) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => screen));
   }
 
   @override
@@ -42,13 +52,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
+    _termsTap.dispose();
+    _privacyTap.dispose();
     super.dispose();
   }
 
   String get _passwordStrengthMessage {
     final password = _passwordController.text;
-    if (password.isNotEmpty && !_strongPasswordRegex.hasMatch(password)) {
-      return 'Use 8+ caracteres com maiúscula, minúscula, número e símbolo.';
+    if (password.isNotEmpty && !isStrongPassword(password)) {
+      return passwordPolicyHint;
     }
     return '';
   }
@@ -63,6 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool get _isSubmitDisabled {
     return _isLoading ||
+        !_consentAccepted ||
         _emailController.text.trim().isEmpty ||
         _passwordController.text.trim().isEmpty ||
         _confirmController.text.trim().isEmpty ||
@@ -83,7 +96,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _showMessage('Atenção', 'As senhas não coincidem.');
       return;
     }
-    if (!_strongPasswordRegex.hasMatch(password)) {
+    if (!isStrongPassword(password)) {
       _showMessage(
         'Atenção',
         'Use uma senha forte com 8+ caracteres, letra maiúscula, minúscula, número e símbolo.',
@@ -94,15 +107,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
     try {
       await context.read<SessionController>().register(
-            RegisterPayload(email: email.toLowerCase(), password: password, role: UserRole.celiaco),
-          );
+        RegisterPayload(
+          email: email.toLowerCase(),
+          password: password,
+          role: UserRole.celiaco,
+        ),
+      );
       // SessionController navega automaticamente após login bem-sucedido.
     } catch (err) {
       final msg = (err is ApiException && err.isServiceUnavailable)
           ? ApiException.serviceUnavailableMessage
           : err.toString().contains('já está em uso')
-              ? 'Este e-mail já possui uma conta. Faça login.'
-              : 'Não foi possível criar a conta. Tente novamente.';
+          ? 'Este e-mail já possui uma conta. Faça login.'
+          : 'Não foi possível criar a conta. Tente novamente.';
       if (mounted) _showMessage('Erro', msg);
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -116,7 +133,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         title: Text(title),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('OK')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
         ],
       ),
     );
@@ -154,7 +174,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     const SizedBox(height: 4),
                     const Text(
                       'Sua jornada segura começa aqui',
-                      style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 28),
@@ -172,7 +195,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         hintText: 'Use uma senha forte',
                         suffixIcon: IconButton(
                           icon: Text(_showPassword ? '🙈' : '👁'),
-                          onPressed: () => setState(() => _showPassword = !_showPassword),
+                          onPressed: () =>
+                              setState(() => _showPassword = !_showPassword),
                         ),
                       ),
                       style: const TextStyle(color: AppColors.textPrimary),
@@ -185,7 +209,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Text(
                           passwordStrengthMessage.isNotEmpty
                               ? passwordStrengthMessage
-                              : 'Use 8+ caracteres com maiúscula, minúscula, número e símbolo.',
+                              : passwordPolicyHint,
                           style: TextStyle(
                             color: passwordStrengthMessage.isNotEmpty
                                 ? const Color(0xFFF87171)
@@ -203,7 +227,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         hintText: 'Confirmar senha',
                         suffixIcon: IconButton(
                           icon: Text(_showConfirm ? '🙈' : '👁'),
-                          onPressed: () => setState(() => _showConfirm = !_showConfirm),
+                          onPressed: () =>
+                              setState(() => _showConfirm = !_showConfirm),
                         ),
                       ),
                       style: const TextStyle(color: AppColors.textPrimary),
@@ -214,7 +239,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           confirmMessage,
-                          style: const TextStyle(color: Color(0xFFF87171), fontSize: 12),
+                          style: const TextStyle(
+                            color: Color(0xFFF87171),
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                     ],
@@ -230,7 +258,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: RichText(
                         textAlign: TextAlign.center,
                         text: const TextSpan(
-                          style: TextStyle(color: AppColors.textMutedLight, fontSize: 13),
+                          style: TextStyle(
+                            color: AppColors.textMutedLight,
+                            fontSize: 13,
+                          ),
                           children: [
                             TextSpan(text: '🏷️ Conta criada como '),
                             TextSpan(
@@ -241,6 +272,62 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Material(
+                      type: MaterialType.transparency,
+                      child: CheckboxListTile(
+                        key: const Key('register-consent'),
+                        value: _consentAccepted,
+                        onChanged: _isLoading
+                            ? null
+                            : (value) => setState(
+                                () => _consentAccepted = value ?? false,
+                              ),
+                        controlAffinity: ListTileControlAffinity.leading,
+                        contentPadding: EdgeInsets.zero,
+                        activeColor: AppColors.primary,
+                        title: Text.rich(
+                          TextSpan(
+                            style: const TextStyle(
+                              color: AppColors.textMutedLight,
+                              fontSize: 12.5,
+                              height: 1.4,
+                            ),
+                            children: [
+                              const TextSpan(text: 'Li e concordo com os '),
+                              TextSpan(
+                                text: 'Termos de Uso',
+                                recognizer: _termsTap,
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                              const TextSpan(text: ' e a '),
+                              TextSpan(
+                                text: 'Política de Privacidade',
+                                recognizer: _privacyTap,
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w600,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                              const TextSpan(text: ', e dou meu '),
+                              const TextSpan(
+                                text: 'consentimento expresso (LGPD Art. 11)',
+                                style: TextStyle(fontWeight: FontWeight.w700),
+                              ),
+                              const TextSpan(
+                                text:
+                                    ' para o tratamento dos meus dados de saúde e restrições alimentares com a finalidade exclusiva de segurança alimentar.',
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -257,7 +344,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onPressed: widget.onNavigateToLogin,
                       child: RichText(
                         text: const TextSpan(
-                          style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+                          style: TextStyle(
+                            color: AppColors.textMuted,
+                            fontSize: 14,
+                          ),
                           children: [
                             TextSpan(text: 'Já tem conta? '),
                             TextSpan(

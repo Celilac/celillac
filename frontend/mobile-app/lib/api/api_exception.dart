@@ -16,6 +16,7 @@ class ApiException implements Exception {
   bool get isBadRequest => statusCode == 400;
   bool get isUnauthorized => statusCode == 401;
   bool get isConflict => statusCode == 409;
+  bool get isTooManyRequests => statusCode == 429;
   bool get isServiceUnavailable => message == serviceUnavailableMessage;
 
   @override
