@@ -13,6 +13,7 @@ import 'models/consumer_models.dart';
 import 'models/enums.dart';
 import 'models/favorite_models.dart';
 import 'models/food_profile_models.dart';
+import 'models/partner_models.dart';
 import 'models/product_models.dart';
 import 'models/report_models.dart';
 import 'models/review_models.dart';
@@ -262,6 +263,34 @@ class ApiClient {
     return _request(
       '/catalog/products/$id',
       parse: (json) => Product.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  /// Produtos de um parceiro (`partnerId` é parâmetro suportado pela API).
+  Future<CatalogResponse> getPartnerProducts(String partnerId, {int page = 1, int limit = 20}) {
+    return _request(
+      '/catalog/products?partnerId=${Uri.encodeQueryComponent(partnerId)}&page=$page&limit=$limit',
+      parse: (json) => CatalogResponse.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  // ─── Partners (docs/API_CONTRACTS.md §7) ─────────────────────────────────
+
+  /// Público. A API não tem filtros nem paginação; devolve todos os parceiros aprovados e operacionais.
+  Future<List<PublicPartner>> getPublicPartners() {
+    return _request(
+      '/partners',
+      parse: (json) => (json as List<dynamic>)
+          .map((e) => PublicPartner.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  /// Público (auth opcional). Parceiro não público responde 404.
+  Future<PublicPartner> getPartner(String id) {
+    return _request(
+      '/partners/${Uri.encodeComponent(id)}',
+      parse: (json) => PublicPartner.fromJson(json as Map<String, dynamic>),
     );
   }
 
