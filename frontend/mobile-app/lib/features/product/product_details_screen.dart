@@ -9,6 +9,7 @@ import '../../core/auth/session_controller.dart';
 import '../../core/storage/recent_checks_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/loading_overlay.dart';
+import '../../shared/widgets/report_dialog.dart';
 import '../catalog/catalog_error_messages.dart';
 import 'widgets/product_image_carousel.dart';
 import 'widgets/product_info_sections.dart';
@@ -223,57 +224,16 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
   }
 
   Future<void> _openReportDialog() async {
-    final reasonController = TextEditingController();
-    bool isFoodSafetyRisk = false;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Denunciar Produto'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: reasonController,
-                decoration: const InputDecoration(hintText: 'Descreva o motivo da denúncia...'),
-                maxLines: 3,
-              ),
-              CheckboxListTile(
-                title: const Text('Risco de Segurança Alimentar'),
-                value: isFoodSafetyRisk,
-                onChanged: (val) => setDialogState(() => isFoodSafetyRisk = val ?? false),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Denunciar')),
-          ],
-        ),
-      ),
+    final sent = await ReportDialog.show(
+      context,
+      productId: widget.productId,
+      targetName: _product?.name ?? widget.productName ?? 'Produto',
+      apiClient: context.read<ApiClient>(),
     );
-
-    if (result == true && reasonController.text.trim().isNotEmpty && mounted) {
-      try {
-        final apiClient = context.read<ApiClient>();
-        await apiClient.createReport(
-          productId: widget.productId,
-          reason: reasonController.text.trim(),
-          isFoodSafetyRisk: isFoodSafetyRisk,
-        );
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Denúncia enviada para análise.')),
-          );
-        }
-      } catch (_) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erro ao enviar denúncia.')),
-          );
-        }
-      }
+    if (sent == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Denúncia enviada para análise.')),
+      );
     }
   }
 
