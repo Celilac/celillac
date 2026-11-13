@@ -132,6 +132,8 @@ class Product {
     this.dietaryFeatures = const [],
     this.nutritionalInfo,
     this.certifications = const [],
+    this.partnerId,
+    this.price,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) => Product(
@@ -156,6 +158,8 @@ class Product {
         certifications: (json['certifications'] as List<dynamic>? ?? [])
             .map((e) => ProductCertification.fromJson(e as Map<String, dynamic>))
             .toList(),
+        partnerId: json['partnerId'] as String?,
+        price: (json['price'] as num?)?.toDouble(),
       );
 
   final String id;
@@ -173,6 +177,13 @@ class Product {
   final List<String> dietaryFeatures;
   final NutritionalInfo? nutritionalInfo;
   final List<ProductCertification> certifications;
+
+  /// Parceiro dono do produto e preço unitário (BRL). Ambos podem faltar
+  /// (produto sem preço = "sob consulta", não pode ser pedido online).
+  final String? partnerId;
+  final double? price;
+
+  bool get canBeOrdered => partnerId != null && price != null && price! > 0;
 }
 
 class CatalogResponse {

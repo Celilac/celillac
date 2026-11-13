@@ -1792,20 +1792,16 @@ Homologa ou rejeita um selo ou laudo laboratorial, registrando auditoria imutáv
 
 Módulo responsável pela orquestração do ciclo de vida dos pedidos comerciais realizados por celíacos e pessoas com restrições alimentares junto aos estabelecimentos cadastrados.
 
+> **Formato real (verificado no backend):** as respostas de `/orders` são o **objeto direto**, sem envelope `{ success, data }`, e os erros são `{ "error": "mensagem" }`. Campos de valor: `subtotalAmount`, `deliveryFee`, `totalAmount` (não há `orderNumber`, `subtotal`/`total`, `itemsCount` no pedido completo nem `isRefundEligible`).
+
 ### `POST /orders` 🔒 *(Restrito: Usuário Autenticado - Consumidor)*
-Cria um novo pedido com validação biológica compulsória de alérgenos via `AllergenEngine`.
+Cria um novo pedido com validação biológica compulsória de alérgenos via `AllergenEngine`. Exige perfil alimentar ativo. O cliente não envia `deliveryAddress`; `deliveryFee` é opcional (0 a 150) e os clientes web e mobile não o enviam.
 
 **Request Body:**
 ```json
 {
   "partnerId": "uuid-do-parceiro",
-  "items": [
-    {
-      "productId": "uuid-do-produto",
-      "quantity": 2
-    }
-  ],
-  "deliveryAddress": "Rua das Flores, 123, Apto 402, São Paulo - SP",
+  "items": [{ "productId": "uuid-do-produto", "quantity": 2 }],
   "notes": "Favor embalar separadamente para evitar contato."
 }
 ```
@@ -1813,101 +1809,65 @@ Cria um novo pedido com validação biológica compulsória de alérgenos via `A
 **Response `201 Created`:**
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "uuid-do-pedido",
-    "orderNumber": "ORD-1727680000000-1234",
-    "consumerId": "uuid-do-consumidor",
-    "partnerId": "uuid-do-parceiro",
-    "status": "CREATED",
-    "subtotal": 59.80,
-    "deliveryFee": 0.00,
-    "total": 59.80,
-    "deliveryAddress": "Rua das Flores, 123, Apto 402, São Paulo - SP",
-    "notes": "Favor embalar separadamente para evitar contato.",
-    "items": [
-      {
-        "id": "uuid-do-item",
-        "productId": "uuid-do-produto",
-        "productName": "Pão Francês Artesanal Sem Glúten",
-        "unitPrice": 29.90,
-        "quantity": 2,
-        "subtotal": 59.80
-      }
-    ],
-    "createdAt": "2026-09-30T10:00:00.000Z"
-  }
+  "orderId": "uuid-do-pedido",
+  "status": "CREATED",
+  "subtotalAmount": 59.80,
+  "deliveryFee": 0,
+  "totalAmount": 59.80,
+  "allergenCheckVerdict": "SAFE",
+  "itemsCount": 1
 }
 ```
+`allergenCheckVerdict` é `SAFE` ou `WARNING` (decidido pelo `AllergenEngine`).
 
-**Erros de Domínio Conhecidos:**
-- `400 Bad Request`: `FOOD_SAFETY_RISK_BLOCK` — Quando um ou mais produtos contêm alérgenos ou contaminação incompatíveis com o perfil do consumidor:
-```json
-{
-  "success": false,
-  "error": "Item Pão Francês Tradicional possui risco de segurança alimentar (BLOCKED) incompatível com seu perfil de saúde."
-}
-```
-- `400 Bad Request`: `EMPTY_CART` — O carrinho não contém nenhum item.
-- `400 Bad Request`: `CROSS_PARTNER_ITEMS_FORBIDDEN` — Tentativa de incluir produtos de parceiros distintos no mesmo pedido.
+**Erros de domínio (todos `400` com `{ "error": "..." }`):**
+- `BLOQUEIO DE SEGURANÇA ALIMENTAR: O produto "X" é inseguro para seu perfil (...). Pedido cancelado preventivamente.` — produto com risco `BLOCKED`/`DANGER` para o perfil. Os clientes exibem o texto como veredito e não contornam.
+- Perfil alimentar ausente/inativo; parceiro inexistente ou inativo; produto de outro parceiro, inativo ou sem preço ("sob consulta"); item/quantidade inválidos; taxa de entrega inválida.
 
 ---
 
 ### `GET /orders/me` 🔒 *(Restrito: Consumidor)*
-Retorna o histórico cronológico de todos os pedidos realizados pelo consumidor autenticado.
+Lista os pedidos do consumidor autenticado.
 
-**Response `200 OK`:**
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "uuid-do-pedido",
-      "orderNumber": "ORD-1727680000000-1234",
-      "partnerId": "uuid-do-parceiro",
-      "status": "PAID",
-      "total": 59.80,
-      "itemsCount": 2,
-      "createdAt": "2026-09-30T10:00:00.000Z"
-    }
-  ]
-}
-```
+**Response `200 OK`:** array de pedidos completos (mesmo formato de `GET /orders/:id`).
 
 ---
 
 ### `GET /orders/:id` 🔒 *(Restrito: Dono do Pedido ou Parceiro Destinatário)*
-Retorna os detalhes completos de um pedido específico.
+Retorna os detalhes completos de um pedido. `404` se não existir; `403` se não for o dono/parceiro.
 
 **Response `200 OK`:**
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "uuid-do-pedido",
-    "orderNumber": "ORD-1727680000000-1234",
-    "consumerId": "uuid-do-consumidor",
-    "partnerId": "uuid-do-parceiro",
-    "status": "PREPARING",
-    "subtotal": 59.80,
-    "deliveryFee": 0.00,
-    "total": 59.80,
-    "deliveryAddress": "Rua das Flores, 123",
-    "items": [
-      {
-        "id": "uuid-do-item",
-        "productId": "uuid-do-produto",
-        "productName": "Pão Francês Artesanal Sem Glúten",
-        "unitPrice": 29.90,
-        "quantity": 2,
-        "subtotal": 59.80
-      }
-    ],
-    "isRefundEligible": false,
-    "createdAt": "2026-09-30T10:00:00.000Z"
-  }
+  "id": "uuid-do-pedido",
+  "consumerId": "uuid-do-consumidor",
+  "partnerId": "uuid-do-parceiro",
+  "status": "PREPARING",
+  "subtotalAmount": 59.80,
+  "deliveryFee": 0,
+  "totalAmount": 59.80,
+  "allergenCheckVerdict": "SAFE",
+  "notes": "Favor embalar separadamente.",
+  "paymentMethod": "PIX",
+  "changeFor": null,
+  "items": [
+    {
+      "id": "uuid-do-item",
+      "orderId": "uuid-do-pedido",
+      "productId": "uuid-do-produto",
+      "productName": "Pão Francês Artesanal Sem Glúten",
+      "unitPrice": 29.90,
+      "quantity": 2,
+      "totalPrice": 59.80
+    }
+  ],
+  "cancelledAt": null,
+  "cancelReason": null,
+  "createdAt": "2026-09-30T10:00:00.000Z",
+  "updatedAt": "2026-09-30T10:00:00.000Z"
 }
 ```
+`status`: `CREATED`, `AWAITING_PAYMENT`, `PAID`, `CONFIRMED`, `PREPARING`, `READY_FOR_PICKUP`, `OUT_FOR_DELIVERY`, `DELIVERED`, `CANCELLED`.
 
 ---
 
@@ -1934,30 +1894,24 @@ Lista todos os pedidos recebidos pelo estabelecimento parceiro especificado.
 
 ---
 
-### `POST /orders/:id/cancel` 🔒 *(Restrito: Consumidor ou Parceiro)*
-Cancela um pedido em andamento de acordo com a política de cancelamento e reembolso.
+### `POST /orders/:id/cancel` 🔒 *(Restrito: Consumidor dono ou Parceiro)*
+Cancela um pedido. O consumidor só pode cancelar em `CREATED`, `AWAITING_PAYMENT` ou `PAID`; `reason` é obrigatório. Se o pedido estava `PAID`, o estorno é disparado automaticamente.
 
 **Request Body:**
 ```json
-{
-  "reason": "Desisti da compra antes do início do preparo."
-}
+{ "reason": "Desisti da compra antes do início do preparo." }
 ```
 
 **Response `200 OK`:**
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "uuid-do-pedido",
-    "status": "CANCELLED",
-    "isRefundEligible": true,
-    "cancelledAt": "2026-09-30T10:15:00.000Z",
-    "cancelReason": "Desisti da compra antes do início do preparo."
-  },
-  "message": "Pedido cancelado com sucesso. Reembolso integral habilitado."
+  "orderId": "uuid-do-pedido",
+  "status": "CANCELLED",
+  "requiresRefund": true,
+  "cancelReason": "Desisti da compra antes do início do preparo."
 }
 ```
+**Erros:** `400` (motivo vazio, pedido entregue/já cancelado, cancelamento não permitido após confirmação, falha de estorno), `403` (pedido de outro consumidor), `404`.
 
 ---
 

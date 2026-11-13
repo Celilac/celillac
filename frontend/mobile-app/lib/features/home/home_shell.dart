@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../orders/orders_screen.dart';
 import '../partners/partners_screen.dart';
 import '../profile/profile_screen.dart';
 import '../scanner/scanner_screen.dart';
@@ -48,6 +49,12 @@ final _tabs = <_HomeTab>[
     activeIcon: Icons.storefront,
     label: 'Parceiros',
     builder: (_) => const PartnersScreen(),
+  ),
+  _HomeTab(
+    icon: Icons.receipt_long_outlined,
+    activeIcon: Icons.receipt_long,
+    label: 'Pedidos',
+    builder: (isActive) => OrdersScreen(isActive: isActive),
   ),
   _HomeTab(
     icon: Icons.person_outline,
