@@ -122,14 +122,20 @@ Nenhuma é instalada sem o seu "ok". Propostas, por etapa:
 
 ## 9. Detalhamento das próximas etapas (pedidos, checkout, dashboard)
 
-> Escopo: `frontend/mobile-app`. Sem mudanças de backend, `AllergenEngine`, auth/JWT, migrations ou CORS. Novas dependências: **nenhuma** (QR do PIX é exibido via `pixQrCodeUrl` com `Image.network`; copia-e-cola via `Clipboard`). Cada etapa = uma branch `feat/mobile-<nome>` a partir de `develop`, um PR, `flutter analyze` e `flutter test` verdes. Ordem: 5 → 6 → 7 (o checkout depende da lista/detalhe de pedidos; o início agrega pedidos).
+> Escopo: `frontend/mobile-app`. Sem mudanças de backend, `AllergenEngine`, auth/JWT, migrations ou CORS. Novas dependências: **nenhuma** (QR do PIX é exibido a partir de `pixQrCode`, com `Image.network` ou `Image.memory` conforme o formato; copia-e-cola via `Clipboard`). Cada etapa = uma branch `feat/mobile-<nome>` a partir de `develop`, um PR, `flutter analyze` e `flutter test` verdes. Ordem: 5 → 6 → 7 (o checkout depende da lista/detalhe de pedidos; o início agrega pedidos).
 
 > Nota de numeração: as Etapas 5–7 da §5 original (pedidos e pagamento / notificações / acabamento) foram reorganizadas aqui; "Notificações" passa a ser parte da Etapa 5 (polling) e "Acabamento" vira a Etapa 8.
 
 ### 9.1 Fatos levantados (web e contrato)
 
 - **Web:** `orders/page.tsx` (lista, pagar, cancelar com motivo), `checkout/[orderId]/page.tsx` (PIX com polling, entrega, cartão), `dashboard/page.tsx` (perfil/restrições, busca, produtos, veredito por produto).
-- **Divergência de contrato (resolver antes de codar):** `docs/API_CONTRACTS.md` §14 documenta `subtotal`/`total`/`itemsCount`/`isRefundEligible`/`orderNumber`, mas o web (`api/orders.ts`) lê `subtotalAmount`/`totalAmount`/`totalPrice`/`allergenCheckVerdict`/`paymentMethod`/`changeFor`/`cancelReason`, e o web ainda oferece `CREDIT_CARD`, que não está no contrato. O mobile deve seguir a **resposta real** do backend; capturar um JSON real de `GET /orders/me`, `GET /orders/:id` e `POST /payments/checkout` e corrigir `API_CONTRACTS.md` (com aprovação, por ser contrato público) na própria etapa.
+- **Divergência de contrato (confirmada no código do backend, sem subir a stack):** `API_CONTRACTS.md` §14/§15 está defasado. O que o backend realmente produz (`domain/order/entities/Order.ts`, `OrderItem.ts`, `CheckoutOrderUseCase.ts`, `Payment.ts`):
+  - Pedido: `subtotalAmount`, `deliveryFee`, `totalAmount`, `allergenCheckVerdict` (`SAFE`|`WARNING`), `notes`, `paymentMethod`, `changeFor`, `cancelledAt`, `cancelReason`, `createdAt`, `updatedAt`, `items[]` com `productId`, `productName`, `unitPrice`, `quantity`, `totalPrice`. **Não** há `orderNumber`, `subtotal`/`total`, `itemsCount` nem `isRefundEligible` nessa entidade.
+  - Checkout: `paymentId`, `orderId`, `method`, `status`, `grossAmount`, `netPartnerAmount`, `platformFeeAmount`, `changeFor`, **`pixQrCode`**, `pixCopyPaste`, **`pixExpiresAt`** (o contrato diz `pixQrCodeUrl`/`platformFee`/`expiresAt`).
+  - Pagamento (`GET /payments/order/:id`): `status`, `pixQrCode`, `paidAt` etc.
+  - Falta confirmar só o **envelope** de resposta (`{success,data}` vs objeto direto) e o `Content` de `pixQrCode` (URL ou base64): fazer no início da Etapa 5 com a stack local no ar, lendo uma resposta real. Até lá o parse do mobile aceita os dois envelopes.
+  - Ação: corrigir `API_CONTRACTS.md` §14/§15 junto da Etapa 5 (você autorizou capturar as respostas; a correção do contrato entra no PR da etapa).
+- O web ainda oferece `CREDIT_CARD`, que não está no contrato; o mobile não o implementa (D1).
 - **Sem carrinho multi-itens no web** (roadmap §1.3): o pedido nasce de um produto/parceiro, com `partnerId` único (`CROSS_PARTNER_ITEMS_FORBIDDEN`).
 - **SSE `GET /orders/stream`** existe, mas é voltado ao parceiro; decisão D2 mantém polling leve no mobile.
 - **Pagamento online por cartão:** fora (D1). PIX + dinheiro/cartão na entrega.
@@ -159,7 +165,7 @@ Nenhuma é instalada sem o seu "ok". Propostas, por etapa:
 | Fluxo | Endpoint | Regras |
 |:--|:--|:--|
 | Escolher método | — | PIX · Dinheiro na entrega · Cartão (maquininha) na entrega. Se `can_pay_on_delivery = false`, a API devolve 400 → mostrar "pague antecipadamente online" e destacar PIX |
-| PIX | `POST /payments/checkout` `{orderId, method:'PIX'}` | Exibe QR (`pixQrCodeUrl`), copia-e-cola (com botão copiar), valor e expiração; endpoint é idempotente (reabrir não duplica) |
+| PIX | `POST /payments/checkout` `{orderId, method:'PIX'}` | Exibe QR (`pixQrCode`; imagem ou base64, a confirmar), copia-e-cola (com botão copiar), valor e expiração; endpoint é idempotente (reabrir não duplica) |
 | Acompanhar PIX | `GET /payments/order/:orderId` | Polling a cada 5 s até `PAID` (→ tela de sucesso) ou `CANCELLED`/expirado (→ oferecer gerar novo QR); para ao sair da tela |
 | Dinheiro | `POST /payments/checkout` `{method:'CASH_ON_DELIVERY', changeFor?}` | Valida no cliente apenas formato; `changeFor < total` → erro amigável (regra duplicada do web, só UX; o backend é a fonte da verdade) |
 | Cartão na entrega | `POST /payments/checkout` `{method:'CARD_ON_DELIVERY'}` | — |
@@ -169,7 +175,7 @@ Nenhuma é instalada sem o seu "ok". Propostas, por etapa:
 - Segurança: nada de dados de cartão no app (D1); QR/copia-e-cola não são logados nem persistidos; mensagens genéricas para falha do gateway.
 - Ciclo de vida: `Timer` cancelado no `dispose` e quando o app vai para segundo plano (`WidgetsBindingObserver`).
 - Testes: seleção de método, PIX (render + copiar + polling com relógio falso até `PAID`/`CANCELLED`), troco inválido, restrição de pagamento na entrega, erros 502/503.
-- Docs: `mobile-app.md` (§10), `CHANGELOG.md` (FEAT-122), `API_CONTRACTS.md` §15 (campos reais, ex.: `pixQrCodeUrl`/`pixCopyPaste`).
+- Docs: `mobile-app.md` (§10), `CHANGELOG.md` (FEAT-122), `API_CONTRACTS.md` §15 (campos reais, ex.: `pixQrCode`/`pixCopyPaste`/`pixExpiresAt`).
 
 ### 9.4 Etapa 7 — Início (dashboard do consumidor) (`feat/mobile-home-dashboard`)
 
@@ -182,9 +188,6 @@ Nenhuma é instalada sem o seu "ok". Propostas, por etapa:
 - Testes: cada bloco (loading/erro/vazio/preenchido), avisos condicionais, navegação dos atalhos.
 - Docs: `mobile-app.md` (§11), `CHANGELOG.md` (FEAT-123).
 
-### 9.5 Pontos que pedem sua decisão antes de codar
+### 9.5 Decisões
 
-1. **Contrato real de pedidos/pagamento:** posso capturar respostas reais do backend local para alinhar models e `API_CONTRACTS.md`? (altera contrato documentado → precisa de ok).
-2. **Criar pedido:** apenas 1 produto + quantidade por pedido (como o web hoje)? Recomendo **sim**.
-3. **Início:** a aba Início vira a primeira aba, ou os blocos entram no topo de "Buscar"? Recomendo aba própria.
-4. **Taxa de entrega e endereço:** `deliveryFee` fica fixo/omitido (como o web `CreateOrderInput`) e `deliveryAddress` do contrato não é enviado pelo web — manter igual ao web?
+(Confirmadas pelo usuário em 2026-11-13.) Captura de respostas reais autorizada; 1 produto por pedido; aba Início própria; `deliveryFee`/`deliveryAddress` iguais ao web.
