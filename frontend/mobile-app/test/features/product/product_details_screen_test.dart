@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -390,6 +392,37 @@ void main() {
 
       expect(find.byKey(const Key('reviews-error')), findsNothing);
       expect(find.text('Nenhuma avaliação cadastrada ainda.'), findsOneWidget);
+    });
+  });
+
+  group('denunciar produto', () {
+    testWidgets('envia productId e motivo do enum do backend (nunca texto livre)', (tester) async {
+      final http = RecordingHttp((r) async {
+        if (r.url.path == '/admin/reports') {
+          return jsonResponse({
+            'id': 'rp1',
+            'reporterId': 'u1',
+            'productId': 'p1',
+            'reason': 'MISSING_ALLERGEN',
+            'isFoodSafetyRisk': true,
+            'status': 'PENDING',
+            'createdAt': '2026-01-01T00:00:00Z',
+          }, 201);
+        }
+        return _route(r);
+      });
+      await _open(tester, http);
+
+      await tester.tap(find.byIcon(Icons.flag_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Denunciar').last);
+      await tester.pumpAndSettle();
+
+      final post = http.requests.singleWhere((r) => r.url.path == '/admin/reports');
+      final body = jsonDecode(post.body) as Map<String, dynamic>;
+      expect(body['productId'], 'p1');
+      expect(body['reason'], 'MISSING_ALLERGEN');
+      expect(find.text('Denúncia enviada para análise.'), findsOneWidget);
     });
   });
 }
