@@ -13,6 +13,7 @@ import 'models/consumer_models.dart';
 import 'models/enums.dart';
 import 'models/favorite_models.dart';
 import 'models/food_profile_models.dart';
+import 'models/order_models.dart';
 import 'models/partner_models.dart';
 import 'models/product_models.dart';
 import 'models/report_models.dart';
@@ -393,6 +394,56 @@ class ApiClient {
         'isFoodSafetyRisk': isFoodSafetyRisk,
       },
       parse: (json) => ReportItem.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  // ─── Orders ─────────────────────────────────────────────────────────────
+
+  /// Pedido de um único produto. Sem `deliveryFee` (igual ao web: o backend
+  /// assume 0). O backend roda o AllergenEngine; um 400 de bloqueio de
+  /// segurança alimentar chega como [ApiException] e nunca deve ser contornado.
+  Future<CreatedOrder> createOrder({
+    required String partnerId,
+    required String productId,
+    required int quantity,
+    String? notes,
+  }) {
+    return _request(
+      '/orders',
+      method: 'POST',
+      body: {
+        'partnerId': partnerId,
+        'items': [
+          {'productId': productId, 'quantity': quantity},
+        ],
+        if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+      },
+      parse: (json) => CreatedOrder.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<List<Order>> getMyOrders() {
+    return _request(
+      '/orders/me',
+      parse: (json) => (json as List<dynamic>)
+          .map((e) => Order.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  Future<Order> getOrderById(String orderId) {
+    return _request(
+      '/orders/$orderId',
+      parse: (json) => Order.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<CancelledOrder> cancelOrder(String orderId, {required String reason}) {
+    return _request(
+      '/orders/$orderId/cancel',
+      method: 'POST',
+      body: {'reason': reason},
+      parse: (json) => CancelledOrder.fromJson(json as Map<String, dynamic>),
     );
   }
 }

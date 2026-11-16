@@ -11,6 +11,7 @@ import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/loading_overlay.dart';
 import '../../shared/widgets/report_dialog.dart';
 import '../catalog/catalog_error_messages.dart';
+import '../orders/create_order_screen.dart';
 import 'widgets/product_image_carousel.dart';
 import 'widgets/product_info_sections.dart';
 import 'widgets/verdict_section.dart';
@@ -336,6 +337,19 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
             ],
           ),
         ),
+        if (product.canBeOrdered)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: ElevatedButton.icon(
+              key: const Key('make-order'),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => CreateOrderScreen(product: product)),
+              ),
+              icon: const Icon(Icons.shopping_bag_outlined),
+              label: const Text('Fazer pedido'),
+            ),
+          ),
         if (product.dietaryFeatures.isNotEmpty) DietaryFeaturesCard(features: product.dietaryFeatures),
         if (NutritionCard.hasContent(product.nutritionalInfo)) NutritionCard(info: product.nutritionalInfo!),
         if (CertificationsCard.visible(product.certifications).isNotEmpty)

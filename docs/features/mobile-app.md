@@ -140,3 +140,23 @@ Regras: erros via `PartnerErrorMessages` (502/503/rede → `ApiException.service
 - Avaliar parceiro (`POST /reviews` com `partnerId`) existe na API mas não faz parte desta etapa.
 - `ProductDetailsScreen` envia texto livre como `reason` na denúncia de produto, mas o backend exige enum (`MISSING_ALLERGEN`, `OTHER`...). Provável 400 pré-existente; fora do escopo.
 
+
+---
+
+## 9. Pedidos (Etapa 5 — `feat/mobile-orders`)
+
+Sem dependências novas e sem mudanças de backend/JWT. Chamadas só no `ApiClient`; models em `lib/api/models/order_models.dart`. O contrato real (objeto direto, sem envelope; `subtotalAmount`/`totalAmount`) está em `docs/API_CONTRACTS.md` §14.
+
+| Fluxo | Onde | Endpoint | Observações |
+|:------|:-----|:---------|:------------|
+| Criar pedido | `CreateOrderScreen` (botão **Fazer pedido** no detalhe do produto, só se houver `partnerId` e preço > 0) | `POST /orders` | 1 produto + quantidade (1–20) + observações. Sem `deliveryFee` (igual ao web). O subtotal exibido é só estimativa; valores finais vêm do backend |
+| Bloqueio de segurança | `CreateOrderScreen` | `POST /orders` → 400 `BLOQUEIO DE SEGURANÇA ALIMENTAR…` | Exibido em `AlertBanner` `BLOQUEADO` com o texto do backend. Nada é contornado ou recalculado |
+| Lista | `OrdersScreen` (aba **Pedidos**) | `GET /orders/me` | Mais recentes primeiro; *pull to refresh*; polling de 20 s **somente** com aba ativa e algum pedido em andamento (falha de polling não apaga a lista) |
+| Detalhe | `OrderDetailsScreen` | `GET /orders/:id` | Itens, totais, status em PT-BR, `allergenCheckVerdict` (`SAFE`/`WARNING`) como veio; valor desconhecido não exibe nada. Polling enquanto em andamento |
+| Cancelar | `OrderDetailsScreen` | `POST /orders/:id/cancel` | Botão só em `CREATED`/`AWAITING_PAYMENT`/`PAID`; motivo obrigatório; texto de estorno só se `requiresRefund` |
+
+Regras: erros via `OrderErrorMessages` (502/503/rede → serviço indisponível; só o bloqueio de segurança repassa texto do backend; demais 400 são traduzidos).
+
+### Fora desta etapa
+- **Pagar** (PIX / entrega) é a Etapa 6; por isso a tela de pedidos ainda não tem botão "Pagar".
+- Carrinho multi-itens (não existe no web) e confirmação de entrega (backend ainda não tem o endpoint).
