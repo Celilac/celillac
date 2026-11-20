@@ -2054,44 +2054,45 @@ Gera a cobrança do pedido com split e retorna os dados de pagamento (QR Code PI
 ```
 *Observação:* Para métodos presenciais (`CASH_ON_DELIVERY` e `CARD_ON_DELIVERY`), o consumidor deve ter `can_pay_on_delivery = true`. Caso tenha sido restringido anteriormente por não comparecimento ou recusa de pagamento, a API retornará `400 Bad Request` exigindo pagamento prévio online.
 
-**Response `201 Created` / `200 OK` (Idempotente):**
+**Header opcional:** `Idempotency-Key` (ou `X-Idempotency-Key`). Body opcional: `forceNew: true` regenera a cobrança PIX pendente (usado quando o código expirou ou falhou).
+
+**Response `200 OK` (idempotente: repetir o mesmo método devolve a cobrança pendente). Objeto direto, sem envelope `{success,data}`:**
 ```json
 {
-  "success": true,
-  "data": {
-    "paymentId": "uuid-do-pagamento",
-    "orderId": "uuid-do-pedido",
-    "status": "PENDING",
-    "method": "PIX",
-    "grossAmount": 59.80,
-    "platformFee": 7.18,
-    "netPartnerAmount": 50.63,
-    "pixQrCodeUrl": "https://api.asaas.com/qr/payload123",
-    "pixCopyPaste": "00020126580014br.gov.bcb.pix0136uuid-chave-pix520400005303986540559.805802BR5915CELILAC PAGAMENTOS6009SAO PAULO62070503***6304ABCD",
-    "expiresAt": "2026-09-30T11:00:00.000Z"
-  }
+  "paymentId": "uuid-do-pagamento",
+  "orderId": "uuid-do-pedido",
+  "method": "PIX",
+  "status": "PENDING",
+  "grossAmount": 59.80,
+  "netPartnerAmount": 50.63,
+  "platformFeeAmount": 7.18,
+  "pixQrCode": "https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=...",
+  "pixCopyPaste": "00020126580014br.gov.bcb.pix0136uuid-chave-pix...6304ABCD",
+  "pixExpiresAt": "2026-09-30T11:00:00.000Z"
 }
 ```
+- `pixQrCode` pode ser **URL http(s)** (gateway simulado), **data URI** ou **base64 puro** da imagem (`encodedImage` do Asaas): o cliente deve tratar os três formatos.
+- Para `CASH_ON_DELIVERY`/`CARD_ON_DELIVERY` os campos `pix*` não existem e o objeto inclui `changeFor` quando informado.
+- `status`: `PENDING` | `AUTHORIZED` | `PAID` | `FAILED` | `REFUNDED`.
+- Erros `400` (mensagens do backend, em PT-BR): pedido com status que não aceita checkout, total ≤ 0, pagamento na entrega indisponível (`can_pay_on_delivery = false`), `changeFor` menor que o total, método não suportado, `creditCardToken` ausente (cartão online).
 
 ---
 
-### `GET /payments/order/:orderId` 🔒 *(Restrito: Usuário Autenticado)*
-Consulta o estado de pagamento de um pedido em tempo real (usado para polling no checkout).
+### `GET /payments/order/:orderId` 🔒 *(Restrito: Consumidor dono, Parceiro dono do pedido ou Admin)*
+Consulta o estado de pagamento de um pedido (usado para polling no checkout). Devolve a entidade de pagamento direta (sem envelope): `id`, `orderId`, `consumerId`, `partnerId`, `gateway`, `method`, `status`, `grossAmount`, `netPartnerAmount`, `platformFeeAmount`, `pixQrCode`, `pixCopyPaste`, `pixExpiresAt`, `paidAt`, `failureReason`, `changeFor`, `createdAt`, `updatedAt`.
 
-**Response `200 OK`:**
+**Response `200 OK` (exemplo):**
 ```json
 {
-  "success": true,
-  "data": {
-    "id": "uuid-do-pagamento",
-    "orderId": "uuid-do-pedido",
-    "status": "PAID",
-    "method": "PIX",
-    "grossAmount": 59.80,
-    "paidAt": "2026-09-30T10:05:00.000Z"
-  }
+  "id": "uuid-do-pagamento",
+  "orderId": "uuid-do-pedido",
+  "method": "PIX",
+  "status": "PAID",
+  "grossAmount": 59.80,
+  "paidAt": "2026-09-30T10:05:00.000Z"
 }
 ```
+`404` quando ainda não há pagamento para o pedido; `403` para quem não é dono/parceiro/admin.
 
 ---
 

@@ -158,5 +158,28 @@ Sem dependências novas e sem mudanças de backend/JWT. Chamadas só no `ApiClie
 Regras: erros via `OrderErrorMessages` (502/503/rede → serviço indisponível; só o bloqueio de segurança repassa texto do backend; demais 400 são traduzidos).
 
 ### Fora desta etapa
-- **Pagar** (PIX / entrega) é a Etapa 6; por isso a tela de pedidos ainda não tem botão "Pagar".
+- **Pagar** (PIX / entrega): ver §10 (Etapa 6).
 - Carrinho multi-itens (não existe no web) e confirmação de entrega (backend ainda não tem o endpoint).
+
+---
+
+## 10. Checkout e pagamento (Etapa 6 — `feat/mobile-checkout`)
+
+Sem dependências novas (o QR vem como imagem do gateway; o copia-e-cola usa `Clipboard`) e sem mudanças de backend/JWT. Chamadas só no `ApiClient`; models em `lib/api/models/payment_models.dart`. O contrato real (objeto direto, `pixQrCode`/`pixCopyPaste`/`pixExpiresAt`) está em `docs/API_CONTRACTS.md` §15.
+
+| Fluxo | Onde | Endpoint | Observações |
+|:------|:-----|:---------|:------------|
+| Pagar | Botão **Pagar** no `OrderDetailsScreen`, só em `CREATED`/`AWAITING_PAYMENT` | — | Abre o `CheckoutScreen`; ao concluir, o detalhe do pedido recarrega |
+| Escolher método | `CheckoutScreen` | `POST /payments/checkout` | PIX · Dinheiro na entrega (troco opcional) · Cartão na entrega. Cartão de crédito online fica fora (D1): nenhum dado de cartão passa pelo app |
+| Troco | `CheckoutScreen` | `changeFor` | Aceita vírgula; vazio = sem troco. Valor menor que o total é barrado no cliente **só como UX**; o backend é a fonte da verdade |
+| Entrega indisponível | `CheckoutScreen` | 400 `entrega indisponível` | Mensagem amigável orientando PIX; PIX continua selecionável |
+| PIX | `PixPaymentScreen` | `POST /payments/checkout` | QR (URL http(s), data URI ou base64; falha oculta o QR e mantém o copia-e-cola), botão **Copiar código**, valor |
+| Acompanhar PIX | `PixPaymentScreen` | `GET /payments/order/:orderId` | Polling a cada 5 s até `PAID`. Para ao confirmar, ao sair da tela e em segundo plano (consulta de novo ao voltar). Falha transitória mantém a tela |
+| Expirou / falhou | `PixPaymentScreen` | `POST /payments/checkout` com `forceNew` | Quando `pixExpiresAt` passou ou o status é `FAILED`/`REFUNDED`: botão **Gerar novo PIX** |
+
+Regras: erros via `PaymentErrorMessages` (502/503/rede → serviço indisponível; textos do backend/gateway nunca são exibidos); QR e copia-e-cola não são logados nem persistidos.
+
+### Fora desta etapa
+- Cartão de crédito online (D1) e confirmação de entrega (backend ainda não tem o endpoint).
+- Atalho "Pagar" direto na lista de pedidos: hoje o pagamento começa pelo detalhe.
+
