@@ -111,7 +111,7 @@ Regras: erros via `CatalogErrorMessages` (mensagens amigáveis; 502/503/rede →
 ### Diferenças conhecidas em relação ao web (não alteradas aqui)
 - O web filtra no cliente por heurística de texto (`productFilters.ts`) e usa `compatibilityReport` embutido para "somente SAFE". O mobile usa os parâmetros do backend, cuja semântica é diferente (`onlyCompatible` = excluir alérgenos do perfil, não "SAFE"). Ordenação, faixa de preço, categoria e "vegano" não têm parâmetro na API e ficaram de fora.
 - O web guarda `riskLevel` em "verificados recentemente"; o mobile não guarda o veredito (pode ficar desatualizado).
-- O scanner (`ScannerScreen`) ainda fabrica relatórios locais para "produto desconhecido" e falha de comunicação; fora do escopo desta etapa.
+- ~~O scanner fabricava relatórios locais~~ — corrigido em `fix/mobile-scanner-no-local-verdict`: `ScanLookup` só aceita produto com EAN exato e o veredito vem sempre de `POST /compatibility/check`. "Não encontrado" e falhas viram aviso neutro (sem nível de risco).
 
 ---
 
