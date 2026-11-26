@@ -7,6 +7,7 @@ import '../../api/api_client.dart';
 import '../../api/models/order_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/loading_overlay.dart';
+import '../checkout/checkout_screen.dart';
 import 'order_error_messages.dart';
 import 'order_labels.dart';
 import 'widgets/order_verdict_chip.dart';
@@ -76,6 +77,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       _timer?.cancel();
       _timer = null;
     }
+  }
+
+  Future<void> _pay(Order order) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute<bool>(builder: (_) => CheckoutScreen(order: order)),
+    );
+    if (changed == true && mounted) await _load(silent: true);
   }
 
   Future<void> _cancel() async {
@@ -178,8 +187,16 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           const SizedBox(height: 4),
           Text(order.cancelReason!, key: const Key('order-cancel-reason')),
         ],
-        if (order.canCancel) ...[
+        if (order.awaitsPayment) ...[
           const SizedBox(height: 24),
+          ElevatedButton(
+            key: const Key('order-pay'),
+            onPressed: _cancelling ? null : () => _pay(order),
+            child: const Text('Pagar'),
+          ),
+        ],
+        if (order.canCancel) ...[
+          SizedBox(height: order.awaitsPayment ? 12 : 24),
           OutlinedButton(
             key: const Key('order-cancel'),
             onPressed: _cancelling ? null : _cancel,

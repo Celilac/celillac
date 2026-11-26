@@ -15,6 +15,7 @@ import 'models/favorite_models.dart';
 import 'models/food_profile_models.dart';
 import 'models/order_models.dart';
 import 'models/partner_models.dart';
+import 'models/payment_models.dart';
 import 'models/product_models.dart';
 import 'models/report_models.dart';
 import 'models/review_models.dart';
@@ -444,6 +445,37 @@ class ApiClient {
       method: 'POST',
       body: {'reason': reason},
       parse: (json) => CancelledOrder.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  // ─── Payments ───────────────────────────────────────────────────────────
+
+  /// Idempotente no backend: repetir o mesmo método devolve a cobrança
+  /// pendente. `forceNew` regenera o PIX (expirado/falho). `changeFor` só vale
+  /// para dinheiro na entrega.
+  Future<Payment> checkoutPayment({
+    required String orderId,
+    required PaymentMethod method,
+    double? changeFor,
+    bool forceNew = false,
+  }) {
+    return _request(
+      '/payments/checkout',
+      method: 'POST',
+      body: {
+        'orderId': orderId,
+        'method': method.wire,
+        if (method == PaymentMethod.cashOnDelivery && changeFor != null) 'changeFor': changeFor,
+        if (forceNew) 'forceNew': true,
+      },
+      parse: (json) => Payment.fromJson(json as Map<String, dynamic>),
+    );
+  }
+
+  Future<Payment> getPaymentByOrder(String orderId) {
+    return _request(
+      '/payments/order/$orderId',
+      parse: (json) => Payment.fromJson(json as Map<String, dynamic>),
     );
   }
 }
