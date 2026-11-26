@@ -2,7 +2,7 @@
 
 > **Branch sugerida:** `feat/mobile-consumer-parity` (a partir de `develop` atualizada, só após aprovação)
 > **Escopo:** `frontend/mobile-app` (Flutter). Backend só muda se uma etapa disser explicitamente.
-> **Status:** Etapas 0–4 entregues (FEAT-116 a FEAT-120). Etapas 5 (Pedidos), 6 (Checkout) e 7 (Início/Dashboard) detalhadas na §9 — **aguardando aprovação humana, nenhum código foi alterado.**
+> **Status:** Etapas 0–7 entregues (FEAT-116 a FEAT-123; a Etapa 7 aguarda revisão do PR de `feat/mobile-home-dashboard`). Próxima: Etapa 8 (acabamento).
 
 ## 1. Objetivo
 
@@ -177,7 +177,7 @@ Nenhuma é instalada sem o seu "ok". Propostas, por etapa:
 - Testes: seleção de método, PIX (render + copiar + polling com relógio falso até `PAID`/`CANCELLED`), troco inválido, restrição de pagamento na entrega, erros 502/503.
 - Docs: `mobile-app.md` (§10), `CHANGELOG.md` (FEAT-122), `API_CONTRACTS.md` §15 (campos reais, ex.: `pixQrCode`/`pixCopyPaste`/`pixExpiresAt`).
 
-### 9.4 Etapa 7 — Início (dashboard do consumidor) (`feat/mobile-home-dashboard`)
+### 9.4 Etapa 7 — Início (dashboard do consumidor) (`feat/mobile-home-dashboard`) — ✅ entregue (FEAT-123, 2026-11-26)
 
 **Objetivo:** paridade com a parte consumidor de `/dashboard`, em formato de tela inicial.
 
@@ -187,6 +187,18 @@ Nenhuma é instalada sem o seu "ok". Propostas, por etapa:
 - Endpoints: `GET /consumer/me`, `GET /iam/me`, `GET /orders/me`. Cada bloco carrega de forma independente (falha de um não derruba a tela).
 - Testes: cada bloco (loading/erro/vazio/preenchido), avisos condicionais, navegação dos atalhos.
 - Docs: `mobile-app.md` (§11), `CHANGELOG.md` (FEAT-123).
+
+**Aprovado em 2026-11-26, além do escopo acima:**
+- Base `origin/develop` após o merge do PR #125.
+- Selo de veredito do pedido oculto no Início.
+- "Perfil inativo" no resumo quando a API devolver `INATIVO`.
+- `ProfileScreen` reconsulta o status do e-mail ao voltar à aba.
+- Atualização ao voltar à aba e *pull to refresh*, sem polling.
+
+**Ajuste feito na implementação:** o Scanner passa a ser construído só na primeira visita, para não disparar dois `start()` concorrentes da câmera agora que não é a aba inicial.
+
+### Etapa 8 — Acabamento (próxima)
+Tema claro, acessibilidade, estados de loading/erro/vazio padronizados, ícones e splash (itens da antiga Etapa 7 da §5). Requer plano e aprovação.
 
 ### 9.5 Decisões
 

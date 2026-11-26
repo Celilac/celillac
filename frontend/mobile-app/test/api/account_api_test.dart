@@ -158,6 +158,14 @@ void main() {
       expect(me.isEmailVerified, isFalse);
     });
 
+    test('lê fullName quando presente e aceita ausência', () async {
+      final named = _client((_) => _json({'id': 'u1', 'email': 'a@b.com', 'fullName': 'Maria Silva'}, 200));
+      expect((await named.getAccount()).fullName, 'Maria Silva');
+
+      final anonymous = _client((_) => _json({'id': 'u1', 'email': 'a@b.com', 'fullName': null}, 200));
+      expect((await anonymous.getAccount()).fullName, isNull);
+    });
+
     test('campo ausente é tratado como verificado (mesma regra do web)', () async {
       final client = _client((_) => _json({'id': 'u1', 'email': 'a@b.com'}, 200))..setAuthToken('tok');
       expect((await client.getAccount()).isEmailVerified, isTrue);

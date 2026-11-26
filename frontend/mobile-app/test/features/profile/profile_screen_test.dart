@@ -119,6 +119,46 @@ void main() {
     });
   });
 
+  testWidgets('voltar à aba recarrega o estado do e-mail', (tester) async {
+    var verified = false;
+    final recorder = RecordingHttp(
+      (r) async => _route(
+        r,
+        iam: {'id': 'u1', 'email': 'a@b.com', 'role': 'CELIACO', 'isEmailVerified': verified},
+      ),
+    );
+    final api = recorder.client(token: 'tok');
+    final active = ValueNotifier(true);
+    tester.view.physicalSize = const Size(800, 3000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider<ApiClient>.value(value: api),
+          ChangeNotifierProvider<SessionController>(create: (_) => _FakeSession()),
+        ],
+        child: MaterialApp(
+          home: ValueListenableBuilder<bool>(
+            valueListenable: active,
+            builder: (_, isActive, _) => ProfileScreen(isActive: isActive),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('email-unverified-status')), findsOneWidget);
+
+    verified = true;
+    active.value = false;
+    await tester.pumpAndSettle();
+    active.value = true;
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('email-verified-status')), findsOneWidget);
+  });
+
   group('restrições', () {
     testWidgets('lista com pictogramas (e fallback para alérgeno sem ícone)', (
       tester,
