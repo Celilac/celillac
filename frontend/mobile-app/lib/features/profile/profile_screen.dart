@@ -16,7 +16,11 @@ import 'edit_profile_screen.dart';
 import 'widgets/consumer_status_card.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.isActive = true});
+
+  /// Ao voltar para a aba, o estado do e-mail é consultado de novo (ele pode
+  /// ter sido verificado a partir do Início).
+  final bool isActive;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -34,6 +38,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadProfile();
+  }
+
+  @override
+  void didUpdateWidget(covariant ProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) _loadEmailStatus(context.read<ApiClient>());
   }
 
   Future<void> _loadProfile() async {

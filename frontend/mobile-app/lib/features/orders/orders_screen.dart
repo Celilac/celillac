@@ -8,8 +8,7 @@ import '../../api/models/order_models.dart';
 import '../../core/theme/app_colors.dart';
 import 'order_details_screen.dart';
 import 'order_error_messages.dart';
-import 'order_labels.dart';
-import 'widgets/order_verdict_chip.dart';
+import 'widgets/order_card.dart';
 
 /// Aba **Pedidos**. Polling leve só enquanto a aba está visível e existe pedido
 /// em andamento; falhas do polling não substituem a lista já carregada.
@@ -141,53 +140,8 @@ class _OrdersScreenState extends State<OrdersScreen> {
               padding: const EdgeInsets.all(16),
               itemCount: orders.length,
               separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (_, i) => _OrderCard(order: orders[i], onTap: () => _open(orders[i])),
+              itemBuilder: (_, i) => OrderCard(order: orders[i], onTap: () => _open(orders[i])),
             ),
-    );
-  }
-}
-
-class _OrderCard extends StatelessWidget {
-  const _OrderCard({required this.order, required this.onTap});
-
-  final Order order;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      key: Key('order-card-${order.id}'),
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    orderStatusLabel(order.status),
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: AppColors.textPrimary),
-                  ),
-                ),
-                Text(formatBrl(order.totalAmount), style: const TextStyle(fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(orderSummary(order), style: const TextStyle(color: AppColors.textMutedLight)),
-            if (order.createdAt != null)
-              Text(
-                formatOrderDate(order.createdAt),
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
-              ),
-            const SizedBox(height: 8),
-            OrderVerdictChip(verdict: order.allergenCheckVerdict),
-          ],
-        ),
-      ),
     );
   }
 }

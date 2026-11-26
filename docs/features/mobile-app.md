@@ -54,7 +54,7 @@ Erro de rede (`SocketException`, `ClientException`, timeout) e status `502`/`503
 O app é exclusivo para `CELIACO` (`UserRole`, ver `docs/API_CONTRACTS.md` §9). Após login ou restauração de sessão, qualquer outro papel (`PARCEIRO`, `ADMIN` ou desconhecido) encerra a sessão, **não persiste o token** e exibe a tela "Use o painel web". O papel vem do claim `role` do JWT (apenas decodificado; a validação continua no servidor).
 
 ### Navegação
-`HomeShell` usa `BottomNavigationBar` com `Icons` do Material; novas abas entram adicionando uma `_HomeTab` à lista.
+`HomeShell` usa `BottomNavigationBar` com `Icons` do Material; novas abas entram adicionando o valor em `HomeTab` e uma `_HomeTab` à lista. Ordem atual: Início, Scanner, Buscar, Parceiros, Pedidos, Perfil (ver §11).
 
 ---
 
@@ -183,3 +183,34 @@ Regras: erros via `PaymentErrorMessages` (502/503/rede → serviço indisponíve
 - Cartão de crédito online (D1) e confirmação de entrega (backend ainda não tem o endpoint).
 - Atalho "Pagar" direto na lista de pedidos: hoje o pagamento começa pelo detalhe.
 
+---
+
+## 11. Início (Etapa 7 — `feat/mobile-home-dashboard`)
+
+Aba **Início** (`HomeScreen`, primeira aba e aba inicial): paridade com a parte de consumidor do `/dashboard` do web. Sem dependências novas e sem mudanças de backend/JWT. Chamadas só no `ApiClient`.
+
+| Bloco | Fonte | Comportamento |
+|:------|:------|:--------------|
+| Saudação | `GET /iam/me` → `fullName` | "Olá, {primeiro nome}!"; sem nome ou sem resposta, "Olá!" |
+| Aviso de e-mail | `GET /iam/me` → `isEmailVerified` | Só quando `false`; **Verificar e-mail** abre o `VerifyEmailScreen`. Falha da consulta mostra erro com "Tentar novamente" |
+| Aviso de perfil incompleto | `GET /consumer/me` → `hasIncompleteProfileWarning` | Segue apenas a flag da API; **Completar perfil** leva à aba Perfil |
+| Atalhos | — | Scanner, Buscar e Parceiros (troca de aba via `HomeTab`) |
+| Perfil alimentar | `GET /consumer/me` | `RestrictionChip` (alérgeno + severidade) e contaminação cruzada como vêm; `INATIVO` exibe "Perfil inativo"; sem restrições, "Nenhuma restrição cadastrada." |
+| Pedidos em andamento | `GET /orders/me` + `Order.isInProgress` | Até 3, mais recentes primeiro; toque abre o detalhe; **Pagar** quando `awaitsPayment` (abre o `CheckoutScreen`); "Ver todos os pedidos" leva à aba Pedidos. Usa o `OrderCard`, compartilhado com a lista |
+| Verificados recentemente | `RecentChecksStorage` | Nome e marca; abre o detalhe do produto |
+
+### Carregamento e erros
+- Cada bloco é um `HomeBlock` independente (carregando, erro, vazio, preenchido): a falha de um não afeta os demais, e falha nunca aparece como ausência de dados.
+- Atualiza ao voltar para a aba, ao retornar de uma tela aberta pelo Início e no *pull to refresh*. **Sem polling.** Falha numa atualização mantém o que já está na tela; respostas antigas são descartadas.
+- Mensagens: `HomeErrorMessages` (conta e perfil) e `OrderErrorMessages` (pedidos); 502/503/rede → `ApiException.serviceUnavailable`; nunca texto técnico do backend.
+
+### Segurança alimentar
+O Início **não** chama `POST /compatibility/check`, não mostra risco por produto e não calcula compatibilidade. O selo de veredito do pedido (`allergenCheckVerdict`) fica oculto aqui, pois é uma foto da criação do pedido; ele continua na aba Pedidos e no detalhe.
+
+### Ajustes em telas existentes
+- `ProfileScreen` consulta `GET /iam/me` de novo ao voltar para a aba (o e-mail pode ter sido verificado pelo Início).
+- O Scanner deixou de ser a aba inicial e só é construído na primeira visita: assim a câmera é iniciada uma única vez, pelo próprio `MobileScanner`.
+
+### Fora desta etapa
+- Blocos de parceiro/admin do dashboard web e criação de produtos (papéis fora do app).
+- Tema claro, acessibilidade, estados de loading/erro/vazio padronizados, ícones e splash (Etapa 8).

@@ -23,16 +23,19 @@ class ConfirmPasswordResetPayload {
   Map<String, dynamic> toJson() => {'email': email, 'code': code, 'newPassword': newPassword};
 }
 
-/// Subconjunto de `GET /iam/me` usado pelo app: e-mail e estado de verificação.
+/// Subconjunto de `GET /iam/me` usado pelo app: e-mail, estado de verificação e
+/// nome (saudação do Início).
 class AccountInfo {
-  const AccountInfo({required this.email, required this.isEmailVerified});
+  const AccountInfo({required this.email, required this.isEmailVerified, this.fullName});
 
   factory AccountInfo.fromJson(Map<String, dynamic> json) => AccountInfo(
         email: (json['email'] as String?) ?? '',
         // Mesma regra do web: só é "não verificado" quando o backend diz false.
         isEmailVerified: json['isEmailVerified'] != false,
+        fullName: json['fullName'] as String?,
       );
 
   final String email;
   final bool isEmailVerified;
+  final String? fullName;
 }
