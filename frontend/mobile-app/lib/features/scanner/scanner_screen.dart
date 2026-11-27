@@ -3,12 +3,11 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/api_client.dart';
-import '../../api/api_exception.dart';
 import '../../api/models/compatibility_models.dart';
-import '../../api/models/enums.dart';
 import '../../core/auth/session_controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../shared/widgets/alert_banner.dart';
+import 'scan_lookup.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key, this.isActive = true});
@@ -31,6 +30,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
   String? _scannedCode;
   String? _productName;
   CompatibilityReport? _report;
+
+  /// Aviso sem nível de risco (produto fora do catálogo ou falha). Nunca é veredito.
+  String? _neutralMessage;
 
   @override
   void didUpdateWidget(covariant ScannerScreen oldWidget) {
@@ -64,60 +66,37 @@ class _ScannerScreenState extends State<ScannerScreen> {
       _scannedCode = code;
       _isLoading = true;
       _report = null;
+      _neutralMessage = null;
       _productName = null;
     });
     await _controller.stop();
 
-    try {
-      final catalog = await apiClient.searchProducts(code);
-      if (catalog.data.isEmpty) {
-        setState(() {
-          _productName = 'Produto desconhecido';
-          _report = const CompatibilityReport(
-            isCompatible: false,
-            riskLevel: RiskLevel.blocked,
-            reasoning:
-                'Este produto não está no catálogo CeLiLac. Não é possível verificar a segurança.',
-            conflicts: [],
-          );
-        });
-        return;
+    final result = await ScanLookup(apiClient).lookup(code, userId);
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      switch (result) {
+        case ScanFound(:final product, :final report):
+          _productName = product.name;
+          _report = report;
+        case ScanNotFound():
+          _productName = 'Produto não encontrado';
+          _neutralMessage = 'Este código não está no catálogo CeLiLac, então não há '
+              'verificação de segurança. Confira o rótulo antes de consumir.';
+        case ScanVerdictUnavailable(:final product, :final message):
+          _productName = product.name;
+          _neutralMessage = '$message Não consuma sem verificar o rótulo.';
+        case ScanFailed(:final message):
+          _neutralMessage = '$message Não consuma sem verificar o rótulo.';
       }
-
-      final product = catalog.data.first;
-      setState(() => _productName = product.name);
-
-      final compatibility = await apiClient.checkCompatibility(userId, product.id);
-      setState(() => _report = compatibility);
-    } on ApiException {
-      setState(() {
-        _report = const CompatibilityReport(
-          isCompatible: false,
-          riskLevel: RiskLevel.warning,
-          reasoning:
-              'Falha de comunicação com o servidor. Não consuma sem verificação manual.',
-          conflicts: [],
-        );
-      });
-    } catch (_) {
-      setState(() {
-        _report = const CompatibilityReport(
-          isCompatible: false,
-          riskLevel: RiskLevel.warning,
-          reasoning:
-              'Falha de comunicação com o servidor. Não consuma sem verificação manual.',
-          conflicts: [],
-        );
-      });
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    });
   }
 
   void _reset() {
     setState(() {
       _scannedCode = null;
       _report = null;
+      _neutralMessage = null;
       _productName = null;
       _isScanning = true;
     });
@@ -234,6 +213,21 @@ class _ScannerScreenState extends State<ScannerScreen> {
                               ? 'Compatível com seu perfil!'
                               : 'Incompatível com seu perfil',
                           reasoning: _report!.reasoning,
+                        ),
+                      if (_neutralMessage != null && !_isLoading)
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            _neutralMessage!,
+                            key: const Key('scanner-neutral-message'),
+                            style: const TextStyle(color: AppColors.textMutedLight, fontSize: 14),
+                          ),
                         ),
                       if (!_isScanning && !_isLoading)
                         Padding(
